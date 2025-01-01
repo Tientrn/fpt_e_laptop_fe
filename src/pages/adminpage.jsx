@@ -85,9 +85,9 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
       </div>
-      <div className="grid grid-cols-3 gap-4 mt-10">
-        <div className="col-span-2">
-          <h1>accounts chart</h1>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-10">
+        <div className="md:col-span-2 lg:col-span-2">
+          <h1 className="text-lg font-semibold mb-4">accounts chart</h1>
           <ResponsiveContainer width="100%" height={480}>
             <LineChart data={data}>
               <CartesianGrid strokeDasharray="3 3" />
@@ -101,8 +101,8 @@ export default function DashboardPage() {
             </LineChart>
           </ResponsiveContainer>
         </div>
-        <div className="col-span-1">
-          <h1>revenue chart</h1>
+        <div className="md:col-span-1 lg:col-span-1 ">
+          <h1 className="text-lg font-semibold mb-4">revenue chart</h1>
           <ResponsiveContainer width="100%" height={480}>
             <BarChart data={databarchart}>
               <CartesianGrid strokeDasharray="3 3" />
