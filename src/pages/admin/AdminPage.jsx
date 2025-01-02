@@ -16,6 +16,7 @@ import PeopleAltIcon from "@mui/icons-material/PeopleAlt";
 import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
 import StoreIcon from "@mui/icons-material/Store";
 import HandshakeIcon from "@mui/icons-material/Handshake";
+import HistoryIcon from "@mui/icons-material/History";
 
 const data = [
   { name: "Jan", revenue: 4000, customers: 2400, orders: 2400 },
@@ -30,6 +31,21 @@ const databarchart = [
   // thêm dữ liệu khác nếu cần
 ];
 
+const logs = [
+  { id: 1, user: "John Doe", action: "Logged in", time: "2025-01-01 10:00:00" },
+  {
+    id: 2,
+    user: "Jane Smith",
+    action: "Uploaded a file",
+    time: "2025-01-01 10:15:00",
+  },
+  {
+    id: 3,
+    user: "Alice Brown",
+    action: "Deleted a record",
+    time: "2025-01-01 10:30:00",
+  },
+];
 export default function DashboardPage() {
   return (
     <div>
@@ -115,6 +131,53 @@ export default function DashboardPage() {
               <Bar dataKey="orders" fill="#ffc658" />
             </BarChart>
           </ResponsiveContainer>
+        </div>
+      </div>
+      <div>
+        <div className="mt-8">
+          <h2 className="text-lg font-bold mb-6 text-gray-800">Activity Log</h2>
+          <div className="overflow-auto shadow-md rounded-lg">
+            <table className="min-w-full table-auto bg-white">
+              <thead>
+                <tr className="bg-gradient-to-r from-gray-500 to-green-500 text-white">
+                  <th className="px-6 py-4 text-left font-semibold text-sm tracking-wide">
+                    <div className="flex items-center gap-2">
+                      <PeopleAltIcon />
+                      <span>User</span>
+                    </div>
+                  </th>
+                  <th className="px-6 py-4 text-left font-semibold text-sm tracking-wide">
+                    <div className="flex items-center gap-2">
+                      <HistoryIcon />
+                      <span>Recent Activity</span>
+                    </div>
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {logs.map((log, index) => (
+                  <tr
+                    key={log.id}
+                    className={`${
+                      index % 2 === 0 ? "bg-gray-50" : "bg-white"
+                    } hover:bg-blue-50`}
+                  >
+                    <td className="px-6 py-4 text-gray-700 font-medium">
+                      {log.user}
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex flex-col">
+                        <span className="text-gray-900">{log.action}</span>
+                        <span className="text-gray-500 text-sm italic">
+                          {log.time}
+                        </span>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>
