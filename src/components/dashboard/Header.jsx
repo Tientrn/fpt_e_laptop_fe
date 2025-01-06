@@ -43,28 +43,28 @@ export default function Header() {
               <div className="absolute top-full right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-50">
                 <ul className="py-1 text-sm text-gray-700">
                   <li>
-                    <button
+                    <Button
                       onClick={() => handleNavigation("/dashboard")}
                       className="block w-full text-left px-4 py-2 hover:bg-gray-100"
                     >
                       Dashboard
-                    </button>
+                    </Button>
                   </li>
                   <li>
-                    <button
+                    <Button
                       onClick={() => handleNavigation("/profile")}
                       className="block w-full text-left px-4 py-2 hover:bg-gray-100"
                     >
                       Hồ sơ
-                    </button>
+                    </Button>
                   </li>
                   <li>
-                    <button
+                    <Button
                       onClick={() => handleNavigation("/login")}
                       className="block w-full text-left px-4 py-2 text-red-600 hover:bg-red-100"
                     >
                       Log Out
-                    </button>
+                    </Button>
                   </li>
                 </ul>
               </div>
