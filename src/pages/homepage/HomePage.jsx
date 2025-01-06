@@ -1,4 +1,5 @@
 import Card from "../../components/homepage/Card";
+
 export default function HomePage() {
   return (
     <div>
@@ -6,6 +7,7 @@ export default function HomePage() {
         <h1 className="text-2xl font-semibold text-white">Featured Laptops</h1>
       </div>
       <div className="flex my-5">
+        <Card />
         <Card />
         <Card />
         <Card />
@@ -25,6 +27,7 @@ export default function HomePage() {
           </h1>
         </div>
         <div className="flex my-5">
+          <Card />
           <Card />
           <Card />
           <Card />

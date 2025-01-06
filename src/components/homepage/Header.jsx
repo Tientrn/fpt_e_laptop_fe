@@ -1,9 +1,10 @@
 import React, { useState } from "react";
-import { useLocation } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 
 function HeaderHomePage() {
   const [nav, setNav] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
 
   return (
     <header>
@@ -54,12 +55,14 @@ function HeaderHomePage() {
             </ul>
             <div className="flex flex-col md:flex-row items-center gap-4 ml-2">
               <button
+                onClick={() => navigate("/login")}
                 className="rounded-full bg-white py-2 px-4 text-center text-sm text-black transition-all shadow-md hover:shadow-lg hover:bg-red-500 hover:text-white focus:bg-red-500 focus:shadow-none active:bg-red-600 disabled:pointer-events-none disabled:opacity-50"
                 type="button"
               >
                 Sign In
               </button>
               <button
+                onClick={() => navigate("/register")}
                 className="rounded-full bg-white py-2 px-4 text-center text-sm text-black transition-all shadow-md hover:shadow-lg hover:bg-red-500 hover:text-white focus:bg-red-500 focus:shadow-none active:bg-red-600 disabled:pointer-events-none disabled:opacity-50"
                 type="button"
               >
