@@ -24,7 +24,7 @@ export default function Sidebar() {
       {/* Toggle Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="p-2 text-white bg-gray-800  md:hidden "
+        className="absolute top-4 left-4 p-2 text-white bg-gray-800 rounded z-40 md:hidden "
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -45,7 +45,7 @@ export default function Sidebar() {
       {/* Sidebar */}
       <div
         className={`bg-gray-800 text-white w-64 space-y-6 py-7 px-2 absolute inset-y-0 left-0 transform ${
-          isOpen ? "translate-x-0" : "-translate-x-full"
+          isOpen ? "translate-x-0 z-40" : "-translate-x-full z-10"
         } md:relative md:translate-x-0 transition duration-200 ease-in-out flex flex-col`}
       >
         <nav className="flex-grow">

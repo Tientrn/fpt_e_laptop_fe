@@ -110,17 +110,13 @@ export default function AccountManagementPage() {
                       variant="ghost"
                       startIcon={<EditIcon />}
                       onClick={() => handleOpenModal(true, account)}
-                    >
-                      Edit
-                    </Button>
+                    ></Button>
                     <Button
                       variant="ghost"
                       startIcon={<DeleteIcon />}
                       onClick={() => handleDelete(account.id)}
                       className="ml-2"
-                    >
-                      Delete
-                    </Button>
+                    ></Button>
                   </div>
                 </td>
               </tr>
