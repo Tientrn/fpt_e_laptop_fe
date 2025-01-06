@@ -98,7 +98,7 @@ const RegisterPage = () => {
       {/* Redirect to Login */}
       <p className="mt-4 text-sm text-center text-gray-600">
         Already have an account?{" "}
-        <a href="/login" className="text-blue-500 hover:underline">
+        <a href="/login" className="text-blue-700 hover:underline">
           Login
         </a>
       </p>
