@@ -40,7 +40,7 @@ function HeaderHomePage() {
                   href="/home/product"
                   className="block py-2 pr-4 pl-3 text-white border-b border-gray-600 hover:bg-gray-600 md:hover:bg-transparent md:hover:text-gray-300"
                 >
-                  Products
+                  Laptops
                 </a>
               </li>
               <li>
@@ -115,7 +115,7 @@ function HeaderHomePage() {
             backgroundImage: "url(../src/assets/banner.jpg)", // Thay thế bằng URL ảnh của bạn
           }}
         >
-          <div className="bg-black bg-opacity-70 p-8 rounded-lg text-center shadow-lg transform transition-transform duration-300 hover:scale-105">
+          <div className=" bg-opacity-70 p-8 rounded-lg text-center shadow-lg transform transition-transform duration-300 hover:scale-105">
             <h1 className="text-4xl font-bold text-white mb-4 pointer-events-none">
               Welcome to FPT E-Laptop
             </h1>
