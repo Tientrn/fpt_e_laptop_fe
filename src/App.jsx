@@ -1,16 +1,23 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import "./App.css";
-import DashboardLayout from "./layouts/admin";
-import DashboardPage from "./pages/admin/adminpage";
-import AccountManagementPage from "./pages/admin/AccountPage";
-import HomePageLayout from "./layouts/homepage";
-import HomePage from "./pages/homepage/HomePage";
 
+import HomePage from "./pages/homepage/HomePage";
+import DashboardPage from "./pages/admin/AdminPage";
+import AccountManagementPage from "./pages/admin/AccountPage";
+import LoginPage from "./pages/auth/LoginPage";
+import RegisterPage from "./pages/auth/RegisterPage";
+
+import DashboardLayout from "./layouts/dashboard";
+import HomePageLayout from "./layouts/homepage";
+import AuthLayout from "./layouts/auth";
+import RegisterLayout from "./layouts/register";
 function App() {
   return (
     <>
       <BrowserRouter>
         <Routes>
+          {/* thêm route từ đây */}
+
           <Route
             path="/home"
             element={
@@ -35,6 +42,25 @@ function App() {
               </DashboardLayout>
             }
           ></Route>
+          <Route
+            path="/login"
+            element={
+              <AuthLayout>
+                <LoginPage />
+              </AuthLayout>
+            }
+          ></Route>
+          <Route
+            path="/register"
+            element={
+              <RegisterLayout>
+                <RegisterPage />
+              </RegisterLayout>
+            }
+          ></Route>
+
+
+          {/* thêm route từ đây */}
         </Routes>
       </BrowserRouter>
     </>
