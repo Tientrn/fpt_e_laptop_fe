@@ -1,11 +1,14 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import "./App.css";
+import ScrollToTop from "./components/Scroll";
 
 import HomePage from "./pages/homepage/HomePage";
 import DashboardPage from "./pages/admin/AdminPage";
 import AccountManagementPage from "./pages/admin/AccountPage";
 import LoginPage from "./pages/auth/LoginPage";
 import RegisterPage from "./pages/auth/RegisterPage";
+import DetailPage from "./pages/homepage/DetailPage";
+import DetailLaptopBorrowPage from "./pages/homepage/DetailLaptopBorrow";
 import LaptopforsellPage from "./pages/laptopforsell/LaptopforsellPage";
 
 import DashboardLayout from "./layouts/dashboard";
@@ -17,6 +20,7 @@ function App() {
   return (
     <>
       <BrowserRouter>
+        <ScrollToTop />
         <Routes>
           {/* thêm route từ đây */}
 
@@ -60,14 +64,7 @@ function App() {
               </RegisterLayout>
             }
           ></Route>
-          <Route
-            path="/laptoppurchase"
-            element={
-              <HomePageLayout>
-                <LaptopforsellPage />
-              </HomePageLayout>
-            }
-          ></Route>
+
 
           {/* thêm route từ đây */}
         </Routes>

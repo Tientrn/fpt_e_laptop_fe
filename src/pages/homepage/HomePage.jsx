@@ -1,4 +1,5 @@
 import Card from "../../components/homepage/Card";
+import { Link } from "react-router-dom";
 
 export default function HomePage() {
   return (
@@ -6,12 +7,19 @@ export default function HomePage() {
       <div>
         <h1 className="text-2xl font-semibold text-white">Featured Laptops</h1>
       </div>
-      <div className="grid grid-cols-4 gap-6 my-5 ml-10">
-        <Card />
-        <Card />
-        <Card />
-        <Card />
-        
+      <div className="flex my-5">
+        <Link to="/laptopdetail" className="flex-1">
+          <Card />
+        </Link>
+        <Link to="/laptopdetail" className="flex-1">
+          <Card />
+        </Link>
+        <Link to="/laptopdetail" className="flex-1">
+          <Card />
+        </Link>
+        <Link to="/laptopdetail" className="flex-1">
+          <Card />
+        </Link>
       </div>
       <div className="flex justify-center my-10">
         <button
@@ -27,12 +35,11 @@ export default function HomePage() {
             Laptop for borrow
           </h1>
         </div>
-        <div className="grid grid-cols-4 gap-6 my-5 ml-10">
+        <div className="flex my-5">
           <Card />
           <Card />
           <Card />
           <Card />
-          
         </div>
         <div className="flex justify-center my-10">
           <button
