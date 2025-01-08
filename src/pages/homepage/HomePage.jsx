@@ -36,18 +36,10 @@ export default function HomePage() {
           </h1>
         </div>
         <div className="flex my-5">
-          <Link to="/laptopborrowdetail" className="flex-1">
-            <Card />
-          </Link>
-          <Link to="/laptopborrowdetail" className="flex-1">
-            <Card />
-          </Link>
-          <Link to="/laptopborrowdetail" className="flex-1">
-            <Card />
-          </Link>
-          <Link to="/laptopborrowdetail" className="flex-1">
-            <Card />
-          </Link>
+          <Card />
+          <Card />
+          <Card />
+          <Card />
         </div>
         <div className="flex justify-center my-10">
           <button
