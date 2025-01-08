@@ -52,10 +52,10 @@ export default function Header() {
                   </li>
                   <li>
                     <Button
-                      onClick={() => handleNavigation("/profile")}
+                      onClick={() => handleNavigation("/home")}
                       className="block w-full text-left px-4 py-2 hover:bg-gray-100"
                     >
-                      Hồ sơ
+                      Home 
                     </Button>
                   </li>
                   <li>
