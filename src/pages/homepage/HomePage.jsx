@@ -25,6 +25,7 @@ export default function HomePage() {
         <button
           className="rounded-full bg-white py-2 px-4 text-center text-sm text-black transition-all shadow-md hover:shadow-lg hover:text-white hover:bg-red-600 focus:bg-red-600 focus:shadow-none active:bg-red-700 disabled:pointer-events-none disabled:opacity-50"
           type="button"
+          href="/laptoppurchase"
         >
           Explore laptop sales page
         </button>

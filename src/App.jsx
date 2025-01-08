@@ -65,6 +65,32 @@ function App() {
             }
           ></Route>
 
+          <Route
+            path="/laptopdetail"
+            element={
+              <HomePageLayout>
+                <DetailPage />
+              </HomePageLayout>
+            }
+          ></Route>
+
+          <Route
+            path="/laptopborrow"
+            element={
+              <HomePageLayout>
+                <DetailLaptopBorrowPage />
+              </HomePageLayout>
+            }
+          ></Route>
+
+          <Route
+            path="/laptoppurchase"
+            element={
+              <HomePageLayout>
+                <LaptopforsellPage />
+              </HomePageLayout>
+            }
+          ></Route>
 
           {/* thêm route từ đây */}
         </Routes>
