@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import ShoppingCartOutlinedIcon from "@mui/icons-material/ShoppingCartOutlined";
 import { useNavigate, useLocation } from "react-router-dom";
 
 function HeaderHomePage() {
@@ -30,7 +31,7 @@ function HeaderHomePage() {
               <li>
                 <a
                   href="/home"
-                  className="block py-2 pr-4 pl-3 text-white rounded hover:bg-gray-600 md:hover:bg-transparent md:hover:text-gray-300"
+                  className="block py-2 pr-4 pl-3 text-white border-b border-gray-600 hover:bg-gray-600 md:hover:bg-transparent md:hover:text-gray-300"
                   aria-current="page"
                 >
                   Home
@@ -38,7 +39,7 @@ function HeaderHomePage() {
               </li>
               <li>
                 <a
-                  href="/home/product"
+                  href="/laptoppurchase"
                   className="block py-2 pr-4 pl-3 text-white border-b border-gray-600 hover:bg-gray-600 md:hover:bg-transparent md:hover:text-gray-300"
                 >
                   Laptops
@@ -46,7 +47,7 @@ function HeaderHomePage() {
               </li>
               <li>
                 <a
-                  href="#"
+                  href="/laptopborrow"
                   className="block py-2 pr-4 pl-3 text-white border-b border-gray-600 hover:bg-gray-600 md:hover:bg-transparent md:hover:text-gray-300"
                 >
                   Borrow Laptop
@@ -54,20 +55,30 @@ function HeaderHomePage() {
               </li>
             </ul>
             <div className="flex flex-col md:flex-row items-center gap-4 ml-2">
-              <button
-                onClick={() => navigate("/login")}
-                className="rounded-full bg-white py-2 px-4 text-center text-sm text-black transition-all shadow-md hover:shadow-lg hover:bg-red-500 hover:text-white focus:bg-red-500 focus:shadow-none active:bg-red-600 disabled:pointer-events-none disabled:opacity-50"
-                type="button"
-              >
-                Sign In
-              </button>
-              <button
-                onClick={() => navigate("/register")}
-                className="rounded-full bg-white py-2 px-4 text-center text-sm text-black transition-all shadow-md hover:shadow-lg hover:bg-red-500 hover:text-white focus:bg-red-500 focus:shadow-none active:bg-red-600 disabled:pointer-events-none disabled:opacity-50"
-                type="button"
-              >
-                Sign Up
-              </button>
+              {location.pathname === "/home" && (
+                <button
+                  onClick={() => navigate("/login")}
+                  className="rounded-full bg-white py-2 px-4 text-center text-sm text-black transition-all shadow-md hover:shadow-lg hover:bg-red-500 hover:text-white focus:bg-red-500 focus:shadow-none active:bg-red-600 disabled:pointer-events-none disabled:opacity-50"
+                  type="button"
+                >
+                  Sign In
+                </button>
+              )}
+              {location.pathname === "/home" && (
+                <button
+                  onClick={() => navigate("/register")}
+                  className="rounded-full bg-white py-2 px-4 text-center text-sm text-black transition-all shadow-md hover:shadow-lg hover:bg-red-500 hover:text-white focus:bg-red-500 focus:shadow-none active:bg-red-600 disabled:pointer-events-none disabled:opacity-50"
+                  type="button"
+                >
+                  Sign Up
+                </button>
+              )}
+              {location.pathname === "/laptoppurchase" && (
+                <button onClick={() => navigate("/cart")} type="button">
+                  <ShoppingCartOutlinedIcon className="w-6 h-6 text-white" />{" "}
+                  {/* Biểu tượng giỏ hàng từ MUI */}
+                </button>
+              )}
             </div>
           </div>
 

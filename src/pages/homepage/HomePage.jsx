@@ -6,11 +6,12 @@ export default function HomePage() {
       <div>
         <h1 className="text-2xl font-semibold text-white">Featured Laptops</h1>
       </div>
-      <div className="flex my-5">
+      <div className="grid grid-cols-4 gap-6 my-5 ml-10">
         <Card />
         <Card />
         <Card />
         <Card />
+        
       </div>
       <div className="flex justify-center my-10">
         <button
@@ -26,11 +27,12 @@ export default function HomePage() {
             Laptop for borrow
           </h1>
         </div>
-        <div className="flex my-5">
+        <div className="grid grid-cols-4 gap-6 my-5 ml-10">
           <Card />
           <Card />
           <Card />
           <Card />
+          
         </div>
         <div className="flex justify-center my-10">
           <button

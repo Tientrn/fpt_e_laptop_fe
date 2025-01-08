@@ -6,11 +6,13 @@ import DashboardPage from "./pages/admin/AdminPage";
 import AccountManagementPage from "./pages/admin/AccountPage";
 import LoginPage from "./pages/auth/LoginPage";
 import RegisterPage from "./pages/auth/RegisterPage";
+import LaptopforsellPage from "./pages/laptopforsell/LaptopforsellPage";
 
 import DashboardLayout from "./layouts/dashboard";
 import HomePageLayout from "./layouts/homepage";
 import AuthLayout from "./layouts/auth";
 import RegisterLayout from "./layouts/register";
+
 function App() {
   return (
     <>
@@ -58,7 +60,14 @@ function App() {
               </RegisterLayout>
             }
           ></Route>
-
+          <Route
+            path="/laptoppurchase"
+            element={
+              <HomePageLayout>
+                <LaptopforsellPage />
+              </HomePageLayout>
+            }
+          ></Route>
 
           {/* thêm route từ đây */}
         </Routes>
