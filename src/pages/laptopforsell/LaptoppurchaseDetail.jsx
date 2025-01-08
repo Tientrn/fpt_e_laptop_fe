@@ -3,6 +3,7 @@ import { useState } from "react";
 import { StarIcon } from "@heroicons/react/20/solid";
 import AddShoppingCartIcon from "@mui/icons-material/AddShoppingCart";
 import { AttachMoney } from "@mui/icons-material";
+import { useParams } from "react-router-dom";
 
 const product = {
   name: "Dell XPS 15",
@@ -148,9 +149,9 @@ function classNames(...classes) {
   return classes.filter(Boolean).join(" ");
 }
 
-export default function DetailPage() {
+export default function LaptoppurchaseDetail() {
   const [startIndex, setStartIndex] = useState(0);
-
+  
   const moveLeft = () => {
     setStartIndex(
       (prevIndex) =>
@@ -374,7 +375,7 @@ export default function DetailPage() {
                     </p>
 
                     <a
-                      href={`/laptopdetail?id=${product.id}`}
+                      href={`/laptoppurchasedetail?id=${product.id}`}
                       className="mt-2 text-sm text-red-400 hover:text-red-600"
                     >
                       View Details

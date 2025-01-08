@@ -74,12 +74,7 @@ function HeaderHomePage() {
                   Sign Up
                 </button>
               )}
-              {location.pathname === "/laptoppurchase" && (
-                <button onClick={() => navigate("/cart")} type="button">
-                  <ShoppingCartOutlinedIcon className="w-6 h-6 text-white" />{" "}
-                  {/* Biểu tượng giỏ hàng từ MUI */}
-                </button>
-              )}
+              
             </div>
           </div>
 
@@ -123,6 +118,9 @@ function HeaderHomePage() {
           </div>
         </div>
       </nav>
+
+      <hr />
+      
       {location.pathname != "/home" && (
         <div className="flex items-center justify-around px-4 bg-gray-700 py-6 ">
           <div className="relative w-full md:w-1/3  ">
