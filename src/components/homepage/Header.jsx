@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import ShoppingCartCheckoutIcon from "@mui/icons-material/ShoppingCartCheckout";
 
 function HeaderHomePage() {
   const [nav, setNav] = useState(false);
@@ -111,6 +112,26 @@ function HeaderHomePage() {
           </div>
         </div>
       </nav>
+      {location.pathname != "/home" && (
+        <div className="flex items-center justify-around px-4 bg-gray-700 py-6 ">
+          <div className="relative w-full md:w-1/3  ">
+            <input
+              type="text"
+              className="w-full p-2 pl-10 text-white border rounded-full bg-gray-800 text-sm focus:outline-none focus:ring-2 "
+              placeholder="Search laptops..."
+            />
+            <i className="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+          </div>
+          <div>
+            <a href="/cart" className="text-white relative">
+              <ShoppingCartCheckoutIcon className="text-7xl" />
+              <span className="absolute top-0 right-0 inline-block w-4 h-4 text-xs font-semibold text-center text-white bg-red-500 rounded-full">
+                3 {/* Số lượng sản phẩm trong giỏ */}
+              </span>
+            </a>
+          </div>
+        </div>
+      )}
       {location.pathname === "/home" && (
         <div
           className="flex items-center justify-center min-h-screen bg-cover bg-center "
