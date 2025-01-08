@@ -116,7 +116,7 @@ const laptops = [
   },
 ];
 
-const LaptopForSellPage = () => {
+const LaptoppurchasePage = () => {
   const [filter, setFilter] = useState("");
   const [filters, setFilters] = useState({
     laptopType: [],
@@ -159,89 +159,10 @@ const LaptopForSellPage = () => {
 
   return (
     <div className="min-h-screen bg-black text-white flex">
-      <div className="border-r border-white-200"></div>
-      {/* Filter Sidebar */}
-      <div className="w-1/4 bg-gray-700 text-white p-6 ">     
-
-        <div className="mb-4">
-          <h4 className="font-medium mb-2">Brand</h4>
-          <label className="block mb-2">
-            <input type="checkbox" className="mr-2" />
-            Dell
-          </label>
-          <label className="block mb-2">
-            <input type="checkbox" className="mr-2" />
-            HP
-          </label>
-          <label className="block mb-2">
-            <input type="checkbox" className="mr-2" />
-            Toshiba
-          </label>
-
-          <h3 className="font-medium mb-2 mt-7">Show Only</h3>
-          <label className="block mb-2">
-            <input type="checkbox" className="mr-2" />
-            New Release
-          </label>
-          <label className="block mb-2">
-            <input type="checkbox" className="mr-2" />
-            Sale
-          </label>
-          <label className="block mb-2">
-            <input type="checkbox" className="mr-2" />
-            Pre-sale
-          </label>
-          <label className="block mb-2">
-            <input type="checkbox" className="mr-2" />
-            Available
-          </label>
-
-          <h4 className="font-medium mb-2 mt-7">Operating System</h4>
-          <label className="block mb-2">
-            <input type="checkbox" className="mr-2" />
-            Windows
-          </label>
-          <label className="block mb-2">
-            <input type="checkbox" className="mr-2" />
-            macOS
-          </label>
-          <label className="block mb-2">
-            <input type="checkbox" className="mr-2" />
-            Linux
-          </label>
-          <label className="block mb-2">
-            <input type="checkbox" className="mr-2" />
-            Chrome OS
-          </label>
-
-          <h4 className="font-medium mb-2 mt-7">Laptop Type</h4>
-          <label className="block mb-2">
-            <input type="checkbox" className="mr-2" />
-            Notebook
-          </label>
-          <label className="block mb-2">
-            <input type="checkbox" className="mr-2" />
-            Probook
-          </label>
-          <label className="block mb-2">
-            <input type="checkbox" className="mr-2" />
-            Elitebook
-          </label>
-          <label className="block mb-2">
-            <input type="checkbox" className="mr-2" />
-            Convertible
-          </label>
-          <label className="block mb-2">
-            <input type="checkbox" className="mr-2" />
-            Tablet
-          </label>
-        </div>
-      </div>
-
-      <div className="border-r border-white-200"></div>
+      {/* <div className="border-r border-white-200"></div> */}
 
       {/* Laptop Grid */}
-      <div className="container mx-auto py-8 px-2 w-full ml-20">
+      <div className="container mx-auto py-8 px-2 w-full ml-15">
         <div className="mb-8">
           <h1 className="text-4xl font-bold mb-2 text-center">
             Featured Gaming Laptops
@@ -327,4 +248,4 @@ const LaptopForSellPage = () => {
   );
 };
 
-export default LaptopForSellPage;
+export default LaptoppurchasePage;
