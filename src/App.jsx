@@ -16,6 +16,7 @@ import LaptoppurchaseDetail from "./pages/laptopforsell/LaptoppurchaseDetail";
 import DetailLaptopBorrowPage from "./pages/homepage/DetailLaptopBorrow";
 import LaptoppurchasePage from "./pages/laptopforsell/LaptoppurchasePage";
 import HistoryPaymentPage from "./pages/historypayment/HistoryPaymentPage";
+import Cart from "./pages/shoppingcart/CartPage";
 
 function App() {
   return (
@@ -98,7 +99,14 @@ function App() {
             }
           ></Route>
 
-          
+          <Route
+            path="/cart"
+            element={
+              <HomePageLayout>
+                <Cart />
+              </HomePageLayout>
+            }
+          ></Route>
         </Routes>
       </BrowserRouter>
     </>
