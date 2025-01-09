@@ -15,6 +15,7 @@ import RegisterPage from "./pages/auth/RegisterPage";
 import LaptoppurchaseDetail from "./pages/laptopforsell/LaptoppurchaseDetail";
 import DetailLaptopBorrowPage from "./pages/homepage/DetailLaptopBorrow";
 import LaptoppurchasePage from "./pages/laptopforsell/LaptoppurchasePage";
+import Cart from "./pages/shoppingcart/CartPage";
 
 function App() {
   return (
@@ -85,6 +86,15 @@ function App() {
             element={
               <HomePageLayout>
                 <DetailLaptopBorrowPage />
+              </HomePageLayout>
+            }
+          ></Route>
+
+          <Route
+            path="/cart"
+            element={
+              <HomePageLayout>
+                <Cart />
               </HomePageLayout>
             }
           ></Route>

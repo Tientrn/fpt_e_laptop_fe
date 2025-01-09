@@ -74,7 +74,6 @@ function HeaderHomePage() {
                   Sign Up
                 </button>
               )}
-              
             </div>
           </div>
 
@@ -120,7 +119,7 @@ function HeaderHomePage() {
       </nav>
 
       <hr />
-      
+
       {location.pathname != "/home" && (
         <div className="flex items-center justify-around px-4 bg-gray-700 py-6 ">
           <div className="relative w-full md:w-1/3  ">
@@ -141,7 +140,7 @@ function HeaderHomePage() {
           </div>
         </div>
       )}
-      {location.pathname === "/home" && (
+      {/* {location.pathname === "/home" && (
         <div
           className="flex items-center justify-center min-h-screen bg-cover bg-center "
           style={{
@@ -157,7 +156,7 @@ function HeaderHomePage() {
             </p>
           </div>
         </div>
-      )}
+      )} */}
     </header>
   );
 }
