@@ -15,7 +15,9 @@ import RegisterPage from "./pages/auth/RegisterPage";
 import LaptoppurchaseDetail from "./pages/laptopforsell/LaptoppurchaseDetail";
 import DetailLaptopBorrowPage from "./pages/homepage/DetailLaptopBorrow";
 import LaptoppurchasePage from "./pages/laptopforsell/LaptoppurchasePage";
+import HistoryPaymentPage from "./pages/historypayment/HistoryPaymentPage";
 import Cart from "./pages/shoppingcart/CartPage";
+
 
 function App() {
   return (
@@ -46,6 +48,14 @@ function App() {
             element={
               <DashboardLayout>
                 <AccountManagementPage />
+              </DashboardLayout>
+            }
+          ></Route>
+          <Route
+            path="/history"
+            element={
+              <DashboardLayout>
+                <HistoryPaymentPage />
               </DashboardLayout>
             }
           ></Route>

@@ -11,7 +11,7 @@ import { useState } from "react";
 const navItems = [
   { name: "Dashboard", href: "/dashboard", icon: HomeIcon },
   { name: "Analytics", href: "/analytics", icon: BarChartIcon },
-  { name: "User", href: "/user", icon: PeopleAltIcon },
+  { name: "History", href: "/history", icon: PeopleAltIcon },
   { name: "Content", href: "/content", icon: DescriptionIcon },
   { name: "Reports", href: "/reports", icon: ReportIcon },
   { name: "Account ", href: "/account", icon: AccountBoxIcon },
