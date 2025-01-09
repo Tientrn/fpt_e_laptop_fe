@@ -18,7 +18,6 @@ import LaptoppurchasePage from "./pages/laptopforsell/LaptoppurchasePage";
 import HistoryPaymentPage from "./pages/historypayment/HistoryPaymentPage";
 import Cart from "./pages/shoppingcart/CartPage";
 
-import Cart from "./pages/shoppingcart/CartPage";
 
 function App() {
   return (
