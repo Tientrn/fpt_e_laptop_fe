@@ -9,11 +9,14 @@ const Card = () => {
         className="w-full h-48 object-cover aspect-square"
       />
       <div className="p-2 bg-gray-700">
-        <h5 className="text-sm font-bold text-white">Card title</h5>
-        <p className="text-white text-xs mt-1">
-          Some quick example text to build on the card title and make up the
-          bulk of the card's content.
-        </p>
+        <h5 className="text-2xl font-bold text-red-500">14.900.000 VND</h5>
+        <h5 className="text-sm font-bold text-white line-through">
+          20.200.000 VND
+        </h5>
+        <a href="" className="text-white text-xs mt-1 hover:text-blue-300">
+          Laptop Asus ExpertBook B1 B1402CVA-NK0177W (Core™ i7-1355U | 16GB |
+          512GB | Intel® UHD Graphics | 14.0inch FHD | Win11 | Đen)
+        </a>
       </div>
     </div>
   );

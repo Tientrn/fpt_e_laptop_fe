@@ -12,12 +12,12 @@ import DashboardPage from "./pages/admin/AdminPage";
 import AccountManagementPage from "./pages/admin/AccountPage";
 import LoginPage from "./pages/auth/LoginPage";
 import RegisterPage from "./pages/auth/RegisterPage";
+
 import LaptoppurchaseDetail from "./pages/laptopforsell/LaptoppurchaseDetail";
-import DetailLaptopBorrowPage from "./pages/homepage/DetailLaptopBorrow";
 import LaptoppurchasePage from "./pages/laptopforsell/LaptoppurchasePage";
 import HistoryPaymentPage from "./pages/historypayment/HistoryPaymentPage";
 import Cart from "./pages/shoppingcart/CartPage";
-
+import LaptopBorrowDetail from "./pages/laptopborrowdetail/LaptopBorrowDetail";
 
 function App() {
   return (
@@ -95,7 +95,7 @@ function App() {
             path="/laptopborrow"
             element={
               <HomePageLayout>
-                <DetailLaptopBorrowPage />
+                <LaptopBorrowDetail />
               </HomePageLayout>
             }
           ></Route>

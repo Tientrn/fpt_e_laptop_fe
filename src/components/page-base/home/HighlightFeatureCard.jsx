@@ -7,7 +7,7 @@ const HighlightFeatureCard = ({ title }) => {
         <img
           src="https://via.placeholder.com/60x40"
           alt="Feature Image"
-          class="mb-4 h-40 w-full rounded-md object-cover"
+          className="mb-4 h-40 w-full rounded-md object-cover"
         />
       </div>
 
