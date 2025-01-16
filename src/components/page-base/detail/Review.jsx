@@ -35,24 +35,26 @@ const reviewsdetail = [
 
 const Review = () => {
   return (
-    <div className=" min-h-screen flex items-center justify-center mb-8">
-      <div className="max-w-screen-lg mx-auto mt-20 bg-white ">
-        <h2 className="text-2xl font-bold mb-6 mx-32">Customer Reviews</h2>
+    <div className="min-h-screen flex items-center justify-center mb-8">
+      <div className="max-w-screen-lg mx-auto mt-20 bg-gradient-to-br from-white to-teal-50/30 rounded-2xl shadow-lg p-8">
+        <h2 className="text-2xl font-bold mb-8 text-teal-800">
+          Customer Reviews
+        </h2>
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Left Section */}
-          <div className="flex-1 space-y-6">
+          <div className="flex-1 space-y-8">
             {/* Ratings Section */}
-            <div>
+            <div className="bg-white p-6 rounded-xl shadow-sm">
               <div className="flex items-center mb-4">
-                <div className="text-yellow-500 text-2xl flex items-center mr-4">
+                <div className="text-teal-500 text-2xl flex items-center mr-4">
                   <span>★★★★☆</span>
                 </div>
-                <p>
+                <p className="text-teal-700">
                   Based on <span className="font-bold">1624 reviews</span>
                 </p>
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-3">
                 {[
                   { stars: 5, percentage: 63 },
                   { stars: 4, percentage: 10 },
@@ -61,51 +63,83 @@ const Review = () => {
                   { stars: 1, percentage: 9 },
                 ].map((rating, index) => (
                   <div key={index} className="flex items-center space-x-2">
-                    <span>{rating.stars} ★</span>
-                    <div className="w-full h-2 bg-white rounded">
+                    <span className="text-teal-600 min-w-[40px]">
+                      {rating.stars} ★
+                    </span>
+                    <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
                       <div
-                        className="h-full bg-yellow-500 rounded"
+                        className="h-full bg-teal-500 rounded-full transition-all duration-500 ease-out"
                         style={{ width: `${rating.percentage}%` }}
                       ></div>
                     </div>
-                    <span>{rating.percentage}%</span>
+                    <span className="text-teal-600 min-w-[40px]">
+                      {rating.percentage}%
+                    </span>
                   </div>
                 ))}
               </div>
             </div>
 
             {/* Share Thoughts Section */}
-            <div>
-              <h3 className="font-bold text-lg mb-2">Share your thoughts</h3>
-              <p className=" p-4">
-                If you’ve used this product, share your thoughts with other
+            <div className="bg-white p-6 rounded-xl shadow-sm">
+              <h3 className="font-bold text-lg mb-2 text-teal-800">
+                Share your thoughts
+              </h3>
+              <p className="text-teal-600 mb-4">
+                If you've used this product, share your thoughts with other
                 customers
               </p>
-              <button className="px-4 py-2 bg-gray-400 text-white rounded hover:bg-red-700">
-                Write a review
+              <button
+                className="px-6 py-2.5 bg-teal-600 text-white rounded-lg
+                hover:bg-teal-700 transition-all duration-300
+                hover:shadow-lg hover:scale-105 active:scale-100
+                flex items-center space-x-2 group"
+              >
+                <span>Write a review</span>
+                <svg
+                  className="w-4 h-4 transform group-hover:translate-x-1 transition-transform"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M17 8l4 4m0 0l-4 4m4-4H3"
+                  />
+                </svg>
               </button>
             </div>
           </div>
 
-          {/* Right Section */}
-          <div className="flex-1 max-h-[450px] overflow-y-scroll space-y-8 ml-20 ">
-            {reviewsdetail.map((review, index) => (
-              <div key={index} className="flex items-start space-x-4">
-                <img
-                  src={review.avatar}
-                  alt={review.name}
-                  className="w-12 h-12 rounded-full"
-                />
-                <div>
-                  <h3 className="font-bold ">{review.name}</h3>
-                  <div className="text-yellow-500 flex">
-                    {"★".repeat(review.rating)}
-                    {"☆".repeat(5 - review.rating)}
+          {/* Right Section - Reviews List */}
+          <div className="flex-1 bg-white p-6 rounded-xl shadow-sm">
+            <div
+              className="max-h-[600px] overflow-y-auto space-y-6 pr-4 
+              scrollbar-thin scrollbar-thumb-teal-500 scrollbar-track-gray-100"
+            >
+              {reviewsdetail.map((review, index) => (
+                <div
+                  key={index}
+                  className="flex space-x-4 p-4 rounded-lg hover:bg-teal-50 transition-colors"
+                >
+                  <img
+                    src={review.avatar}
+                    alt={review.name}
+                    className="w-12 h-12 rounded-full ring-2 ring-teal-500/20"
+                  />
+                  <div className="flex-1">
+                    <h3 className="font-bold text-teal-800">{review.name}</h3>
+                    <div className="text-teal-500 flex my-1">
+                      {"★".repeat(review.rating)}
+                      {"☆".repeat(5 - review.rating)}
+                    </div>
+                    <p className="text-teal-600 text-sm">{review.text}</p>
                   </div>
-                  <p className=" mt-1">{review.text}</p>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
       </div>
