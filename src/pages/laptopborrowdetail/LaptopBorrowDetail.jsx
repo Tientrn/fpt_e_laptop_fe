@@ -1,5 +1,5 @@
 import React from "react";
-import DetaiLaptopBorrow from "../../components/page-base/detail/DetaiLaptopBorrow";
+import DetaiLaptopBorrow from "../../components/page-base/detail/DetaiLaptopShop";
 
 const LaptopBorrowDetail = () => {
   return (
