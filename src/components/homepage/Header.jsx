@@ -1,7 +1,7 @@
 import React, { useState } from "react";
-import ShoppingCartOutlinedIcon from "@mui/icons-material/ShoppingCartOutlined";
 import { useNavigate, useLocation } from "react-router-dom";
 import ShoppingCartCheckoutIcon from "@mui/icons-material/ShoppingCartCheckout";
+import StoreIcon from "@mui/icons-material/Store";
 
 function HeaderHomePage() {
   const [nav, setNav] = useState(false);
@@ -10,29 +10,38 @@ function HeaderHomePage() {
 
   return (
     <header>
-      <nav className="bg-gray-700 border-gray-200 px-4 lg:px-6 py-2.5 shadow">
+      <div className="bg-gradient-to-r from-[#1E1E2F] to-[#662D91] text-white">
+        <a
+          href=""
+          className="ml-10 font-semibold text-lg hover:text-purple-300"
+        >
+          <StoreIcon className="mr-1" />
+          <span className="drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]">Shop</span>
+        </a>
+      </div>
+      <nav className="bg-gradient-to-r from-[#1E1E2F] to-[#662D91] text-white px-4 lg:px-6 py-2.5">
         <div className="flex flex-wrap justify-between items-center mx-auto max-w-screen-lg">
-          <a href="#" className="flex items-center">
-            <span className="self-center text-xl font-semibold whitespace-nowrap text-white">
-              <div className="flex items-center">
-                <i className="fas fa-laptop mr-2 text-2xl"></i>
-                <h1 className="text-lg text-white">FPT E-Laptop</h1>
-              </div>
-            </span>
-          </a>
+          <span className="self-center text-xl font-bold whitespace-nowrap text-white">
+            <div className="flex items-center">
+              <i className="fas fa-laptop mr-2 text-2xl"></i>
+              <h1 className="text-lg text-white font-bold drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]">
+                FPT E-Laptop
+              </h1>
+            </div>
+          </span>
 
           <div
             className={`flex-col md:flex md:flex-row items-center w-full md:w-auto md:order-2 transition-all duration-300 ${
               nav
-                ? "absolute top-14 left-0 w-full bg-gray-700 shadow-md p-4 md:relative md:top-0 md:w-auto md:bg-transparent md:shadow-none"
+                ? "absolute top-14 left-0 w-full bg-[#1E1E2F] shadow-md p-4 md:relative md:top-0 md:w-auto md:bg-transparent md:shadow-none"
                 : "hidden md:flex gap-6"
             }`}
           >
             <ul className="flex flex-col md:flex-row md:gap-8 gap-4">
               <li>
                 <a
-                  href="/home"
-                  className="block py-2 pr-4 pl-3 text-white border-b border-gray-600 hover:bg-gray-600 md:hover:bg-transparent md:hover:text-gray-300"
+                  href="/"
+                  className="block py-2 pr-4 pl-3 text-white font-semibold drop-shadow-[0_1px_1px_rgba(0,0,0,0.8)] hover:text-purple-300"
                   aria-current="page"
                 >
                   Home
@@ -41,7 +50,7 @@ function HeaderHomePage() {
               <li>
                 <a
                   href="/laptoppurchase"
-                  className="block py-2 pr-4 pl-3 text-white border-b border-gray-600 hover:bg-gray-600 md:hover:bg-transparent md:hover:text-gray-300"
+                  className="block py-2 pr-4 pl-3 text-white font-semibold drop-shadow-[0_1px_1px_rgba(0,0,0,0.8)] hover:text-purple-300"
                 >
                   Laptops
                 </a>
@@ -49,30 +58,40 @@ function HeaderHomePage() {
               <li>
                 <a
                   href="/laptopborrow"
-                  className="block py-2 pr-4 pl-3 text-white border-b border-gray-600 hover:bg-gray-600 md:hover:bg-transparent md:hover:text-gray-300"
+                  className="block py-2 pr-4 pl-3 text-white font-semibold drop-shadow-[0_1px_1px_rgba(0,0,0,0.8)] hover:text-purple-300"
                 >
                   Borrow Laptop
                 </a>
               </li>
             </ul>
             <div className="flex flex-col md:flex-row items-center gap-4 ml-2">
+              <a
+                href="/cart"
+                className="text-white relative hover:text-purple-300"
+              >
+                <ShoppingCartCheckoutIcon />
+                <span className="absolute -top-2 -right-2 inline-block w-5 h-5 text-xs font-semibold text-center text-white bg-red-500 rounded-full leading-5">
+                  3
+                </span>
+              </a>
+
               {location.pathname === "/home" && (
-                <button
-                  onClick={() => navigate("/login")}
-                  className="rounded-full bg-white py-2 px-4 text-center text-sm text-black transition-all shadow-md hover:shadow-lg hover:bg-red-500 hover:text-white focus:bg-red-500 focus:shadow-none active:bg-red-600 disabled:pointer-events-none disabled:opacity-50"
-                  type="button"
-                >
-                  Sign In
-                </button>
-              )}
-              {location.pathname === "/home" && (
-                <button
-                  onClick={() => navigate("/register")}
-                  className="rounded-full bg-white py-2 px-4 text-center text-sm text-black transition-all shadow-md hover:shadow-lg hover:bg-red-500 hover:text-white focus:bg-red-500 focus:shadow-none active:bg-red-600 disabled:pointer-events-none disabled:opacity-50"
-                  type="button"
-                >
-                  Sign Up
-                </button>
+                <>
+                  <button
+                    onClick={() => navigate("/login")}
+                    className="rounded-full bg-[#662D91] bg-opacity-70 py-2 px-4 text-center text-sm text-white transition-all hover:bg-opacity-90 hover:shadow-lg"
+                    type="button"
+                  >
+                    Sign In
+                  </button>
+                  <button
+                    onClick={() => navigate("/register")}
+                    className="rounded-full bg-[#662D91] bg-opacity-70 py-2 px-4 text-center text-sm text-white transition-all hover:bg-opacity-90 hover:shadow-lg"
+                    type="button"
+                  >
+                    Sign Up
+                  </button>
+                </>
               )}
             </div>
           </div>
@@ -117,46 +136,7 @@ function HeaderHomePage() {
           </div>
         </div>
       </nav>
-
       <hr />
-
-      {location.pathname != "/home" && (
-        <div className="flex items-center justify-around px-4 bg-gray-700 py-6 ">
-          <div className="relative w-full md:w-1/3  ">
-            <input
-              type="text"
-              className="w-full p-2 pl-10 text-white border rounded-full bg-gray-800 text-sm focus:outline-none focus:ring-2 "
-              placeholder="Search laptops..."
-            />
-            <i className="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-          </div>
-          <div>
-            <a href="/cart" className="text-white relative">
-              <ShoppingCartCheckoutIcon className="text-7xl" />
-              <span className="absolute top-0 right-0 inline-block w-4 h-4 text-xs font-semibold text-center text-white bg-red-500 rounded-full">
-                3 {/* Số lượng sản phẩm trong giỏ */}
-              </span>
-            </a>
-          </div>
-        </div>
-      )}
-      {/* {location.pathname === "/home" && (
-        <div
-          className="flex items-center justify-center min-h-screen bg-cover bg-center "
-          style={{
-            backgroundImage: "url(../src/assets/banner.jpg)", // Thay thế bằng URL ảnh của bạn
-          }}
-        >
-          <div className=" bg-opacity-70 p-8 rounded-lg text-center shadow-lg transform transition-transform duration-300 hover:scale-105">
-            <h1 className="text-4xl font-bold text-white mb-4 pointer-events-none">
-              Welcome to FPT E-Laptop
-            </h1>
-            <p className="text-lg text-yellow-400 mt-2 leading-relaxed pointer-events-none">
-              Discover our high quality laptop Borrow and Sales!
-            </p>
-          </div>
-        </div>
-      )} */}
     </header>
   );
 }

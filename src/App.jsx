@@ -17,7 +17,7 @@ import LaptoppurchaseDetail from "./pages/laptopforsell/LaptoppurchaseDetail";
 import LaptoppurchasePage from "./pages/laptopforsell/LaptoppurchasePage";
 import HistoryPaymentPage from "./pages/historypayment/HistoryPaymentPage";
 import Cart from "./pages/shoppingcart/CartPage";
-import LaptopBorrowDetail from "./pages/laptopborrowdetail/LaptopBorrowDetail";
+import CheckoutPage from "./pages/checkout/CheckoutPage";
 
 function App() {
   return (
@@ -28,7 +28,7 @@ function App() {
           {/* thêm route từ đây */}
 
           <Route
-            path="/home"
+            path="/"
             element={
               <HomePageLayout>
                 <HomePage />
@@ -84,18 +84,10 @@ function App() {
             }
           ></Route>
           <Route
-            path="/laptoppurchasedetail"
+            path="/laptoppurchasedetail/:id"
             element={
               <HomePageLayout>
                 <LaptoppurchaseDetail />
-              </HomePageLayout>
-            }
-          ></Route>
-          <Route
-            path="/laptopborrow"
-            element={
-              <HomePageLayout>
-                <LaptopBorrowDetail />
               </HomePageLayout>
             }
           ></Route>
@@ -108,6 +100,7 @@ function App() {
               </HomePageLayout>
             }
           ></Route>
+          <Route path="/checkout" element={<CheckoutPage />}></Route>
         </Routes>
       </BrowserRouter>
     </>
