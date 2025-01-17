@@ -111,7 +111,7 @@ const ListLaptopBorrow = () => {
       {/* Nút Explore More */}
       <div className="flex justify-center pt-4">
         <a
-          href="/laptop-borrow"
+          href="/laptopborrow"
           className="px-6 py-3 rounded-full 
             bg-teal-600 text-white
             hover:bg-teal-700 

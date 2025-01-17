@@ -15,6 +15,7 @@ import RegisterPage from "./pages/auth/RegisterPage";
 
 import LaptoppurchaseDetail from "./pages/laptopforsell/LaptoppurchaseDetail";
 import LaptoppurchasePage from "./pages/laptopforsell/LaptoppurchasePage";
+import LaptopborrowPage from "./pages/laptopborrow/LaptopBorrowPage";
 import HistoryPaymentPage from "./pages/historypayment/HistoryPaymentPage";
 import Cart from "./pages/shoppingcart/CartPage";
 import CheckoutPage from "./pages/checkout/CheckoutPage";
@@ -91,7 +92,14 @@ function App() {
               </HomePageLayout>
             }
           ></Route>
-
+          <Route
+            path="/laptopborrow"
+            element={
+              <HomePageLayout>
+                <LaptopborrowPage />
+              </HomePageLayout>
+            }
+          ></Route>
           <Route
             path="/cart"
             element={
