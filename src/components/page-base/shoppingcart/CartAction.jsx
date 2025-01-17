@@ -34,7 +34,7 @@ const CartActions = ({ onCheckout }) => {
       {/* Action Buttons */}
       <div className="flex gap-4">
         <button
-          onClick={() => navigate("/shop")}
+          onClick={() => navigate("/laptoppurchase")}
           className="flex-1 px-6 py-3 rounded-lg border-2 border-teal-500 text-teal-600
             hover:bg-teal-50 active:bg-teal-100
             transition-all duration-300 font-medium
