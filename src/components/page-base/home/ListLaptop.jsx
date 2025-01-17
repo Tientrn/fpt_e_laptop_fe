@@ -1,8 +1,10 @@
-import React, { useRef } from "react";
+import React, { useRef, useEffect, useState } from "react";
 import Card from "../../reuse/cards/Card";
+import productApi from "../../../api/productApi";
 
 const ListLaptop = () => {
   const scrollContainerRef = useRef(null);
+  const [productList, setProductList] = useState([]);
 
   const handleScrollLeft = () => {
     if (scrollContainerRef.current) {
@@ -16,50 +18,14 @@ const ListLaptop = () => {
     }
   };
 
-  const products = [
-    {
-      id: 1,
-      name: "HP Pavilion 14",
-      price: "15,000,000",
-      image: "hp_pavilion.jpg",
-      shortDescription: "Laptop mỏng nhẹ, cấu hình mạnh.",
-    },
-    {
-      id: 2,
-      name: "Asus ZenBook 13",
-      price: "18,000,000",
-      image: "asus_zenbook.jpg",
-      shortDescription: "Laptop với thiết kế tinh tế và hiệu năng cao.",
-    },
-    {
-      id: 3,
-      name: "Lenovo ThinkPad X1",
-      price: "22,000,000",
-      image: "lenovo_thinkpad.jpg",
-      shortDescription: "Máy tính xách tay chuyên nghiệp.",
-    },
-    {
-      id: 4,
-      name: "Lenovo ThinkPad X1",
-      price: "22,000,000",
-      image: "lenovo_thinkpad.jpg",
-      shortDescription: "Máy tính xách tay chuyên nghiệp.",
-    },
-    {
-      id: 5,
-      name: "Lenovo ThinkPad X1",
-      price: "22,000,000",
-      image: "lenovo_thinkpad.jpg",
-      shortDescription: "Máy tính xách tay chuyên nghiệp.",
-    },
-    {
-      id: 6,
-      name: "Lenovo ThinkPad X1",
-      price: "22,000,000",
-      image: "lenovo_thinkpad.jpg",
-      shortDescription: "Máy tính xách tay chuyên nghiệp.",
-    },
-  ];
+  useEffect(() => {
+    const fetchProducts = async () => {
+      const productList = await productApi.getAll();
+      setProductList(productList);
+    };
+
+    fetchProducts();
+  }, []);
 
   return (
     <div className="p-6 space-y-10 bg-gradient-to-br from-emerald-50 to-teal-50">
@@ -102,9 +68,9 @@ const ListLaptop = () => {
             py-4 px-2"
         >
           <div className="flex space-x-6 w-fit">
-            {products.map((product) => (
+            {productList.map((product) => (
               <div
-                key={product.id}
+                key={product.productId}
                 className="flex-none w-72 transform transition-transform 
                   duration-300 hover:scale-105"
               >

@@ -3,14 +3,14 @@ import Rating from "../../reuse/rating/Rating";
 import { AttachMoney } from "@mui/icons-material";
 import AddShoppingCartIcon from "@mui/icons-material/AddShoppingCart";
 
-const ProductInfo = ({ laptop }) => {
+const ProductInfo = ({ product }) => {
   return (
     <div className="space-y-6 p-4">
       {/* Product Title and Rating */}
       <div className="space-y-3">
         <h1 className="text-2xl font-bold text-gray-800 leading-tight">
-          {laptop?.name}
-          <span className="text-gray-500 text-lg ml-2">{laptop?.specs}</span>
+          {product?.name}
+          <span className="text-gray-500 text-lg ml-2">{product?.specs}</span>
         </h1>
         <div className="flex items-center space-x-2">
           <Rating />
@@ -22,7 +22,7 @@ const ProductInfo = ({ laptop }) => {
       {/* Price Section */}
       <div className="space-y-2">
         <h5 className="text-3xl font-bold text-red-500">
-          {new Intl.NumberFormat("vi-VN").format(laptop?.price)} VND
+          {new Intl.NumberFormat("vi-VN").format(product?.price)} VND
         </h5>
         <h5 className="text-sm font-medium text-gray-400 line-through">
           20.200.000 VND
@@ -35,7 +35,7 @@ const ProductInfo = ({ laptop }) => {
           <tbody className="divide-y divide-gray-200">
             {[
               { label: "Brand", value: "Lenovo" },
-              { label: "Model Name", value: laptop?.name },
+              { label: "Model Name", value: product?.name },
               { label: "Screen Size", value: '14.0" HD' },
               { label: "Hard Disk Size", value: "64GB" },
               { label: "CPU Model", value: "Intel Celeron N4020" },

@@ -1,6 +1,9 @@
 import React from "react";
+import { Link, useNavigate } from "react-router-dom";
 
 export default function HighlightFeatureSection({ images }) {
+  const navigate = useNavigate();
+
   return (
     <div
       id="budget-laptops"
@@ -32,7 +35,10 @@ export default function HighlightFeatureSection({ images }) {
             studying, official warranty, and student-friendly payment plans.
           </span>
         </p>
-        <button className="mt-8 bg-white text-black border-2 border-black px-8 py-3 rounded-lg hover:bg-[#808000] hover:text-white hover:border-[#808000] transition-all duration-300 font-semibold">
+        <button
+          onClick={() => navigate("/laptoppurchase")}
+          className="mt-8 bg-white text-black border-2 border-black px-8 py-3 rounded-lg hover:bg-[#808000] hover:text-white hover:border-[#808000] transition-all duration-300 font-semibold"
+        >
           Shop Now
         </button>
       </div>

@@ -1,8 +1,14 @@
 import React, { useState } from "react";
 
-const ProductImage = ({ images }) => {
-  const [selectedImage, setSelectedImage] = useState(images[0]?.imageUrl);
+const ProductImage = ({ productImage = [] }) => {
+  const [selectedImage, setSelectedImage] = useState(
+    productImage[0]?.imageUrl || ""
+  );
   const [isZoomed, setIsZoomed] = useState(false);
+
+  if (!productImage.length) {
+    return <div>No images available</div>;
+  }
 
   return (
     <div className="w-full space-y-4">
@@ -57,12 +63,12 @@ const ProductImage = ({ images }) => {
         >
           <button
             onClick={() => {
-              const currentIndex = images.findIndex(
+              const currentIndex = productImage.findIndex(
                 (img) => img.imageUrl === selectedImage
               );
               const prevIndex =
-                (currentIndex - 1 + images.length) % images.length;
-              setSelectedImage(images[prevIndex].imageUrl);
+                (currentIndex - 1 + productImage.length) % productImage.length;
+              setSelectedImage(productImage[prevIndex].imageUrl);
             }}
             className="p-2 rounded-full bg-white/80 hover:bg-white shadow-lg 
               transform transition-all duration-300 hover:scale-110 active:scale-95"
@@ -83,11 +89,11 @@ const ProductImage = ({ images }) => {
           </button>
           <button
             onClick={() => {
-              const currentIndex = images.findIndex(
+              const currentIndex = productImage.findIndex(
                 (img) => img.imageUrl === selectedImage
               );
-              const nextIndex = (currentIndex + 1) % images.length;
-              setSelectedImage(images[nextIndex].imageUrl);
+              const nextIndex = (currentIndex + 1) % productImage.length;
+              setSelectedImage(productImage[nextIndex].imageUrl);
             }}
             className="p-2 rounded-full bg-white/80 hover:bg-white shadow-lg 
               transform transition-all duration-300 hover:scale-110 active:scale-95"
@@ -110,8 +116,8 @@ const ProductImage = ({ images }) => {
       </div>
 
       {/* Thumbnails Container */}
-      <div className="grid grid-cols-4 gap-4">
-        {images.map((image, index) => (
+      <div className="grid grid-cols-5 gap-4">
+        {productImage.map((image, index) => (
           <button
             key={index}
             onClick={() => setSelectedImage(image.imageUrl)}

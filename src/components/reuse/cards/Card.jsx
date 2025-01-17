@@ -5,7 +5,7 @@ const Card = ({ product }) => {
   const navigate = useNavigate();
 
   const handleNavigateToDetail = () => {
-    navigate(`/laptoppurchasedetail/${product?.id}`);
+    navigate(`/laptoppurchasedetail/${product?.productId}`);
   };
 
   return (
@@ -43,7 +43,7 @@ const Card = ({ product }) => {
 
         {/* Description */}
         <p className="text-gray-600 text-sm line-clamp-2">
-          {product?.shortDescription || "Description of the laptop"}
+          {product?.description || "Description of the laptop"}
         </p>
 
         {/* Price and Action */}
