@@ -3,6 +3,8 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import loginApi from "../../api/loginApi";
+import roleApi from "../../api/roleApi";
+import { jwtDecode } from "jwt-decode";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -29,49 +31,78 @@ export default function LoginPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      // Đăng nhập
       const response = await loginApi.login({
         email,
         password,
       });
       
-      console.log('Response:', response);
+      console.log('Full Login Response:', response);
       
       const token = response.token || response.data?.token;
-      const userData = response.user || response.data?.user;
       
       if (!token) {
         throw new Error('Token không tồn tại trong response');
       }
-      
-      localStorage.setItem('token', token);
-      if (userData) {
-        localStorage.setItem('user', JSON.stringify(userData));
+
+      // Decode JWT token để lấy thông tin user
+      const decodedToken = jwtDecode(token);
+      console.log('Decoded Token:', decodedToken);
+
+      // Xác định roleId dựa trên role trong token
+      let userRoleId;
+      if (decodedToken['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'] === 'Admin') {
+        userRoleId = 1;
+      } else {
+        userRoleId = 3; // Mặc định là Customer
       }
-      
-      setError("");
-      
-      // Hiển thị toast thành công
-      toast.success('Đăng nhập thành công!', {
-        position: "top-right",
-        autoClose: 1500,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-      });
-      
-      // Chờ toast hiển thị xong rồi mới chuyển trang
-      setTimeout(() => {
-        navigate("/");
-      },1300);
+
+      // Lấy thông tin role của user dựa vào roleId
+      try {
+        const roleResponse = await roleApi.getRoleById(userRoleId);
+        const userRole = roleResponse.data || roleResponse;
+        console.log('User Role:', userRole);
+        
+        // Lưu thông tin user và token
+        localStorage.setItem('token', token);
+        localStorage.setItem('user', JSON.stringify({
+          email: decodedToken.email,
+          username: decodedToken.username,
+          userId: decodedToken.userid,
+          roleId: userRoleId,
+          role: userRole
+        }));
+        
+        setError("");
+        
+        // Hiển thị toast thành công
+        toast.success('Đăng nhập thành công!', {
+          position: "top-right",
+          autoClose: 1500,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+        });
+        
+        // Chờ toast hiển thị xong rồi mới chuyển trang
+        setTimeout(() => {
+          // Kiểm tra roleId và điều hướng
+          if (userRoleId === 1) {
+            navigate("/dashboard");
+          } else {
+            navigate("/");
+          }
+        }, 1300);
+      } catch (roleError) {
+        console.error("Error fetching role:", roleError);
+        toast.error("Không thể xác thực quyền người dùng");
+      }
       
     } catch (err) {
-      console.error('Error:', err);
-      if (err.response && err.response.data && err.response.data.message) {
-        toast.error(err.response.data.message);
-      } else {
-        toast.error("Đăng nhập không thành công. Vui lòng kiểm tra lại email và mật khẩu.");
-      }
+      console.error("Login Error:", err);
+      setError(err.response?.data?.message || "Đăng nhập thất bại");
+      toast.error(err.response?.data?.message || "Đăng nhập thất bại");
     }
   };
 
