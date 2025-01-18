@@ -1,42 +1,77 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import React, { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import loginApi from "../../api/loginApi";
 
-const LoginPage = () => {
+export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    if (location.state?.showRegisterSuccess) {
+      toast.success('Đăng ký thành công! Vui lòng đăng nhập.', {
+        position: "top-right",
+        autoClose: 1500,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
+      // Xóa state sau khi hiển thị toast
+      window.history.replaceState({}, document.title);
+    }
+  }, [location]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post('http://testapi1.somee.com/api/Auth/login', 
-        {
-          email,
-          password,
-        },
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-          }
-        }
-      );
-  
-      if (response.status === 200) {
-        setError("");
-        setSuccess(true);
-        
-        setTimeout(() => {
-          setSuccess(false);
-          navigate("/");
-        }, 1500);
+      const response = await loginApi.login({
+        email,
+        password,
+      });
+      
+      console.log('Response:', response);
+      
+      const token = response.token || response.data?.token;
+      const userData = response.user || response.data?.user;
+      
+      if (!token) {
+        throw new Error('Token không tồn tại trong response');
       }
+      
+      localStorage.setItem('token', token);
+      if (userData) {
+        localStorage.setItem('user', JSON.stringify(userData));
+      }
+      
+      setError("");
+      
+      // Hiển thị toast thành công
+      toast.success('Đăng nhập thành công!', {
+        position: "top-right",
+        autoClose: 1500,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
+      
+      // Chờ toast hiển thị xong rồi mới chuyển trang
+      setTimeout(() => {
+        navigate("/");
+      },1300);
+      
     } catch (err) {
       console.error('Error:', err);
-      setError("An error occurred. Please try again later.");
+      if (err.response && err.response.data && err.response.data.message) {
+        toast.error(err.response.data.message);
+      } else {
+        toast.error("Đăng nhập không thành công. Vui lòng kiểm tra lại email và mật khẩu.");
+      }
     }
   };
 
@@ -47,19 +82,21 @@ const LoginPage = () => {
         backgroundImage: "url(https://source.unsplash.com/1600x900/?technology)",
       }}
     >
+      <ToastContainer />
       <div className="w-full max-w-md p-6 bg-white bg-opacity-90 rounded-lg shadow-lg">
         <h1 className="text-3xl font-bold text-center text-gray-800">Welcome Back</h1>
         <p className="mt-2 text-center text-gray-600">
           Login to continue to your account
         </p>
 
+        {error && (
+          <div className="mb-4 text-sm text-center text-red-700 bg-red-100 p-2 rounded-md">
+            {error}
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className="mt-6">
           
-          {error && (
-            <div className="mb-4 text-sm text-center text-red-700 bg-red-100 p-2 rounded-md">
-              {error}
-            </div>
-          )}
           <div className="mb-4">
             <label htmlFor="email" className="block text-sm font-medium text-gray-700">
               Email
@@ -144,6 +181,4 @@ const LoginPage = () => {
       </div>
     </div>
   );
-};
-
-export default LoginPage;
+}

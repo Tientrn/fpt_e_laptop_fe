@@ -1,18 +1,21 @@
 import React, { useState } from "react";
-import axios from "axios";
+import { useNavigate } from "react-router-dom";
+import { toast } from 'react-toastify';
+import registerApi from "../../api/registerApi";
 
 const RegisterPage = () => {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     email: "",
     password: "",
     fullName: "",
     phone: "",
     address: "",
-    roleId: 0,
+    roleId: 3,
     isStudent: false,
     studentCode: "",
     university: "",
-    studentCardImage: null,
+    studentCardImage: "",
   });
 
   const handleChange = (e) => {
@@ -23,36 +26,44 @@ const RegisterPage = () => {
     });
   };
 
-  const handleFileChange = (e) => {
-    setFormData({
-      ...formData,
-      studentCardImage: e.target.files[0],
-    });
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const formDataToSend = new FormData();
-      Object.keys(formData).forEach(key => {
-        formDataToSend.append(key, formData[key]);
+      // Tạo object data để gửi đi
+      const registerData = {
+        email: formData.email,
+        password: formData.password,
+        fullName: formData.fullName,
+        phone: formData.phone,
+        address: formData.address,
+        roleId: formData.roleId,
+        isStudent: formData.isStudent,
+        studentCode: formData.isStudent ? formData.studentCode : null,
+        university: formData.isStudent ? formData.university : null,
+        studentCardImage: formData.isStudent ? formData.studentCardImage : null
+      };
+
+      console.log("Sending registration data:", registerData);
+      
+      const response = await registerApi.register(registerData);
+      console.log("Registration successful:", response);
+
+      navigate("/login", { 
+        state: { showRegisterSuccess: true },
+        replace: true
       });
-
-      const response = await axios.post(
-        "https://localhost:7144/api/Auth/register",
-        formDataToSend,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
-
-      console.log("Registration successful:", response.data);
-      // Redirect to login page or show success message
-    } catch (error) {
-      console.error("Registration failed:", error);
-      alert("Registration failed. Please try again.");
+      
+    } catch (err) {
+      console.error("Registration failed:", err);
+      if (err.response) {
+        console.log("Error response:", err.response.data);
+      }
+      
+      if (err.response && err.response.data && err.response.data.message) {
+        toast.error(err.response.data.message);
+      } else {
+        toast.error("Đăng ký không thành công. Vui lòng thử lại.");
+      }
     }
   };
 
@@ -186,17 +197,18 @@ const RegisterPage = () => {
               />
             </div>
 
-            {/* Student Card Image */}
+            {/* Student Card Image URL */}
             <div className="mb-4">
               <label htmlFor="studentCardImage" className="block text-sm font-medium text-gray-700">
-                Student Card Image
+                Student Card Image URL
               </label>
               <input
-                type="file"
+                type="url"
                 id="studentCardImage"
                 name="studentCardImage"
-                onChange={handleFileChange}
-                accept="image/*"
+                value={formData.studentCardImage}
+                onChange={handleChange}
+                placeholder="https://example.com/image.jpg"
                 className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
               />
             </div>
