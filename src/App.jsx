@@ -20,6 +20,8 @@ import HistoryPaymentPage from "./pages/historypayment/HistoryPaymentPage";
 import Cart from "./pages/shoppingcart/CartPage";
 import CheckoutPage from "./pages/checkout/CheckoutPage";
 
+import RegisterShopPage from "./pages/shop/RegisterShopPage";
+
 function App() {
   return (
     <>
@@ -109,6 +111,7 @@ function App() {
             }
           ></Route>
           <Route path="/checkout" element={<CheckoutPage />}></Route>
+          <Route path="/registershop" element={<RegisterShopPage />}></Route>
         </Routes>
       </BrowserRouter>
     </>
