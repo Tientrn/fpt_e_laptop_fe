@@ -13,11 +13,13 @@ function HeaderHomePage() {
       <div className="bg-gradient-to-r from-[#1E1E2F] to-[#662D91] text-white px-4 lg:px-6">
         <div className="mx-auto max-w-screen-lg">
           <a
-            href=""
+            href="/registershop"
             className="font-semibold text-lg hover:text-purple-300 flex items-center h-10"
           >
             <StoreIcon className="mr-1" />
-            <span className="drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]">Shop</span>
+            <span className="drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]">
+              Shop
+            </span>
           </a>
         </div>
       </div>
