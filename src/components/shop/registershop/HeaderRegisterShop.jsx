@@ -8,8 +8,21 @@ const HeaderRegisterShop = ({ currentStep }) => {
   ];
 
   return (
-    <header className="flex items-center justify-between px-8 py-4 bg-white shadow-md border-b border-gray-100">
-      <img src="/logo.png" alt="Logo" className="h-12 w-auto" />
+    <header className="flex items-center justify-between px-8 py-4 bg-gradient-to-r from-emerald-600 to-emerald-800 shadow-lg">
+      <div className="flex items-center space-x-8">
+        <span className="self-center text-xl font-bold whitespace-nowrap text-white">
+          <div className="flex items-center">
+            <i className="fas fa-laptop mr-2 text-2xl"></i>
+            <h1 className="text-lg text-white font-bold drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]">
+              FPT E-Laptop
+            </h1>
+          </div>
+        </span>
+
+        <div className="bg-white/10 backdrop-blur-sm px-4 py-1.5 rounded-full border border-white/20">
+          <span className="text-white font-medium">Đăng ký trở thành Shop</span>
+        </div>
+      </div>
 
       <div className="flex items-center gap-8">
         {steps.map((step, index) => (
@@ -20,10 +33,10 @@ const HeaderRegisterShop = ({ currentStep }) => {
                 w-8 h-8 rounded-full flex items-center justify-center font-semibold
                 ${
                   currentStep === step.number
-                    ? "bg-blue-600 text-white"
+                    ? "bg-white text-emerald-600"
                     : currentStep > step.number
-                    ? "bg-green-500 text-white"
-                    : "bg-gray-200 text-gray-500"
+                    ? "bg-emerald-300 text-white"
+                    : "bg-emerald-400/50 text-white/70"
                 }
               `}
               >
@@ -49,25 +62,23 @@ const HeaderRegisterShop = ({ currentStep }) => {
               <span
                 className={`ml-3 font-medium ${
                   currentStep === step.number
-                    ? "text-blue-600"
+                    ? "text-white"
                     : currentStep > step.number
-                    ? "text-green-500"
-                    : "text-gray-500"
+                    ? "text-emerald-100"
+                    : "text-emerald-200"
                 }`}
               >
                 {step.title}
               </span>
             </span>
-
-            {/* Separator line (không hiển thị cho step cuối) */}
             {index < steps.length - 1 && (
               <span
                 className={`h-[2px] w-12 mx-4 ${
                   currentStep > step.number + 1
-                    ? "bg-green-500"
+                    ? "bg-emerald-300"
                     : currentStep > step.number
-                    ? "bg-blue-600"
-                    : "bg-gray-300"
+                    ? "bg-white"
+                    : "bg-emerald-400/30"
                 }`}
               />
             )}

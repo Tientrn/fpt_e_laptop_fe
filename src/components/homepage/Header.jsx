@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import ShoppingCartCheckoutIcon from "@mui/icons-material/ShoppingCartCheckout";
 import StoreIcon from "@mui/icons-material/Store";
+import HandshakeIcon from "@mui/icons-material/Handshake";
 
 function HeaderHomePage() {
   const [nav, setNav] = useState(false);
@@ -11,7 +12,7 @@ function HeaderHomePage() {
   return (
     <header>
       <div className="bg-gradient-to-r from-[#1E1E2F] to-[#662D91] text-white px-4 lg:px-6">
-        <div className="mx-auto max-w-screen-lg">
+        <div className="mx-auto max-w-screen-lg flex space-x-6">
           <a
             href="/registershop"
             className="font-semibold text-lg hover:text-purple-300 flex items-center h-10"
@@ -19,6 +20,16 @@ function HeaderHomePage() {
             <StoreIcon className="mr-1" />
             <span className="drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]">
               Shop
+            </span>
+          </a>
+          <span className="mt-1 font-semibold">|</span>
+          <a
+            href=""
+            className="font-semibold text-lg hover:text-purple-300 flex items-center h-10"
+          >
+            <HandshakeIcon className="mr-1" />
+            <span className="drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]">
+              Sponsor
             </span>
           </a>
         </div>
