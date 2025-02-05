@@ -1,13 +1,18 @@
 import React, { useState } from "react";
 
 const ProductImage = ({ productImage = [] }) => {
-  const [selectedImage, setSelectedImage] = useState(
-    productImage[0]?.imageUrl || ""
-  );
+  const defaultImage = ""; // Bạn có thể thêm một ảnh mặc định ở đây
+  const [selectedImage, setSelectedImage] = useState(() => {
+    return productImage?.[0]?.imageUrl || defaultImage;
+  });
   const [isZoomed, setIsZoomed] = useState(false);
 
-  if (!productImage.length) {
-    return <div>No images available</div>;
+  if (!productImage?.length) {
+    return (
+      <div className="aspect-square w-full rounded-xl bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center text-gray-400">
+        No images available
+      </div>
+    );
   }
 
   return (

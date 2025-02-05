@@ -49,7 +49,9 @@ const Card = ({ product }) => {
         {/* Price and Action */}
         <div className="flex justify-between items-center pt-2">
           <div className="text-teal-600 font-bold">
-            {product?.price ? `${product.price}đ` : "Contact"}
+            {product?.price
+              ? `${product.price.toLocaleString("vi-VN")} VND`
+              : "Contact"}
           </div>
 
           <button

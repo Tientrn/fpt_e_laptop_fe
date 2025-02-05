@@ -39,9 +39,9 @@ const ContainRegisterShop = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-white">
       <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+        <div className="bg-white rounded-xl shadow-xl overflow-hidden">
           {/* Header */}
           <HeaderRegisterShop currentStep={step} />
 
@@ -60,9 +60,9 @@ const ContainRegisterShop = () => {
                 key={i}
                 className={`w-2.5 h-2.5 rounded-full transition-colors duration-200 ${
                   i === step
-                    ? "bg-blue-600"
+                    ? "bg-emerald-600"
                     : i < step
-                    ? "bg-blue-400"
+                    ? "bg-emerald-400"
                     : "bg-gray-300"
                 }`}
               />

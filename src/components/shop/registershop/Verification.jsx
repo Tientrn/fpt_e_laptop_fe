@@ -2,12 +2,14 @@ import React from "react";
 
 const Verification = ({ onBack, onNext, taxId, cccdImage }) => {
   return (
-    <div className="p-8 bg-white rounded-lg shadow-md">
-      <h2 className="text-2xl font-semibold text-gray-800 mb-6">Xác minh</h2>
+    <div className="p-8 bg-white rounded-lg">
+      <h2 className="text-2xl font-semibold text-emerald-900 mb-6">Xác minh</h2>
       <div className="space-y-6">
-        <div className="bg-gray-50 p-4 rounded-lg">
-          <p className="text-sm font-medium text-gray-600 mb-2">Mã số thuế:</p>
-          <p className="text-gray-800">{taxId}</p>
+        <div className="bg-emerald-50 p-4 rounded-lg">
+          <p className="text-sm font-medium text-emerald-700 mb-2">
+            Mã số thuế:
+          </p>
+          <p className="text-emerald-900">{taxId}</p>
         </div>
         <div className="bg-gray-50 p-4 rounded-lg">
           <p className="text-sm font-medium text-gray-600 mb-2">Ảnh CCCD:</p>
@@ -24,13 +26,13 @@ const Verification = ({ onBack, onNext, taxId, cccdImage }) => {
         <div className="flex gap-4 pt-4">
           <button
             onClick={onBack}
-            className="bg-gray-100 hover:bg-gray-200 text-gray-700 py-2.5 px-6 rounded-lg transition duration-200"
+            className="bg-emerald-100 hover:bg-emerald-200 text-emerald-700 py-2.5 px-6 rounded-lg"
           >
             Quay lại
           </button>
           <button
             onClick={onNext}
-            className="bg-blue-600 hover:bg-blue-700 text-white py-2.5 px-6 rounded-lg transition duration-200"
+            className="bg-emerald-600 hover:bg-emerald-700 text-white py-2.5 px-6 rounded-lg shadow-lg"
           >
             Tiếp tục
           </button>

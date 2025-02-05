@@ -2,7 +2,7 @@ import React from "react";
 
 const FooterRegisterShop = () => {
   return (
-    <footer className="bg-white border-t border-gray-100 shadow-sm">
+    <footer className="bg-gradient-to-r from-emerald-50 to-white border-t border-emerald-100">
       <div className="max-w-4xl mx-auto px-8 py-6">
         <div className="flex flex-col items-center space-y-4">
           {/* Error message section */}
@@ -25,10 +25,10 @@ const FooterRegisterShop = () => {
 
           {/* Support section */}
           <div className="flex items-center gap-4">
-            <span className="text-gray-600">Liên hệ hỗ trợ:</span>
+            <span className="text-emerald-700">Liên hệ hỗ trợ:</span>
             <a
               href="tel:1800-1234"
-              className="flex items-center text-blue-600 hover:text-blue-700 transition-colors duration-200"
+              className="flex items-center text-emerald-600 hover:text-emerald-800"
             >
               <svg
                 className="w-4 h-4 mr-1"
@@ -45,10 +45,10 @@ const FooterRegisterShop = () => {
               </svg>
               1800-1234
             </a>
-            <span className="text-gray-400">|</span>
+            <span className="text-emerald-200">|</span>
             <a
               href="#"
-              className="flex items-center text-blue-600 hover:text-blue-700 transition-colors duration-200"
+              className="flex items-center text-emerald-600 hover:text-emerald-800"
             >
               <svg
                 className="w-4 h-4 mr-1"
