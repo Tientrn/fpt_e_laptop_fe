@@ -39,6 +39,14 @@ function App() {
             }
           ></Route>
           <Route
+            path="/home"
+            element={
+              <HomePageLayout>
+                <HomePage />
+              </HomePageLayout>
+            }
+          ></Route>
+          <Route
             path="/dashboard"
             element={
               <DashboardLayout>

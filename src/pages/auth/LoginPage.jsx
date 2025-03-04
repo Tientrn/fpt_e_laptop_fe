@@ -91,7 +91,7 @@ export default function LoginPage() {
           if (userRoleId === 1) {
             navigate("/dashboard");
           } else {
-            navigate("/");
+            navigate("/home");
           }
         }, 1300);
       } catch (roleError) {
@@ -108,28 +108,29 @@ export default function LoginPage() {
 
   return (
     <div
-      className="flex items-center justify-center min-h-screen bg-blue-100 bg-center"
+      className="flex items-center justify-center min-h-screen bg-gradient-to-r from-blue-900 via-gray-800 to-blue-900"
       style={{
-        backgroundImage: "url(https://source.unsplash.com/1600x900/?technology)",
+        backgroundImage: "url('https://images.unsplash.com/photo-1537498425277-c283d32ef9db?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2078&q=80')",
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundBlendMode: 'overlay',
       }}
     >
-      <ToastContainer />
-      <div className="w-full max-w-md p-6 bg-white bg-opacity-90 rounded-lg shadow-lg">
-        <h1 className="text-3xl font-bold text-center text-gray-800">Welcome Back</h1>
-        <p className="mt-2 text-center text-gray-600">
-          Login to continue to your account
+      <div className="w-full max-w-md p-8 space-y-6 bg-gray-900/80 backdrop-blur-md rounded-xl shadow-2xl m-4 border border-gray-700">
+        <h1 className="text-3xl font-bold text-center text-gray-100 mb-2">Welcome to LaptopSharing</h1>
+        <p className="text-center text-gray-300 mb-6">
+          Sign in to access your account
         </p>
 
         {error && (
-          <div className="mb-4 text-sm text-center text-red-700 bg-red-100 p-2 rounded-md">
+          <div className="mb-4 text-sm text-center text-red-400 bg-red-900/50 p-3 rounded-lg border border-red-700">
             {error}
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="mt-6">
-          
-          <div className="mb-4">
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div>
+            <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-1">
               Email
             </label>
             <input
@@ -138,11 +139,15 @@ export default function LoginPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              className="w-full px-4 py-2 bg-gray-800/90 border border-gray-600 rounded-lg 
+                       text-gray-100 placeholder-gray-400
+                       focus:ring-2 focus:ring-blue-500 focus:border-transparent 
+                       transition duration-200"
             />
           </div>
-          <div className="mb-6">
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+          
+          <div>
+            <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-1">
               Password
             </label>
             <input
@@ -151,65 +156,76 @@ export default function LoginPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              className="w-full px-4 py-2 bg-gray-800/90 border border-gray-600 rounded-lg 
+                       text-gray-100 placeholder-gray-400
+                       focus:ring-2 focus:ring-blue-500 focus:border-transparent 
+                       transition duration-200"
             />
           </div>
+
           <button
             type="submit"
-            className="w-full px-4 py-2 text-white bg-blue-600 rounded-md shadow hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            className="w-full py-3 px-4 text-white bg-blue-600 hover:bg-blue-700 
+                     rounded-lg transition duration-200 transform hover:scale-[1.02] 
+                     focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 
+                     focus:ring-offset-gray-900"
           >
             Login
           </button>
         </form>
 
-        <div className="flex items-center justify-center mt-4">
-          <hr className="flex-1 border-gray-300" />
-          <span className="px-2 text-gray-600 text-sm">Or login with</span>
-          <hr className="flex-1 border-gray-300" />
+        <div className="flex items-center justify-center mt-6">
+          <hr className="flex-1 border-gray-600" />
+          <span className="px-4 text-gray-400 text-sm">Or login with</span>
+          <hr className="flex-1 border-gray-600" />
         </div>
 
         <button
-          className="mt-4 flex items-center justify-center w-full px-4 py-2 text-white bg-red-500 hover:bg-red-600 rounded-md shadow focus:outline-none"
+          className="w-full flex items-center justify-center px-4 py-3 
+                   text-gray-300 bg-gray-800/90 border border-gray-600 
+                   rounded-lg hover:bg-gray-700 transition duration-200 
+                   transform hover:scale-[1.02]"
         >
           <img
             src="https://img.icons8.com/color/24/000000/google-logo.png"
             alt="Google Logo"
-            className="mr-2"
+            className="mr-2 h-5 w-5"
           />
           Login with Google
         </button>
 
-        <div className="flex justify-center mt-6 gap-4">
-          <a href="#" className="text-gray-600 hover:text-gray-900">
+        <div className="flex justify-center space-x-4">
+          <a href="#" className="text-gray-400 hover:text-gray-200 transition duration-200">
             <img
               src="https://img.icons8.com/fluency/48/000000/facebook-new.png"
               alt="Facebook Logo"
-              className="h-6 w-6"
+              className="h-8 w-8 hover:scale-110 transition duration-200"
             />
           </a>
-          <a href="#" className="text-gray-600 hover:text-gray-900">
+          <a href="#" className="text-gray-400 hover:text-gray-200 transition duration-200">
             <img
               src="https://img.icons8.com/fluency/48/000000/instagram-new.png"
               alt="Instagram Logo"
-              className="h-6 w-6"
+              className="h-8 w-8 hover:scale-110 transition duration-200"
             />
           </a>
-          <a href="#" className="text-gray-600 hover:text-gray-900">
+          <a href="#" className="text-gray-400 hover:text-gray-200 transition duration-200">
             <img
               src="https://img.icons8.com/fluency/48/000000/tiktok.png"
               alt="TikTok Logo"
-              className="h-6 w-6"
+              className="h-8 w-8 hover:scale-110 transition duration-200"
             />
           </a>
         </div>
 
-        <p className="mt-6 text-sm text-center text-gray-600">
+        <p className="text-center text-gray-400 text-sm">
           Don't have an account?{" "}
-          <a href="/register" className="text-blue-700 hover:underline">
+          <a href="/register" className="text-blue-400 hover:text-blue-300 hover:underline">
             Sign up
           </a>
         </p>
       </div>
+      <ToastContainer />
     </div>
   );
 }

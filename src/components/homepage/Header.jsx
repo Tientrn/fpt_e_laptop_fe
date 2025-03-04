@@ -1,13 +1,39 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import ShoppingCartCheckoutIcon from "@mui/icons-material/ShoppingCartCheckout";
 import StoreIcon from "@mui/icons-material/Store";
 import HandshakeIcon from "@mui/icons-material/Handshake";
+import PersonIcon from '@mui/icons-material/Person';
 
 function HeaderHomePage() {
   const [nav, setNav] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(() => {
+    return localStorage.getItem('token') !== null;
+  });
   const location = useLocation();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      localStorage.removeItem('token');
+      sessionStorage.clear();
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, []);
+
+  const handleLogout = () => {
+    setIsLoggedIn(false);
+    localStorage.removeItem('token');
+    sessionStorage.clear();
+    document.cookie = "";
+    navigate('/login');
+  };
 
   return (
     <header>
@@ -90,7 +116,7 @@ function HeaderHomePage() {
                 </span>
               </a>
 
-              {location.pathname === "/home" && (
+              {!isLoggedIn ? (
                 <>
                   <button
                     onClick={() => navigate("/login")}
@@ -107,6 +133,31 @@ function HeaderHomePage() {
                     Sign Up
                   </button>
                 </>
+              ) : (
+                <div className="relative ml-4">
+                  <button
+                    onClick={() => setIsProfileOpen(!isProfileOpen)}
+                    className="text-white hover:text-purple-300"
+                  >
+                    <PersonIcon />
+                  </button>
+                  {isProfileOpen && (
+                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10">
+                      <a
+                        href="/profile"
+                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      >
+                        Profile
+                      </a>
+                      <button
+                        onClick={handleLogout}
+                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      >
+                        Logout
+                      </button>
+                    </div>
+                  )}
+                </div>
               )}
             </div>
           </div>
