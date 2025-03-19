@@ -4,39 +4,64 @@ import ShoppingCartCheckoutIcon from "@mui/icons-material/ShoppingCartCheckout";
 import StoreIcon from "@mui/icons-material/Store";
 import HandshakeIcon from "@mui/icons-material/Handshake";
 import PersonIcon from '@mui/icons-material/Person';
+import { jwtDecode } from "jwt-decode";
 
 function HeaderHomePage() {
   const [nav, setNav] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isSponsorOpen, setIsSponsorOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(() => {
     return localStorage.getItem('token') !== null;
   });
   const location = useLocation();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const handleBeforeUnload = () => {
-      localStorage.removeItem('token');
-      sessionStorage.clear();
-    };
-
-    window.addEventListener('beforeunload', handleBeforeUnload);
-
-    return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-    };
-  }, []);
-
   const handleLogout = () => {
-    setIsLoggedIn(false);
-    localStorage.removeItem('token');
+    // Clear all storage
+    localStorage.clear();
     sessionStorage.clear();
-    document.cookie = "";
+    
+    // Clear cookies
+    document.cookie.split(";").forEach((c) => {
+      document.cookie = c
+        .replace(/^ +/, "")
+        .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+    });
+    
+    // Navigate to login
     navigate('/login');
   };
 
+  // Kiểm tra token không hợp lệ hoặc hết hạn
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      try {
+        const decodedToken = jwtDecode(token);
+        const currentTime = Date.now() / 1000;
+        if (decodedToken.exp < currentTime) {
+          handleLogout();
+        }
+      } catch (error) {
+        handleLogout();
+      }
+    }
+  }, []);
+
   return (
     <header>
+      {/* {process.env.NODE_ENV === 'development' && (
+        <button
+          onClick={() => {
+            localStorage.clear();
+            sessionStorage.clear();
+            window.location.reload();
+          }}
+          className="fixed bottom-4 right-4 bg-red-500 text-white px-4 py-2 rounded-full"
+        >
+          Clear Data
+        </button>
+      )} */}
       <div className="bg-gradient-to-r from-[#1E1E2F] to-[#662D91] text-white px-4 lg:px-6">
         <div className="mx-auto max-w-screen-lg flex space-x-6">
           <a
@@ -49,15 +74,15 @@ function HeaderHomePage() {
             </span>
           </a>
           <span className="mt-1 font-semibold">|</span>
-          <a
-            href=""
+          <button
+            onClick={() => navigate('/sponsor/register')}
             className="font-semibold text-lg hover:text-purple-300 flex items-center h-10"
           >
             <HandshakeIcon className="mr-1" />
             <span className="drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]">
               Sponsor
             </span>
-          </a>
+          </button>
         </div>
       </div>
       <nav className="bg-gradient-to-r from-[#1E1E2F] to-[#662D91] text-white px-4 lg:px-6 py-2.5">
@@ -93,7 +118,7 @@ function HeaderHomePage() {
                   href="/laptoppurchase"
                   className="block py-2 pr-4 pl-3 text-white font-semibold drop-shadow-[0_1px_1px_rgba(0,0,0,0.8)] hover:text-purple-300"
                 >
-                  Laptops
+                  Laptop Purchase
                 </a>
               </li>
               <li>
@@ -101,7 +126,7 @@ function HeaderHomePage() {
                   href="/laptopborrow"
                   className="block py-2 pr-4 pl-3 text-white font-semibold drop-shadow-[0_1px_1px_rgba(0,0,0,0.8)] hover:text-purple-300"
                 >
-                  Borrow Laptop
+                  Laptop Borrow 
                 </a>
               </li>
             </ul>

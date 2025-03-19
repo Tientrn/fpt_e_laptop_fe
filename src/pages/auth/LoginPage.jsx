@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { toast, ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import loginApi from "../../api/loginApi";
 import roleApi from "../../api/roleApi";
 import { jwtDecode } from "jwt-decode";
@@ -15,7 +15,7 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (location.state?.showRegisterSuccess) {
-      toast.success('Đăng ký thành công! Vui lòng đăng nhập.', {
+      toast.success("Đăng ký thành công! Vui lòng đăng nhập.", {
         position: "top-right",
         autoClose: 1500,
         hideProgressBar: false,
@@ -23,10 +23,35 @@ export default function LoginPage() {
         pauseOnHover: true,
         draggable: true,
       });
-      // Xóa state sau khi hiển thị toast
       window.history.replaceState({}, document.title);
     }
-  }, [location]);
+
+    const isLoggingOut = new URLSearchParams(location.search).get('logout');
+    
+    if (isLoggingOut) {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      window.history.replaceState({}, document.title, '/login');
+      return;
+    }
+
+    const token = localStorage.getItem("token");
+    const userData = localStorage.getItem("user");
+
+    if (token && userData) {
+      try {
+        const user = JSON.parse(userData);
+        if (user.roleId === 1) {
+          navigate("/dashboard");
+        } else {
+          navigate("/");
+        }
+      } catch (error) {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+      }
+    }
+  }, [navigate, location]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -36,22 +61,26 @@ export default function LoginPage() {
         email,
         password,
       });
-      
-      console.log('Full Login Response:', response);
-      
+
+      console.log("Full Login Response:", response);
+
       const token = response.token || response.data?.token;
-      
+
       if (!token) {
-        throw new Error('Token không tồn tại trong response');
+        throw new Error("Token không tồn tại trong response");
       }
 
       // Decode JWT token để lấy thông tin user
       const decodedToken = jwtDecode(token);
-      console.log('Decoded Token:', decodedToken);
+      console.log("Decoded Token:", decodedToken);
 
       // Xác định roleId dựa trên role trong token
       let userRoleId;
-      if (decodedToken['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'] === 'Admin') {
+      if (
+        decodedToken[
+          "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
+        ] === "Admin"
+      ) {
         userRoleId = 1;
       } else {
         userRoleId = 3; // Mặc định là Customer
@@ -61,22 +90,25 @@ export default function LoginPage() {
       try {
         const roleResponse = await roleApi.getRoleById(userRoleId);
         const userRole = roleResponse.data || roleResponse;
-        console.log('User Role:', userRole);
-        
+        console.log("User Role:", userRole);
+
         // Lưu thông tin user và token
-        localStorage.setItem('token', token);
-        localStorage.setItem('user', JSON.stringify({
-          email: decodedToken.email,
-          username: decodedToken.username,
-          userId: decodedToken.userid,
-          roleId: userRoleId,
-          role: userRole
-        }));
-        
+        localStorage.setItem("token", token);
+        localStorage.setItem(
+          "user",
+          JSON.stringify({
+            email: decodedToken.email,
+            username: decodedToken.username,
+            userId: decodedToken.userid,
+            roleId: userRoleId,
+            role: userRole,
+          })
+        );
+
         setError("");
-        
+
         // Hiển thị toast thành công
-        toast.success('Đăng nhập thành công!', {
+        toast.success("Đăng nhập thành công!", {
           position: "top-right",
           autoClose: 1500,
           hideProgressBar: false,
@@ -84,7 +116,7 @@ export default function LoginPage() {
           pauseOnHover: true,
           draggable: true,
         });
-        
+
         // Chờ toast hiển thị xong rồi mới chuyển trang
         setTimeout(() => {
           // Kiểm tra roleId và điều hướng
@@ -98,7 +130,6 @@ export default function LoginPage() {
         console.error("Error fetching role:", roleError);
         toast.error("Không thể xác thực quyền người dùng");
       }
-      
     } catch (err) {
       console.error("Login Error:", err);
       setError(err.response?.data?.message || "Đăng nhập thất bại");
@@ -110,14 +141,17 @@ export default function LoginPage() {
     <div
       className="flex items-center justify-center min-h-screen bg-gradient-to-r from-blue-900 via-gray-800 to-blue-900"
       style={{
-        backgroundImage: "url('https://images.unsplash.com/photo-1537498425277-c283d32ef9db?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2078&q=80')",
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundBlendMode: 'overlay',
+        backgroundImage:
+          "url('https://images.unsplash.com/photo-1537498425277-c283d32ef9db?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2078&q=80')",
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundBlendMode: "overlay",
       }}
     >
       <div className="w-full max-w-md p-8 space-y-6 bg-gray-900/80 backdrop-blur-md rounded-xl shadow-2xl m-4 border border-gray-700">
-        <h1 className="text-3xl font-bold text-center text-gray-100 mb-2">Welcome to LaptopSharing</h1>
+        <h1 className="text-3xl font-bold text-center text-gray-100 mb-2">
+          Welcome to LaptopSharing
+        </h1>
         <p className="text-center text-gray-300 mb-6">
           Sign in to access your account
         </p>
@@ -130,7 +164,10 @@ export default function LoginPage() {
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-1">
+            <label
+              htmlFor="email"
+              className="block text-sm font-medium text-gray-300 mb-1"
+            >
               Email
             </label>
             <input
@@ -145,9 +182,12 @@ export default function LoginPage() {
                        transition duration-200"
             />
           </div>
-          
+
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-1">
+            <label
+              htmlFor="password"
+              className="block text-sm font-medium text-gray-300 mb-1"
+            >
               Password
             </label>
             <input
@@ -195,21 +235,30 @@ export default function LoginPage() {
         </button>
 
         <div className="flex justify-center space-x-4">
-          <a href="#" className="text-gray-400 hover:text-gray-200 transition duration-200">
+          <a
+            href="#"
+            className="text-gray-400 hover:text-gray-200 transition duration-200"
+          >
             <img
               src="https://img.icons8.com/fluency/48/000000/facebook-new.png"
               alt="Facebook Logo"
               className="h-8 w-8 hover:scale-110 transition duration-200"
             />
           </a>
-          <a href="#" className="text-gray-400 hover:text-gray-200 transition duration-200">
+          <a
+            href="#"
+            className="text-gray-400 hover:text-gray-200 transition duration-200"
+          >
             <img
               src="https://img.icons8.com/fluency/48/000000/instagram-new.png"
               alt="Instagram Logo"
               className="h-8 w-8 hover:scale-110 transition duration-200"
             />
           </a>
-          <a href="#" className="text-gray-400 hover:text-gray-200 transition duration-200">
+          <a
+            href="#"
+            className="text-gray-400 hover:text-gray-200 transition duration-200"
+          >
             <img
               src="https://img.icons8.com/fluency/48/000000/tiktok.png"
               alt="TikTok Logo"
@@ -220,7 +269,10 @@ export default function LoginPage() {
 
         <p className="text-center text-gray-400 text-sm">
           Don't have an account?{" "}
-          <a href="/register" className="text-blue-400 hover:text-blue-300 hover:underline">
+          <a
+            href="/register"
+            className="text-blue-400 hover:text-blue-300 hover:underline"
+          >
             Sign up
           </a>
         </p>

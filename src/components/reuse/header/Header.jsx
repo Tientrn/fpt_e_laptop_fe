@@ -8,13 +8,25 @@ export default function ReuseHeader({ name, navs }) {
   const navigate = useNavigate();
   const [isDropdownOpen, setDropdownOpen] = useState(false);
 
-  const toggleDropdown = () => {
-    setDropdownOpen(!isDropdownOpen);
+  const handleLogout = () => {
+    // Clear all localStorage
+    localStorage.clear();
+    
+    // Redirect to login page and force a page reload
+    window.location.replace('/login');
   };
 
   const handleNavigation = (path) => {
-    navigate(path);
-    setDropdownOpen(false);
+    if (path === '/logout') {
+      handleLogout();
+    } else {
+      navigate(path);
+      setDropdownOpen(false);
+    }
+  };
+
+  const toggleDropdown = () => {
+    setDropdownOpen(!isDropdownOpen);
   };
 
   return (
@@ -42,30 +54,7 @@ export default function ReuseHeader({ name, navs }) {
             {isDropdownOpen && (
               <div className="absolute top-full right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-50">
                 <ul className="py-1 text-sm text-gray-700">
-                  {/* <li>
-                    <Button
-                      onClick={() => handleNavigation("/dashboard")}
-                      className="block w-full text-left px-4 py-2 hover:bg-gray-100"
-                    >
-                      Dashboard
-                    </Button>
-                  </li>
-                  <li>
-                    <Button
-                      onClick={() => handleNavigation("/home")}
-                      className="block w-full text-left px-4 py-2 hover:bg-gray-100"
-                    >
-                      Home
-                    </Button>
-                  </li>
-                  <li>
-                    <Button
-                      onClick={() => handleNavigation("/login")}
-                      className="block w-full text-left px-4 py-2 text-red-600 hover:bg-red-100"
-                    >
-                      Log Out
-                    </Button>
-                  </li> */}
+
                   {navs.map((nav, index) => (
                     <li key={index}>
                       <Button

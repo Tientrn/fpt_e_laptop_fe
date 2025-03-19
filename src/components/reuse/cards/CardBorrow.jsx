@@ -6,9 +6,10 @@ function CardBorrow({ product }) {
 
   return (
     <div
+      onClick={() => navigate(`/detailborrow/${product.id}`)}
       className="bg-white rounded-xl shadow-lg overflow-hidden 
       border border-teal-100 hover:shadow-xl transition-all duration-300
-      group"
+      group cursor-pointer"
     >
       {/* Image container */}
       <div className="relative h-48 overflow-hidden">
@@ -90,7 +91,7 @@ function CardBorrow({ product }) {
         {/* Action button */}
         <div className="flex justify-end pt-2">
           <button
-            onClick={() => navigate(`/laptop-borrow/${product?.id}`)}
+            onClick={() => navigate(`/laptopborrow`)}
             className="p-2 bg-teal-600 text-white rounded-lg
               hover:bg-teal-700 transition-all duration-300
               hover:scale-110 active:scale-95

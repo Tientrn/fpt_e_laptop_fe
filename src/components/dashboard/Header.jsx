@@ -11,7 +11,7 @@ const headerNavs = [
   },
   {
     label: "Logout",
-    link: "/login",
+    link: "/logout",
   },
 ];
 
