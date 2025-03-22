@@ -1,7 +1,7 @@
 import "./App.css";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import ScrollToTop from "./components/Scroll";
-import ProtectedRoute from "./components/ProtectedRoute";
+import PrivateRoute from './components/routes/PrivateRoute';
+import ScrollToTop from './components/routes/ScrollToTop';
 
 import AuthLayout from "./layouts/auth";
 import HomePageLayout from "./layouts/homepage";
@@ -38,90 +38,83 @@ function App() {
       <BrowserRouter>
         <ScrollToTop />
         <Routes>
-          {/* thêm route từ đây */}
+          {/* Public Routes */}
+          <Route path="/" element={<HomePageLayout>
+            <HomePage />
+          </HomePageLayout>} />
+          <Route path="/home" element={<HomePageLayout>
+            <HomePage />
+          </HomePageLayout>} />
+          <Route path="/login" element={<AuthLayout>
+            <LoginPage />
+          </AuthLayout>} />
+          <Route path="/register" element={<AuthLayout>
+            <RegisterPage />
+          </AuthLayout>} />
 
-          <Route
-            path="/"
-            element={
-              <HomePageLayout>
-                <HomePage />
-              </HomePageLayout>
-            }
-          ></Route>
-          <Route
-            path="/home"
-            element={
-              <HomePageLayout>
-                <HomePage />
-              </HomePageLayout>
-            }
-          ></Route>
+          {/* Protected Routes */}
           <Route
             path="/dashboard"
             element={
-              <ProtectedRoute>
+              <PrivateRoute>
                 <DashboardLayout>
                   <DashboardPage />
                 </DashboardLayout>
-              </ProtectedRoute>
+              </PrivateRoute>
             }
-          ></Route>
+          />
           <Route
             path="/account"
             element={
-              <DashboardLayout>
-                <AccountManagementPage />
-              </DashboardLayout>
+              <PrivateRoute>
+                <DashboardLayout>
+                  <AccountManagementPage />
+                </DashboardLayout>
+              </PrivateRoute>
             }
-          ></Route>
+          />
           <Route
             path="/history"
             element={
-              <DashboardLayout>
-                <HistoryPaymentPage />
-              </DashboardLayout>
+              <PrivateRoute>
+                <DashboardLayout>
+                  <HistoryPaymentPage />
+                </DashboardLayout>
+              </PrivateRoute>
             }
-          ></Route>
+          />
           <Route
             path="/analytic"
             element={
-              <DashboardLayout>
-                <AnalyticPage />
-              </DashboardLayout>
+              <PrivateRoute>
+                <DashboardLayout>
+                  <AnalyticPage />
+                </DashboardLayout>
+              </PrivateRoute>
             }
-          ></Route>
+          />
           <Route
             path="/content"
             element={
-              <DashboardLayout>
-                <ContentPage />
-              </DashboardLayout>
+              <PrivateRoute>
+                <DashboardLayout>
+                  <ContentPage />
+                </DashboardLayout>
+              </PrivateRoute>
             }
-          ></Route>
+          />
           <Route
             path="/report"
             element={
-              <DashboardLayout>
-                <ReportPage />
-              </DashboardLayout>
+              <PrivateRoute>
+                <DashboardLayout>
+                  <ReportPage />
+                </DashboardLayout>
+              </PrivateRoute>
             }
-          ></Route>
-          <Route
-            path="/login"
-            element={
-              <AuthLayout>
-                <LoginPage />
-              </AuthLayout>
-            }
-          ></Route>
-          <Route
-            path="/register"
-            element={
-              <AuthLayout>
-                <RegisterPage />
-              </AuthLayout>
-            }
-          ></Route>
+          />
+
+          {/* Laptop Routes */}
           <Route
             path="/laptoppurchase"
             element={
@@ -129,15 +122,17 @@ function App() {
                 <LaptoppurchasePage />
               </HomePageLayout>
             }
-          ></Route>
+          />
           <Route
             path="/laptoppurchasedetail/:productId"
             element={
-              <HomePageLayout>
-                <LaptoppurchaseDetail />
-              </HomePageLayout>
+              <PrivateRoute>
+                <HomePageLayout>
+                  <LaptoppurchaseDetail />
+                </HomePageLayout>
+              </PrivateRoute>
             }
-          ></Route>
+          />
           <Route
             path="/laptopborrow"
             element={
@@ -145,34 +140,73 @@ function App() {
                 <LaptopborrowPage />
               </HomePageLayout>
             }
-          ></Route>
+          />
+
+          {/* Shopping Routes */}
           <Route
             path="/cart"
             element={
-              <HomePageLayout>
-                <Cart />
-              </HomePageLayout>
+              <PrivateRoute>
+                <HomePageLayout>
+                  <Cart />
+                </HomePageLayout>
+              </PrivateRoute>
             }
-          ></Route>
+          />
+          <Route
+            path="/checkout"
+            element={
+              <PrivateRoute>
+                <CheckoutPage />
+              </PrivateRoute>
+            }
+          />
+
+          {/* Profile and Shop Routes */}
           <Route
             path="/profile"
             element={
-              <HomePageLayout>
-                <ProfilePage />
-              </HomePageLayout>
+              <PrivateRoute>
+                <HomePageLayout>
+                  <ProfilePage />
+                </HomePageLayout>
+              </PrivateRoute>
             }
-          ></Route>
-          <Route path="/checkout" element={<CheckoutPage />}></Route>
-          <Route path="/registershop" element={<RegisterShopPage />}></Route>
+          />
+          <Route
+            path="/registershop"
+            element={
+              <PrivateRoute>
+                <RegisterShopPage />
+              </PrivateRoute>
+            }
+          />
+
+          {/* Sponsor Routes */}
           <Route path="/sponsor" element={<SponsorLayout />}>
             <Route index element={<RegisterSponsor />} />
             <Route path="register" element={<RegisterSponsor />} />
             <Route path="laptop-info" element={<LaptopInfo />} />
             <Route path="laptop-status" element={<LaptopStatus />} />
           </Route>
-          
-          <Route path="/detailborrow/:id" element={<DetailLaptopBorrow />} />
-          <Route path="/borrow/:id/confirm" element={<ConfirmationPage />} />
+
+          {/* Borrow Detail Routes */}
+          <Route
+            path="/detailborrow/:id"
+            element={
+              <PrivateRoute>
+                <DetailLaptopBorrow />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/borrow/:id/confirm"
+            element={
+              <PrivateRoute>
+                <ConfirmationPage />
+              </PrivateRoute>
+            }
+          />
         </Routes>
       </BrowserRouter>
     </>

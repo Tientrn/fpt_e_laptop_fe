@@ -1,13 +1,14 @@
 import axiosClient from "./axiosClient";
 
 const registerApi = {
-  register: (data) => {
-    const url = '/Auth/register';
-    return axiosClient.post(url, data, {
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
+  // Register for student
+  registerStudent: (data) => {
+    return axiosClient.post('/Authentication/register/student', data);
+  },
+
+  // Register for sponsor
+  registerSponsor: (data) => {
+    return axiosClient.post('/Authentication/register/sponsor', data);
   },
 };
 
