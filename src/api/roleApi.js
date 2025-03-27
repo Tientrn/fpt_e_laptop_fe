@@ -1,18 +1,25 @@
 import axiosClient from "./axiosClient";
 
 const roleApi = {
-  getAllRoles() {
-    const url = '/Roles';
-    return axiosClient.get(url);
-  },
-  
-  getRoleById(roleId) {
-    const url = `/Roles/${roleId}`;
-    return axiosClient.get(url).then(response => {
-      // API trả về array với 1 phần tử, lấy phần tử đầu tiên
-      return Array.isArray(response) ? response[0] : response;
-    });
-  }
+    // Get all roles
+    getAllRoles: () => {
+        return axiosClient.get('/Role/get-all');
+    },
+
+    // Get role by id
+    getRoleById: (id) => {
+        return axiosClient.get(`/Role/${id}`);
+    },
+
+    // Create new role
+    createRole: (data) => {
+        return axiosClient.post('/Role/create', data);
+    },
+
+    // Update role
+    updateRole: (id, data) => {
+        return axiosClient.put(`/Role/update/${id}`, data);
+    }
 };
 
 export default roleApi; 

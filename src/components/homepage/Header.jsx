@@ -115,10 +115,10 @@ function HeaderHomePage() {
               </li>
               <li>
                 <a
-                  href="/laptoppurchase"
+                  href="/laptopshop"
                   className="block py-2 pr-4 pl-3 text-white font-semibold drop-shadow-[0_1px_1px_rgba(0,0,0,0.8)] hover:text-purple-300"
                 >
-                  Laptop Purchase
+                  Laptop Shop
                 </a>
               </li>
               <li>

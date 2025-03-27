@@ -35,7 +35,7 @@ const SortOptions = ({ onSort }) => {
               RAM: High to Low
             </option>
             <option value="processor-high-to-low" className="text-teal-800">
-              Processor: High to Low
+              CPU : High to Low
             </option>
             {/* <option value="price-low-to-high" className="text-teal-800">
               Price: Low to High

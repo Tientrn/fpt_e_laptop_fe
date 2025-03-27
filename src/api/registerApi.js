@@ -1,6 +1,11 @@
 import axiosClient from "./axiosClient";
 
-const registerApi = {
+const registerApi = { 
+  // Register general (for non-student)
+  register: (data) => {
+    return axiosClient.post('/Authentication/register', data);
+  },
+  
   // Register for student
   registerStudent: (data) => {
     return axiosClient.post('/Authentication/register/student', data);
@@ -10,6 +15,7 @@ const registerApi = {
   registerSponsor: (data) => {
     return axiosClient.post('/Authentication/register/sponsor', data);
   },
+
 };
 
 export default registerApi; 

@@ -5,7 +5,7 @@ import Hero from "./Hero";
 import HighlightFeatureCard from "./HighlightFeatureCard";
 import HighlightFeatureSection from "./HighlightFeatureSection";
 import HighlightFeatureSection2 from "./HighlightFeatureSection_2";
-import ListLaptop from "./ListLaptop";
+import ListLaptopShop from "./ListLaptopShop";
 import ListLaptopBorrow from "./ListLaptopBorrow";
 import laptopsellImage from "../../../assets/laptopsell.jpg";
 import laptopsellImage1 from "../../../assets/laptopsell1.jpg";
@@ -38,7 +38,7 @@ export default function DefaultHomePage() {
         <HighlightFeatureSection2 images={laptopborrowImage1} />
       </div>
       <div className="my-8">
-        <ListLaptop />
+        <ListLaptopShop />
       </div>
       <div className="my-8">
         <ListLaptopBorrow />

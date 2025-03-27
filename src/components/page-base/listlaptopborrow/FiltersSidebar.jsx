@@ -1,6 +1,24 @@
-import React from "react";
+import React, { useState } from "react";
 
-const FiltersSidebar = () => {
+const FiltersSidebar = ({ onFilterChange }) => {
+  const [filters, setFilters] = useState({
+    screenSize: "",
+    status: "",
+    cpu: "",
+    ram: "",
+    storage: "",
+  });
+
+  // Handle filter changes
+  const handleFilterChange = (filterName, value) => {
+    const newFilters = {
+      ...filters,
+      [filterName]: value,
+    };
+    setFilters(newFilters);
+    onFilterChange(newFilters); // Gửi filters mới lên component cha
+  };
+
   return (
     <div className="w-1/4 p-6 bg-gradient-to-br from-emerald-50 to-teal-50 rounded-lg shadow-lg border border-teal-100">
       <h3 className="text-xl font-bold mb-6 text-teal-800 border-b border-teal-200 pb-3 flex items-center">
@@ -9,7 +27,6 @@ const FiltersSidebar = () => {
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
-          xmlns="http://www.w3.org/2000/svg"
         >
           <path
             strokeLinecap="round"
@@ -22,45 +39,70 @@ const FiltersSidebar = () => {
       </h3>
 
       <div className="space-y-6">
+        {/* CPU Filter */}
         <div className="filter-group">
           <h4 className="font-semibold mb-3 text-teal-700 flex items-center">
             <span className="w-2 h-2 bg-teal-500 rounded-full mr-2"></span>
-            Brand
+            CPU
           </h4>
           <select
             className="w-full p-2.5 bg-white border border-teal-200 rounded-lg 
             focus:ring-2 focus:ring-teal-500 focus:border-teal-500 
             transition-all duration-300 hover:border-teal-400
             shadow-sm"
+            value={filters.cpu}
+            onChange={(e) => handleFilterChange("cpu", e.target.value)}
           >
-            <option value="all">All</option>
-            <option value="hp">HP</option>
-            <option value="lenovo">Lenovo</option>
-            <option value="asus">Asus</option>
+            <option value="">All CPU</option>
+            <option value="i5">Intel Core i5</option>
+            <option value="i7">Intel Core i7</option>
+            <option value="i9">Intel Core i9</option>
           </select>
         </div>
 
+        {/* RAM Filter */}
         <div className="filter-group">
           <h4 className="font-semibold mb-3 text-teal-700 flex items-center">
             <span className="w-2 h-2 bg-teal-500 rounded-full mr-2"></span>
-            Price
+            RAM
           </h4>
-          <div className="px-2">
-            <input
-              type="range"
-              min="0"
-              max="10000000"
-              step="100000"
-              className="w-full h-2 bg-teal-100 rounded-lg appearance-none cursor-pointer 
-                accent-teal-500 hover:accent-teal-600"
-            />
-            <div className="flex justify-between mt-2 text-sm text-teal-600">
-              <span>$0</span>
-              <span>$10,000</span>
-            </div>
-          </div>
+          <select
+            className="w-full p-2.5 bg-white border border-teal-200 rounded-lg 
+            focus:ring-2 focus:ring-teal-500 focus:border-teal-500 
+            transition-all duration-300 hover:border-teal-400
+            shadow-sm"
+            value={filters.ram}
+            onChange={(e) => handleFilterChange("ram", e.target.value)}
+          >
+            <option value="">All RAM</option>
+            <option value="8">8GB</option>
+            <option value="16">16GB</option>
+            <option value="32">32GB</option>
+          </select>
         </div>
 
+        {/* Storage Filter */}
+        <div className="filter-group">
+          <h4 className="font-semibold mb-3 text-teal-700 flex items-center">
+            <span className="w-2 h-2 bg-teal-500 rounded-full mr-2"></span>
+            Storage
+          </h4>
+          <select
+            className="w-full p-2.5 bg-white border border-teal-200 rounded-lg 
+            focus:ring-2 focus:ring-teal-500 focus:border-teal-500 
+            transition-all duration-300 hover:border-teal-400
+            shadow-sm"
+            value={filters.storage}
+            onChange={(e) => handleFilterChange("storage", e.target.value)}
+          >
+            <option value="">All Storage</option>
+            <option value="256">256GB</option>
+            <option value="512">512GB</option>
+            <option value="1024">1TB</option>
+          </select>
+        </div>
+
+        {/* Screen Size Filter */}
         <div className="filter-group">
           <h4 className="font-semibold mb-3 text-teal-700 flex items-center">
             <span className="w-2 h-2 bg-teal-500 rounded-full mr-2"></span>
@@ -71,19 +113,53 @@ const FiltersSidebar = () => {
             focus:ring-2 focus:ring-teal-500 focus:border-teal-500 
             transition-all duration-300 hover:border-teal-400
             shadow-sm"
+            value={filters.screenSize}
+            onChange={(e) => handleFilterChange("screenSize", e.target.value)}
           >
-            <option value="all">All</option>
-            <option value="15">15 inch</option>
-            <option value="13">13 inch</option>
+            <option value="">All Sizes</option>
+            <option value="13.3">13.3 inch</option>
+            <option value="15.6">15.6 inch</option>
           </select>
         </div>
 
+        {/* Status Filter */}
+        <div className="filter-group">
+          <h4 className="font-semibold mb-3 text-teal-700 flex items-center">
+            <span className="w-2 h-2 bg-teal-500 rounded-full mr-2"></span>
+            Status
+          </h4>
+          <select
+            className="w-full p-2.5 bg-white border border-teal-200 rounded-lg 
+            focus:ring-2 focus:ring-teal-500 focus:border-teal-500 
+            transition-all duration-300 hover:border-teal-400
+            shadow-sm"
+            value={filters.status}
+            onChange={(e) => handleFilterChange("status", e.target.value)}
+          >
+            <option value="">All Status</option>
+            <option value="Available">Available</option>
+            <option value="Unavailable">Unavailable</option>
+          </select>
+        </div>
+
+        {/* Reset Filters Button */}
         <button
+          onClick={() => {
+            const defaultFilters = {
+              screenSize: "",
+              status: "",
+              cpu: "",
+              ram: "",
+              storage: "",
+            };
+            setFilters(defaultFilters);
+            onFilterChange(defaultFilters);
+          }}
           className="w-full mt-6 bg-teal-600 hover:bg-teal-700 text-white font-medium 
           py-2.5 rounded-lg transition-colors duration-300 
           shadow-sm hover:shadow-md"
         >
-          Apply Filters
+          Reset Filters
         </button>
       </div>
     </div>

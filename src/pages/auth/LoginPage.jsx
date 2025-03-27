@@ -3,7 +3,6 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import loginApi from "../../api/loginApi";
-import roleApi from "../../api/roleApi";
 import { jwtDecode } from "jwt-decode";
 
 export default function LoginPage() {
@@ -56,13 +55,12 @@ export default function LoginPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      // Đăng nhập
       const response = await loginApi.login({
         email,
         password,
       });
 
-      console.log("Full Login Response:", response);
+      console.log("Login Response:", response);
 
       const token = response.token || response.data?.token;
 
@@ -76,60 +74,78 @@ export default function LoginPage() {
 
       // Xác định roleId dựa trên role trong token
       let userRoleId;
-      if (
-        decodedToken[
-          "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
-        ] === "Admin"
-      ) {
-        userRoleId = 1;
-      } else {
-        userRoleId = 3; // Mặc định là Customer
+      const userRole = decodedToken["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"];
+      
+      // Map role name to roleId
+      switch (userRole) {
+        case "Admin":
+          userRoleId = 1;
+          break;
+        case "Student":
+          userRoleId = 2;
+          break;
+        case "Sponsor":
+          userRoleId = 3;
+          break;
+        case "Staff":
+          userRoleId = 4;
+          break;
+        case "Manager":
+          userRoleId = 5;
+          break;
+        default:
+          throw new Error("Invalid role");
       }
 
-      // Lấy thông tin role của user dựa vào roleId
-      try {
-        const roleResponse = await roleApi.getRoleById(userRoleId);
-        const userRole = roleResponse.data || roleResponse;
-        console.log("User Role:", userRole);
+      // Lưu thông tin user và token
+      localStorage.setItem("token", token);
+      localStorage.setItem(
+        "user",
+        JSON.stringify({
+          email: decodedToken.email,
+          username: decodedToken.username,
+          userId: decodedToken.userid,
+          roleId: userRoleId,
+          role: userRole,
+        })
+      );
 
-        // Lưu thông tin user và token
-        localStorage.setItem("token", token);
-        localStorage.setItem(
-          "user",
-          JSON.stringify({
-            email: decodedToken.email,
-            username: decodedToken.username,
-            userId: decodedToken.userid,
-            roleId: userRoleId,
-            role: userRole,
-          })
-        );
+      setError("");
 
-        setError("");
+      // Hiển thị toast thành công
+      toast.success("Đăng nhập thành công!", {
+        position: "top-right",
+        autoClose: 1500,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
 
-        // Hiển thị toast thành công
-        toast.success("Đăng nhập thành công!", {
-          position: "top-right",
-          autoClose: 1500,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-        });
-
-        // Chờ toast hiển thị xong rồi mới chuyển trang
-        setTimeout(() => {
-          // Kiểm tra roleId và điều hướng
-          if (userRoleId === 1) {
+      // Chờ toast hiển thị xong rồi mới chuyển trang
+      setTimeout(() => {
+        // Điều hướng dựa trên role
+        switch (userRoleId) {
+          case 1: // Admin
             navigate("/dashboard");
-          } else {
+            break;
+          case 2: // Student
             navigate("/home");
-          }
-        }, 1300);
-      } catch (roleError) {
-        console.error("Error fetching role:", roleError);
-        toast.error("Không thể xác thực quyền người dùng");
-      }
+            break;
+          case 3: // Sponsor
+            navigate("/sponsor");
+            break;
+          case 4: // Staff
+            navigate("/staff");
+            break;
+          case 5: // Manager
+            navigate("/dashboard");
+            break;
+          default:
+            navigate("/home");
+        }
+      }, 1500);
+
     } catch (err) {
       console.error("Login Error:", err);
       setError(err.response?.data?.message || "Đăng nhập thất bại");

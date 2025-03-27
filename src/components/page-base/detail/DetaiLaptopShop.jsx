@@ -1,9 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 
-import productApi from "../../../api/productApi";
-import productImageApi from "../../../api/productImageApi";
-
 import Breadcrumb from "../../reuse/breadscumb/Breadcrumb";
 import ProductImage from "./ProductImage";
 import ProductInfo from "./ProductInfo";

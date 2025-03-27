@@ -1,8 +1,8 @@
 import axios from "axios";
 
 const axiosClient = axios.create({
-  baseURL: "http://fptsharelaptop.somee.com/api", // URL API mới đúng
-  timeout: 10000, // Thời gian chờ request
+  baseURL: "http://fptsharelaptopsp.somee.com/api", 
+  timeout: 10000, 
   headers: {
     "Content-Type": "application/json",
   },
@@ -23,7 +23,7 @@ axiosClient.interceptors.request.use(
 axiosClient.interceptors.response.use(
   (response) => {
     return response.data;
-  }, // Chỉ lấy dữ liệu cần thiết từ response
+  }, 
   (error) => {
     if (error.response) {
       switch (error.response.status) {

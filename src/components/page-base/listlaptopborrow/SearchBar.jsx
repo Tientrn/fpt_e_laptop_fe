@@ -47,28 +47,6 @@ const SearchBar = ({ onSearch }) => {
               d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
             />
           </svg>
-          <button
-            type="submit"
-            className="px-6 py-3 bg-teal-600 hover:bg-teal-700 text-white font-medium 
-              rounded-r-lg transition-colors duration-300 shadow-sm hover:shadow-md
-              flex items-center"
-          >
-            <span>Search</span>
-            <svg
-              className="w-4 h-4 ml-2"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M14 5l7 7m0 0l-7 7m7-7H3"
-              />
-            </svg>
-          </button>
         </form>
       </div>
     </div>
