@@ -1,33 +1,28 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate, Outlet } from 'react-router-dom';
-import { FaHistory, FaClipboardList, FaChartLine, FaSignOutAlt, FaBars, FaFileContract, FaMoneyBillWave } from 'react-icons/fa';
+import { FaUser, FaClipboardList, FaFileContract, FaSignOutAlt, FaBars, FaHome } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 
-const StaffLayout = () => {
+const StudentLayout = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const location = useLocation();
   const navigate = useNavigate();
 
   const menuItems = [
     {
-      path: '/staff/borrow-requests',
-      name: 'Borrow Requests',
+      path: '/student/profile',
+      name: 'My Profile',
+      icon: <FaUser className="w-5 h-5" />
+    },
+    {
+      path: '/student/requests',
+      name: 'My Requests',
       icon: <FaClipboardList className="w-5 h-5" />
     },
     {
-      path: '/staff/borrow-history',
-      name: 'Borrow History',
-      icon: <FaHistory className="w-5 h-5" />
-    },
-    {
-      path: '/staff/contracts',
-      name: 'Contracts',
+      path: '/student/contractstudent',
+      name: 'My Contracts',
       icon: <FaFileContract className="w-5 h-5" />
-    },
-    {
-      path: '/staff/statistics',
-      name: 'Statistics',
-      icon: <FaChartLine className="w-5 h-5" />
     }
   ];
 
@@ -48,12 +43,16 @@ const StaffLayout = () => {
     }
   };
 
+  const handleGoHome = () => {
+    navigate('/');
+  };
+
   return (
     <div className="flex h-screen bg-gray-100">
-      {/* Sidebar */}
+      {/* Sidebar - Changed from purple-800 to blue-800 */}
       <div className={`${isSidebarOpen ? 'w-64' : 'w-20'} bg-blue-800 text-white transition-all duration-300 ease-in-out`}>
         <div className="p-4 flex justify-between items-center">
-          <h2 className={`text-2xl ml-4 font-bold ${!isSidebarOpen && 'hidden'}`}>Staff</h2>
+          <h2 className={`text-2xl ml-4 font-bold ${!isSidebarOpen && 'hidden'}`}>Student</h2>
           <button
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
             className="p-2 rounded-lg hover:bg-blue-700 transition-colors"
@@ -82,13 +81,21 @@ const StaffLayout = () => {
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Header with Logout */}
+        {/* Header with Home and Logout */}
         <header className="bg-white shadow-md">
           <div className="flex justify-end items-center px-6 py-4">
             <button
+              onClick={handleGoHome}
+              className="flex items-center px-4 py-2 mr-4 text-sm font-medium text-blue-600 
+                       bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors duration-200"
+            >
+              <FaHome className="w-5 h-5 mr-2" />
+              Home
+            </button>
+            <button
               onClick={handleLogout}
-              className="flex items-center px-4 py-2 text-sm font-medium text-gray-700 hover:text-red-600 
-                       hover:bg-gray-100 rounded-lg transition-colors duration-200"
+              className="flex items-center px-4 py-2 text-sm font-medium text-red-600 
+                       bg-red-50 rounded-lg hover:bg-red-100 transition-colors duration-200"
             >
               <FaSignOutAlt className="w-5 h-5 mr-2" />
               Logout
@@ -107,4 +114,4 @@ const StaffLayout = () => {
   );
 };
 
-export default StaffLayout; 
+export default StudentLayout; 

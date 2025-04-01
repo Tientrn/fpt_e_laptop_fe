@@ -5,6 +5,7 @@ import StoreIcon from "@mui/icons-material/Store";
 import HandshakeIcon from "@mui/icons-material/Handshake";
 import PersonIcon from '@mui/icons-material/Person';
 import { jwtDecode } from "jwt-decode";
+import useCartStore from "../../store/useCartStore";
 
 function HeaderHomePage() {
   const [nav, setNav] = useState(false);
@@ -15,6 +16,9 @@ function HeaderHomePage() {
   });
   const location = useLocation();
   const navigate = useNavigate();
+  
+  // Get cart count from cart store
+  const cartCount = useCartStore((state) => state.getCartCount());
 
   const handleLogout = () => {
     // Clear all storage
@@ -136,9 +140,11 @@ function HeaderHomePage() {
                 className="text-white relative hover:text-purple-300"
               >
                 <ShoppingCartCheckoutIcon />
-                <span className="absolute -top-2 -right-2 inline-block w-5 h-5 text-xs font-semibold text-center text-white bg-red-500 rounded-full leading-5">
-                  3
-                </span>
+                {cartCount > 0 && (
+                  <span className="absolute -top-2 -right-2 inline-block w-5 h-5 text-xs font-semibold text-center text-white bg-red-500 rounded-full leading-5">
+                    {cartCount}
+                  </span>
+                )}
               </a>
 
               {!isLoggedIn ? (
@@ -169,10 +175,10 @@ function HeaderHomePage() {
                   {isProfileOpen && (
                     <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10">
                       <a
-                        href="/profile"
+                        href="/student/profile"
                         className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                       >
-                        Profile
+                        My account
                       </a>
                       <button
                         onClick={handleLogout}

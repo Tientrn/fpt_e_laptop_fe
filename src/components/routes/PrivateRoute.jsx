@@ -1,3 +1,4 @@
+import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 
 export const ROLES = {
@@ -34,4 +35,4 @@ const PrivateRoute = ({ children, allowedRoles = [] }) => {
   return children;
 };
 
-export default PrivateRoute; 
+export { PrivateRoute }; 

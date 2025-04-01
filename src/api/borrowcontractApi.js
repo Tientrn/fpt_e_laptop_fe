@@ -10,8 +10,8 @@ const borrowcontractApi = {
     getBorrowContractById: (id) => {
         return axiosClient.get(`/BorrowContract/get/${id}`);
     },
-
-    // Create new borrow contract
+    
+    // Create borrow contract
     createBorrowContract: (data) => {
         return axiosClient.post('/BorrowContract/create', data);
     },

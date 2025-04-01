@@ -188,7 +188,7 @@ const DetailLaptopBorrow = () => {
                   <h2 className="text-xl font-semibold text-gray-900 mb-3">Recent Reviews</h2>
                   <div className="space-y-4">
                     {laptop.reviews.map((review, index) => (
-                      <div key={index} className="bg-white p-4 rounded-lg shadow">
+                      <div key={index} className="bg-white p-3 rounded-lg shadow">
                         <div className="flex items-center justify-between mb-2">
                           <span className="font-medium text-gray-700">{review.user}</span>
                           <div className="flex items-center">

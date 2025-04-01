@@ -8,6 +8,9 @@ import {
   FaTrash,
   FaFilter
 } from 'react-icons/fa';
+import borrowhistoryApi from '../../api/borrowhistoryApi';
+import userinfoApi from '../../api/userinfoApi';
+import borrowRequestApi from '../../api/borrowRequestApi';
 
 const BorrowHistory = () => {
   const [borrowHistory, setBorrowHistory] = useState([]);
@@ -16,21 +19,69 @@ const BorrowHistory = () => {
   const [filterStatus, setFilterStatus] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
+  const [userInfoMap, setUserInfoMap] = useState({});
+  const [requestsMap, setRequestsMap] = useState({});
 
   useEffect(() => {
     fetchBorrowHistory();
+    fetchUserInfo();
+    fetchBorrowRequests();
   }, []);
+
+  const fetchUserInfo = async () => {
+    try {
+      const response = await userinfoApi.getUserInfo();
+      if (response.isSuccess) {
+        const userMap = {};
+        response.data.forEach(user => {
+          userMap[user.userId] = {
+            fullName: user.fullName,
+            email: user.email
+          };
+        });
+        setUserInfoMap(userMap);
+      } else {
+        console.warn('Failed to fetch user info:', response.message);
+        setUserInfoMap({});
+      }
+    } catch (error) {
+      console.error('Error fetching user info:', error);
+      setUserInfoMap({});
+      toast.error('Unable to load user information');
+    }
+  };
 
   const fetchBorrowHistory = async () => {
     try {
-      const response = await fetch('api/borrow-histories');
-      const data = await response.json();
-      setBorrowHistory(data);
+      const response = await borrowhistoryApi.getAllBorrowHistories();
+      if (response.isSuccess) {
+        setBorrowHistory(response.data || []);
+      } else {
+        toast.error('Failed to load borrow history');
+      }
       setLoading(false);
     } catch (error) {
       console.error('Error fetching borrow history:', error);
       toast.error('Failed to load borrow history');
       setLoading(false);
+    }
+  };
+
+  const fetchBorrowRequests = async () => {
+    try {
+      const response = await borrowRequestApi.getAllBorrowRequests();
+      if (response.isSuccess) {
+        const requestMap = {};
+        response.data.forEach(request => {
+          requestMap[request.requestId] = {
+            itemName: request.itemName,
+            status: request.status
+          };
+        });
+        setRequestsMap(requestMap);
+      }
+    } catch (error) {
+      console.error('Error fetching borrow requests:', error);
     }
   };
 
@@ -80,8 +131,10 @@ const BorrowHistory = () => {
 
   // Filter and search logic
   const filteredHistory = borrowHistory.filter(item => {
-    const matchesSearch = item.studentName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         item.laptopName.toLowerCase().includes(searchTerm.toLowerCase());
+    const userInfo = userInfoMap[item.userId] || {};
+    const matchesSearch = 
+      userInfo.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      userInfo.email?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesFilter = filterStatus === 'all' || item.status === filterStatus;
     return matchesSearch && matchesFilter;
   });
@@ -93,155 +146,107 @@ const BorrowHistory = () => {
   const totalPages = Math.ceil(filteredHistory.length / itemsPerPage);
 
   return (
-    <div className="bg-white rounded-lg shadow-lg p-6">
-      <h1 className="text-2xl font-bold mb-6">Borrow History</h1>
+    <div className="container mx-auto px-6 py-8">
+      <h1 className="text-3xl font-bold mb-8 text-gray-800 border-b pb-4">
+        Borrow History
+      </h1>
 
-      {/* Search and Filter Section */}
-      <div className="flex flex-wrap gap-4 mb-6">
-        <div className="flex-1 min-w-[200px]">
-          <div className="relative">
-            <input
-              type="text"
-              placeholder="Search by student or laptop..."
-              className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-            <FaSearch className="absolute left-3 top-3 text-gray-400" />
-          </div>
-        </div>
-
-        <div className="min-w-[200px]">
-          <div className="relative">
-            <select
-              className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 appearance-none"
-              value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
-            >
-              <option value="all">All Status</option>
-              <option value="borrowed">Borrowed</option>
-              <option value="returned">Returned</option>
-              <option value="overdue">Overdue</option>
-            </select>
-            <FaFilter className="absolute left-3 top-3 text-gray-400" />
-          </div>
+      {/* Search Section */}
+      <div className="mb-6">
+        <div className="relative">
+          <input
+            type="text"
+            placeholder="Search by name or email..."
+            className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+          <FaSearch className="absolute left-3 top-3 text-gray-400" />
         </div>
       </div>
 
       {/* Table */}
       {loading ? (
-        <div className="text-center py-4">Loading...</div>
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+        </div>
       ) : (
-        <>
-          <div className="overflow-x-auto">
-            <table className="min-w-full bg-white border rounded-lg">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Student
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Laptop
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Borrow Date
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Return Date
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Actions
-                  </th>
+        <div className="bg-white rounded-xl shadow-md overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">History ID</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Request ID</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Full Name</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Email</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Item Name</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Borrow Date</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Return Date</th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {currentItems.map((item) => (
+                <tr key={item.borrowHistoryId} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    #{item.borrowHistoryId}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    #{item.requestId}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                    {userInfoMap[item.userId]?.fullName || 'Loading...'}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {userInfoMap[item.userId]?.email || 'Loading...'}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {requestsMap[item.requestId]?.itemName || 'Loading...'}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                    {format(new Date(item.borrowDate), 'dd/MM/yyyy HH:mm:ss')}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                    {item.returnDate ? format(new Date(item.returnDate), 'dd/MM/yyyy HH:mm:ss') : '-'}
+                  </td>
                 </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200">
-                {currentItems.map((item) => (
-                  <tr key={item.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {item.studentName}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {item.laptopName}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {format(new Date(item.borrowDate), 'dd/MM/yyyy')}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {item.returnDate ? format(new Date(item.returnDate), 'dd/MM/yyyy') : '-'}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full
-                        ${item.status === 'borrowed' ? 'bg-green-100 text-green-800' : 
-                          item.status === 'returned' ? 'bg-blue-100 text-blue-800' : 
-                          'bg-red-100 text-red-800'}`}>
-                        {item.status}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <div className="flex space-x-3">
-                        <button
-                          onClick={() => handleViewDetails(item.id)}
-                          className="text-blue-600 hover:text-blue-900"
-                        >
-                          <FaEye className="w-5 h-5" />
-                        </button>
-                        <button
-                          onClick={() => handleUpdateStatus(item.id)}
-                          className="text-green-600 hover:text-green-900"
-                        >
-                          <FaEdit className="w-5 h-5" />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(item.id)}
-                          className="text-red-600 hover:text-red-900"
-                        >
-                          <FaTrash className="w-5 h-5" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Pagination */}
-          <div className="flex justify-between items-center mt-4">
-            <div className="text-sm text-gray-700">
-              Showing {indexOfFirstItem + 1} to {Math.min(indexOfLastItem, filteredHistory.length)} of {filteredHistory.length} entries
-            </div>
-            <div className="flex space-x-2">
-              <button
-                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                disabled={currentPage === 1}
-                className="px-3 py-1 border rounded-lg disabled:opacity-50"
-              >
-                Previous
-              </button>
-              {[...Array(totalPages)].map((_, i) => (
-                <button
-                  key={i + 1}
-                  onClick={() => setCurrentPage(i + 1)}
-                  className={`px-3 py-1 border rounded-lg 
-                    ${currentPage === i + 1 ? 'bg-blue-500 text-white' : ''}`}
-                >
-                  {i + 1}
-                </button>
               ))}
-              <button
-                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                disabled={currentPage === totalPages}
-                className="px-3 py-1 border rounded-lg disabled:opacity-50"
-              >
-                Next
-              </button>
-            </div>
-          </div>
-        </>
+            </tbody>
+          </table>
+        </div>
       )}
+
+      {/* Pagination */}
+      <div className="flex justify-between items-center mt-4">
+        <div className="text-sm text-gray-700">
+          Showing {indexOfFirstItem + 1} to {Math.min(indexOfLastItem, filteredHistory.length)} of {filteredHistory.length} entries
+        </div>
+        <div className="flex space-x-2">
+          <button
+            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+            disabled={currentPage === 1}
+            className="px-3 py-1 border rounded-lg disabled:opacity-50"
+          >
+            Previous
+          </button>
+          {[...Array(totalPages)].map((_, i) => (
+            <button
+              key={i + 1}
+              onClick={() => setCurrentPage(i + 1)}
+              className={`px-3 py-1 border rounded-lg 
+                ${currentPage === i + 1 ? 'bg-blue-500 text-white' : ''}`}
+            >
+              {i + 1}
+            </button>
+          ))}
+          <button
+            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+            disabled={currentPage === totalPages}
+            className="px-3 py-1 border rounded-lg disabled:opacity-50"
+          >
+            Next
+          </button>
+        </div>
+      </div>
     </div>
   );
 };

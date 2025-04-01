@@ -24,7 +24,8 @@ const donateitemsApi = {
     // Delete donate item
     deleteDonateItem: (id) => {
         return axiosClient.delete(`/donate-items/${id}`);
-    }
+    },
+
 };
 
 export default donateitemsApi; 
