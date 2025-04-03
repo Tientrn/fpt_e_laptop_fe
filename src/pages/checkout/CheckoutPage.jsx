@@ -4,17 +4,17 @@ import CheckoutForm from "../../components/page-base/checkout/CheckoutForm";
 const initialCartItems = [
   {
     id: 1,
-    name: "Product 1",
-    price: 29.99,
+    name: "Laptop Dell XPS 13",
+    price: 1299.99,
     quantity: 1,
-    image: "link_to_image",
+    image: "https://via.placeholder.com/150",
   },
   {
     id: 2,
-    name: "Product 2",
-    price: 19.99,
+    name: "MacBook Air M1",
+    price: 999.99,
     quantity: 2,
-    image: "link_to_image",
+    image: "https://via.placeholder.com/150",
   },
 ];
 
@@ -35,12 +35,16 @@ const CheckoutPage = () => {
   };
 
   return (
-    <CheckoutForm
-      cartItems={cartItems}
-      onUpdateQuantity={handleUpdateQuantity}
-      onRemove={handleRemoveItem}
-      shippingCost={shippingCost}
-    />
+    <div className="min-h-screen bg-gray-50 py-8">
+      <div className="max-w-5xl mx-auto">
+        <CheckoutForm
+          cartItems={cartItems}
+          onUpdateQuantity={handleUpdateQuantity}
+          onRemove={handleRemoveItem}
+          shippingCost={shippingCost}
+        />
+      </div>
+    </div>
   );
 };
 
