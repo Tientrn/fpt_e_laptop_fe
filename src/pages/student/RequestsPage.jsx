@@ -21,24 +21,6 @@ const getStatusColor = (status) => {
   }
 };
 
-const getStatusMessage = (status) => {
-  switch (status) {
-    case "Borrowing":
-      return {
-        message:
-          "Bạn đang mượn một laptop. Bạn không thể mượn thêm cho đến khi trả lại chiếc này.",
-        className: "text-gray-600 italic",
-      };
-    case "Returned":
-      return {
-        message: "Bạn có thể mượn một laptop khác ngay bây giờ.",
-        className: "text-amber-600 font-medium",
-      };
-    default:
-      return null;
-  }
-};
-
 const RequestsPage = () => {
   const [request, setRequest] = useState(null);
   const [userInfo, setUserInfo] = useState(null);
@@ -48,9 +30,8 @@ const RequestsPage = () => {
     const fetchData = async () => {
       try {
         setLoading(true);
-
         const userResponse = await userinfoApi.getUserInfo();
-        if (userResponse && userResponse.isSuccess && userResponse.data) {
+        if (userResponse?.isSuccess && userResponse.data) {
           const userData = userResponse.data;
           setUserInfo({
             fullName: userData.fullName,
@@ -59,11 +40,7 @@ const RequestsPage = () => {
           });
 
           const requestResponse = await borrowrequestApi.getAllBorrowRequests();
-          if (
-            requestResponse &&
-            requestResponse.isSuccess &&
-            requestResponse.data
-          ) {
+          if (requestResponse?.isSuccess && requestResponse.data) {
             const userRequests = requestResponse.data.filter(
               (req) => req.userId === userData.userId
             );
@@ -71,6 +48,7 @@ const RequestsPage = () => {
             if (userRequests.length > 0) {
               const latestRequest = userRequests[userRequests.length - 1];
               setRequest({
+                id: latestRequest.requestId, // Thêm ID để hủy yêu cầu
                 itemName: latestRequest.itemName,
                 status: latestRequest.status,
                 startDate: latestRequest.startDate,
@@ -91,6 +69,23 @@ const RequestsPage = () => {
 
     fetchData();
   }, []);
+
+  const handleCancelRequest = async () => {
+    if (!request || request.status !== "Pending") return;
+
+    try {
+      const response = await borrowrequestApi.deleteBorrowRequest(request.id);
+      if (response?.isSuccess) {
+        toast.success("Hủy yêu cầu thành công!");
+        setRequest((prev) => ({ ...prev, status: "Canceled" }));
+      } else {
+        toast.error("Không thể hủy yêu cầu.");
+      }
+    } catch (error) {
+      console.error("Lỗi khi hủy yêu cầu:", error);
+      toast.error("Lỗi khi hủy yêu cầu.");
+    }
+  };
 
   if (loading) {
     return (
@@ -145,15 +140,6 @@ const RequestsPage = () => {
                     ? "Đã trả"
                     : request.status}
                 </span>
-                {getStatusMessage(request.status) && (
-                  <p
-                    className={`mt-1 text-xs ${
-                      getStatusMessage(request.status).className
-                    }`}
-                  >
-                    {getStatusMessage(request.status).message}
-                  </p>
-                )}
               </div>
             </div>
             <div className="flex items-center p-2">
@@ -190,7 +176,19 @@ const RequestsPage = () => {
             </div>
           </div>
 
-          {/* Borrowing Rules */}
+          {/* Nút Hủy Yêu Cầu */}
+          {request.status === "Pending" && (
+            <div className="flex justify-center mt-4">
+              <button
+                onClick={handleCancelRequest}
+                className="bg-red-600 text-white px-4 py-2 text-sm font-medium rounded-lg hover:bg-red-700 transition"
+              >
+                Hủy yêu cầu
+              </button>
+            </div>
+          )}
+
+          {/* Quy định */}
           <div className="p-4 border border-gray-200 rounded">
             <h4 className="text-sm font-semibold text-black mb-2">
               Quy định mượn laptop:
