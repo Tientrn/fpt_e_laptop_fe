@@ -91,15 +91,7 @@ const StaffLayout = () => {
         </nav>
 
         {/* Logout in Sidebar */}
-        <div className="p-4 border-t border-slate-500">
-          <button
-            onClick={handleLogout}
-            className="flex items-center w-full px-4 py-3 text-sm font-medium text-white hover:bg-amber-600 transition-colors"
-          >
-            <FaSignOutAlt className="w-5 h-5" />
-            <span className={`ml-3 ${!isSidebarOpen && "hidden"}`}>Logout</span>
-          </button>
-        </div>
+        
       </div>
 
       {/* Main Content */}
@@ -108,12 +100,18 @@ const StaffLayout = () => {
         <header className="bg-white border-b border-slate-200 shadow-sm">
           <div className="flex items-center justify-between px-6 py-4">
             <div className="text-sm text-amber-600 font-medium">
-              {menuItems.find((item) => item.path === location.pathname)
-                ?.name || "Staff Dashboard"}
+              {/* {menuItems.find((item) => item.path === location.pathname)
+                ?.name || "Staff Dashboard"} */}
             </div>
-            <div className="flex items-center space-x-4">
-              <span className="text-sm text-black">Welcome, Staff</span>
-            </div>
+            <div className="p-4 border-t border-slate-500">
+          <button
+            onClick={handleLogout}
+            className="flex items-center w-full px-4 py-3 text-sm font-medium text-black hover:bg-teal-600 transition-colors"
+          >
+            <FaSignOutAlt className="w-5 h-5" />
+            <span className={`ml-3 ${!isSidebarOpen && "hidden"}`}>Logout</span>
+          </button>
+        </div>
           </div>
         </header>
 

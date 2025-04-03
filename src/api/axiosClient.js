@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const axiosClient = axios.create({
-  baseURL: "http://fptsharelaptopsp.somee.com/api", 
+  baseURL: "http://fptsharelaptop1.somee.com/api", 
   timeout: 10000, 
   headers: {
     "Content-Type": "application/json",

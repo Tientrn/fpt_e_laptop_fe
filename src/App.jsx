@@ -52,7 +52,7 @@ import ConfirmationPage from "./components/page-base/detailborrow/ConfirmationPa
 import CardDetail from "./components/page-base/listlaptopborrow/CardDetail";
 import LaptopShopPage from "./pages/shop/LaptopShopPage";
 import ProductDetailPage from "./pages/shop/ProductDetailPage";
-
+import BorrowRequestPage from "./pages/borrow/BorrowRequestPage";
 const App = () => {
   return (
     <BrowserRouter>
@@ -175,7 +175,7 @@ const App = () => {
           <Route path="requests" element={<RequestsPage />} />
           <Route path="contractstudent" element={<Contractstudent />} />
         </Route>
-
+        <Route path="/borrow-request/create/:id" element={<BorrowRequestPage />} />
         {/* Admin Routes */}
         <Route
           path="/admin"
@@ -236,6 +236,7 @@ const App = () => {
             </HomePageLayout>
           }
         />
+        
       </Routes>
     </BrowserRouter>
   );

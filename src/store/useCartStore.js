@@ -1,97 +1,93 @@
 import { create } from "zustand";
-import { persist, createJSONStorage } from "zustand/middleware";
+import { persist } from "zustand/middleware";
 
 const useCartStore = create(
   persist(
     (set, get) => ({
-      items: [],
+      carts: {},
+      currentUserId: null,
 
-      // Thêm sản phẩm vào giỏ hàng
+      initializeCart: (userId) => {
+        set({ currentUserId: userId });
+      },
+
       addToCart: (product) => {
-        const items = get().items;
-        const existingItem = items.find(
-          (item) => item.productId === product.productId
+        const { carts, currentUserId } = get();
+        const userCart = carts[currentUserId] || [];
+        const existingItem = userCart.find(item => item.productId === product.productId);
+        
+        if (existingItem) {
+          const updatedCart = userCart.map(item =>
+            item.productId === product.productId
+              ? { ...item, quantity: item.quantity + 1, totalPrice: (item.quantity + 1) * item.price }
+              : item
+          );
+          set({
+            carts: {
+              ...carts,
+              [currentUserId]: updatedCart
+            }
+          });
+        } else {
+          set({
+            carts: {
+              ...carts,
+              [currentUserId]: [...userCart, { ...product, quantity: 1, totalPrice: product.price }]
+            }
+          });
+        }
+      },
+
+      decreaseQuantity: (productId) => {
+        const { carts, currentUserId } = get();
+        const userCart = carts[currentUserId] || [];
+
+        const updatedCart = userCart.map(item =>
+          item.productId === productId && item.quantity > 1
+            ? { ...item, quantity: item.quantity - 1, totalPrice: (item.quantity - 1) * item.price }
+            : item
         );
 
-        if (existingItem) {
-          // Nếu sản phẩm đã tồn tại, tăng số lượng
-          set({
-            items: items.map((item) =>
-              item.productId === product.productId
-                ? {
-                    ...item,
-                    quantity: item.quantity + 1,
-                    totalPrice: (item.quantity + 1) * item.price,
-                  }
-                : item
-            ),
-          });
-        } else {
-          // Nếu sản phẩm chưa tồn tại, thêm mới
-          set({
-            items: [
-              ...items,
-              {
-                ...product,
-                quantity: 1,
-                totalPrice: product.price,
-              },
-            ],
-          });
-        }
-      },
-
-      // Giảm số lượng sản phẩm
-      decreaseQuantity: (productId) => {
-        const items = get().items;
-        const existingItem = items.find((item) => item.productId === productId);
-
-        if (existingItem.quantity === 1) {
-          // Nếu số lượng là 1, xóa sản phẩm
-          set({
-            items: items.filter((item) => item.productId !== productId),
-          });
-        } else {
-          // Giảm số lượng
-          set({
-            items: items.map((item) =>
-              item.productId === productId
-                ? {
-                    ...item,
-                    quantity: item.quantity - 1,
-                    totalPrice: (item.quantity - 1) * item.price,
-                  }
-                : item
-            ),
-          });
-        }
-      },
-
-      // Xóa sản phẩm khỏi giỏ hàng
-      removeFromCart: (productId) => {
         set({
-          items: get().items.filter((item) => item.productId !== productId),
+          carts: {
+            ...carts,
+            [currentUserId]: updatedCart
+          }
         });
       },
 
-      // Tính tổng tiền giỏ hàng
-      getTotalPrice: () => {
-        return get().items.reduce((total, item) => total + item.totalPrice, 0);
+      removeFromCart: (productId) => {
+        const { carts, currentUserId } = get();
+        const userCart = carts[currentUserId] || [];
+
+        set({
+          carts: {
+            ...carts,
+            [currentUserId]: userCart.filter(item => item.productId !== productId)
+          }
+        });
       },
 
-      // Xóa toàn bộ giỏ hàng
-      clearCart: () => {
-        set({ items: [] });
-      },
-
-      // Lấy số lượng sản phẩm trong giỏ
       getCartCount: () => {
-        return get().items.reduce((total, item) => total + item.quantity, 0);
+        const { carts, currentUserId } = get();
+        const userCart = carts[currentUserId] || [];
+        return userCart.reduce((total, item) => total + item.quantity, 0);
       },
+
+      getTotalPrice: () => {
+        const { carts, currentUserId } = get();
+        const userCart = carts[currentUserId] || [];
+        return userCart.reduce((total, item) => total + item.totalPrice, 0);
+      },
+
+      getCurrentCart: () => {
+        const { carts, currentUserId } = get();
+        return carts[currentUserId] || [];
+      }
     }),
     {
-      name: "cart-storage", // tên unique cho storage
-      storage: createJSONStorage(() => sessionStorage), // sử dụng sessionStorage
+      name: "cart-storage",
+      getStorage: () => localStorage,
     }
   )
 );

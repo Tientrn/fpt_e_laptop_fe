@@ -19,21 +19,22 @@ function HeaderHomePage() {
 
   // Get cart count from cart store
   const cartCount = useCartStore((state) => state.getCartCount());
+  const resetCart = useCartStore(state => state.resetCart);
 
   const handleLogout = () => {
-    // Clear all storage
+    // Clear localStorage ngoại trừ cart-storage
+    const cartData = localStorage.getItem('cart-storage');
     localStorage.clear();
-    sessionStorage.clear();
-
+    localStorage.setItem('cart-storage', cartData);
+    
     // Clear cookies
     document.cookie.split(";").forEach((c) => {
       document.cookie = c
         .replace(/^ +/, "")
         .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
     });
-
-    // Navigate to login
-    navigate("/login");
+    
+    navigate('/login');
   };
 
   // Kiểm tra token không hợp lệ hoặc hết hạn

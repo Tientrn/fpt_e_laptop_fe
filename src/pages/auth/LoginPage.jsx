@@ -5,6 +5,7 @@ import "react-toastify/dist/ReactToastify.css";
 import { motion } from "framer-motion"; // Thêm framer-motion
 import loginApi from "../../api/loginApi";
 import { jwtDecode } from "jwt-decode";
+import useCartStore from '../../store/useCartStore';
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -12,6 +13,7 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const navigate = useNavigate();
   const location = useLocation();
+  const initializeCart = useCartStore(state => state.initializeCart);
 
   useEffect(() => {
     if (location.state?.showRegisterSuccess) {
@@ -132,6 +134,9 @@ export default function LoginPage() {
             navigate("/home");
         }
       }, 1500);
+
+      // Khởi tạo cart cho user mới đăng nhập
+      initializeCart(decodedToken.userid);
     } catch (err) {
       console.error("Login Error:", err);
       setError(err.response?.data?.message || "Đăng nhập thất bại");

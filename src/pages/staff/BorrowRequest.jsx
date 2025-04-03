@@ -7,8 +7,6 @@ import {
 } from 'react-icons/fa';
 import borrowrequestApi from "../../api/borrowRequestApi"; 
 import userApi from "../../api/userApi";
-import borrowhistoryApi from "../../api/borrowhistoryApi";
-import donateitemsApi from "../../api/donateitemsApi";
 
 const BorrowRequest = () => {
   const [requests, setRequests] = useState([]);
@@ -29,27 +27,29 @@ const BorrowRequest = () => {
 
   useEffect(() => {
     fetchBorrowRequests();
-    fetchUserInfo();
   }, []);
 
-  const fetchUserInfo = async () => {
-    try {
-      const response = await userinfoApi.getUserInfo();
-      if (response.isSuccess) {
-        const userMap = response.data.reduce(
-          (map, user) => ({
-            ...map,
-            [user.userId]: { fullName: user.fullName, email: user.email },
-          }),
-          {}
-        );
-        setUserInfoMap(userMap);
+  useEffect(() => {
+    const fetchUserInfo = async () => {
+      for (const request of requests) {
+        if (request.userId && !userInfoMap[request.userId]) {
+          try {
+            const response = await userApi.getUserById(request.userId);
+            if (response.isSuccess) {
+              setUserInfoMap(prev => ({
+                ...prev,
+                [request.userId]: response.data
+              }));
+            }
+          } catch (error) {
+            console.error(`Error fetching user info for ID ${request.userId}:`, error);
+          }
+        }
       }
-    } catch (error) {
-      console.error("Error fetching user info:", error);
-      toast.error("Unable to load user information");
-    }
-  };
+    };
+
+    fetchUserInfo();
+  }, [requests]);
 
   const fetchBorrowRequests = async () => {
     try {
@@ -159,32 +159,30 @@ const BorrowRequest = () => {
   const totalPages = Math.ceil(filteredRequests.length / itemsPerPage);
 
   return (
-    <div className="min-h-screen bg-white p-6">
+    <div className="min-h-screen bg-gray-50">
       {/* Header with Staff Role Indicator */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-semibold text-black">Borrow Requests</h1>
-          <span className="text-sm text-amber-600 font-medium">
-            Staff Dashboard
-          </span>
+          <h1 className="text-3xl font-semibold text-black">Borrow Requests</h1>
+          
         </div>
         <div className="flex items-center space-x-4">
           <div className="relative w-64">
             <input
               type="text"
               placeholder="Search by user or item..."
-              className="w-full pl-8 pr-4 py-2 border border-slate-300 rounded-md text-black focus:outline-none focus:ring-2 focus:ring-amber-600"
+              className="w-full pl-10 pr-4 py-2 text-base border border-slate-300 rounded-md text-black focus:outline-none focus:ring-2 focus:ring-amber-600"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
-            <FaSearch className="absolute left-2 top-1/2 transform -translate-y-1/2 text-slate-600" />
+            <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-600" />
           </div>
           <div className="flex items-center space-x-2">
-            <FaFilter className="text-slate-600" />
+            <FaFilter className="text-slate-600 text-sm" />
             <select
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
-              className="pl-3 pr-8 py-2 border border-slate-300 rounded-md text-black focus:outline-none focus:ring-2 focus:ring-amber-600"
+              className="pl-3 pr-8 py-2 text-base border border-slate-300 rounded-md text-black focus:outline-none focus:ring-2 focus:ring-amber-600"
             >
               <option value="all">All Status</option>
               <option value="Pending">Pending</option>
@@ -198,90 +196,65 @@ const BorrowRequest = () => {
       </div>
 
       {/* Table */}
-      {loading ? (
-        <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-amber-600"></div>
-        </div>
-      ) : (
-        <div className="bg-white border border-slate-200 rounded-md shadow-sm overflow-x-auto">
-          <table className="min-w-full divide-y divide-slate-200">
-            <thead className="bg-slate-50">
-              <tr>
-                {[
-                  "Request ID",
-                  "Full Name",
-                  "Email",
-                  "Item Name",
-                  "Start Date",
-                  "End Date",
-                  "Status",
-                  "Actions",
-                ].map((header) => (
-                  <th
-                    key={header}
-                    className="px-4 py-2 text-left text-xs font-medium text-slate-600 uppercase tracking-wider"
-                  >
-                    {header}
-                  </th>
-                ))}
+      <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="bg-gray-50">
+                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600">ID</th>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600">Full Name</th>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600">Email</th>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600">Item Name</th>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600">Start Date</th>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600">End Date</th>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600">Status</th>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-200">
+            <tbody className="divide-y divide-gray-100">
               {currentItems.length > 0 ? (
                 currentItems.map((request) => (
-                  <tr key={request.requestId} className="hover:bg-slate-50">
-                    <td className="px-4 py-3 text-sm text-black">
-                      #{request.requestId}
+                  <tr key={request.requestId} className="hover:bg-gray-50 transition-colors">
+                    <td className="px-6 py-3 text-sm text-gray-800">
+                      {request.requestId}
                     </td>
-                    <td className="px-4 py-3 text-sm text-black">
-                      {userInfoMap[request.userId]?.fullName || "N/A"}
+                    <td className="px-6 py-3 text-sm text-gray-800">
+                      {userInfoMap[request.userId]?.fullName || "Loading..."}
                     </td>
-                    <td className="px-4 py-3 text-sm text-black">
-                      {userInfoMap[request.userId]?.email || "N/A"}
+                    <td className="px-6 py-3 text-sm text-gray-800">
+                      {userInfoMap[request.userId]?.email || "Loading..."}
                     </td>
-                    <td className="px-4 py-3 text-sm text-black">
-                      {request.itemName || "N/A"}
+                    <td className="px-6 py-3 text-sm text-gray-800">
+                      {request.itemName}
                     </td>
-                    <td className="px-4 py-3 text-sm text-black">
-                      {request.startDate
-                        ? format(new Date(request.startDate), "dd/MM/yyyy")
-                        : "N/A"}
+                    <td className="px-6 py-3 text-sm text-gray-800">
+                      {request.startDate ? format(new Date(request.startDate), "dd/MM/yyyy") : "N/A"}
                     </td>
-                    <td className="px-4 py-3 text-sm text-black">
-                      {request.endDate
-                        ? format(new Date(request.endDate), "dd/MM/yyyy")
-                        : "N/A"}
+                    <td className="px-6 py-3 text-sm text-gray-800">
+                      {request.endDate ? format(new Date(request.endDate), "dd/MM/yyyy") : "N/A"}
                     </td>
-                    <td className="px-4 py-3 text-sm">
-                      <span
-                        className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                          request.status === "Pending"
-                            ? "bg-amber-100 text-amber-800"
-                            : request.status === "Approved"
-                            ? "bg-green-100 text-green-800"
-                            : request.status === "Rejected"
-                            ? "bg-red-100 text-red-800"
-                            : request.status === "Borrowing"
-                            ? "bg-blue-100 text-blue-800"
-                            : request.status === "Returned"
-                            ? "bg-gray-100 text-gray-800"
-                            : "bg-gray-100 text-gray-800"
-                        }`}
+                    <td className="px-6 py-3">
+                      <span className={`px-3 py-1 text-sm font-medium rounded-full
+                        ${request.status === "Pending" ? "bg-amber-100 text-amber-800" :
+                          request.status === "Approved" ? "bg-green-100 text-green-800" :
+                          request.status === "Rejected" ? "bg-red-100 text-red-800" :
+                          request.status === "Borrowing" ? "bg-blue-100 text-blue-800" :
+                          "bg-gray-100 text-gray-800"}`}
                       >
                         {request.status || "Pending"}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-sm">
-                      <div className="flex space-x-2">
+                    <td className="px-6 py-3">
+                      <div className="flex gap-2">
                         <button
                           onClick={() => handleEditClick(request)}
-                          className="px-3 py-1 bg-slate-600 text-white rounded-md hover:bg-amber-600 transition-colors"
+                          className="px-3 py-1.5 text-sm font-medium text-white bg-amber-500 rounded-lg hover:bg-amber-600 transition-colors"
                         >
                           Edit
                         </button>
                         <button
                           onClick={() => handleDeleteClick(request.requestId)}
-                          className="px-3 py-1 bg-slate-600 text-white rounded-md hover:bg-amber-600 transition-colors"
+                          className="px-3 py-1.5 text-sm font-medium text-white bg-red-500 rounded-lg hover:bg-red-600 transition-colors"
                         >
                           Delete
                         </button>
@@ -291,7 +264,7 @@ const BorrowRequest = () => {
                 ))
               ) : (
                 <tr>
-                  <td colSpan="8" className="px-4 py-3 text-center text-black">
+                  <td colSpan="8" className="px-6 py-6 text-center text-sm text-gray-500">
                     No borrow requests found
                   </td>
                 </tr>
@@ -299,43 +272,38 @@ const BorrowRequest = () => {
             </tbody>
           </table>
         </div>
-      )}
+      </div>
 
       {/* Pagination */}
       {filteredRequests.length > itemsPerPage && (
-        <div className="flex justify-between items-center mt-4 text-sm text-black">
-          <span>
-            Showing {indexOfFirstItem + 1} to{" "}
-            {Math.min(indexOfLastItem, filteredRequests.length)} of{" "}
-            {filteredRequests.length} entries
-          </span>
-          <div className="flex space-x-2">
+        <div className="mt-6 flex items-center justify-between bg-white rounded-lg shadow-sm p-4">
+          <p className="text-sm text-gray-600">
+            Showing {indexOfFirstItem + 1} to {Math.min(indexOfLastItem, filteredRequests.length)} of {filteredRequests.length} entries
+          </p>
+          <div className="flex gap-2">
             <button
-              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
               disabled={currentPage === 1}
-              className="px-3 py-1 bg-slate-600 text-white rounded-md disabled:bg-slate-300 hover:bg-amber-600 transition-colors"
+              className="px-3 py-1.5 text-sm font-medium text-white bg-amber-500 rounded-lg hover:bg-amber-600 transition-colors disabled:bg-gray-300"
             >
               Previous
             </button>
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
               <button
                 key={page}
                 onClick={() => setCurrentPage(page)}
-                className={`px-3 py-1 rounded-md ${
-                  currentPage === page
-                    ? "bg-amber-600 text-white"
-                    : "bg-slate-600 text-white hover:bg-amber-600"
-                } transition-colors`}
+                className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors
+                  ${currentPage === page 
+                    ? 'bg-amber-500 text-white' 
+                    : 'bg-gray-100 text-gray-600 hover:bg-amber-100'}`}
               >
                 {page}
               </button>
             ))}
             <button
-              onClick={() =>
-                setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-              }
+              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
               disabled={currentPage === totalPages}
-              className="px-3 py-1 bg-slate-600 text-white rounded-md disabled:bg-slate-300 hover:bg-amber-600 transition-colors"
+              className="px-3 py-1.5 text-sm font-medium text-white bg-amber-500 rounded-lg hover:bg-amber-600 transition-colors disabled:bg-gray-300"
             >
               Next
             </button>

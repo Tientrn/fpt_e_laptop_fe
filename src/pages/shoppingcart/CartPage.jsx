@@ -6,8 +6,15 @@ import { toast } from "react-toastify";
 
 const CartPage = () => {
   const navigate = useNavigate();
-  const { items, removeFromCart, addToCart, decreaseQuantity, getTotalPrice } =
-    useCartStore();
+  const { 
+    getCurrentCart,
+    removeFromCart, 
+    addToCart, 
+    decreaseQuantity, 
+    getTotalPrice 
+  } = useCartStore();
+
+  const items = getCurrentCart();
 
   const formatPrice = (price) => {
     return new Intl.NumberFormat("vi-VN", {
