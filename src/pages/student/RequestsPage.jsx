@@ -39,7 +39,7 @@ const RequestsPage = () => {
             userId: userData.userId,
           });
 
-          const requestResponse = await borrowrequestApi.getAllBorrowRequests();
+          const requestResponse = await borrowRequestApi.getAllBorrowRequests();
           if (requestResponse?.isSuccess && requestResponse.data) {
             const userRequests = requestResponse.data.filter(
               (req) => req.userId === userData.userId
