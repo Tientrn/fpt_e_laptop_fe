@@ -7,7 +7,7 @@ import ScrollToTop from "./components/routes/ScrollToTop";
   /* Layout */
 }
 import AuthLayout from "./layouts/Auth";
-import HomePageLayout from "./layouts/Homepage";
+import HomePageLayout from "./layouts/homepage";
 import { SponsorLayout } from "./layouts/SponsorLayout";
 import StaffLayout from "./layouts/StaffLayout";
 import AdminLayout from "./layouts/AdminLayout";
@@ -53,6 +53,7 @@ import CardDetail from "./components/page-base/listlaptopborrow/CardDetail";
 import LaptopShopPage from "./pages/shop/LaptopShopPage";
 import ProductDetailPage from "./pages/shop/ProductDetailPage";
 import BorrowRequestPage from "./pages/borrow/BorrowRequestPage";
+
 const App = () => {
   return (
     <BrowserRouter>

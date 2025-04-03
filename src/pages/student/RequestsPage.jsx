@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { toast } from "react-toastify";
 import { format } from "date-fns";
-import borrowrequestApi from "../../api/borrowRequestApi";
-import userinfoApi from "../../api/userinfoApi";
+import borrowRequestApi from '../../../api/borrowRequestApi';
+import userinfoApi from '../../../api/userinfoApi';
 
 const getStatusColor = (status) => {
   switch (status) {
@@ -58,7 +58,7 @@ const RequestsPage = () => {
             userId: userData.userId,
           });
 
-          const requestResponse = await borrowrequestApi.getAllBorrowRequests();
+          const requestResponse = await borrowRequestApi.getAllBorrowRequests();
           if (
             requestResponse &&
             requestResponse.isSuccess &&
