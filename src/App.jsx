@@ -6,7 +6,7 @@ import ScrollToTop from "./components/routes/ScrollToTop";
 {
   /* Layout */
 }
-import AuthLayout from "./layouts/Auth";
+import {AuthLayout} from "./layouts/Auth";
 import HomePageLayout from "./layouts/Homepage";
 import { SponsorLayout } from "./layouts/SponsorLayout";
 import StaffLayout from "./layouts/StaffLayout";
