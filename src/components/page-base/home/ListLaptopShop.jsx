@@ -15,7 +15,7 @@ const ListLaptopShop = () => {
         setLoading(true);
         const response = await productApi.getAllProducts();
         console.log("API Response:", response);
-        
+
         if (response.isSuccess) {
           setLaptops(response.data || []);
         } else {
@@ -61,8 +61,8 @@ const ListLaptopShop = () => {
   }
 
   return (
-    <div className="p-6 space-y-10 bg-gradient-to-br from-emerald-50 to-teal-50">
-      <h1 className="text-center font-bold text-3xl p-4 font-serif text-teal-800">
+    <div className="p-6 space-y-10 bg-white">
+      <h1 className="text-center font-bold text-3xl p-4 font-serif text-black">
         Laptop Shop
       </h1>
 
@@ -78,14 +78,13 @@ const ListLaptopShop = () => {
           }}
           className="absolute -left-4 top-1/2 -translate-y-1/2 z-10 
             w-10 h-10 flex items-center justify-center
-            bg-white/90 rounded-full shadow-lg 
+            bg-white rounded-full shadow-lg 
             hover:bg-white hover:shadow-xl
             transition-all duration-300 
-            border border-teal-100
-            group"
+            border border-slate-600"
         >
           <svg
-            className="w-6 h-6 text-teal-600 group-hover:text-teal-700 transition-colors"
+            className="w-6 h-6 text-slate-600 group-hover:text-slate-700 transition-colors"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -107,69 +106,132 @@ const ListLaptopShop = () => {
             {laptops.map((laptop) => (
               <div
                 key={laptop.productId}
-                className="flex-none w-80 bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-duration-300 h-[540px] flex flex-col cursor-pointer"
+                className="flex-none w-80 bg-white rounded-xl shadow-md overflow-hidden transition-all duration-300 transform hover:scale-105 hover:shadow-2xl cursor-pointer"
                 onClick={() => handleCardClick(laptop.productId)}
               >
                 <div className="relative h-52">
                   <img
-                    src={laptop.imageProduct || "https://via.placeholder.com/300x200"}
+                    src={
+                      laptop.imageProduct ||
+                      "https://via.placeholder.com/300x200"
+                    }
                     alt={laptop.productName}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-cover transition-all duration-300 transform hover:scale-110"
                   />
                   <div
                     className={`absolute top-4 right-4 px-3 py-1 rounded-md text-sm font-medium text-white
-                      ${laptop.quantity > 0 ? "bg-teal-500" : "bg-red-500"}`}
+                   ${laptop.quantity > 0 ? "bg-amber-600" : "bg-slate-600"}`}
                   >
                     {laptop.quantity > 0 ? "Available" : "Out of Stock"}
                   </div>
                 </div>
 
                 <div className="p-6 flex flex-col flex-grow">
-                  <h3 className="font-bold text-xl mb-4 text-gray-800 line-clamp-2 min-h-[3.5rem]">
+                  <h3 className="font-bold text-xl mb-4 text-black line-clamp-2 min-h-[3.5rem]">
                     {laptop.productName}
                   </h3>
-                  
+
                   <div className="space-y-2.5 flex-grow">
                     <div className="flex items-center text-gray-600">
-                      <svg className="w-5 h-5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
+                      <svg
+                        className="w-5 h-5 mr-2 flex-shrink-0"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"
+                        />
                       </svg>
-                      <span className="truncate">CPU: {laptop.cpu || "N/A"}</span>
+                      <span className="truncate">
+                        CPU: {laptop.cpu || "N/A"}
+                      </span>
                     </div>
                     <div className="flex items-center text-gray-600">
-                      <svg className="w-5 h-5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                      <svg
+                        className="w-5 h-5 mr-2 flex-shrink-0"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                        />
                       </svg>
-                      <span className="truncate">RAM: {laptop.ram || "N/A"}</span>
+                      <span className="truncate">
+                        RAM: {laptop.ram || "N/A"}
+                      </span>
                     </div>
                     <div className="flex items-center text-gray-600">
-                      <svg className="w-5 h-5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4" />
+                      <svg
+                        className="w-5 h-5 mr-2 flex-shrink-0"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4"
+                        />
                       </svg>
-                      <span className="truncate">Storage: {laptop.storage || "N/A"}</span>
+                      <span className="truncate">
+                        Storage: {laptop.storage || "N/A"}
+                      </span>
                     </div>
                     <div className="flex items-center text-gray-600">
-                      <svg className="w-5 h-5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                      <svg
+                        className="w-5 h-5 mr-2 flex-shrink-0"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                        />
                       </svg>
-                      <span className="truncate">Screen: {laptop.screenSize || "N/A"}</span>
+                      <span className="truncate">
+                        Screen: {laptop.screenSize || "N/A"}
+                      </span>
                     </div>
                     <div className="flex items-center text-gray-600">
-                      <svg className="w-5 h-5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      <svg
+                        className="w-5 h-5 mr-2 flex-shrink-0"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                        />
                       </svg>
-                      <span className="truncate">Category: {laptop.categoryName || "N/A"}</span>
+                      <span className="truncate">
+                        Category: {laptop.categoryName || "N/A"}
+                      </span>
                     </div>
                   </div>
 
                   <div className="mt-4 flex justify-between items-center">
-                    <span className="text-lg font-bold text-teal-600">
+                    <span className="text-lg font-bold text-slate-600">
                       ${laptop.price ? laptop.price.toLocaleString() : "N/A"}
                     </span>
                     <Link
                       to={`/shop/${laptop.productId}`}
                       className="inline-flex items-center px-4 py-2 text-sm 
-                               bg-teal-500 text-white rounded-full hover:bg-teal-600 transition-colors"
+                            bg-slate-600 text-white rounded-full hover:bg-amber-600 transition-all duration-300"
                       onClick={(e) => e.stopPropagation()}
                     >
                       <span>View Details</span>
@@ -192,14 +254,13 @@ const ListLaptopShop = () => {
           }}
           className="absolute -right-4 top-1/2 -translate-y-1/2 z-10 
             w-10 h-10 flex items-center justify-center
-            bg-white/90 rounded-full shadow-lg 
+            bg-white rounded-full shadow-lg 
             hover:bg-white hover:shadow-xl
             transition-all duration-300 
-            border border-teal-100
-            group"
+            border border-slate-600"
         >
           <svg
-            className="w-6 h-6 text-teal-600 group-hover:text-teal-700 transition-colors"
+            className="w-6 h-6 text-slate-600 group-hover:text-amber-600 transition-colors"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -218,8 +279,8 @@ const ListLaptopShop = () => {
         <Link
           to="/laptopshop"
           className="px-6 py-3 rounded-full 
-            bg-teal-600 text-white
-            hover:bg-teal-700 
+            bg-slate-600 text-white
+            hover:bg-amber-600
             transition-all duration-300
             shadow-md hover:shadow-lg
             font-medium

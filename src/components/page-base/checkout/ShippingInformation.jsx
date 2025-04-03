@@ -70,19 +70,15 @@ const ShippingInformation = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Full Name */}
         <div className="space-y-2">
-          <label className="block text-sm font-medium text-teal-700">
-            Full Name
-            <span className="text-red-500 ml-1">*</span>
+          <label className="block text-sm font-medium text-black">
+            Full Name<span className="text-red-500 ml-1">*</span>
           </label>
           <input
             type="text"
             name="name"
             value={formData.name}
             onChange={handleChange}
-            className="w-full p-3 border border-teal-200 rounded-lg
-              focus:ring-2 focus:ring-teal-500 focus:border-teal-500
-              placeholder-teal-300 text-teal-800
-              transition-all duration-200"
+            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-slate-600 focus:border-slate-600 placeholder-gray-400 text-black transition-all duration-200"
             placeholder="John Doe"
           />
           {errors.name && (
@@ -92,19 +88,15 @@ const ShippingInformation = () => {
 
         {/* Phone Number */}
         <div className="space-y-2">
-          <label className="block text-sm font-medium text-teal-700">
-            Phone Number
-            <span className="text-red-500 ml-1">*</span>
+          <label className="block text-sm font-medium text-black">
+            Phone Number<span className="text-red-500 ml-1">*</span>
           </label>
           <input
             type="tel"
             name="phone"
             value={formData.phone}
             onChange={handleChange}
-            className="w-full p-3 border border-teal-200 rounded-lg
-              focus:ring-2 focus:ring-teal-500 focus:border-teal-500
-              placeholder-teal-300 text-teal-800
-              transition-all duration-200"
+            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-slate-600 focus:border-slate-600 placeholder-gray-400 text-black transition-all duration-200"
             placeholder="0123456789"
           />
           {errors.phone && (
@@ -115,19 +107,15 @@ const ShippingInformation = () => {
 
       {/* Email */}
       <div className="space-y-2">
-        <label className="block text-sm font-medium text-teal-700">
-          Email Address
-          <span className="text-red-500 ml-1">*</span>
+        <label className="block text-sm font-medium text-black">
+          Email Address<span className="text-red-500 ml-1">*</span>
         </label>
         <input
           type="email"
           name="email"
           value={formData.email}
           onChange={handleChange}
-          className="w-full p-3 border border-teal-200 rounded-lg
-            focus:ring-2 focus:ring-teal-500 focus:border-teal-500
-            placeholder-teal-300 text-teal-800
-            transition-all duration-200"
+          className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-slate-600 focus:border-slate-600 placeholder-gray-400 text-black transition-all duration-200"
           placeholder="john@example.com"
         />
         {errors.email && (
@@ -137,19 +125,15 @@ const ShippingInformation = () => {
 
       {/* Address Information */}
       <div className="space-y-2">
-        <label className="block text-sm font-medium text-teal-700">
-          Street Address
-          <span className="text-red-500 ml-1">*</span>
+        <label className="block text-sm font-medium text-black">
+          Street Address<span className="text-red-500 ml-1">*</span>
         </label>
         <input
           type="text"
           name="address"
           value={formData.address}
           onChange={handleChange}
-          className="w-full p-3 border border-teal-200 rounded-lg
-            focus:ring-2 focus:ring-teal-500 focus:border-teal-500
-            placeholder-teal-300 text-teal-800
-            transition-all duration-200"
+          className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-slate-600 focus:border-slate-600 placeholder-gray-400 text-black transition-all duration-200"
           placeholder="123 Main St"
         />
         {errors.address && (
@@ -160,19 +144,15 @@ const ShippingInformation = () => {
       {/* City and Postal Code */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-2">
-          <label className="block text-sm font-medium text-teal-700">
-            City
-            <span className="text-red-500 ml-1">*</span>
+          <label className="block text-sm font-medium text-black">
+            City<span className="text-red-500 ml-1">*</span>
           </label>
           <input
             type="text"
             name="city"
             value={formData.city}
             onChange={handleChange}
-            className="w-full p-3 border border-teal-200 rounded-lg
-              focus:ring-2 focus:ring-teal-500 focus:border-teal-500
-              placeholder-teal-300 text-teal-800
-              transition-all duration-200"
+            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-slate-600 focus:border-slate-600 placeholder-gray-400 text-black transition-all duration-200"
             placeholder="Your City"
           />
           {errors.city && (
@@ -181,19 +161,15 @@ const ShippingInformation = () => {
         </div>
 
         <div className="space-y-2">
-          <label className="block text-sm font-medium text-teal-700">
-            Postal Code
-            <span className="text-red-500 ml-1">*</span>
+          <label className="block text-sm font-medium text-black">
+            Postal Code<span className="text-red-500 ml-1">*</span>
           </label>
           <input
             type="text"
             name="postalCode"
             value={formData.postalCode}
             onChange={handleChange}
-            className="w-full p-3 border border-teal-200 rounded-lg
-              focus:ring-2 focus:ring-teal-500 focus:border-teal-500
-              placeholder-teal-300 text-teal-800
-              transition-all duration-200"
+            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-slate-600 focus:border-slate-600 placeholder-gray-400 text-black transition-all duration-200"
             placeholder="12345"
           />
           {errors.postalCode && (

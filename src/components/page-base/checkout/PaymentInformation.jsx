@@ -24,8 +24,8 @@ const PaymentInformation = () => {
   const validateExpiryDate = (date) => {
     const regex = /^(0[1-9]|1[0-2])\/([0-9]{2})$/;
     const [month, year] = date.split("/");
-    const currentYear = new Date().getFullYear() % 100; // Last two digits of current year
-    const currentMonth = new Date().getMonth() + 1; // Months are 0-indexed
+    const currentYear = new Date().getFullYear() % 100;
+    const currentMonth = new Date().getMonth() + 1;
     return (
       regex.test(date) &&
       (parseInt(year) > currentYear ||
@@ -39,13 +39,6 @@ const PaymentInformation = () => {
     return regex.test(cvv);
   };
 
-  // Validate shipping code (optional, can be empty)
-  const validateShippingCode = (code) => {
-    // Không yêu cầu shipping code phải có giá trị, có thể để trống
-    return true;
-  };
-
-  // Effect hook to validate the fields whenever there's an input change
   useEffect(() => {
     const newErrors = {
       cardNumber: validateCardNumber(cardNumber)
@@ -53,154 +46,111 @@ const PaymentInformation = () => {
         : "Card number must be 16 digits.",
       expiryDate: validateExpiryDate(expiryDate) ? "" : "Invalid expiry date.",
       cvv: validateCvv(cvv) ? "" : "CVV must be 3 or 4 digits.",
-      shippingCode:
-        paymentMethod === "shipCode" && !validateShippingCode(shippingCode)
-          ? "Shipping code cannot be empty."
-          : "",
     };
 
     setErrors(newErrors);
-  }, [cardNumber, expiryDate, cvv, shippingCode, paymentMethod]);
+  }, [cardNumber, expiryDate, cvv]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 bg-white p-6 rounded-2xl shadow-md border border-gray-200">
+      <h2 className="text-xl font-semibold text-black">Payment Information</h2>
+
       {/* Payment Method Selection */}
       <div className="space-y-4">
-        <label className="block text-sm font-medium text-teal-700">
+        <label className="block text-sm font-medium text-gray-700">
           Select Payment Method
         </label>
         <div className="flex gap-4">
-          <label
-            className="flex items-center p-4 border border-teal-200 
-            rounded-lg cursor-pointer transition-all duration-200
-            hover:border-teal-400 hover:bg-teal-50
-            peer-checked:border-teal-500 peer-checked:bg-teal-50"
+          <button
+            className={`p-3 rounded-lg border text-black transition-all ${
+              paymentMethod === "shipCode"
+                ? "border-amber-600"
+                : "border-gray-300"
+            }`}
+            onClick={() => setPaymentMethod("shipCode")}
           >
-            <input
-              type="radio"
-              value="shipCode"
-              checked={paymentMethod === "shipCode"}
-              onChange={(e) => setPaymentMethod(e.target.value)}
-              className="w-4 h-4 text-teal-600 
-                focus:ring-teal-500 border-teal-300"
-            />
-            <span className="ml-2 text-teal-700">Ship with Code</span>
-          </label>
+            Ship with Code
+          </button>
 
-          <label
-            className="flex items-center p-4 border border-teal-200 
-            rounded-lg cursor-pointer transition-all duration-200
-            hover:border-teal-400 hover:bg-teal-50
-            peer-checked:border-teal-500 peer-checked:bg-teal-50"
+          <button
+            className={`p-3 rounded-lg border text-black transition-all ${
+              paymentMethod === "creditCard"
+                ? "border-amber-600"
+                : "border-gray-300"
+            }`}
+            onClick={() => setPaymentMethod("creditCard")}
           >
-            <input
-              type="radio"
-              value="creditCard"
-              checked={paymentMethod === "creditCard"}
-              onChange={(e) => setPaymentMethod(e.target.value)}
-              className="w-4 h-4 text-teal-600 
-                focus:ring-teal-500 border-teal-300"
-            />
-            <span className="ml-2 text-teal-700">Credit Card</span>
-          </label>
+            Credit Card
+          </button>
         </div>
       </div>
 
       {/* Shipping Code Section */}
       {paymentMethod === "shipCode" && (
         <div className="space-y-2">
-          <label className="block text-sm font-medium text-teal-700">
+          <label className="block text-sm font-medium text-gray-700">
             Shipping Code
           </label>
           <input
             type="text"
             value={shippingCode}
             onChange={(e) => setShippingCode(e.target.value)}
-            className="w-full p-3 border border-teal-200 rounded-lg
-              focus:ring-2 focus:ring-teal-500 focus:border-teal-500
-              placeholder-teal-300 text-teal-800
-              transition-all duration-200"
+            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-600"
             placeholder="Enter your shipping code (optional)"
           />
-          {errors.shippingCode && (
-            <p className="text-red-500 text-sm mt-1">{errors.shippingCode}</p>
-          )}
         </div>
       )}
 
       {/* Credit Card Section */}
       {paymentMethod === "creditCard" && (
         <div className="space-y-4">
-          {/* Card Number */}
           <div className="space-y-2">
-            <label className="block text-sm font-medium text-teal-700">
+            <label className="block text-sm font-medium text-gray-700">
               Card Number
             </label>
             <input
               type="text"
               value={cardNumber}
               onChange={(e) => setCardNumber(e.target.value)}
-              className="w-full p-3 border border-teal-200 rounded-lg
-                focus:ring-2 focus:ring-teal-500 focus:border-teal-500
-                placeholder-teal-300 text-teal-800
-                transition-all duration-200"
+              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-600"
               placeholder="1234 5678 9012 3456"
             />
-            {errors.cardNumber && (
-              <p className="text-red-500 text-sm mt-1">{errors.cardNumber}</p>
-            )}
           </div>
 
-          {/* Expiry Date and CVV */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <label className="block text-sm font-medium text-teal-700">
+              <label className="block text-sm font-medium text-gray-700">
                 Expiry Date
               </label>
               <input
                 type="text"
                 value={expiryDate}
                 onChange={(e) => setExpiryDate(e.target.value)}
-                className="w-full p-3 border border-teal-200 rounded-lg
-                  focus:ring-2 focus:ring-teal-500 focus:border-teal-500
-                  placeholder-teal-300 text-teal-800
-                  transition-all duration-200"
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-600"
                 placeholder="MM/YY"
               />
-              {errors.expiryDate && (
-                <p className="text-red-500 text-sm mt-1">{errors.expiryDate}</p>
-              )}
             </div>
 
             <div className="space-y-2">
-              <label className="block text-sm font-medium text-teal-700">
+              <label className="block text-sm font-medium text-gray-700">
                 CVV
               </label>
               <input
                 type="text"
                 value={cvv}
                 onChange={(e) => setCvv(e.target.value)}
-                className="w-full p-3 border border-teal-200 rounded-lg
-                  focus:ring-2 focus:ring-teal-500 focus:border-teal-500
-                  placeholder-teal-300 text-teal-800
-                  transition-all duration-200"
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-600"
                 placeholder="123"
               />
-              {errors.cvv && (
-                <p className="text-red-500 text-sm mt-1">{errors.cvv}</p>
-              )}
             </div>
           </div>
 
           {/* QR Code Section */}
           <div className="mt-8 text-center space-y-4">
-            <h3 className="text-lg font-medium text-teal-800">
+            <h3 className="text-lg font-medium text-black">
               Scan QR Code to Pay
             </h3>
-            <div
-              className="p-4 bg-white rounded-lg shadow-sm 
-              border border-teal-100 inline-block"
-            >
+            <div className="p-4 bg-gray-100 rounded-lg shadow-sm border border-gray-300 inline-block">
               <img
                 src="/path/to/your-qr-code-image.png"
                 alt="QR Code"

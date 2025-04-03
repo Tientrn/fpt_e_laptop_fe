@@ -3,11 +3,11 @@ import React from "react";
 const ErrorMessage = ({ message }) => {
   return (
     <div
-      className="flex items-center space-x-2 p-2 rounded-lg 
-      bg-red-50 border border-red-200 text-red-600"
+      className="flex items-center space-x-2 p-3 rounded-lg 
+      bg-white border border-gray-300 text-gray-900 shadow-sm"
     >
       <svg
-        className="w-5 h-5 flex-shrink-0"
+        className="w-5 h-5 flex-shrink-0 text-amber-600"
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"

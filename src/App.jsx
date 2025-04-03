@@ -3,36 +3,48 @@ import React from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { PrivateRoute } from "./components/routes/PrivateRoute";
 import ScrollToTop from "./components/routes/ScrollToTop";
-{/* Layout */}
+{
+  /* Layout */
+}
 import AuthLayout from "./layouts/Auth";
 import HomePageLayout from "./layouts/Homepage";
 import { SponsorLayout } from "./layouts/SponsorLayout";
 import StaffLayout from "./layouts/StaffLayout";
 import AdminLayout from "./layouts/AdminLayout";
 import StudentLayout from "./layouts/StudentLayout";
-{/* Admin */}
+{
+  /* Admin */
+}
 import HomePage from "./pages/homepage/HomePage";
 import LoginPage from "./pages/auth/LoginPage";
 import RegisterPage from "./pages/auth/RegisterPage";
 import AnalyticPage from "./pages/admin/AnalyticPage";
 import ContentPage from "./pages/admin/ContentPage";
 import ReportPage from "./pages/admin/ReportPage";
-{/* Student */}
+{
+  /* Student */
+}
 import ProfilePage from "./pages/student/ProfilePage";
 import Contractstudent from "./pages/student/Contractstudent";
 import RequestsPage from "./pages/student/RequestsPage";
-{/* Staff */}
+{
+  /* Staff */
+}
 import BorrowHistory from "./pages/staff/BorrowHistory";
 import BorrowRequest from "./pages/staff/BorrowRequest";
 import Statistics from "./pages/staff/Statistics";
 import ContractsPage from "./pages/staff/ContractsPage";
 import DepositPage from "./pages/staff/DepositPage";
-{/* Sponsor */}
+{
+  /* Sponsor */
+}
 import RegisterShopPage from "./pages/shop/RegisterShopPage";
 import RegisterSponsor from "./pages/sponsor/RegisterSponsor";
 import LaptopInfo from "./pages/sponsor/LaptopInfo";
 import LaptopStatus from "./pages/sponsor/LaptopStatus";
-{/* Others */}
+{
+  /* Others */
+}
 import BorrowListingPage from "./components/page-base/listlaptopborrow/BorrowListingPage";
 import Cart from "./pages/shoppingcart/CartPage";
 import CheckoutPage from "./pages/checkout/CheckoutPage";
@@ -129,9 +141,9 @@ const App = () => {
         <Route
           path="/borrow/:id"
           element={
-            <PrivateRoute>
+            <HomePageLayout>
               <CardDetail />
-            </PrivateRoute>
+            </HomePageLayout>
           }
         />
 
@@ -163,7 +175,7 @@ const App = () => {
           <Route path="requests" element={<RequestsPage />} />
           <Route path="contractstudent" element={<Contractstudent />} />
         </Route>
-        
+
         {/* Admin Routes */}
         <Route
           path="/admin"

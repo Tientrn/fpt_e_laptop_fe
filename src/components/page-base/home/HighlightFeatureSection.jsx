@@ -22,14 +22,14 @@ export default function HighlightFeatureSection({ images }) {
         />
       </div>
       <div className="w-full md:w-1/2 text-center md:text-left">
-        <h1 className="font-bold text-4xl font-serif mb-6 text-olive-dark">
+        <h1 className="font-bold text-4xl font-serif mb-6 text-black">
           Budget-Friendly Student Laptops
         </h1>
-        <p className="text-gray-600 text-lg leading-relaxed">
+        <p className="text-gray-800 text-lg leading-relaxed">
           <span className="font-semibold text-gray-800 text-xl">
             Explore our collection of high-quality laptops at affordable prices.
           </span>
-          <span className="font-medium text-gray-800">
+          <span className="font-medium text-gray-600">
             Perfect for students with features including long-lasting battery
             life, lightweight and portable design, reliable performance for
             studying, official warranty, and student-friendly payment plans.
@@ -37,7 +37,7 @@ export default function HighlightFeatureSection({ images }) {
         </p>
         <button
           onClick={() => navigate("/laptoppurchase")}
-          className="mt-8 bg-white text-black border-2 border-black px-8 py-3 rounded-lg hover:bg-[#808000] hover:text-white hover:border-[#808000] transition-all duration-300 font-semibold"
+          className="mt-8 bg-slate-600 text-white border-2 border-slate-600 px-8 py-3 rounded-lg hover:bg-amber-600 hover:border-amber-600 transition-all duration-300 font-semibold"
         >
           Shop Now
         </button>

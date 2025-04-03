@@ -27,7 +27,6 @@ const CardDetail = () => {
         setLoading(true);
         setError(null);
 
-        // Fetch laptop details with timeout handling
         const laptopResponse = await Promise.race([
           donateitemsApi.getDonateItemById(id),
           new Promise((_, reject) =>
@@ -41,7 +40,6 @@ const CardDetail = () => {
           setLaptop(laptopResponse.data);
           setSelectedImage(laptopResponse.data.itemImage);
 
-          // Only fetch images if laptop data is successful
           const imagesResponse = await itemimagesApi.getItemImagesById(id);
           if (isMounted && imagesResponse.isSuccess) {
             setImages(imagesResponse.data);
@@ -65,7 +63,6 @@ const CardDetail = () => {
 
     fetchData();
 
-    // Cleanup function
     return () => {
       isMounted = false;
       controller.abort();
@@ -84,29 +81,24 @@ const CardDetail = () => {
 
   if (loading) {
     return (
-      <div className="h-screen bg-gradient-to-br from-emerald-50 to-teal-50 p-4 sm:p-6 lg:p-8 flex items-center justify-center">
-        <div className="animate-pulse">
+      <div className="min-h-screen bg-white p-4 flex items-center justify-center">
+        <div className="animate-pulse max-w-6xl mx-auto w-full">
           <div className="h-8 w-32 bg-gray-200 rounded mb-6"></div>
-          <div className="bg-white rounded-xl p-8">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              <div className="space-y-4">
-                <div className="h-96 bg-gray-200 rounded-lg"></div>
-                <div className="flex space-x-4">
-                  {[1, 2, 3].map((n) => (
-                    <div
-                      key={n}
-                      className="w-24 h-24 bg-gray-200 rounded-lg"
-                    ></div>
-                  ))}
-                </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="space-y-4">
+              <div className="h-96 bg-gray-200 rounded"></div>
+              <div className="flex space-x-2">
+                {[1, 2, 3].map((n) => (
+                  <div key={n} className="w-16 h-16 bg-gray-200 rounded"></div>
+                ))}
               </div>
-              <div className="space-y-6">
-                <div className="h-8 w-3/4 bg-gray-200 rounded"></div>
-                <div className="space-y-4">
-                  {[1, 2, 3, 4, 5].map((n) => (
-                    <div key={n} className="h-6 bg-gray-200 rounded"></div>
-                  ))}
-                </div>
+            </div>
+            <div className="space-y-6">
+              <div className="h-8 w-3/4 bg-gray-200 rounded"></div>
+              <div className="space-y-4">
+                {[1, 2, 3, 4, 5].map((n) => (
+                  <div key={n} className="h-6 bg-gray-200 rounded"></div>
+                ))}
               </div>
             </div>
           </div>
@@ -117,14 +109,14 @@ const CardDetail = () => {
 
   if (error || !laptop) {
     return (
-      <div className="h-screen bg-gradient-to-br from-emerald-50 to-teal-50 p-4 flex items-center justify-center">
-        <div className="bg-white rounded-xl p-8 shadow-lg">
-          <h2 className="text-2xl font-bold text-red-600 mb-4">
+      <div className="min-h-screen bg-white p-4 flex items-center justify-center">
+        <div className="border border-gray-200 p-6 rounded text-black">
+          <h2 className="text-xl font-semibold mb-4">
             {error || "Failed to load laptop details"}
           </h2>
           <button
             onClick={() => window.location.reload()}
-            className="px-6 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700"
+            className="px-6 py-2 bg-slate-600 text-white rounded hover:bg-slate-700 transition-colors"
           >
             Try Again
           </button>
@@ -134,111 +126,131 @@ const CardDetail = () => {
   }
 
   return (
-    <div className="h-screen bg-gradient-to-br from-emerald-50 to-teal-50 p-4 sm:p-6 lg:p-8 flex flex-col">
-      {/* Main Content - Reduced size with max-width */}
-      <div className="flex-1 overflow-hidden bg-white rounded-xl shadow-lg max-w-6xl mx-auto w-full">
-        <div className="h-full flex flex-col">
-          <div className="flex-1 overflow-auto p-4 sm:p-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Image Section with Back Button inside */}
-              <div className="flex flex-col">
-                {/* Back Button */}
+    <div className="min-h-screen bg-white p-4 flex flex-col">
+      <div className="flex-1 max-w-6xl mx-auto w-full">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Image Section with Thumbnails Below */}
+          <div className="flex flex-col">
+            <button
+              onClick={() => navigate(-1)}
+              className="flex items-center text-black hover:text-amber-600 mb-4"
+            >
+              <svg
+                className="w-5 h-5 mr-1"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M10 19l-7-7m0 0l7-7m-7 7h18"
+                />
+              </svg>
+              Back to Listing
+            </button>
+            <div className="border border-gray-200 rounded overflow-hidden mb-4">
+              <img
+                src={selectedImage}
+                alt={laptop.itemName}
+                className="w-full h-96 object-contain"
+              />
+            </div>
+            <div className="flex space-x-2 overflow-x-auto">
+              <button
+                onClick={() => setSelectedImage(laptop.itemImage)}
+                className={`w-16 h-16 rounded overflow-hidden border-2 ${
+                  selectedImage === laptop.itemImage
+                    ? "border-amber-600"
+                    : "border-gray-200"
+                }`}
+              >
+                <img
+                  src={laptop.itemImage}
+                  alt="Main"
+                  className="w-full h-full object-cover"
+                />
+              </button>
+              {images.slice(0, 4).map((image) => (
                 <button
-                  onClick={() => navigate(-1)}
-                  className="flex items-center space-x-2 text-teal-600 hover:text-teal-700 transition-colors mb-2 self-start"
+                  key={image.itemImageId}
+                  onClick={() => setSelectedImage(image.imageUrl)}
+                  className={`w-16 h-16 rounded overflow-hidden border-2 ${
+                    selectedImage === image.imageUrl
+                      ? "border-amber-600"
+                      : "border-gray-200"
+                  }`}
                 >
-                  <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M10 19l-7-7m0 0l7-7m-7 7h18"
-                    />
-                  </svg>
-                  <span className="font-medium">Back to Listing</span>
-                </button>
-                
-                {/* Image - Adjusted to fill container */}
-                <div className="rounded-lg overflow-hidden flex-1 bg-white relative">
                   <img
-                    src={selectedImage}
-                    alt={laptop.itemName}
-                    className="absolute inset-0 w-full h-full object-contain p-4"
+                    src={image.imageUrl}
+                    alt={`View ${image.itemImageId}`}
+                    className="w-full h-full object-cover"
                   />
-                </div>
-              </div>
+                </button>
+              ))}
+            </div>
+          </div>
 
-              {/* Details Section - With thumbnails and borrow button */}
-              <div className="flex flex-col h-full">
-                {/* Title and Status - Changed to horizontal layout */}
-                <div className="flex justify-between items-center mb-7">
-                  <h1 className="text-2xl font-bold text-gray-900">{laptop.itemName}</h1>
-                  <div className={`px-3 py-1 rounded-full text-sm font-medium
-                    ${laptop.status === 'Available' ? 'bg-teal-100 text-teal-800' : 'bg-red-100 text-red-800'}`}>
-                    {laptop.status}
-                  </div>
-                </div>
+          {/* Details Section */}
+          <div className="flex flex-col">
+            <div className="flex justify-between items-center mb-4">
+              <h1 className="text-3xl font-bold text-black">
+                {laptop.itemName}
+              </h1>
+              <span
+                className={`px-2 py-1 rounded text-xs font-medium ${
+                  laptop.status === "Available"
+                    ? "bg-amber-100 text-amber-800"
+                    : "bg-gray-100 text-gray-800"
+                }`}
+              >
+                {laptop.status}
+              </span>
+            </div>
 
-                {/* Thumbnail Gallery - Added mb-6 */}
-                <div className="flex flex-wrap gap-2 mb-6">
-                  {/* Main image thumbnail */}
-                  <button
-                    onClick={() => setSelectedImage(laptop.itemImage)}
-                    className={`w-14 h-14 rounded-lg overflow-hidden border-2 
-                      ${selectedImage === laptop.itemImage ? 'border-teal-500' : 'border-transparent'}`}
-                  >
-                    <img
-                      src={laptop.itemImage}
-                      alt="Main"
-                      className="w-full h-full object-cover"
-                    />
-                  </button>
+            {/* Specifications */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-6">
+              <DetailItem icon="cpu" label="CPU" value={laptop.cpu} />
+              <DetailItem icon="ram" label="RAM" value={laptop.ram} />
+              <DetailItem
+                icon="storage"
+                label="Storage"
+                value={laptop.storage}
+              />
+              <DetailItem
+                icon="screen"
+                label="Screen Size"
+                value={laptop.screenSize}
+              />
+              <DetailItem
+                icon="condition"
+                label="Condition"
+                value={laptop.conditionItem}
+              />
+              <DetailItem
+                icon="status"
+                label="Status"
+                value={
+                  laptop.status === "Available" ? "In Stock" : "Out of Stock"
+                }
+                valueClassName={
+                  laptop.status === "Available"
+                    ? "text-amber-600 font-semibold"
+                    : "text-gray-600 font-semibold"
+                }
+              />
+            </div>
+
+            {/* Description */}
+            <div className="mb-6">
+              <h2 className="text-lg font-semibold text-black mb-2">
+                Description
+              </h2>
+              <p className="text-black text-sm whitespace-pre-line">
+                {laptop.description ||
+                  `This ${laptop.itemName} is in ${laptop.conditionItem} condition and ready for use.
                   
-                  {/* Additional images thumbnails - Show max 4 */}
-                  {images.slice(0, 4).map((image) => (
-                    <button
-                      key={image.itemImageId}
-                      onClick={() => setSelectedImage(image.imageUrl)}
-                      className={`w-14 h-14 rounded-lg overflow-hidden border-2 
-                        ${selectedImage === image.imageUrl ? 'border-teal-500' : 'border-transparent'}`}
-                    >
-                      <img
-                        src={image.imageUrl}
-                        alt={`View ${image.itemImageId}`}
-                        className="w-full h-full object-cover"
-                      />
-                    </button>
-                  ))}
-                </div>
-
-                {/* Specifications - Added mb-6 */}
-                <div className="mb-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <DetailItem icon="cpu" label="CPU" value={laptop.cpu} />
-                    <DetailItem icon="ram" label="RAM" value={laptop.ram} />
-                    <DetailItem icon="storage" label="Storage" value={laptop.storage} />
-                    <DetailItem icon="screen" label="Screen Size" value={laptop.screenSize} />
-                    <DetailItem icon="condition" label="Condition" value={laptop.conditionItem} />
-                    <DetailItem 
-                      icon="status" 
-                      label="Status" 
-                      value={laptop.status === 'Available' ? 'In Stock' : 'Out of Stock'} 
-                      valueClassName={laptop.status === 'Available' ? 'text-teal-600 font-semibold' : 'text-red-600 font-semibold'}
-                    />
-                  </div>
-                </div>
-
-                {/* Description - Added mb-6 */}
-                <div className="border-t pt-4 mb-6">
-                  <h2 className="text-lg font-semibold text-gray-900 mb-2">Description</h2>
-                  <p className="text-gray-600 text-md whitespace-pre-line">
-                    {laptop.description || `This ${laptop.itemName} is in ${laptop.conditionItem} condition and ready for use.
-                    
 Features:
 • ${laptop.cpu} processor for smooth performance
 • ${laptop.ram} memory for multitasking
@@ -246,24 +258,22 @@ Features:
 • ${laptop.screenSize} display for comfortable viewing
 
 Perfect for students and professionals alike.`}
-                  </p>
-                </div>
-                
-                {/* Borrow Button - Right aligned */}
-                <div className="mt-auto pt-4 flex justify-end">
-                  <button
-                    onClick={handleBorrowClick}
-                    disabled={laptop.status !== 'Available'}
-                    className={`px-8 py-2 rounded-lg text-white font-medium
-                      ${laptop.status === 'Available' 
-                        ? 'bg-teal-600 hover:bg-teal-700' 
-                        : 'bg-gray-400 cursor-not-allowed'}
-                      transition-colors duration-200 shadow-md`}
-                  >
-                    {laptop.status === 'Available' ? 'Borrow Now' : 'Not Available'}
-                  </button>
-                </div>
-              </div>
+              </p>
+            </div>
+
+            {/* Borrow Button */}
+            <div className="mt-auto">
+              <button
+                onClick={handleBorrowClick}
+                disabled={laptop.status !== "Available"}
+                className={`w-full px-6 py-3 rounded text-white font-medium ${
+                  laptop.status === "Available"
+                    ? "bg-slate-600 hover:bg-amber-600"
+                    : "bg-gray-300 cursor-not-allowed"
+                } transition-colors duration-200`}
+              >
+                {laptop.status === "Available" ? "Borrow Now" : "Not Available"}
+              </button>
             </div>
           </div>
         </div>
@@ -272,74 +282,109 @@ Perfect for students and professionals alike.`}
   );
 };
 
-// Cập nhật DetailItem component để hỗ trợ custom className cho value
+// DetailItem Component
 const DetailItem = ({ icon, label, value, valueClassName = "" }) => {
   const icons = {
     cpu: (
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth="2"
-        d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"
-      />
+      <svg
+        className="w-5 h-5 text-amber-600"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="2"
+          d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"
+        />
+      </svg>
     ),
     ram: (
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth="2"
-        d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-      />
+      <svg
+        className="w-5 h-5 text-amber-600"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="2"
+          d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+        />
+      </svg>
     ),
     storage: (
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth="2"
-        d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4"
-      />
+      <svg
+        className="w-5 h-5 text-amber-600"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="2"
+          d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"
+        />
+      </svg>
     ),
     screen: (
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth="2"
-        d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-      />
+      <svg
+        className="w-5 h-5 text-amber-600"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="2"
+          d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+        />
+      </svg>
     ),
     condition: (
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth="2"
-        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-      />
+      <svg
+        className="w-5 h-5 text-amber-600"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="2"
+          d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+        />
+      </svg>
     ),
     status: (
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth="2"
-        d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
-      />
+      <svg
+        className="w-5 h-5 text-amber-600"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="2"
+          d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+        />
+      </svg>
     ),
   };
 
   return (
-    <div className="flex items-center space-x-3 text-gray-700">
-      <div className="flex-shrink-0">
-        <svg
-          className="w-5 h-5"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          {icons[icon]}
-        </svg>
-      </div>
+    <div className="flex items-center p-2">
+      <div className="mr-2">{icons[icon]}</div>
       <div>
-        <span className="text-sm text-gray-500">{label}:</span>
-        <span className={`ml-1 font-medium text-base ${valueClassName}`}>{value}</span>
+        <p className="text-xs text-gray-500">{label}</p>
+        <p className={`text-sm font-medium ${valueClassName}`}>
+          {value || "N/A"}
+        </p>
       </div>
     </div>
   );
