@@ -103,7 +103,7 @@ const StaffLayout = () => {
               {/* {menuItems.find((item) => item.path === location.pathname)
                 ?.name || "Staff Dashboard"} */}
             </div>
-            <div className="p-4 border-t border-slate-500">
+            <div className="p-4 border-slate-500">
           <button
             onClick={handleLogout}
             className="flex items-center w-full px-4 py-3 text-sm font-medium text-black hover:bg-teal-600 transition-colors"

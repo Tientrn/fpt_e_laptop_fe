@@ -3,7 +3,8 @@ import { toast } from "react-toastify";
 import { format } from "date-fns";
 import borrowcontractApi from "../../api/borrowcontractApi";
 import borrowRequestApi from "../../api/borrowRequestApi";
-import userinfoApi from "../../api/userinfoApi";
+import userApi from "../../api/userApi";
+import deposittransactionApi from "../../api/deposittransactionApi";
 
 const ContractsPage = () => {
   const [contracts, setContracts] = useState([]);
@@ -20,12 +21,25 @@ const ContractsPage = () => {
     expectedReturnDate: format(new Date(), "yyyy-MM-dd'T'HH:mm:ss.SSSxxx"),
   });
   const [userInfoMap, setUserInfoMap] = useState({});
+  const [deposits, setDeposits] = useState({});
 
   useEffect(() => {
-    fetchContracts();
-    fetchApprovedRequests();
-    fetchUserInfo();
+    const fetchData = async () => {
+      await Promise.all([
+        fetchContracts(),
+        fetchApprovedRequests(),
+        fetchDeposits()
+      ]);
+    };
+    fetchData();
   }, []);
+
+  useEffect(() => {
+    console.log("Contracts:", contracts);
+    console.log("Approved Requests:", approvedRequests);
+    console.log("User Info Map:", userInfoMap);
+    console.log("Deposits:", deposits);
+  }, [contracts, approvedRequests, userInfoMap, deposits]);
 
   const fetchContracts = async () => {
     try {
@@ -33,11 +47,15 @@ const ContractsPage = () => {
       const response = await borrowcontractApi.getAllBorrowContracts();
       if (response.isSuccess) {
         setContracts(response.data || []);
+        
+        // Fetch user info for borrowers (students)
+        const borrowerIds = [...new Set(response.data.map(contract => contract.userId))];
+        await fetchUserInfoForIds(borrowerIds);
       } else {
         toast.error("Failed to load contracts");
       }
     } catch (error) {
-      console.error("Error:", error);
+      console.error("Error loading contracts:", error);
       toast.error("Error loading contracts");
     } finally {
       setLoading(false);
@@ -48,32 +66,49 @@ const ContractsPage = () => {
     try {
       const response = await borrowRequestApi.getAllBorrowRequests();
       if (response.isSuccess) {
-        const approvedReqs = response.data.filter(
-          (req) => req.status === "Approved"
-        );
-        setApprovedRequests(approvedReqs);
+        const approved = response.data.filter(request => request.status === "Approved");
+        setApprovedRequests(approved);
+        
+        // Fetch user info for approved requests
+        const userIds = [...new Set(approved.map(request => request.userId))];
+        await fetchUserInfoForIds(userIds);
       }
     } catch (error) {
       console.error("Error fetching approved requests:", error);
-      toast.error("Error loading approved requests");
+      toast.error("Failed to load approved requests");
     }
   };
 
-  const fetchUserInfo = async () => {
+  const fetchUserInfoForIds = async (userIds) => {
     try {
-      const response = await userinfoApi.getUserInfo();
-      if (response.isSuccess) {
-        const userMap = response.data.reduce(
-          (map, user) => ({
-            ...map,
-            [user.userId]: { fullName: user.fullName, email: user.email },
-          }),
-          {}
-        );
-        setUserInfoMap(userMap);
+      for (const userId of userIds) {
+        if (!userInfoMap[userId]) {
+          const response = await userApi.getUserById(userId);
+          if (response.isSuccess) {
+            setUserInfoMap(prev => ({
+              ...prev,
+              [userId]: response.data
+            }));
+          }
+        }
       }
     } catch (error) {
       console.error("Error fetching user info:", error);
+    }
+  };
+
+  const fetchDeposits = async () => {
+    try {
+      const response = await deposittransactionApi.getAllDepositTransactions();
+      if (response.isSuccess) {
+        const depositMap = {};
+        response.data.forEach(deposit => {
+          depositMap[deposit.contractId] = deposit;
+        });
+        setDeposits(depositMap);
+      }
+    } catch (error) {
+      console.error("Error fetching deposits:", error);
     }
   };
 
@@ -90,6 +125,7 @@ const ContractsPage = () => {
       terms: `Contract for ${request.itemName}`,
       conditionBorrow: "good",
       expectedReturnDate: formattedDate,
+      userId: request.userId
     });
     setIsModalOpen(true);
   };
@@ -97,27 +133,26 @@ const ContractsPage = () => {
   const handleCreateContract = async (e) => {
     e.preventDefault();
     try {
-      if (
-        !contractForm.requestId ||
-        !contractForm.itemId ||
-        !contractForm.itemValue
-      ) {
+      if (!contractForm.requestId || !contractForm.itemId || !contractForm.itemValue) {
         toast.error("Please fill in all required fields");
         return;
       }
 
+      // Format the date correctly
+      const formattedDate = new Date(contractForm.expectedReturnDate)
+        .toISOString();
+
       const contractData = {
-        ...contractForm,
         requestId: parseInt(contractForm.requestId),
         itemId: parseInt(contractForm.itemId),
         itemValue: parseInt(contractForm.itemValue),
         conditionBorrow: contractForm.conditionBorrow || "good",
         terms: contractForm.terms || "summer 2025",
+        expectedReturnDate: formattedDate,
+        userId: selectedRequest.userId
       };
 
-      const response = await borrowcontractApi.createBorrowContract(
-        contractData
-      );
+      const response = await borrowcontractApi.createBorrowContract(contractData);
       if (response.isSuccess) {
         toast.success("Contract created successfully");
         setIsModalOpen(false);
@@ -128,10 +163,7 @@ const ContractsPage = () => {
           terms: "",
           conditionBorrow: "",
           itemValue: 0,
-          expectedReturnDate: format(
-            new Date(),
-            "yyyy-MM-dd'T'HH:mm:ss.SSSxxx"
-          ),
+          expectedReturnDate: format(new Date(), "yyyy-MM-dd'T'HH:mm:ss.SSSxxx"),
         });
       } else {
         toast.error(response.message || "Failed to create contract");
@@ -165,12 +197,10 @@ const ContractsPage = () => {
     <div className="min-h-screen bg-white p-6">
       {/* Header with Staff Role Indicator */}
       <div className="mb-6">
-        <h1 className="text-2xl font-semibold text-black">
+        <h1 className="text-2xl text-center font-semibold text-black">
           Contract Management
         </h1>
-        <span className="text-sm text-amber-600 font-medium">
-          Staff Dashboard
-        </span>
+        
       </div>
 
       {/* Approved Requests Section */}
@@ -183,7 +213,7 @@ const ContractsPage = () => {
             <thead className="bg-slate-50">
               <tr>
                 {[
-                  "Request ID",
+                  "ID",
                   "Full Name",
                   "Email",
                   "Item Name",
@@ -203,13 +233,13 @@ const ContractsPage = () => {
               {approvedRequests.map((request) => (
                 <tr key={request.requestId} className="hover:bg-slate-50">
                   <td className="px-4 py-3 text-sm text-black">
-                    #{request.requestId}
+                    {request.requestId}
                   </td>
                   <td className="px-4 py-3 text-sm text-black">
-                    {userInfoMap[request.userId]?.fullName || "N/A"}
+                    {userInfoMap[request.userId]?.fullName || "Loading..."}
                   </td>
                   <td className="px-4 py-3 text-sm text-black">
-                    {userInfoMap[request.userId]?.email || "N/A"}
+                    {userInfoMap[request.userId]?.email || "Loading..."}
                   </td>
                   <td className="px-4 py-3 text-sm text-black">
                     {request.itemName}
@@ -250,12 +280,12 @@ const ContractsPage = () => {
                 <tr>
                   {[
                     "Contract ID",
-                    "Request ID",
                     "Full Name",
                     "Email",
                     "Item Value",
                     "Expected Return",
-                    "Actions",
+                    "Status",
+                    "Actions"
                   ].map((header) => (
                     <th
                       key={header}
@@ -270,44 +300,52 @@ const ContractsPage = () => {
                 {contracts.map((contract) => (
                   <tr key={contract.contractId} className="hover:bg-slate-50">
                     <td className="px-4 py-3 text-sm text-black">
-                      #{contract.contractId}
+                      {contract.contractId}
                     </td>
                     <td className="px-4 py-3 text-sm text-black">
-                      #{contract.requestId}
+                      {userInfoMap[contract.userId]?.fullName || "Loading..."}
                     </td>
                     <td className="px-4 py-3 text-sm text-black">
-                      {userInfoMap[contract.userId]?.fullName || "N/A"}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-black">
-                      {userInfoMap[contract.userId]?.email || "N/A"}
+                      {userInfoMap[contract.userId]?.email || "Loading..."}
                     </td>
                     <td className="px-4 py-3 text-sm text-black">
                       ${contract.itemValue}
                     </td>
                     <td className="px-4 py-3 text-sm text-black">
-                      {format(
-                        new Date(contract.expectedReturnDate),
-                        "dd/MM/yyyy"
+                      {format(new Date(contract.expectedReturnDate), "dd/MM/yyyy")}
+                    </td>
+                    <td className="px-4 py-3 text-sm">
+                      {!deposits[contract.contractId] ? (
+                        <span className="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                          Pending
+                        </span>
+                      ) : (
+                        <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                          deposits[contract.contractId].status === "Completed"
+                            ? "bg-green-100 text-green-800"
+                            : "bg-red-100 text-red-800"
+                        }`}>
+                          {deposits[contract.contractId].status}
+                        </span>
                       )}
                     </td>
                     <td className="px-4 py-3 text-sm">
                       <div className="flex space-x-2">
-                        <button
-                          onClick={() =>
-                            (window.location.href = `/staff/deposits/create/${contract.contractId}`)
-                          }
-                          className="px-3 py-1 bg-slate-600 text-white rounded-md hover:bg-amber-600 transition-colors"
-                        >
-                          Create Deposit
-                        </button>
-                        <button
-                          onClick={() =>
-                            handleDeleteContract(contract.contractId)
-                          }
-                          className="px-3 py-1 bg-slate-600 text-white rounded-md hover:bg-amber-600 transition-colors"
-                        >
-                          Delete
-                        </button>
+                        {!deposits[contract.contractId] ? (
+                          <button
+                            onClick={() => window.location.href = `/staff/deposits/create/${contract.contractId}`}
+                            className="px-3 py-1 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
+                          >
+                            Create Deposit
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => handleDeleteContract(contract.contractId)}
+                            className="px-3 py-1 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
+                          >
+                            Delete Deposit
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>

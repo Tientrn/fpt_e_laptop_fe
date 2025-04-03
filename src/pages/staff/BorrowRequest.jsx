@@ -69,25 +69,34 @@ const BorrowRequest = () => {
   };
 
   const handleDeleteClick = (id) => {
+    console.log("Delete clicked for ID:", id);
     setDeletingRequestId(id);
     setIsDeleteModalOpen(true);
   };
 
   const handleDeleteConfirm = async () => {
+    if (!deletingRequestId) {
+      toast.error("Invalid request ID");
+      return;
+    }
+
     try {
-      const response = await borrowrequestApi.deleteBorrowRequest(
-        deletingRequestId
-      );
-      if (response.isSuccess) {
+      setLoading(true);
+      console.log("Deleting request with ID:", deletingRequestId);
+
+      const response = await borrowrequestApi.deleteBorrowRequest(deletingRequestId);
+      
+      if (response && response.isSuccess) {
         toast.success("Request deleted successfully");
-        fetchBorrowRequests();
+        await fetchBorrowRequests();
       } else {
-        toast.error(response.message || "Failed to delete request");
+        toast.error(response?.message || "Failed to delete request");
       }
     } catch (error) {
       console.error("Error deleting request:", error);
-      toast.error("Error deleting request");
+      toast.error("Error deleting request. Please try again.");
     } finally {
+      setLoading(false);
       setIsDeleteModalOpen(false);
       setDeletingRequestId(null);
     }
@@ -112,19 +121,25 @@ const BorrowRequest = () => {
     if (!editingRequest) return;
 
     try {
-      const updateData = { status: editFormData.status };
-      if (editFormData.status === "Rejected" && editFormData.rejectionReason) {
-        updateData.rejectionReason = editFormData.rejectionReason;
-      }
+      const updateData = { 
+        status: editFormData.status,
+        rejectionReason: editFormData.status === "Rejected" ? editFormData.rejectionReason : null
+      };
 
       const response = await borrowrequestApi.updateBorrowRequest(
         editingRequest.requestId,
         updateData
       );
+      
       if (response.isSuccess) {
         toast.success("Request status updated successfully");
-        fetchBorrowRequests();
+        await fetchBorrowRequests(); // Refresh borrow requests list
         setIsEditModalOpen(false);
+        
+        // Nếu status là Approved, refresh trang Contracts để hiển thị request mới
+        if (editFormData.status === "Approved") {
+          window.location.href = '/staff/contracts';
+        }
       } else {
         toast.error(response.message || "Failed to update request status");
       }
@@ -159,7 +174,7 @@ const BorrowRequest = () => {
   const totalPages = Math.ceil(filteredRequests.length / itemsPerPage);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="">
       {/* Header with Staff Role Indicator */}
       <div className="flex items-center justify-between mb-6">
         <div>
@@ -201,40 +216,40 @@ const BorrowRequest = () => {
           <table className="w-full">
             <thead>
               <tr className="bg-gray-50">
-                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600">ID</th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600">Full Name</th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600">Email</th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600">Item Name</th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600">Start Date</th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600">End Date</th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600">Status</th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600">Actions</th>
+                <th className="px-6 py-3 text-left text-md font-semibold text-gray-600">ID</th>
+                <th className="px-6 py-3 text-left text-md font-semibold text-gray-600">Full Name</th>
+                <th className="px-6 py-3 text-left text-md font-semibold text-gray-600">Email</th>
+                <th className="px-6 py-3 text-left text-md font-semibold text-gray-600">Item Name</th>
+                <th className="px-6 py-3 text-left text-md font-semibold text-gray-600">Start Date</th>
+                <th className="px-6 py-3 text-left text-md font-semibold text-gray-600">End Date</th>
+                <th className="px-6 py-3 text-left text-md font-semibold text-gray-600">Status</th>
+                <th className="px-6 py-3 text-left text-md font-semibold text-gray-600">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {currentItems.length > 0 ? (
                 currentItems.map((request) => (
                   <tr key={request.requestId} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-6 py-3 text-sm text-gray-800">
+                    <td className="px-6 py-3 text-md text-gray-800">
                       {request.requestId}
                     </td>
-                    <td className="px-6 py-3 text-sm text-gray-800">
+                    <td className="px-6 py-3 text-md text-gray-800">
                       {userInfoMap[request.userId]?.fullName || "Loading..."}
                     </td>
-                    <td className="px-6 py-3 text-sm text-gray-800">
+                    <td className="px-6 py-3 text-md text-gray-800">
                       {userInfoMap[request.userId]?.email || "Loading..."}
                     </td>
-                    <td className="px-6 py-3 text-sm text-gray-800">
+                    <td className="px-6 py-3 text-md text-gray-800">
                       {request.itemName}
                     </td>
-                    <td className="px-6 py-3 text-sm text-gray-800">
+                    <td className="px-6 py-3 text-md text-gray-800">
                       {request.startDate ? format(new Date(request.startDate), "dd/MM/yyyy") : "N/A"}
                     </td>
-                    <td className="px-6 py-3 text-sm text-gray-800">
+                    <td className="px-6 py-3 text-md text-gray-800">
                       {request.endDate ? format(new Date(request.endDate), "dd/MM/yyyy") : "N/A"}
                     </td>
                     <td className="px-6 py-3">
-                      <span className={`px-3 py-1 text-sm font-medium rounded-full
+                      <span className={`px-3 py-1 text-md font-medium rounded-full
                         ${request.status === "Pending" ? "bg-amber-100 text-amber-800" :
                           request.status === "Approved" ? "bg-green-100 text-green-800" :
                           request.status === "Rejected" ? "bg-red-100 text-red-800" :
@@ -248,13 +263,13 @@ const BorrowRequest = () => {
                       <div className="flex gap-2">
                         <button
                           onClick={() => handleEditClick(request)}
-                          className="px-3 py-1.5 text-sm font-medium text-white bg-amber-500 rounded-lg hover:bg-amber-600 transition-colors"
+                          className="px-3 py-1.5 text-md font-medium text-white bg-amber-500 rounded-lg hover:bg-amber-600 transition-colors"
                         >
                           Edit
                         </button>
                         <button
                           onClick={() => handleDeleteClick(request.requestId)}
-                          className="px-3 py-1.5 text-sm font-medium text-white bg-red-500 rounded-lg hover:bg-red-600 transition-colors"
+                          className="px-3 py-1.5 text-md font-medium text-white bg-red-500 rounded-lg hover:bg-red-600 transition-colors"
                         >
                           Delete
                         </button>
