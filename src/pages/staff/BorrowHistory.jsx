@@ -3,14 +3,11 @@ import { toast } from 'react-toastify';
 import { format } from 'date-fns';
 import {
   FaSearch,
-  FaEye,
-  FaEdit,
-  FaTrash,
-  FaFilter
 } from 'react-icons/fa';
 import borrowhistoryApi from '../../api/borrowhistoryApi';
-import userinfoApi from '../../api/userinfoApi';
+import userApi from '../../api/userApi';
 import borrowRequestApi from '../../api/borrowRequestApi';
+import donateitemsApi from '../../api/donateitemsApi';
 
 const BorrowHistory = () => {
   const [borrowHistory, setBorrowHistory] = useState([]);
@@ -24,26 +21,42 @@ const BorrowHistory = () => {
 
   useEffect(() => {
     fetchBorrowHistory();
-    fetchUserInfo();
-    fetchBorrowRequests();
   }, []);
+
+  useEffect(() => {
+    if (borrowHistory.length > 0) {
+      fetchUserInfo();
+      fetchBorrowRequests();
+    }
+  }, [borrowHistory]);
+
+  useEffect(() => {
+    if (borrowHistory.length > 0) {
+      console.log('Current Borrow History:', borrowHistory);
+      console.log('Item IDs to fetch:', borrowHistory.map(item => item.itemId));
+    }
+  }, [borrowHistory]);
 
   const fetchUserInfo = async () => {
     try {
-      const response = await userinfoApi.getUserInfo();
-      if (response.isSuccess) {
-        const userMap = {};
-        response.data.forEach(user => {
-          userMap[user.userId] = {
-            fullName: user.fullName,
-            email: user.email
-          };
-        });
-        setUserInfoMap(userMap);
-      } else {
-        console.warn('Failed to fetch user info:', response.message);
-        setUserInfoMap({});
+      // Get unique user IDs from borrow history
+      const userIds = [...new Set(borrowHistory.map(item => item.userId))];
+      const userMap = {};
+      
+      // Fetch user info for each unique user ID
+      for (const userId of userIds) {
+        if (userId) {
+          const response = await userApi.getUserById(userId);
+          if (response.isSuccess) {
+            userMap[userId] = {
+              fullName: response.data.fullName,
+              email: response.data.email
+            };
+          }
+        }
       }
+      
+      setUserInfoMap(userMap);
     } catch (error) {
       console.error('Error fetching user info:', error);
       setUserInfoMap({});
@@ -54,6 +67,8 @@ const BorrowHistory = () => {
   const fetchBorrowHistory = async () => {
     try {
       const response = await borrowhistoryApi.getAllBorrowHistories();
+      console.log('Borrow History Response:', response);
+      
       if (response.isSuccess) {
         setBorrowHistory(response.data || []);
       } else {
@@ -69,19 +84,43 @@ const BorrowHistory = () => {
 
   const fetchBorrowRequests = async () => {
     try {
-      const response = await borrowRequestApi.getAllBorrowRequests();
-      if (response.isSuccess) {
-        const requestMap = {};
-        response.data.forEach(request => {
-          requestMap[request.requestId] = {
-            itemName: request.itemName,
-            status: request.status
-          };
-        });
-        setRequestsMap(requestMap);
+      // Get unique item IDs from borrow history
+      const itemIds = [...new Set(borrowHistory.map(item => item.itemId))];
+      const itemMap = {};
+      
+      // Fetch each item individually
+      for (const itemId of itemIds) {
+        if (itemId) {
+          try {
+            const response = await donateitemsApi.getDonateItemById(itemId);
+            console.log(`Response for item ${itemId}:`, response); // Debug log
+            
+            if (response.isSuccess && response.data) {
+              itemMap[itemId] = {
+                itemName: response.data.name || response.data.itemName || 'Unnamed Item',
+                status: response.data.status
+              };
+            } else {
+              itemMap[itemId] = {
+                itemName: 'Unknown Item',
+                status: 'Unknown'
+              };
+            }
+          } catch (error) {
+            console.error(`Error fetching item ${itemId}:`, error);
+            itemMap[itemId] = {
+              itemName: 'Error Loading Item',
+              status: 'Error'
+            };
+          }
+        }
       }
+      
+      console.log('Final Item Map:', itemMap);
+      setRequestsMap(itemMap);
     } catch (error) {
-      console.error('Error fetching borrow requests:', error);
+      console.error('Error in fetchBorrowRequests:', error);
+      toast.error('Error loading item information');
     }
   };
 
@@ -135,8 +174,9 @@ const BorrowHistory = () => {
     const matchesSearch = 
       userInfo.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       userInfo.email?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesFilter = filterStatus === 'all' || item.status === filterStatus;
-    return matchesSearch && matchesFilter;
+    
+    // Since we don't have status in the history response, we'll just return all items
+    return matchesSearch;
   });
 
   // Pagination
@@ -175,78 +215,93 @@ const BorrowHistory = () => {
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">History ID</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Request ID</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">ID</th>
+                {/* <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Request ID</th> */}
                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Full Name</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Email</th>
+                {/* <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Email</th> */}
                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Item Name</th>
                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Borrow Date</th>
                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Return Date</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {currentItems.map((item) => (
-                <tr key={item.borrowHistoryId} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    #{item.borrowHistoryId}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    #{item.requestId}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                    {userInfoMap[item.userId]?.fullName || 'Loading...'}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {userInfoMap[item.userId]?.email || 'Loading...'}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {requestsMap[item.requestId]?.itemName || 'Loading...'}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                    {format(new Date(item.borrowDate), 'dd/MM/yyyy HH:mm:ss')}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                    {item.returnDate ? format(new Date(item.returnDate), 'dd/MM/yyyy HH:mm:ss') : '-'}
+              {currentItems.length > 0 ? (
+                currentItems.map((item) => (
+                  <tr key={item.borrowHistoryId} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {item.borrowHistoryId}
+                    </td>
+                    {/* <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      #{item.requestId}
+                    </td> */}
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                      {userInfoMap[item.userId]?.fullName || 'Loading...'}
+                    </td>
+                    {/* <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {userInfoMap[item.userId]?.email || 'Loading...'}
+                    </td> */}
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {(() => {
+                        if (!item.itemId) return 'No Item ID';
+                        const itemInfo = requestsMap[item.itemId];
+                        if (!itemInfo) return 'Loading...';
+                        return itemInfo.itemName || 'Unknown Item';
+                      })()}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                      {item.borrowDate ? format(new Date(item.borrowDate), 'dd/MM/yyyy HH:mm:ss') : '-'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                      {item.returnDate ? format(new Date(item.returnDate), 'dd/MM/yyyy HH:mm:ss') : '-'}
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="7" className="px-6 py-4 text-center text-sm text-gray-500">
+                    No borrow history records found
                   </td>
                 </tr>
-              ))}
+              )}
             </tbody>
           </table>
         </div>
       )}
 
       {/* Pagination */}
-      <div className="flex justify-between items-center mt-4">
-        <div className="text-sm text-gray-700">
-          Showing {indexOfFirstItem + 1} to {Math.min(indexOfLastItem, filteredHistory.length)} of {filteredHistory.length} entries
-        </div>
-        <div className="flex space-x-2">
-          <button
-            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-            disabled={currentPage === 1}
-            className="px-3 py-1 border rounded-lg disabled:opacity-50"
-          >
-            Previous
-          </button>
-          {[...Array(totalPages)].map((_, i) => (
+      {filteredHistory.length > 0 && (
+        <div className="flex justify-between items-center mt-4">
+          <div className="text-sm text-gray-700">
+            Showing {indexOfFirstItem + 1} to {Math.min(indexOfLastItem, filteredHistory.length)} of {filteredHistory.length} entries
+          </div>
+          <div className="flex space-x-2">
             <button
-              key={i + 1}
-              onClick={() => setCurrentPage(i + 1)}
-              className={`px-3 py-1 border rounded-lg 
-                ${currentPage === i + 1 ? 'bg-blue-500 text-white' : ''}`}
+              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+              className="px-3 py-1 border rounded-lg disabled:opacity-50"
             >
-              {i + 1}
+              Previous
             </button>
-          ))}
-          <button
-            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-            disabled={currentPage === totalPages}
-            className="px-3 py-1 border rounded-lg disabled:opacity-50"
-          >
-            Next
-          </button>
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+              <button
+                key={page}
+                onClick={() => setCurrentPage(page)}
+                className={`px-3 py-1 border rounded-lg 
+                  ${currentPage === page ? 'bg-blue-500 text-white' : ''}`}
+              >
+                {page}
+              </button>
+            ))}
+            <button
+              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+              disabled={currentPage === totalPages}
+              className="px-3 py-1 border rounded-lg disabled:opacity-50"
+            >
+              Next
+            </button>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };

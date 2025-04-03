@@ -6,7 +6,9 @@ import {
   FaFilter,
 } from 'react-icons/fa';
 import borrowrequestApi from "../../api/borrowRequestApi"; 
-import userinfoApi from "../../api/userinfoApi";
+import userApi from "../../api/userApi";
+import borrowhistoryApi from "../../api/borrowhistoryApi";
+import donateitemsApi from "../../api/donateitemsApi";
 
 const BorrowRequest = () => {
   const [requests, setRequests] = useState([]);
@@ -34,24 +36,33 @@ const BorrowRequest = () => {
   useEffect(() => {
     const fetchUserInfo = async () => {
       try {
-        const response = await userinfoApi.getUserInfo();
-        if (response.isSuccess) {
-          const userMap = {};
-          response.data.forEach(user => {
-            userMap[user.userId] = {
-              fullName: user.fullName,
-              email: user.email
-            };
-          });
-          setUserInfoMap(userMap);
+        // Get unique user IDs from requests
+        const userIds = [...new Set(requests.map(request => request.userId))];
+        const userMap = {};
+        
+        // Fetch user info for each unique user ID
+        for (const userId of userIds) {
+          if (userId) {
+            const response = await userApi.getUserById(userId);
+            if (response.isSuccess) {
+              userMap[userId] = {
+                fullName: response.data.fullName,
+                email: response.data.email
+              };
+            }
+          }
         }
+        
+        setUserInfoMap(userMap);
       } catch (error) {
         console.error('Error fetching user info:', error);
       }
     };
 
-    fetchUserInfo();
-  }, []);
+    if (requests.length > 0) {
+      fetchUserInfo();
+    }
+  }, [requests]);
 
   const fetchBorrowRequests = async () => {
     try {
@@ -168,7 +179,7 @@ const BorrowRequest = () => {
         status: editFormData.status
       };
 
-      // Chỉ thêm rejectionReason nếu status là rejected và có lý do
+      // Thêm rejectionReason nếu status là rejected
       if (editFormData.status === 'Rejected' && editFormData.rejectionReason) {
         updateData.rejectionReason = editFormData.rejectionReason;
       }
@@ -176,6 +187,38 @@ const BorrowRequest = () => {
       const response = await borrowrequestApi.updateBorrowRequest(editingRequest.requestId, updateData);
       
       if (response.isSuccess) {
+        // Nếu status được cập nhật thành "Returned", tạo bản ghi history mới
+        if (editFormData.status === 'Returned') {
+          try {
+            // Lấy thông tin item từ donate items API
+            const itemResponse = await donateitemsApi.getDonateItemById(editingRequest.itemId);
+            
+            if (itemResponse.isSuccess) {
+              // Tạo bản ghi history mới
+              const historyData = {
+                requestId: editingRequest.requestId,
+                userId: editingRequest.userId,
+                itemId: editingRequest.itemId,
+                itemName: itemResponse.data.name, // Lưu tên item vào history
+                borrowDate: editingRequest.startDate,
+                returnDate: new Date().toISOString()
+              };
+
+              // Gọi API tạo history (bạn cần tạo API này)
+              const historyResponse = await borrowhistoryApi.createBorrowHistory(historyData);
+              
+              if (historyResponse.isSuccess) {
+                toast.success('Request completed and history created successfully');
+              } else {
+                toast.error('Failed to create borrow history');
+              }
+            }
+          } catch (error) {
+            console.error('Error creating borrow history:', error);
+            toast.error('Error creating borrow history');
+          }
+        }
+
         toast.success('Request status updated successfully');
         fetchBorrowRequests(); // Refresh data
         setIsEditModalOpen(false);
@@ -254,23 +297,23 @@ const BorrowRequest = () => {
               <thead className="bg-gray-50">
                 <tr>
                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Request ID
+                    ID
                   </th>
                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Full Name
                   </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  {/* <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Email
-                  </th>
+                  </th> */}
                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Laptop
                   </th>
                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Start Date
                   </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  {/* <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     End Date
-                  </th>
+                  </th> */}
                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Status
                   </th>
@@ -293,11 +336,11 @@ const BorrowRequest = () => {
                           {userInfoMap[request.userId]?.fullName || 'Loading...'}
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      {/* <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-900">
                           {userInfoMap[request.userId]?.email || 'Loading...'}
                         </div>
-                      </td>
+                      </td> */}
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-900">
                           {request.itemName || 'N/A'}
@@ -310,13 +353,13 @@ const BorrowRequest = () => {
                             : 'N/A'}
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      {/* <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-900">
                           {request.endDate 
                             ? format(new Date(request.endDate), 'dd/MM/yyyy')
                             : 'N/A'}
                         </div>
-                      </td>
+                      </td> */}
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full
                           ${request.status === 'Pending' ? 'bg-yellow-100 text-yellow-800' : 
@@ -436,14 +479,14 @@ const BorrowRequest = () => {
                       : 'N/A'}
                   </p>
                 </div>
-                <div>
+                {/* <div>
                   <h3 className="text-sm font-medium text-gray-500">End Date</h3>
                   <p>
                     {selectedRequest.endDate 
                       ? format(new Date(selectedRequest.endDate), 'dd/MM/yyyy')
                       : 'N/A'}
                   </p>
-                </div>
+                </div> */}
               </div>
               
               {selectedRequest.status === 'Rejected' && selectedRequest.rejectionReason && (
@@ -508,7 +551,9 @@ const BorrowRequest = () => {
                   className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                   required
                 >
-                  <option value="Pending">Pending</option>
+                  {editingRequest.status === 'Pending' && (
+                    <option value="Pending">Pending</option>
+                  )}
                   <option value="Approved">Approved</option>
                   <option value="Rejected">Rejected</option>
                   <option value="Borrowing">Borrowing</option>
