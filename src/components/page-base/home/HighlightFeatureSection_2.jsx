@@ -7,20 +7,20 @@ export default function HighlightFeatureSection2({ images }) {
       className="container mx-auto my-8 flex flex-col md:flex-row items-center md:space-x-20 p-8"
     >
       <div className="w-full md:w-1/2 text-center md:text-left">
-        <h1 className="font-bold text-4xl font-serif mb-6 text-olive-dark">
+        <h1 className="font-bold text-4xl font-serif mb-6 text-black">
           Easy Laptop Borrowing
         </h1>
-        <p className="text-gray-600 text-lg leading-relaxed">
+        <p className="text-gray-800 text-lg leading-relaxed">
           <span className="font-semibold text-gray-800 text-xl">
             Experience hassle-free laptop borrowing for your academic needs.
           </span>
-          <span className="font-medium text-gray-800">
+          <span className="font-medium text-gray-600">
             Our borrowing service offers numerous benefits, including a quick
             and simple process, flexible borrowing periods, well-maintained
             devices, technical support.
           </span>
         </p>
-        <button className="mt-8 bg-white text-black border-2 border-black px-8 py-3 rounded-lg hover:bg-[#808000] hover:text-white hover:border-[#808000] transition-all duration-300 font-semibold">
+        <button className="mt-8 bg-slate-600 text-white border-2 border-slate-600 px-8 py-3 rounded-lg hover:bg-amber-600 hover:border-amber-600 transition-all duration-300 font-semibold">
           Borrow Now
         </button>
       </div>

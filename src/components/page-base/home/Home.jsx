@@ -1,5 +1,3 @@
-//The entire home page
-
 import React from "react";
 import Hero from "./Hero";
 import HighlightFeatureCard from "./HighlightFeatureCard";
@@ -15,10 +13,13 @@ import laptopborrowImage1 from "../../../assets/laptopborrow1.jpg";
 
 export default function DefaultHomePage() {
   return (
-    <section>
+    <section className="bg-white text-gray-800 font-sans">
+      {/* Hero Section */}
       <Hero />
-      <div className="relative max-h-[480px] my-8">
-        <div className="w-full flex justify-around items-center gap-4 p-4">
+
+      {/* Highlight Feature Section */}
+      <div className="flex justify-center ">
+        <div className="w-full max-w-screen-lg flex justify-between items-center gap-8 px-6">
           <HighlightFeatureCard
             title="Budget-Friendly Student Laptops"
             image={laptopsellImage}
@@ -31,17 +32,20 @@ export default function DefaultHomePage() {
           />
         </div>
       </div>
-      <div className="container mx-auto my-8">
+      <div>
+        <h1 className="text-4xl font-bold text-center py-6">Our Laptop Shop</h1>
+        {/* Hiển thị danh sách laptop cho mượn */}
+        <ListLaptopBorrow />
+        {/* Hiển thị danh sách laptop để bán */}
+        <ListLaptopShop />
+      </div>
+
+      {/* Highlight Feature Sections */}
+      <div className="container mx-auto my-12 px-6">
         <HighlightFeatureSection
           images={{ img1: laptopsellImage1, img2: laptopsellImage2 }}
         />
         <HighlightFeatureSection2 images={laptopborrowImage1} />
-      </div>
-      <div className="my-8">
-        <ListLaptopShop />
-      </div>
-      <div className="my-8">
-        <ListLaptopBorrow />
       </div>
     </section>
   );

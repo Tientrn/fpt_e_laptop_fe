@@ -14,9 +14,6 @@ const ListLaptopBorrow = () => {
       try {
         setLoading(true);
         const response = await donateitemsApi.getAllDonateItems();
-        console.log("API Response:", response);
-        console.log("Laptop data:", response.data);
-
         if (response.isSuccess) {
           setLaptops(response.data || []);
         } else {
@@ -39,8 +36,8 @@ const ListLaptopBorrow = () => {
   if (loading) {
     return (
       <div className="p-6 text-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-teal-500 mx-auto"></div>
-        <p className="mt-2 text-teal-600">Loading laptops...</p>
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-amber-600 mx-auto"></div>
+        <p className="mt-2 text-amber-600">Loading laptops...</p>
       </div>
     );
   }
@@ -62,8 +59,8 @@ const ListLaptopBorrow = () => {
   }
 
   return (
-    <div className="p-6 space-y-10 bg-gradient-to-br from-emerald-50 to-teal-50">
-      <h1 className="text-center font-bold text-3xl p-4 font-serif text-teal-800">
+    <div className="p-6 space-y-10 bg-white">
+      <h1 className="text-center font-bold text-3xl p-4 text-black">
         Laptop Borrow
       </h1>
 
@@ -82,11 +79,11 @@ const ListLaptopBorrow = () => {
             bg-white/90 rounded-full shadow-lg 
             hover:bg-white hover:shadow-xl
             transition-all duration-300 
-            border border-teal-100
+            border border-slate-600
             group"
         >
           <svg
-            className="w-6 h-6 text-teal-600 group-hover:text-teal-700 transition-colors"
+            className="w-6 h-6 text-slate-600 group-hover:text-slate-700 transition-colors"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -108,7 +105,7 @@ const ListLaptopBorrow = () => {
             {laptops.map((laptop) => (
               <div
                 key={laptop.itemId}
-                className="flex-none w-80 bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-duration-300 h-[540px] flex flex-col cursor-pointer"
+                className="flex-none w-80 bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-all duration-300 h-[540px] flex flex-col cursor-pointer transform hover:scale-105"
                 onClick={() => handleCardClick(laptop.itemId)}
               >
                 <div className="relative h-52">
@@ -118,12 +115,10 @@ const ListLaptopBorrow = () => {
                     className="w-full h-full object-cover"
                   />
                   <div
-                    className={`absolute top-4 right-4 px-3 py-1 rounded-md text-sm font-medium text-white
-                    ${
-                      laptop.status === "Available"
-                        ? "bg-teal-500"
-                        : "bg-red-500"
-                    }`}
+                    className={`absolute top-4 right-4 px-3 py-1 rounded-md text-sm font-medium text-white 
+                ${
+                  laptop.status === "Available" ? "bg-amber-600" : "bg-red-600"
+                }`}
                   >
                     {laptop.status}
                   </div>
@@ -133,7 +128,7 @@ const ListLaptopBorrow = () => {
                   <h3 className="font-bold text-xl mb-4 text-gray-800 line-clamp-2 min-h-[3.5rem]">
                     {laptop.itemName}
                   </h3>
-                  
+
                   <div className="space-y-2.5 flex-grow">
                     <div className="flex items-center text-gray-600">
                       <svg
@@ -181,7 +176,9 @@ const ListLaptopBorrow = () => {
                           d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4"
                         />
                       </svg>
-                      <span className="truncate">Storage: {laptop.storage}</span>
+                      <span className="truncate">
+                        Storage: {laptop.storage}
+                      </span>
                     </div>
                     <div className="flex items-center text-gray-600">
                       <svg
@@ -197,7 +194,9 @@ const ListLaptopBorrow = () => {
                           d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
                         />
                       </svg>
-                      <span className="truncate">Screen Size: {laptop.screenSize}</span>
+                      <span className="truncate">
+                        Screen Size: {laptop.screenSize}
+                      </span>
                     </div>
                     <div className="flex items-center text-gray-600">
                       <svg
@@ -213,7 +212,9 @@ const ListLaptopBorrow = () => {
                           d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
                         />
                       </svg>
-                      <span className="truncate">Condition: {laptop.conditionItem || "N/A"}</span>
+                      <span className="truncate">
+                        Condition: {laptop.conditionItem || "N/A"}
+                      </span>
                     </div>
                   </div>
 
@@ -221,7 +222,7 @@ const ListLaptopBorrow = () => {
                     <Link
                       to={`/borrow/${laptop.itemId}`}
                       className="inline-flex items-center px-4 py-2 text-sm 
-                               bg-teal-500 text-white rounded-full hover:bg-teal-600 transition-colors"
+                           bg-slate-600 text-white rounded-full hover:bg-amber-600 transition-colors"
                       onClick={(e) => e.stopPropagation()}
                     >
                       <span>View Details</span>
@@ -247,11 +248,11 @@ const ListLaptopBorrow = () => {
             bg-white/90 rounded-full shadow-lg 
             hover:bg-white hover:shadow-xl
             transition-all duration-300 
-            border border-teal-100
+            border border-slate-600
             group"
         >
           <svg
-            className="w-6 h-6 text-teal-600 group-hover:text-teal-700 transition-colors"
+            className="w-6 h-6 text-slate-600 group-hover:text-slate-700 transition-colors"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -270,8 +271,8 @@ const ListLaptopBorrow = () => {
         <Link
           to="/laptopborrow"
           className="px-6 py-3 rounded-full 
-            bg-teal-600 text-white
-            hover:bg-teal-700 
+            bg-slate-600 text-white
+            hover:bg-amber-600
             transition-all duration-300
             shadow-md hover:shadow-lg
             font-medium

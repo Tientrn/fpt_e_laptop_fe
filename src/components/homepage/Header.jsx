@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import ShoppingCartCheckoutIcon from "@mui/icons-material/ShoppingCartCheckout";
 import StoreIcon from "@mui/icons-material/Store";
 import HandshakeIcon from "@mui/icons-material/Handshake";
-import PersonIcon from '@mui/icons-material/Person';
+import PersonIcon from "@mui/icons-material/Person";
 import { jwtDecode } from "jwt-decode";
 import useCartStore from "../../store/useCartStore";
 
@@ -12,11 +12,11 @@ function HeaderHomePage() {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isSponsorOpen, setIsSponsorOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(() => {
-    return localStorage.getItem('token') !== null;
+    return localStorage.getItem("token") !== null;
   });
   const location = useLocation();
   const navigate = useNavigate();
-  
+
   // Get cart count from cart store
   const cartCount = useCartStore((state) => state.getCartCount());
 
@@ -24,21 +24,21 @@ function HeaderHomePage() {
     // Clear all storage
     localStorage.clear();
     sessionStorage.clear();
-    
+
     // Clear cookies
     document.cookie.split(";").forEach((c) => {
       document.cookie = c
         .replace(/^ +/, "")
         .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
     });
-    
+
     // Navigate to login
-    navigate('/login');
+    navigate("/login");
   };
 
   // Kiểm tra token không hợp lệ hoặc hết hạn
   useEffect(() => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem("token");
     if (token) {
       try {
         const decodedToken = jwtDecode(token);
@@ -54,23 +54,11 @@ function HeaderHomePage() {
 
   return (
     <header>
-      {/* {process.env.NODE_ENV === 'development' && (
-        <button
-          onClick={() => {
-            localStorage.clear();
-            sessionStorage.clear();
-            window.location.reload();
-          }}
-          className="fixed bottom-4 right-4 bg-red-500 text-white px-4 py-2 rounded-full"
-        >
-          Clear Data
-        </button>
-      )} */}
-      <div className="bg-gradient-to-r from-[#1E1E2F] to-[#662D91] text-white px-4 lg:px-6">
+      <div className="bg-[#1e293b] text-white px-4 lg:px-6">
         <div className="mx-auto max-w-screen-lg flex space-x-6">
           <a
             href="/registershop"
-            className="font-semibold text-lg hover:text-purple-300 flex items-center h-10"
+            className="font-semibold text-lg hover:text-amber-600 flex items-center h-10"
           >
             <StoreIcon className="mr-1" />
             <span className="drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]">
@@ -79,8 +67,8 @@ function HeaderHomePage() {
           </a>
           <span className="mt-1 font-semibold">|</span>
           <button
-            onClick={() => navigate('/sponsor/register')}
-            className="font-semibold text-lg hover:text-purple-300 flex items-center h-10"
+            onClick={() => navigate("/sponsor/register")}
+            className="font-semibold text-lg hover:text-amber-600 flex items-center h-10"
           >
             <HandshakeIcon className="mr-1" />
             <span className="drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]">
@@ -89,12 +77,12 @@ function HeaderHomePage() {
           </button>
         </div>
       </div>
-      <nav className="bg-gradient-to-r from-[#1E1E2F] to-[#662D91] text-white px-4 lg:px-6 py-2.5">
+      <nav className="bg-[#1e293b] text-white px-4 lg:px-6 py-2.5">
         <div className="flex flex-wrap justify-between items-center mx-auto max-w-screen-lg">
           <span className="self-center text-xl font-bold whitespace-nowrap text-white">
             <div className="flex items-center">
               <i className="fas fa-laptop mr-2 text-2xl"></i>
-              <h1 className="text-lg text-white font-bold drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]">
+              <h1 className="text-lg text-amber-400 font-bold drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]">
                 FPT E-Laptop
               </h1>
             </div>
@@ -111,7 +99,7 @@ function HeaderHomePage() {
               <li>
                 <a
                   href="/"
-                  className="block py-2 pr-4 pl-3 text-white font-semibold drop-shadow-[0_1px_1px_rgba(0,0,0,0.8)] hover:text-purple-300"
+                  className="block py-2 pr-4 pl-3 text-white font-semibold drop-shadow-[0_1px_1px_rgba(0,0,0,0.8)] hover:text-amber-600"
                   aria-current="page"
                 >
                   Home
@@ -120,7 +108,7 @@ function HeaderHomePage() {
               <li>
                 <a
                   href="/laptopshop"
-                  className="block py-2 pr-4 pl-3 text-white font-semibold drop-shadow-[0_1px_1px_rgba(0,0,0,0.8)] hover:text-purple-300"
+                  className="block py-2 pr-4 pl-3 text-white font-semibold drop-shadow-[0_1px_1px_rgba(0,0,0,0.8)] hover:text-amber-600"
                 >
                   Laptop Shop
                 </a>
@@ -128,16 +116,16 @@ function HeaderHomePage() {
               <li>
                 <a
                   href="/laptopborrow"
-                  className="block py-2 pr-4 pl-3 text-white font-semibold drop-shadow-[0_1px_1px_rgba(0,0,0,0.8)] hover:text-purple-300"
+                  className="block py-2 pr-4 pl-3 text-white font-semibold drop-shadow-[0_1px_1px_rgba(0,0,0,0.8)] hover:text-amber-600"
                 >
-                  Laptop Borrow 
+                  Laptop Borrow
                 </a>
               </li>
             </ul>
             <div className="flex flex-col md:flex-row items-center gap-4 ml-2">
               <a
                 href="/cart"
-                className="text-white relative hover:text-purple-300"
+                className="text-white relative hover:text-amber-600"
               >
                 <ShoppingCartCheckoutIcon />
                 {cartCount > 0 && (
@@ -151,14 +139,14 @@ function HeaderHomePage() {
                 <>
                   <button
                     onClick={() => navigate("/login")}
-                    className="rounded-full bg-[#662D91] bg-opacity-70 py-2 px-4 text-center text-sm text-white transition-all hover:bg-opacity-90 hover:shadow-lg"
+                    className="rounded-full bg-[#f59e0b] bg-opacity-70 py-2 px-4 text-center text-sm text-white transition-all hover:bg-opacity-90 hover:shadow-lg"
                     type="button"
                   >
                     Sign In
                   </button>
                   <button
                     onClick={() => navigate("/register")}
-                    className="rounded-full bg-[#662D91] bg-opacity-70 py-2 px-4 text-center text-sm text-white transition-all hover:bg-opacity-90 hover:shadow-lg"
+                    className="rounded-full bg-[#f59e0b] bg-opacity-70 py-2 px-4 text-center text-sm text-white transition-all hover:bg-opacity-90 hover:shadow-lg"
                     type="button"
                   >
                     Sign Up
@@ -168,7 +156,7 @@ function HeaderHomePage() {
                 <div className="relative ml-4">
                   <button
                     onClick={() => setIsProfileOpen(!isProfileOpen)}
-                    className="text-white hover:text-purple-300"
+                    className="text-white hover:text-amber-600"
                   >
                     <PersonIcon />
                   </button>
@@ -233,7 +221,6 @@ function HeaderHomePage() {
           </div>
         </div>
       </nav>
-      <hr />
     </header>
   );
 }

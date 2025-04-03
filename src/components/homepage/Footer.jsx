@@ -3,7 +3,7 @@ import InstagramIcon from "@mui/icons-material/Instagram";
 
 function FooterHomePage() {
   return (
-    <footer className="bg-gradient-to-r from-[#1E1E2F] to-[#662D91] text-white py-8">
+    <footer className="bg-gradient-to-r from-[#2F2F3B] to-[#3C2B64] text-white py-8">
       <div className="container mx-auto px-4 lg:px-6">
         {/* Top Section */}
         <div className="flex flex-col md:flex-row justify-between items-center md:items-start gap-8">
@@ -27,7 +27,7 @@ function FooterHomePage() {
                 <i className="fas fa-home mr-2"></i>
                 <a
                   href="/"
-                  className="text-white/80 hover:text-purple-300 transition-colors"
+                  className="text-white/80 hover:text-amber-600 transition-colors"
                 >
                   Home
                 </a>
@@ -36,7 +36,7 @@ function FooterHomePage() {
                 <i className="fas fa-cogs mr-2"></i>
                 <a
                   href="#"
-                  className="text-white/80 hover:text-purple-300 transition-colors"
+                  className="text-white/80 hover:text-amber-600 transition-colors"
                 >
                   Products
                 </a>
@@ -45,7 +45,7 @@ function FooterHomePage() {
                 <i className="fas fa-laptop mr-2"></i>
                 <a
                   href="#"
-                  className="text-white/80 hover:text-purple-300 transition-colors"
+                  className="text-white/80 hover:text-amber-600 transition-colors"
                 >
                   Borrow Laptop
                 </a>
@@ -54,7 +54,7 @@ function FooterHomePage() {
                 <i className="fas fa-envelope mr-2"></i>
                 <a
                   href="#"
-                  className="text-white/80 hover:text-purple-300 transition-colors"
+                  className="text-white/80 hover:text-amber-600 transition-colors"
                 >
                   Contact Us
                 </a>
@@ -95,19 +95,19 @@ function FooterHomePage() {
           <div className="flex space-x-4">
             <a
               href="#"
-              className="text-white/80 hover:text-purple-300 transition-colors"
+              className="text-white/80 hover:text-amber-600 transition-colors"
             >
               <i className="fab fa-facebook-f"></i>
             </a>
             <a
               href="#"
-              className="text-white/80 hover:text-purple-300 transition-colors"
+              className="text-white/80 hover:text-amber-600 transition-colors"
             >
               <InstagramIcon />
             </a>
             <a
               href="#"
-              className="text-white/80 hover:text-purple-300 transition-colors"
+              className="text-white/80 hover:text-amber-600 transition-colors"
             >
               <i className="fab fa-linkedin-in"></i>
             </a>

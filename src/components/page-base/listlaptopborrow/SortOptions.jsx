@@ -3,10 +3,11 @@ import React from "react";
 const SortOptions = ({ onSort }) => {
   return (
     <div className="flex justify-between items-center mb-6">
-      <div className="p-4 bg-gradient-to-br from-emerald-50 to-teal-50 rounded-lg shadow-md border border-teal-100">
+      <div className="p-4 bg-white rounded-lg shadow-md border border-gray-300">
         <div className="flex items-center space-x-2">
+          {/* Icon lọc */}
           <svg
-            className="w-5 h-5 text-teal-600"
+            className="w-5 h-5 text-black"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -20,32 +21,18 @@ const SortOptions = ({ onSort }) => {
             />
           </svg>
 
+          {/* Dropdown */}
           <select
             onChange={(e) => onSort(e.target.value)}
-            className="p-2.5 bg-white border border-teal-200 rounded-lg
-              focus:ring-2 focus:ring-teal-500 focus:border-teal-500 
-              transition-all duration-300 hover:border-teal-400
-              text-teal-800 font-medium cursor-pointer
-              shadow-sm"
+            className="p-2.5 bg-white border border-gray-300 rounded-lg
+              focus:ring-2 focus:ring-amber-600 focus:border-amber-600 
+              transition-all duration-300 hover:border-gray-400
+              text-black font-medium cursor-pointer shadow-sm"
           >
-            <option value="default" className="text-teal-800">
-              Sort by
-            </option>
-            <option value="ram-high-to-low" className="text-teal-800">
-              RAM: High to Low
-            </option>
-            <option value="processor-high-to-low" className="text-teal-800">
-              CPU : High to Low
-            </option>
-            {/* <option value="price-low-to-high" className="text-teal-800">
-              Price: Low to High
-            </option>
-            <option value="price-high-to-low" className="text-teal-800">
-              Price: High to Low
-            </option> */}
-            <option value="newest" className="text-teal-800">
-              Newest
-            </option>
+            <option value="default">Sắp xếp theo</option>
+            <option value="ram-high-to-low">RAM: Cao đến Thấp</option>
+            <option value="processor-high-to-low">CPU: Cao đến Thấp</option>
+            <option value="newest">Mới nhất</option>
           </select>
         </div>
       </div>

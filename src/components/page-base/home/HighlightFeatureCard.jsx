@@ -13,18 +13,17 @@ export default function HighlightFeatureCard({ title, image, sectionId }) {
 
   return (
     <div
-      className="relative w-96 z-0 hover:transform hover:scale-105 transition-all duration-300 mb-32 cursor-pointer"
+      className="relative w-80 p-6 border border-gray-200 rounded-2xl shadow-lg bg-white hover:shadow-xl transition-all duration-300 cursor-pointer hover:scale-105 flex flex-col items-center"
       onClick={handleClick}
     >
-      <div className="absolute -z-10 w-full">
+      <div className="w-full h-44 flex justify-center items-center overflow-hidden rounded-xl bg-gray-100">
         <img
-          src={image || "https://via.placeholder.com/60x40"}
+          src={image || "https://via.placeholder.com/300x200"}
           alt="Feature Image"
-          className="mb-4 h-40 w-full rounded-md object-cover shadow-lg"
+          className="w-auto h-full object-cover transition-transform duration-500 hover:scale-110"
         />
       </div>
-
-      <h1 className="relative top-16 mb-2 text-center text-lg font-semibold text-white drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]">
+      <h1 className="mt-6 text-center text-lg font-semibold text-gray-900 hover:text-amber-600 transition-colors duration-300">
         {title}
       </h1>
     </div>
