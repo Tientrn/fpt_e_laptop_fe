@@ -115,9 +115,7 @@ const BorrowHistory = () => {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-semibold text-black">Borrow History</h1>
-          <span className="text-sm text-amber-600 font-medium">
-            Staff Dashboard
-          </span>
+          
         </div>
         <div className="relative w-64">
           <input
