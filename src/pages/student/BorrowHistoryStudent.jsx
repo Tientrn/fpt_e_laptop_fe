@@ -7,8 +7,8 @@ import borrowhistoryApi from "../../api/borrowhistoryApi"; // Ensure the correct
 
 const BorrowHistoryStudent = () => {
   const navigate = useNavigate();
-  const goToDetail = (id) => {
-    navigate(`/student/borrowhistorydetailstudent/${id}`);
+  const goToDetail = (borrowHistoryId, id) => {
+    navigate(`/student/borrowhistorydetailstudent/${borrowHistoryId}/${id}`);
   };
 
   const [borrowHistories, setBorrowHistories] = useState([]);
@@ -117,7 +117,9 @@ const BorrowHistoryStudent = () => {
               <div className="flex justify-between items-center">
                 <h2 className="text-xl font-medium text-black">Borrow</h2>
                 <button
-                  onClick={() => goToDetail(history.requestId)}
+                  onClick={() =>
+                    goToDetail(history.borrowHistoryId, history.requestId)
+                  }
                   className="text-white border bg-slate-600 px-4 py-2 text-sm rounded hover:bg-amber-600 hover:text-white transition"
                 >
                   View Detail

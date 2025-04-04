@@ -38,6 +38,7 @@ import Statistics from "./pages/staff/Statistics";
 import ContractsPage from "./pages/staff/ContractsPage";
 import DepositPage from "./pages/staff/DepositPage";
 import DonateItem from "./pages/staff/DonateItem";
+import CreateDonateItem from "./pages/staff/CreateDonateItem";
 {
   /* Sponsor */
 }
@@ -170,6 +171,7 @@ const App = () => {
           <Route path="borrow-history" element={<BorrowHistory />} />
           <Route path="statistics" element={<Statistics />} />
           <Route path="contracts" element={<ContractsPage />} />
+          <Route path="create-itemdonate" element={<CreateDonateItem />} />
           <Route path="deposits/create/:contractId" element={<DepositPage />} />
         </Route>
 
@@ -184,7 +186,7 @@ const App = () => {
             element={<BorrowHistoryStudent />}
           />
           <Route
-            path="borrowhistorydetailstudent/:id"
+            path="borrowhistorydetailstudent/:borrowHistoryId/:id"
             element={<BorrowHistoryDetail />}
           />
         </Route>

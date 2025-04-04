@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { toast } from "react-toastify";
 import { format } from "date-fns";
-import borrowRequestApi from '../../../api/borrowRequestApi';
-import userinfoApi from '../../../api/userinfoApi';
+import borrowrequestApi from "../../api/borrowRequestApi";
+import userinfoApi from "../../api/userinfoApi";
+import borrowhistoryApi from "../../api/borrowhistoryApi";
 
 const getStatusColor = (status) => {
   switch (status) {
@@ -22,11 +23,28 @@ const getStatusColor = (status) => {
 };
 
 const RequestsPage = () => {
+  const [borrowHistories, setBorrowHistories] = useState([]);
   const [request, setRequest] = useState(null);
   const [userInfo, setUserInfo] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  const getAllBorrowHistories = () => {
+    borrowhistoryApi
+      .getAllBorrowHistories()
+      .then((response) => {
+        setBorrowHistories(response.data);
+        console.log(`borrrowhistory:${JSON.stringify(response.data, null, 2)}`); // Lưu dữ liệu vào state
+        setLoading(false); // Set loading là false khi lấy xong dữ liệu
+      })
+      .catch((err) => {
+        setError("Failed to load borrow histories"); // Xử lý lỗi nếu có
+        setLoading(false); // Set loading là false khi có lỗi
+      });
+  };
 
   useEffect(() => {
+    getAllBorrowHistories();
     const fetchData = async () => {
       try {
         setLoading(true);
@@ -39,7 +57,7 @@ const RequestsPage = () => {
             userId: userData.userId,
           });
 
-          const requestResponse = await borrowRequestApi.getAllBorrowRequests();
+          const requestResponse = await borrowrequestApi.getAllBorrowRequests();
           if (requestResponse?.isSuccess && requestResponse.data) {
             const userRequests = requestResponse.data.filter(
               (req) => req.userId === userData.userId
@@ -73,10 +91,61 @@ const RequestsPage = () => {
   const handleCancelRequest = async () => {
     if (!request || request.status !== "Pending") return;
 
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      toast.error("Không tìm thấy token, bạn cần đăng nhập lại.");
+      return;
+    }
+
+    // 2. Cấu hình header để đính kèm token vào yêu cầu xóa yêu cầu
+    const config = {
+      headers: {
+        Authorization: `Bearer ${token}`, // Đính kèm token vào header
+      },
+    };
+
     try {
+      // 1. Xóa yêu cầu mượn
       const response = await borrowrequestApi.deleteBorrowRequest(request.id);
       if (response?.isSuccess) {
         toast.success("Hủy yêu cầu thành công!");
+
+        // 2. Xóa lịch sử mượn tương ứng
+        const borrowHistory = borrowHistories.find(
+          (history) => history.requestId === request.id
+        );
+
+        console.log("historyIdToDelete:", borrowHistory);
+
+        if (borrowHistory) {
+          // Nếu tìm thấy borrowHistory, truy cập borrowHistoryId từ object
+          const historyIdToDelete = borrowHistory?.borrowHistoryId; // Lấy borrowHistoryId từ object
+
+          console.log("historyIdToDelete:", historyIdToDelete); // Kiểm tra giá trị
+
+          // Thực hiện xóa lịch sử mượn với borrowHistoryId
+          const historyResponse = await borrowhistoryApi.deleteBorrowHistory(
+            historyIdToDelete,
+            config
+          );
+          if (historyResponse?.isSuccess) {
+            toast.success("Xóa lịch sử mượn thành công!");
+
+            // Cập nhật lại borrowHistories sau khi xóa
+            setBorrowHistories((prevHistories) => {
+              return prevHistories.filter(
+                (history) => history.borrowHistoryId !== historyIdToDelete
+              );
+            });
+          } else {
+            toast.error("Không thể xóa lịch sử mượn.");
+          }
+        } else {
+          toast.error("Không tìm thấy lịch sử mượn để xóa.");
+        }
+
+        // Cập nhật lại trạng thái yêu cầu
         setRequest((prev) => ({ ...prev, status: "Canceled" }));
       } else {
         toast.error("Không thể hủy yêu cầu.");
@@ -86,7 +155,6 @@ const RequestsPage = () => {
       toast.error("Lỗi khi hủy yêu cầu.");
     }
   };
-
   if (loading) {
     return (
       <div className="min-h-screen bg-white flex justify-center items-center">

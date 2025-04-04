@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import donateitemsApi from "../../../api/donateitemsApi";
 import itemimagesApi from "../../../api/itemimagesApi";
+import feedbackborrowApi from "../../../api/feedbackborrowApi";
 
 const CardDetail = () => {
   const { id } = useParams();
@@ -12,6 +13,7 @@ const CardDetail = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [feedbacks, setFeedbacks] = useState([]);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -43,6 +45,15 @@ const CardDetail = () => {
           const imagesResponse = await itemimagesApi.getItemImagesById(id);
           if (isMounted && imagesResponse.isSuccess) {
             setImages(imagesResponse.data);
+          }
+          const feedbackResponse =
+            await feedbackborrowApi.getAllFeedbackBorrows();
+          if (isMounted && feedbackResponse.isSuccess) {
+            // Filter feedbacks for the current laptop
+            const filteredFeedbacks = feedbackResponse.data.filter(
+              (feedback) => feedback.itemId === parseInt(id)
+            );
+            setFeedbacks(filteredFeedbacks);
           }
         }
       } catch (error) {
@@ -276,6 +287,62 @@ Perfect for students and professionals alike.`}
               </button>
             </div>
           </div>
+        </div>
+
+        {/* Feedback  */}
+        <div className="mt-12 border-t pt-10 w-full">
+          <h2 className="text-2xl font-bold text-black mb-6">User Feedback</h2>
+
+          {feedbacks.length === 0 ? (
+            <p className="text-gray-500 text-sm">
+              No feedback available for this item.
+            </p>
+          ) : (
+            <>
+              <div className="mb-6 text-center">
+                <p className="text-lg text-slate-800">
+                  Average Rating:{" "}
+                  <span className="text-amber-600 font-semibold text-xl">
+                    {(
+                      feedbacks.reduce((sum, fb) => sum + fb.rating, 0) /
+                      feedbacks.length
+                    ).toFixed(1)}{" "}
+                    / 5
+                  </span>
+                </p>
+              </div>
+
+              <div className="space-y-4">
+                {feedbacks.map((fb) => (
+                  <div
+                    key={fb.feedbackBorrowId}
+                    className="border border-gray-200 bg-white p-4 rounded-xl shadow-sm hover:shadow-md transition"
+                  >
+                    <p className="text-sm text-gray-700 italic mb-1 font-bold">
+                      {fb.isAnonymous ? "Anonymous" : `User`}
+                    </p>
+                    <div className="flex justify-between items-center mb-2">
+                      <p className="text-sm font-medium text-black">
+                        Rating:{" "}
+                        <span className="text-amber-600 font-semibold">
+                          {fb.rating}/5
+                        </span>
+                      </p>
+                      <p className="text-xs text-gray-400">
+                        {new Date(fb.feedbackDate).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <p className="text-sm font-medium text-black">
+                      Comment:{" "}
+                      <span className=" text-gray-800 font-normal">
+                        {fb.comments}
+                      </span>
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { toast } from "react-toastify";
 import { format } from "date-fns";
+import { jwtDecode } from "jwt-decode";
 import {
   FaSearch,
   FaFilter,
@@ -8,7 +9,9 @@ import {
   FaFileDownload,
   FaCheckCircle,
 } from "react-icons/fa";
-import borrowcontractApi from "../../api/borrowcontractApi"; // Thay bằng đường dẫn tới axiosClient của bạn
+import borrowcontractApi from "../../api/borrowcontractApi";
+import borrowrequestApi from "../../api/borrowRequestApi";
+// Đảm bảo đã import jwt-decode
 
 const Contractstudent = () => {
   const [contracts, setContracts] = useState([]);
@@ -19,10 +22,50 @@ const Contractstudent = () => {
   const [itemsPerPage] = useState(5);
   const [selectedContract, setSelectedContract] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [borrowRequestDetails, setBorrowRequestDetails] = useState(null);
+  const [userId, setUserId] = useState(null);
 
+  // Lấy userId từ token khi component mount
   useEffect(() => {
-    fetchContracts();
+    const token = localStorage.getItem("token");
+    if (token) {
+      try {
+        const decodedToken = jwtDecode(token);
+        console.log("Decoded Token:", decodedToken);
+        const userIdFromToken =
+          decodedToken[
+            "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"
+          ];
+        console.log("Decoded userId:", userIdFromToken);
+        setUserId(Number(userIdFromToken));
+      } catch (error) {
+        console.error("Error decoding token:", error);
+        toast.error("Lỗi khi giải mã token");
+      }
+    }
   }, []);
+
+  // Gọi fetchContracts khi userId thay đổi
+  useEffect(() => {
+    if (userId !== null) {
+      // Chỉ gọi khi userId đã được set
+      fetchContracts();
+    }
+  }, [userId]);
+
+  const fetchBorrowRequestDetails = async (id) => {
+    try {
+      const response = await borrowrequestApi.getBorrowRequestById(id);
+      if (response.isSuccess) {
+        setBorrowRequestDetails(response.data);
+      } else {
+        throw new Error("Failed to fetch borrow request details");
+      }
+    } catch (error) {
+      console.error("Error fetching borrow request details:", error);
+      toast.error(error.message || "Error fetching details");
+    }
+  };
 
   const fetchContracts = async () => {
     try {
@@ -36,28 +79,32 @@ const Contractstudent = () => {
       }
 
       if (response.isSuccess) {
-        console.log("Dữ liệu thô:", response.data.data);
-        const transformedContracts = response.data.map((contract) => {
-          console.log("Đang ánh xạ contract:", contract);
-          return {
-            id: contract.contractId,
-            contractNumber: `CTR-${contract.contractId}`,
-            laptopName: contract.terms.split("Contract for ")[1] || "Unknown",
-            startDate: contract.contractDate,
-            endDate: contract.expectedReturnDate,
-            status:
-              contract.status.toLowerCase() === "pending"
-                ? "active"
-                : "completed",
-            depositAmount: contract.itemValue * 0.1,
-            returnDate: null,
-            laptopCondition: {
-              beforeBorrow: contract.conditionBorrow,
-              afterReturn: null,
-            },
-          };
-        });
-        console.log("Dữ liệu sau ánh xạ:", transformedContracts);
+        console.log("Dữ liệu thô:", response.data);
+        const transformedContracts = response.data
+          .map((contract) => {
+            console.log("Đang ánh xạ contract:", contract);
+            return {
+              id: contract.contractId,
+              requestId: contract.requestId,
+              userId: contract.userId, // Thêm userId vào đối tượng
+              contractNumber: `CTR-${contract.contractId}`,
+              laptopName: contract.terms.split("Contract for ")[1] || "Unknown",
+              startDate: contract.contractDate,
+              endDate: contract.expectedReturnDate,
+              status:
+                contract.status.toLowerCase() === "pending"
+                  ? "active"
+                  : "completed",
+              depositAmount: contract.itemValue * 0.1,
+              returnDate: null,
+              laptopCondition: {
+                beforeBorrow: contract.conditionBorrow,
+                afterReturn: null,
+              },
+            };
+          })
+          .filter((contract) => contract.userId === userId); // Lọc theo userId
+        console.log("Dữ liệu sau ánh xạ và lọc:", transformedContracts);
         setContracts(transformedContracts);
       } else {
         throw new Error(
@@ -74,6 +121,8 @@ const Contractstudent = () => {
 
   const handleViewDetails = (contract) => {
     setSelectedContract(contract);
+    console.log("Fetching details for request ID:", contract.requestId);
+    fetchBorrowRequestDetails(contract.requestId);
     setIsModalOpen(true);
   };
 
@@ -89,7 +138,7 @@ const Contractstudent = () => {
       window.confirm("Bạn có chắc chắn muốn xác nhận trả laptop này không?")
     ) {
       try {
-        await new Promise((resolve) => setTimeout(resolve, 500)); // Giả lập API call
+        await new Promise((resolve) => setTimeout(resolve, 500));
         setContracts(
           contracts.map((contract) =>
             contract.id === id
@@ -183,9 +232,6 @@ const Contractstudent = () => {
                       Mã hợp đồng
                     </th>
                     <th className="px-4 py-2 text-left text-xs text-gray-500 uppercase">
-                      Laptop
-                    </th>
-                    <th className="px-4 py-2 text-left text-xs text-gray-500 uppercase">
                       Thời gian
                     </th>
                     <th className="px-4 py-2 text-left text-xs text-gray-500 uppercase">
@@ -208,9 +254,6 @@ const Contractstudent = () => {
                       >
                         <td className="px-4 py-3 text-sm text-black">
                           {contract.contractNumber}
-                        </td>
-                        <td className="px-4 py-3 text-sm text-black">
-                          {contract.laptopName}
                         </td>
                         <td className="px-4 py-3 text-sm text-black">
                           {format(new Date(contract.startDate), "dd/MM/yyyy")} -{" "}
@@ -266,7 +309,7 @@ const Contractstudent = () => {
                   ) : (
                     <tr>
                       <td
-                        colSpan="6"
+                        colSpan="5" // Sửa colSpan thành 5 vì đã bỏ cột Laptop
                         className="px-4 py-3 text-center text-sm text-gray-500"
                       >
                         Không tìm thấy hợp đồng nào
@@ -324,7 +367,7 @@ const Contractstudent = () => {
         )}
 
         {/* Details Modal */}
-        {isModalOpen && selectedContract && (
+        {isModalOpen && selectedContract && borrowRequestDetails && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded p-6 max-w-lg w-full mx-4">
               <div className="flex justify-between items-center mb-4">
@@ -364,7 +407,7 @@ const Contractstudent = () => {
                 <div>
                   <p className="text-xs text-gray-500">Laptop</p>
                   <p className="text-sm text-black font-medium">
-                    {selectedContract.laptopName}
+                    {borrowRequestDetails.itemName}
                   </p>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
@@ -394,23 +437,32 @@ const Contractstudent = () => {
                     {selectedContract.laptopCondition.beforeBorrow}
                   </p>
                 </div>
-                {selectedContract.status === "completed" && (
+
+                {/* Display additional borrow request details */}
+                {borrowRequestDetails && (
                   <>
                     <div>
-                      <p className="text-xs text-gray-500">Ngày trả</p>
-                      <p className="text-sm text-black">
-                        {format(
-                          new Date(selectedContract.returnDate),
-                          "dd/MM/yyyy HH:mm"
-                        )}
+                      <p className="text-xs text-gray-500">Tên người mượn</p>
+                      <p className="text-sm text-black font-medium">
+                        {borrowRequestDetails.fullName}
                       </p>
                     </div>
                     <div>
-                      <p className="text-xs text-gray-500">
-                        Tình trạng laptop sau khi trả
+                      <p className="text-xs text-gray-500">Email</p>
+                      <p className="text-sm text-black font-medium">
+                        {borrowRequestDetails.email}
                       </p>
-                      <p className="text-sm text-black">
-                        {selectedContract.laptopCondition.afterReturn}
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500">Số điện thoại</p>
+                      <p className="text-sm text-black font-medium">
+                        {borrowRequestDetails.phoneNumber}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500">Laptop được mượn</p>
+                      <p className="text-sm text-black font-medium">
+                        {borrowRequestDetails.itemName}
                       </p>
                     </div>
                   </>

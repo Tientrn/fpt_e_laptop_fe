@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from "react";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { CheckCircle, XCircle, RefreshCw } from "lucide-react";
 import donateformApi from "../../api/donateformApi";
 
 const DonateItem = () => {
   const [donations, setDonations] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [donationIdInput, setDonationIdInput] = useState(""); // For fetching by ID
+  const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
-  // Fetch all donations on mount
   useEffect(() => {
     const fetchDonations = async () => {
       try {
@@ -24,56 +26,25 @@ const DonateItem = () => {
         setLoading(false);
       }
     };
-
     fetchDonations();
   }, []);
 
-  // Fetch donation by ID
-  const fetchDonationById = async () => {
-    if (!donationIdInput) {
-      toast.error("Please enter a donation ID");
-      return;
-    }
-    try {
-      setLoading(true);
-      const response = await donateformApi.getDonateFormById(donationIdInput);
-      setDonations([response.data]); // Replace list with single donation
-      toast.success(`Donation ${donationIdInput} loaded successfully`);
-      setDonationIdInput(""); // Clear input
-    } catch (error) {
-      console.error("Error fetching donation by ID:", error);
-      toast.error("Failed to fetch donation");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Update donation status
   const updateStatus = async (donationId, newStatus) => {
     try {
-      // Find the donation in local state
       const donation = donations.find((d) => d.donationFormId === donationId);
-      if (!donation) {
-        throw new Error("Donation not found in local state");
-      }
+      if (!donation) throw new Error("Donation not found");
 
-      // Construct the payload with required fields
       const updatedData = {
-        itemName: donation.itemName,
-        itemDescription: donation.itemDescription,
-        quantity: donation.quantity,
+        itemName: donation.itemName || "string",
+        itemDescription: donation.itemDescription || "string",
+        quantity: donation.quantity || 0,
         status: newStatus,
       };
 
-      // Update the donation on the server
       await donateformApi.updateDonateForm(donationId, updatedData);
-
-      // Update local state
-      setDonations((prevDonations) =>
-        prevDonations.map((donation) =>
-          donation.donationFormId === donationId
-            ? { ...donation, status: newStatus }
-            : donation
+      setDonations((prev) =>
+        prev.map((d) =>
+          d.donationFormId === donationId ? { ...d, status: newStatus } : d
         )
       );
       toast.success("Status updated successfully");
@@ -83,55 +54,60 @@ const DonateItem = () => {
     }
   };
 
-  // Delete donation
   const deleteDonation = async (donationId) => {
     if (!window.confirm("Are you sure you want to delete this donation?"))
       return;
     try {
-      await donateformApi.deleteDonateForm(donationId);
-      setDonations((prevDonations) =>
-        prevDonations.filter(
-          (donation) => donation.donationFormId !== donationId
-        )
+      console.log("Deleting donation with ID:", donationId); // debug
+      const response = await donateformApi.deleteDonateForm(donationId);
+      console.log("Delete response:", response); // debug
+
+      setDonations((prev) =>
+        prev.filter((d) => d.donationFormId !== donationId)
       );
       toast.success("Donation deleted successfully");
     } catch (error) {
-      console.error("Error deleting donation:", error);
+      console.error(
+        "Error deleting donation:",
+        error.response || error.message
+      );
       toast.error("Failed to delete donation");
     }
   };
 
+  const filteredDonations = donations.filter((d) =>
+    d.itemName.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = filteredDonations.slice(
+    indexOfFirstItem,
+    indexOfLastItem
+  );
+  const totalPages = Math.ceil(filteredDonations.length / itemsPerPage);
+
   return (
-    <div className="min-h-screen bg-gray-100 p-6">
-      {/* Header */}
+    <div className="min-h-screen bg-white text-black p-6">
       <div className="max-w-7xl mx-auto mb-8">
-        <h1 className="text-3xl font-bold text-gray-800">
-          Donation Management
-        </h1>
+        <h1 className="text-3xl font-bold">Donation Management</h1>
         <p className="mt-2 text-gray-600">
           Manage and review sponsor donations
         </p>
       </div>
 
-      {/* Fetch by ID Input */}
       <div className="max-w-7xl mx-auto mb-4 flex gap-2">
         <input
           type="text"
-          value={donationIdInput}
-          onChange={(e) => setDonationIdInput(e.target.value)}
-          placeholder="Search by ID..."
-          className="px-4 py-2 border rounded-lg"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          placeholder="Search by Item Name..."
+          className="px-4 py-2 border rounded-lg w-full max-w-md"
         />
         <button
-          onClick={fetchDonationById}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-        >
-          Search
-        </button>
-        <button
           onClick={() => {
-            setDonationIdInput("");
-            setDonations([]);
+            setSearchTerm("");
+            setCurrentPage(1);
             setLoading(true);
             const fetchAll = async () => {
               try {
@@ -145,61 +121,47 @@ const DonateItem = () => {
             };
             fetchAll();
           }}
-          className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
+          className="flex items-center gap-2 px-4 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-700"
         >
-          Reload All
+          <RefreshCw size={16} /> Reload
         </button>
       </div>
 
-      {/* Main Content */}
-      <div className="max-w-7xl mx-auto bg-white rounded-xl shadow-md overflow-hidden">
-        {/* Table Header */}
-        <div className="px-6 py-4 bg-gray-50 border-b">
-          <div className="flex justify-between items-center">
-            <h2 className="text-xl font-semibold text-gray-800">
-              Pending Donations
-            </h2>
-          </div>
+      <div className="max-w-7xl mx-auto bg-white border border-gray-200 rounded-xl shadow-sm">
+        <div className="px-6 py-4 border-b border-gray-100">
+          <h2 className="text-xl font-semibold">Pending Donations</h2>
         </div>
 
-        {/* Table */}
         <div className="overflow-x-auto">
           {loading ? (
             <div className="px-6 py-4 text-center text-gray-500">
               Loading donations...
             </div>
           ) : (
-            <table className="w-full">
+            <table className="w-full text-sm">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Donation ID
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Sponsor ID
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Item Name
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Description
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Quantity
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Created At
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Actions
-                  </th>
+                  {[
+                    "Donation ID",
+                    "Sponsor ID",
+                    "Item Name",
+                    "Description",
+                    "Quantity",
+                    "Created At",
+                    "Status",
+                    "Actions",
+                  ].map((title) => (
+                    <th
+                      key={title}
+                      className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase"
+                    >
+                      {title}
+                    </th>
+                  ))}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
-                {donations.length === 0 ? (
+              <tbody className="divide-y divide-gray-100">
+                {currentItems.length === 0 ? (
                   <tr>
                     <td
                       colSpan="8"
@@ -209,72 +171,62 @@ const DonateItem = () => {
                     </td>
                   </tr>
                 ) : (
-                  donations.map((donation) => (
+                  currentItems.map((donation) => (
                     <tr
                       key={donation.donationFormId}
                       className="hover:bg-gray-50"
                     >
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <td className="px-6 py-4 whitespace-nowrap">
                         {donation.donationFormId}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <td className="px-6 py-4 whitespace-nowrap">
                         {donation.sponsorId || "N/A"}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <td className="px-6 py-4 whitespace-nowrap">
                         {donation.itemName}
                       </td>
-                      <td className="px-6 py-4 text-sm text-gray-900">
-                        {donation.itemDescription}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <td className="px-6 py-4">{donation.itemDescription}</td>
+                      <td className="px-6 py-4 whitespace-nowrap">
                         {donation.quantity}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <td className="px-6 py-4 whitespace-nowrap">
                         {new Date(donation.createdAt).toLocaleDateString()}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span
-                          className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                          className={`px-2 py-1 inline-flex text-xs font-medium rounded-full ${
                             donation.status === "Pending"
-                              ? "bg-yellow-100 text-yellow-800"
+                              ? "bg-amber-100 text-amber-600"
                               : donation.status === "Approved"
-                              ? "bg-green-100 text-green-800"
-                              : "bg-red-100 text-red-800"
+                              ? "bg-green-100 text-green-600"
+                              : "bg-red-100 text-red-600"
                           }`}
                         >
                           {donation.status}
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <div className="flex space-x-2">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center space-x-2">
                           {donation.status === "Pending" && (
-                            <>
-                              <button
-                                onClick={() =>
-                                  updateStatus(
-                                    donation.donationFormId,
-                                    "Approved"
-                                  )
-                                }
-                                className="text-green-600 hover:text-green-900"
-                              >
-                                Approve
-                              </button>
-                              {/* <button
-                                onClick={() => updateStatus(donation.donationFormId, 'Rejected')}
-                                className="text-red-600 hover:text-red-900"
-                              >
-                                Reject
-                              </button> */}
-                            </>
+                            <button
+                              onClick={() =>
+                                updateStatus(
+                                  donation.donationFormId,
+                                  "Approved"
+                                )
+                              }
+                              className="text-slate-600 hover:text-amber-600"
+                            >
+                              <CheckCircle size={18} />
+                            </button>
                           )}
                           <button
                             onClick={() =>
                               deleteDonation(donation.donationFormId)
                             }
-                            className="text-red-600 hover:text-red-900"
+                            className="text-slate-600 hover:text-amber-600"
                           >
-                            Reject
+                            <XCircle size={18} />
                           </button>
                         </div>
                       </td>
@@ -285,6 +237,47 @@ const DonateItem = () => {
             </table>
           )}
         </div>
+
+        {filteredDonations.length > 0 && (
+          <div className="px-6 py-4 flex justify-between items-center border-t border-gray-100">
+            <div className="text-sm text-gray-500">
+              Showing {indexOfFirstItem + 1} to{" "}
+              {Math.min(indexOfLastItem, filteredDonations.length)} of{" "}
+              {filteredDonations.length} donations
+            </div>
+            <div className="flex space-x-2">
+              <button
+                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+                className="px-3 py-1 text-sm bg-slate-100 text-slate-700 rounded hover:bg-slate-200 disabled:opacity-50"
+              >
+                Previous
+              </button>
+              {[...Array(totalPages)].map((_, i) => (
+                <button
+                  key={i + 1}
+                  onClick={() => setCurrentPage(i + 1)}
+                  className={`px-3 py-1 text-sm rounded ${
+                    currentPage === i + 1
+                      ? "bg-amber-600 text-white"
+                      : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                  }`}
+                >
+                  {i + 1}
+                </button>
+              ))}
+              <button
+                onClick={() =>
+                  setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                }
+                disabled={currentPage === totalPages}
+                className="px-3 py-1 text-sm bg-slate-100 text-slate-700 rounded hover:bg-slate-200 disabled:opacity-50"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       <ToastContainer />
