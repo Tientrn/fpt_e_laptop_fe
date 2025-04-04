@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import { toast } from 'react-toastify';
-import { format } from 'date-fns';
-import { FaSearch } from 'react-icons/fa';
-import borrowhistoryApi from '../../api/borrowhistoryApi';
-import userinfoApi from '../../api/userinfoApi';
-import borrowRequestApi from '../../api/borrowRequestApi';
+import React, { useState, useEffect } from "react";
+import { toast } from "react-toastify";
+import { format } from "date-fns";
+import { FaSearch } from "react-icons/fa";
+import borrowhistoryApi from "../../api/borrowhistoryApi";
+import userinfoApi from "../../api/userinfoApi";
+import borrowRequestApi from "../../api/borrowRequestApi";
 
 const BorrowHistory = () => {
   const [borrowHistory, setBorrowHistory] = useState([]);
@@ -29,15 +29,18 @@ const BorrowHistory = () => {
 
   useEffect(() => {
     if (borrowHistory.length > 0) {
-      console.log('Current Borrow History:', borrowHistory);
-      console.log('Item IDs to fetch:', borrowHistory.map(item => item.itemId));
+      console.log("Current Borrow History:", borrowHistory);
+      console.log(
+        "Item IDs to fetch:",
+        borrowHistory.map((item) => item.itemId)
+      );
     }
   }, [borrowHistory]);
 
   const fetchUserInfo = async () => {
     try {
       const response = await userinfoApi.getUserInfo();
-      if (response.isSuccess) {
+      if (response.isSuccess && Array.isArray(response.data)) {
         const userMap = response.data.reduce(
           (map, user) => ({
             ...map,
@@ -47,7 +50,8 @@ const BorrowHistory = () => {
         );
         setUserInfoMap(userMap);
       } else {
-        toast.error("Failed to fetch user info");
+        toast.error("User info is not in expected format");
+        console.error("Expected array but got:", response.data);
       }
     } catch (error) {
       console.error("Error fetching user info:", error);
@@ -58,8 +62,8 @@ const BorrowHistory = () => {
   const fetchBorrowHistory = async () => {
     try {
       const response = await borrowhistoryApi.getAllBorrowHistories();
-      console.log('Borrow History Response:', response);
-      
+      console.log("Borrow History Response:", response);
+
       if (response.isSuccess) {
         setBorrowHistory(response.data || []);
       } else {
@@ -115,7 +119,6 @@ const BorrowHistory = () => {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-semibold text-black">Borrow History</h1>
-          
         </div>
         <div className="relative w-64">
           <input
