@@ -13,6 +13,7 @@ const BorrowRequestPage = () => {
   const [userInfo, setUserInfo] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     borrowDate: new Date().toISOString().split("T")[0],
@@ -64,9 +65,37 @@ const BorrowRequestPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    let validationErrors = {};
+
+    const today = new Date().toISOString().split("T")[0];
+    const semesterStartDate = "2025-04-01";
+    const semesterEndDate = "2025-06-30";
+    if (formData.borrowDate < today) {
+      validationErrors.borrowDate = "Borrow date cannot be in the past.";
+    }
+    if (
+      formData.borrowDate < semesterStartDate ||
+      formData.borrowDate > semesterEndDate
+    ) {
+      validationErrors.borrowDate =
+        "Borrow date must be within the current semester.";
+    }
+    if (formData.endDate < formData.borrowDate) {
+      validationErrors.endDate = "End date must be after the borrow date.";
+    }
+    if (formData.endDate > semesterEndDate) {
+      validationErrors.endDate =
+        "End date cannot exceed the semester end date.";
+    }
     if (!termsAccepted) {
-      toast.error("Please accept the terms and conditions");
+      validationErrors.terms = "You must accept the terms and conditions.";
+    }
+
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
       return;
+    } else {
+      setErrors({});
     }
 
     try {
@@ -84,10 +113,16 @@ const BorrowRequestPage = () => {
       const requestResponse = await borrowrequestApi.createBorrowRequest(
         requestData
       );
+      console.log("Request response:", requestResponse);
 
       if (requestResponse?.isSuccess && requestResponse.data) {
-        const requestId = requestResponse.data; // Lấy ID từ phản hồi
+        const requestId = requestResponse.data.requestId; // Lấy ID từ phản hồi
         console.log(`data request: ${requestId}`);
+
+        if (!requestId) {
+          toast.error("Request ID is missing.");
+          return;
+        }
 
         // 2. Gửi yêu cầu tạo Borrow History với requestId vừa nhận
         const historyData = {
@@ -98,6 +133,7 @@ const BorrowRequestPage = () => {
           returnDate: formData.endDate,
         };
 
+        console.log("Request data for borrow history:", historyData);
         const historyResponse = await borrowhistoryApi.createBorrowHistory(
           historyData
         );
@@ -122,7 +158,10 @@ const BorrowRequestPage = () => {
       }
     } catch (err) {
       console.error("Error creating request:", err);
-      toast.error(err.response?.data?.message || "An error occurred.");
+      // Log more details for debugging
+      toast.error(err?.response?.data?.message || "An error occurred.");
+      // For debugging, you could also add:
+      console.log("Error response:", err?.response);
     } finally {
       setSubmitting(false);
     }
@@ -261,6 +300,11 @@ const BorrowRequestPage = () => {
                   onChange={handleInputChange}
                   className="w-full p-2 border border-gray-200 rounded focus:outline-none focus:border-amber-600"
                 />
+                {errors.borrowDate && (
+                  <p className="text-red-600 text-sm mt-1">
+                    {errors.borrowDate}
+                  </p>
+                )}
               </div>
               <div>
                 <label
@@ -279,6 +323,9 @@ const BorrowRequestPage = () => {
                   onChange={handleInputChange}
                   className="w-full p-2 border border-gray-200 rounded focus:outline-none focus:border-amber-600"
                 />
+                {errors.endDate && (
+                  <p className="text-red-600 text-sm mt-1">{errors.endDate}</p>
+                )}
               </div>
             </div>
 

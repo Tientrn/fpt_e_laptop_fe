@@ -8,6 +8,7 @@ import {
   FaFileDownload,
   FaCheckCircle,
 } from "react-icons/fa";
+import borrowcontractApi from "../../api/borrowcontractApi"; // Thay bằng đường dẫn tới axiosClient của bạn
 
 const Contractstudent = () => {
   const [contracts, setContracts] = useState([]);
@@ -26,54 +27,46 @@ const Contractstudent = () => {
   const fetchContracts = async () => {
     try {
       setLoading(true);
-      const mockContracts = [
-        {
-          id: 1,
-          contractNumber: "CTR-2023-001",
-          laptopName: "Dell XPS 13",
-          startDate: "2023-06-20T00:00:00",
-          endDate: "2023-07-20T00:00:00",
-          status: "active",
-          depositAmount: 500000,
-          returnDate: null,
-          laptopCondition: {
-            beforeBorrow: "Excellent condition, no scratches",
-            afterReturn: null,
-          },
-        },
-        {
-          id: 2,
-          contractNumber: "CTR-2023-002",
-          laptopName: "MacBook Pro",
-          startDate: "2023-05-15T00:00:00",
-          endDate: "2023-08-15T00:00:00",
-          status: "active",
-          depositAmount: 800000,
-          returnDate: null,
-          laptopCondition: {
-            beforeBorrow: "Good condition, minor scratches on bottom",
-            afterReturn: null,
-          },
-        },
-        {
-          id: 3,
-          contractNumber: "CTR-2023-003",
-          laptopName: "Lenovo ThinkPad",
-          startDate: "2023-02-10T00:00:00",
-          endDate: "2023-03-10T00:00:00",
-          status: "completed",
-          depositAmount: 400000,
-          returnDate: "2023-03-09T14:30:00",
-          laptopCondition: {
-            beforeBorrow: "Good condition, some wear on keyboard",
-            afterReturn: "Returned in same condition as borrowed",
-          },
-        },
-      ];
-      setContracts(mockContracts);
+      console.log("Bắt đầu gọi API");
+      const response = await borrowcontractApi.getAllBorrowContracts();
+      console.log("Phản hồi từ API:", response);
+
+      if (!response || !response.data) {
+        throw new Error("Không nhận được dữ liệu từ server");
+      }
+
+      if (response.isSuccess) {
+        console.log("Dữ liệu thô:", response.data.data);
+        const transformedContracts = response.data.map((contract) => {
+          console.log("Đang ánh xạ contract:", contract);
+          return {
+            id: contract.contractId,
+            contractNumber: `CTR-${contract.contractId}`,
+            laptopName: contract.terms.split("Contract for ")[1] || "Unknown",
+            startDate: contract.contractDate,
+            endDate: contract.expectedReturnDate,
+            status:
+              contract.status.toLowerCase() === "pending"
+                ? "active"
+                : "completed",
+            depositAmount: contract.itemValue * 0.1,
+            returnDate: null,
+            laptopCondition: {
+              beforeBorrow: contract.conditionBorrow,
+              afterReturn: null,
+            },
+          };
+        });
+        console.log("Dữ liệu sau ánh xạ:", transformedContracts);
+        setContracts(transformedContracts);
+      } else {
+        throw new Error(
+          response.data.message || "Lấy dữ liệu hợp đồng thất bại"
+        );
+      }
     } catch (error) {
       console.error("Error fetching contracts:", error);
-      toast.error("Không thể tải danh sách hợp đồng");
+      toast.error(error.message || "Không thể tải danh sách hợp đồng");
     } finally {
       setLoading(false);
     }
@@ -96,7 +89,7 @@ const Contractstudent = () => {
       window.confirm("Bạn có chắc chắn muốn xác nhận trả laptop này không?")
     ) {
       try {
-        await new Promise((resolve) => setTimeout(resolve, 500));
+        await new Promise((resolve) => setTimeout(resolve, 500)); // Giả lập API call
         setContracts(
           contracts.map((contract) =>
             contract.id === id

@@ -1,173 +1,142 @@
-import React, { useState } from 'react';
-import { toast, ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import React, { useState } from "react";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import donateformApi from "../../api/donateformApi";
 
 export const RegisterSponsor = () => {
   const [formData, setFormData] = useState({
-    companyName: '',
-    contactPerson: '',
-    email: '',
-    phone: '',
-    address: '',
-    description: ''
+    itemName: "",
+    itemDescription: "",
+    quantity: 0,
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prevState => ({
+    setFormData((prevState) => ({
       ...prevState,
-      [name]: value
+      [name]: name === "quantity" ? parseInt(value) || 0 : value,
     }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsSubmitting(true);
+
     try {
-      // API call to register sponsor
-      toast.success('Registration successful!');
+      // Prepare data for API
+      const donateFormData = {
+        itemName: formData.itemName,
+        itemDescription: formData.itemDescription,
+        quantity: formData.quantity,
+      };
+
+      // Make API call to create donate form
+      const response = await donateformApi.createDonateForm(donateFormData);
+
+      toast.success("Sponsorship submission successful!");
+      // Optional: Reset form after successful submission
+      setFormData({
+        itemName: "",
+        itemDescription: "",
+        quantity: 0,
+      });
     } catch (error) {
-      toast.error('Registration failed. Please try again.');
+      console.error("Error submitting form:", error);
+      toast.error("Submission failed. Please try again.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="p-6 bg-white rounded-xl shadow-md">
+    <div className="p-8 bg-white rounded-xl shadow-md max-w-3xl mx-auto">
       {/* Header Section */}
-      <div className="text-center mb-8">
-        <h1 className="text-3xl font-bold text-gray-800">Become a Sponsor</h1>
-        <p className="mt-2 text-gray-600">Join our community and make a difference in students' lives</p>
+      <div className="text-center mb-10">
+        <h1 className="text-4xl font-bold text-black mb-4">Donate Items</h1>
+        <p className="text-gray-600 text-lg">
+          Support our community by sponsoring items
+        </p>
       </div>
 
       {/* Main Form */}
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Two Column Layout for Form Fields */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {/* Company Information Section - Optional */}
-          <div className="space-y-6">
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-semibold text-gray-800">Company Information</h2>
-                <span className="text-sm text-gray-500 italic">(Optional)</span>
-              </div>
-              
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Company Name ( Optional )
-                  </label>
-                  <input
-                    type="text"
-                    name="companyName"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition duration-200"
-                    value={formData.companyName}
-                    onChange={handleChange}
-                    placeholder="Enter your company name"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Business Address ( Optional )
-                  </label>
-                  <textarea
-                    name="address"
-                    rows={3}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition duration-200"
-                    value={formData.address}
-                    onChange={handleChange}
-                    placeholder="Enter your business address"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Company Description ( Optional )
-                  </label>
-                  <textarea
-                    name="description"
-                    rows={4}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition duration-200"
-                    value={formData.description}
-                    onChange={handleChange}
-                    placeholder="Tell us about your company"
-                  />
-                </div>
-              </div>
-            </div>
+      <form onSubmit={handleSubmit} className="space-y-10">
+        {/* Item Information Section */}
+        <div className="bg-gray-50 p-6 rounded-lg shadow-sm">
+          <div className="mb-6">
+            <h2 className="text-2xl font-semibold text-black">
+              Item Information
+            </h2>
+            <span className="text-sm text-red-500">*Required</span>
           </div>
 
-          {/* Contact Information Section - Required */}
-          <div className="space-y-6">
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-semibold text-gray-800">Contact Information</h2>
-                <span className="text-sm text-red-500">*Required</span>
-              </div>
-              
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Contact Person <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="contactPerson"
-                    required
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition duration-200"
-                    value={formData.contactPerson}
-                    onChange={handleChange}
-                    placeholder="Enter contact person name"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Email Address <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="email"
-                    name="email"
-                    required
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition duration-200"
-                    value={formData.email}
-                    onChange={handleChange}
-                    placeholder="Enter your email"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Phone Number <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="tel"
-                    name="phone"
-                    required
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition duration-200"
-                    value={formData.phone}
-                    onChange={handleChange}
-                    placeholder="Enter your phone number"
-                  />
-                </div>
-              </div>
+          <div className="space-y-8">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Item Name <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                name="itemName"
+                required
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-600 focus:border-transparent transition duration-200"
+                value={formData.itemName}
+                onChange={handleChange}
+                placeholder="Enter item name"
+                disabled={isSubmitting}
+              />
             </div>
 
-            {/* Terms and Conditions */}
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <h2 className="text-xl font-semibold text-gray-800 mb-4">Terms & Conditions</h2>
-              <div className="space-y-4">
-                <div className="flex items-start">
-                  <input
-                    type="checkbox"
-                    required
-                    className="mt-1 h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
-                  />
-                  <label className="ml-2 block text-sm text-gray-700">
-                    I agree to the terms and conditions and privacy policy
-                  </label>
-                </div>
-              </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Item Description <span className="text-red-500">*</span>
+              </label>
+              <textarea
+                name="itemDescription"
+                rows={4}
+                required
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-600 focus:border-transparent transition duration-200"
+                value={formData.itemDescription}
+                onChange={handleChange}
+                placeholder="Describe the item you're sponsoring"
+                disabled={isSubmitting}
+              />
             </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Quantity <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="number"
+                name="quantity"
+                required
+                min="1"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-600 focus:border-transparent transition duration-200"
+                value={formData.quantity}
+                onChange={handleChange}
+                placeholder="Enter quantity"
+                disabled={isSubmitting}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Terms and Conditions */}
+        <div className="bg-gray-50 p-6 rounded-lg shadow-sm">
+          <h2 className="text-xl font-semibold text-black mb-6">
+            Terms & Conditions
+          </h2>
+          <div className="flex items-center space-x-3">
+            <input
+              type="checkbox"
+              required
+              className="h-5 w-5 text-slate-600 border-gray-300 rounded focus:ring-amber-600"
+              disabled={isSubmitting}
+            />
+            <label className="text-sm text-gray-700">
+              I agree to the terms and conditions and privacy policy
+            </label>
           </div>
         </div>
 
@@ -175,11 +144,10 @@ export const RegisterSponsor = () => {
         <div className="flex justify-center mt-8">
           <button
             type="submit"
-            className="px-8 py-3 bg-purple-600 text-white font-medium rounded-lg 
-                     hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 
-                     focus:ring-offset-2 transform transition-all duration-200 hover:scale-105"
+            className="px-8 py-3 bg-slate-600 text-white font-semibold rounded-lg hover:bg-amber-600 focus:outline-none focus:ring-2 focus:ring-amber-600 focus:ring-offset-2 transition duration-200"
+            disabled={isSubmitting}
           >
-            Submit Application
+            {isSubmitting ? "Submitting..." : "Submit Sponsorship"}
           </button>
         </div>
       </form>
@@ -190,4 +158,3 @@ export const RegisterSponsor = () => {
 };
 
 export default RegisterSponsor;
-

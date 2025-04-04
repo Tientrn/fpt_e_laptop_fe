@@ -22,6 +22,12 @@ const StaffLayout = () => {
       name: "Borrow Requests",
       icon: <FaClipboardList className="w-5 h-5" />,
     },
+    //sua icon
+    {
+      path: "/staff/donate-items",
+      name: "Donate Manager",
+      icon: <FaHistory className="w-5 h-5" />,
+    },
     {
       path: "/staff/borrow-history",
       name: "Borrow History",
@@ -91,7 +97,6 @@ const StaffLayout = () => {
         </nav>
 
         {/* Logout in Sidebar */}
-        
       </div>
 
       {/* Main Content */}
@@ -104,14 +109,16 @@ const StaffLayout = () => {
                 ?.name || "Staff Dashboard"} */}
             </div>
             <div className="p-4 border-slate-500">
-          <button
-            onClick={handleLogout}
-            className="flex items-center w-full px-4 py-3 text-sm font-medium text-black hover:bg-teal-600 transition-colors"
-          >
-            <FaSignOutAlt className="w-5 h-5" />
-            <span className={`ml-3 ${!isSidebarOpen && "hidden"}`}>Logout</span>
-          </button>
-        </div>
+              <button
+                onClick={handleLogout}
+                className="flex items-center w-full px-4 py-3 text-sm font-medium text-black hover:bg-teal-600 transition-colors"
+              >
+                <FaSignOutAlt className="w-5 h-5" />
+                <span className={`ml-3 ${!isSidebarOpen && "hidden"}`}>
+                  Logout
+                </span>
+              </button>
+            </div>
           </div>
         </header>
 

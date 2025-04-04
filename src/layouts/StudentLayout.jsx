@@ -18,17 +18,22 @@ const StudentLayout = () => {
   const menuItems = [
     {
       path: "/student/profile",
-      name: "Hồ sơ của tôi",
+      name: "Profile",
       icon: <FaUser className="w-5 h-5" />,
     },
     {
       path: "/student/requests",
-      name: "Yêu cầu của tôi",
+      name: "Borrow Requests",
       icon: <FaClipboardList className="w-5 h-5" />,
     },
     {
       path: "/student/contractstudent",
-      name: "Hợp đồng của tôi",
+      name: "Borrow Contracts",
+      icon: <FaFileContract className="w-5 h-5" />,
+    },
+    {
+      path: "/student/borrowhistorystudent",
+      name: "Borrow Historys",
       icon: <FaFileContract className="w-5 h-5" />,
     },
   ];

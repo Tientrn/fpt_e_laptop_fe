@@ -27,6 +27,8 @@ import ReportPage from "./pages/admin/ReportPage";
 import ProfilePage from "./pages/student/ProfilePage";
 import Contractstudent from "./pages/student/Contractstudent";
 import RequestsPage from "./pages/student/RequestsPage";
+import BorrowHistoryStudent from "./pages/student/BorrowHistoryStudent";
+import BorrowHistoryDetail from "./pages/student/BorrowHistoryDetail";
 {
   /* Staff */
 }
@@ -35,6 +37,7 @@ import BorrowRequest from "./pages/staff/BorrowRequest";
 import Statistics from "./pages/staff/Statistics";
 import ContractsPage from "./pages/staff/ContractsPage";
 import DepositPage from "./pages/staff/DepositPage";
+import DonateItem from "./pages/staff/DonateItem";
 {
   /* Sponsor */
 }
@@ -53,6 +56,7 @@ import CardDetail from "./components/page-base/listlaptopborrow/CardDetail";
 import LaptopShopPage from "./pages/shop/LaptopShopPage";
 import ProductDetailPage from "./pages/shop/ProductDetailPage";
 import BorrowRequestPage from "./pages/borrow/BorrowRequestPage";
+
 const App = () => {
   return (
     <BrowserRouter>
@@ -161,6 +165,7 @@ const App = () => {
             index
             element={<Navigate to="/staff/borrow-requests" replace />}
           />
+          <Route path="donate-items" element={<DonateItem />} />
           <Route path="borrow-requests" element={<BorrowRequest />} />
           <Route path="borrow-history" element={<BorrowHistory />} />
           <Route path="statistics" element={<Statistics />} />
@@ -174,8 +179,20 @@ const App = () => {
           <Route path="profile" element={<ProfilePage />} />
           <Route path="requests" element={<RequestsPage />} />
           <Route path="contractstudent" element={<Contractstudent />} />
+          <Route
+            path="borrowhistorystudent"
+            element={<BorrowHistoryStudent />}
+          />
+          <Route
+            path="borrowhistorydetailstudent/:id"
+            element={<BorrowHistoryDetail />}
+          />
         </Route>
-        <Route path="/borrow-request/create/:id" element={<BorrowRequestPage />} />
+
+        <Route
+          path="/borrow-request/create/:id"
+          element={<BorrowRequestPage />}
+        />
         {/* Admin Routes */}
         <Route
           path="/admin"
@@ -236,7 +253,6 @@ const App = () => {
             </HomePageLayout>
           }
         />
-        
       </Routes>
     </BrowserRouter>
   );
