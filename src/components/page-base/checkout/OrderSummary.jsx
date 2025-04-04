@@ -88,11 +88,6 @@ const OrderSummary = ({ totalPrice = 0, shippingCost = 0, grandTotal = 0 }) => {
           </svg>
           <span className="text-sm text-gray-700">Secure Transaction</span>
         </div>
-
-        {/* Checkout Button */}
-        <button className="w-full bg-slate-600 text-white font-medium py-3 rounded-lg hover:bg-slate-700 transition">
-          Proceed to Checkout
-        </button>
       </div>
     </div>
   );

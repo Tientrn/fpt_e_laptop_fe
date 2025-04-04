@@ -6,15 +6,26 @@ import ShippingInformation from "./ShippingInformation";
 import PaymentInformation from "./PaymentInformation";
 import OrderSummary from "./OrderSummary";
 import ErrorMessage from "./ErrorMessage";
+import orderApis from "../../../api/orderApi";
+import { toast } from "react-toastify";
+import { useNavigate } from "react-router-dom";
+import useCartStore from "../../../store/useCartStore";
 
 const CheckoutForm = ({
+  orderId,
   cartItems,
   onUpdateQuantity,
   onRemove,
   shippingCost,
 }) => {
+   const {
+      initializeCart
+    } = useCartStore();
+  
+    const userData = localStorage.getItem("user");
+  const navigate = useNavigate();
   const totalPrice = cartItems.reduce(
-    (total, item) => total + item.price * item.quantity,
+    (total, item) => total + item.totalPrice * item.quantity,
     0
   );
   const grandTotal = totalPrice + shippingCost;
@@ -27,16 +38,28 @@ const CheckoutForm = ({
     return newErrors;
   };
 
+  // const handlePlaceOrder = () => {
+  //   const formErrors = validateForm();
+  //   if (formErrors.length > 0) {
+  //     setErrors(formErrors);
+  //   } else {
+  //     setErrors([]);
+  //     console.log("Order placed successfully!");
+  //     // Thêm logic thực tế để xử lý đặt hàng (API call, redirect, v.v.)
+  //   }
+  // };
+
   const handlePlaceOrder = () => {
-    const formErrors = validateForm();
-    if (formErrors.length > 0) {
-      setErrors(formErrors);
-    } else {
-      setErrors([]);
-      console.log("Order placed successfully!");
-      // Thêm logic thực tế để xử lý đặt hàng (API call, redirect, v.v.)
+      orderApis.createPayment({orderId, paymentMethod: 1}).then((data) => {
+        orderApis.createPaymentUrl({paymentId: data.data.paymentId, redirectUrl: window.location}).then((data) => {
+          initializeCart(userData.userId)
+          window.open(data.data, "_blank");
+          navigate("/laptopshop")
+        })
+      }).catch(() => {
+        toast.error("Thanh toán lỗi");
+      })
     }
-  };
 
   // Animation variants
   const containerVariants = {

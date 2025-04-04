@@ -120,7 +120,7 @@ const App = () => {
           }
         />
         <Route
-          path="/checkout"
+          path="/checkout/:orderId"
           element={
             <PrivateRoute>
               <CheckoutPage />
