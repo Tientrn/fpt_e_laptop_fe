@@ -72,12 +72,45 @@ const DepositPage = () => {
     e.preventDefault();
     try {
       setLoading(true);
-      const response = await deposittransactionApi.createDepositTransaction(depositForm);
-      if (response.isSuccess) {
-        toast.success("Deposit recorded successfully");
-        navigate("/staff/contracts");
+      console.log("Creating deposit with data:", depositForm); // Debug log
+
+      // Tạo deposit transaction trước
+      const createResponse = await deposittransactionApi.createDepositTransaction(depositForm);
+      
+      if (createResponse.isSuccess) {
+        const newDepositId = createResponse.data.depositId;
+        console.log("Created deposit with ID:", newDepositId); // Debug log
+
+        // Lấy thông tin deposit hiện tại
+        const getResponse = await deposittransactionApi.getDepositTransactionById(newDepositId);
+        
+        if (getResponse.isSuccess) {
+          const currentDeposit = getResponse.data;
+          console.log("Current deposit data:", currentDeposit); // Debug log
+
+          // Update status thành Completed
+          const updateResponse = await deposittransactionApi.updateDepositTransaction(
+            newDepositId, // Sử dụng ID trong path parameter
+            {
+              ...currentDeposit,
+              status: "Completed"
+            }
+          );
+
+          console.log("Update response:", updateResponse); // Debug log
+
+          if (updateResponse.isSuccess) {
+            toast.success("Deposit recorded and completed successfully");
+            navigate("/staff/contracts");
+          } else {
+            console.error("Failed to update deposit:", updateResponse);
+            toast.error("Failed to update deposit status");
+          }
+        } else {
+          toast.error("Failed to get deposit details");
+        }
       } else {
-        toast.error(response.message || "Failed to record deposit");
+        toast.error(createResponse.message || "Failed to record deposit");
       }
     } catch (error) {
       console.error("Error:", error);
@@ -150,19 +183,6 @@ const DepositPage = () => {
             className="w-full p-2 border border-slate-300 rounded-md text-black focus:outline-none focus:ring-2 focus:ring-amber-600"
             required
           />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-black mb-1">Status</label>
-          <select
-            value={depositForm.status}
-            onChange={(e) => setDepositForm({ ...depositForm, status: e.target.value })}
-            className="w-full p-2 border border-slate-300 rounded-md text-black focus:outline-none focus:ring-2 focus:ring-amber-600"
-            required
-          >
-            <option value="Pending">Pending</option>
-            <option value="Completed">Completed</option>
-            <option value="Failed">Failed</option>
-          </select>
         </div>
         <div className="flex justify-end space-x-3">
           <button
