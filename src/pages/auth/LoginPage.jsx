@@ -84,8 +84,9 @@ export default function LoginPage() {
         case "Staff":
           userRoleId = 4;
           break;
-        case "Manager":
+        case "Manage":
           userRoleId = 5;
+          break;
         case "Shop":
           userRoleId = 6;
           break;
@@ -130,7 +131,7 @@ export default function LoginPage() {
             navigate("/staff");
             break;
           case 5:
-            navigate("/dashboard");
+            navigate("/manager");
             break;
           case 6:
             navigate("/shop");

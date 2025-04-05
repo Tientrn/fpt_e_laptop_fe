@@ -304,6 +304,7 @@ const RegisterPage = () => {
                 <option value="2">Student</option>
                 <option value="3">Sponsor</option>
                 <option value="6">Shop</option>
+                <option value="5">Manager</option>
               </select>
             </div>
 

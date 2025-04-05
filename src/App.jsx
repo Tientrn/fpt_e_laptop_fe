@@ -13,6 +13,7 @@ import StaffLayout from "./layouts/StaffLayout";
 import AdminLayout from "./layouts/AdminLayout";
 import StudentLayout from "./layouts/StudentLayout";
 import ShopLayout from "./layouts/ShopLayout";
+import ManagerLayout from "./layouts/ManagerLayout";
 {
   /* Admin */
 }
@@ -22,6 +23,9 @@ import RegisterPage from "./pages/auth/RegisterPage";
 import AnalyticPage from "./pages/admin/AnalyticPage";
 import ContentPage from "./pages/admin/ContentPage";
 import ReportPage from "./pages/admin/ReportPage";
+{
+  /* Admin */
+}
 {
   /* Shop */
 }
@@ -170,6 +174,9 @@ const App = () => {
           <Route path="laptop-info" element={<LaptopInfo />} />
           <Route path="laptop-status" element={<LaptopStatus />} />
         </Route>
+
+        {/* Managerment Routes */}
+        <Route path="/manager" element={<ManagerLayout />}></Route>
 
         {/* Staff Routes */}
         <Route path="/staff" element={<StaffLayout />}>

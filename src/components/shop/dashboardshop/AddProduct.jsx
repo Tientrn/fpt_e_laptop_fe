@@ -182,7 +182,7 @@ const AddProduct = () => {
           />
         </div>
 
-        <div>
+        {/* <div>
           <label className="block text-sm font-medium text-black mb-1">
             Additional Images (optional)
           </label>
@@ -193,7 +193,7 @@ const AddProduct = () => {
             onChange={handleExtraImagesChange}
             className="w-full px-3 py-2 border border-slate-300 rounded-md"
           />
-        </div>
+        </div> */}
 
         <button
           type="submit"

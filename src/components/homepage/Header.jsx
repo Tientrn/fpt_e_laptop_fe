@@ -130,14 +130,14 @@ function HeaderHomePage() {
                 <>
                   <button
                     onClick={() => navigate("/login")}
-                    className="rounded-full bg-[#662D91] bg-opacity-70 py-2 px-4 text-center text-sm text-white transition-all hover:bg-opacity-90 hover:shadow-lg"
+                    className="rounded-full bg-amber-600 bg-opacity-70 py-2 px-4 text-center text-sm text-white transition-all hover:bg-opacity-90 hover:shadow-lg"
                     type="button"
                   >
                     Sign In
                   </button>
                   <button
                     onClick={() => navigate("/register")}
-                    className="rounded-full bg-[#662D91] bg-opacity-70 py-2 px-4 text-center text-sm text-white transition-all hover:bg-opacity-90 hover:shadow-lg"
+                    className="rounded-full bg-amber-600 bg-opacity-70 py-2 px-4 text-center text-sm text-white transition-all hover:bg-opacity-90 hover:shadow-lg"
                     type="button"
                   >
                     Sign Up
