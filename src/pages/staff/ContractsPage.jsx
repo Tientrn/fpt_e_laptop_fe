@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { toast } from "react-toastify";
 import { format } from "date-fns";
 import borrowcontractApi from "../../api/borrowcontractApi";
-import borrowRequestApi from "../../api/borrowrequestApi";
+import borrowRequestApi from "../../api/borrowRequestApi";
 import userApi from "../../api/userApi";
 import deposittransactionApi from "../../api/deposittransactionApi";
 
@@ -44,6 +44,32 @@ const ContractsPage = () => {
     console.log("User Info Map:", userInfoMap);
     console.log("Deposits:", deposits);
   }, [contracts, approvedRequests, userInfoMap, deposits]);
+
+  useEffect(() => {
+    const fetchUserInfo = async () => {
+      for (const contract of contracts) {
+        if (contract.userId && !userInfoMap[contract.userId]) {
+          try {
+            console.log(`Fetching user info for contract ${contract.contractId}, userId: ${contract.userId}`);
+            const response = await userApi.getUserById(contract.userId);
+            if (response.isSuccess) {
+              console.log(`User info received:`, response.data);
+              setUserInfoMap(prev => ({
+                ...prev,
+                [contract.userId]: response.data
+              }));
+            }
+          } catch (error) {
+            console.error(`Error fetching user info for contract ${contract.contractId}:`, error);
+          }
+        }
+      }
+    };
+
+    if (contracts.length > 0) {
+      fetchUserInfo();
+    }
+  }, [contracts]);
 
   const fetchContracts = async () => {
     try {
