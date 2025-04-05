@@ -12,8 +12,8 @@ import {
 } from "react-icons/fa";
 import userinfoApi from "../../api/userinfoApi";
 import updateProfileApi from "../../api/updateprofileApi";
-
 const ProfilePage = () => {
+  const [formErrors, setFormErrors] = useState({});
   const [profile, setProfile] = useState({
     fullName: "",
     email: "",
@@ -32,6 +32,34 @@ const ProfilePage = () => {
   useEffect(() => {
     fetchProfile();
   }, []);
+
+  const validateField = (name, value) => {
+    switch (name) {
+      case "phoneNumber":
+        if (!/^0\d{9}$/.test(value)) {
+          return "Số điện thoại phải bắt đầu bằng 0 và có 10 chữ số.";
+        }
+        break;
+      case "dob":
+        if (!value) {
+          return "Vui lòng chọn ngày sinh.";
+        }
+        break;
+      case "gender":
+        if (!["Male", "Female", "Other"].includes(value)) {
+          return "Giới tính không hợp lệ.";
+        }
+        break;
+      case "address":
+        if (!value || value.trim() === "") {
+          return "Địa chỉ không được để trống.";
+        }
+        break;
+      default:
+        return null;
+    }
+    return null;
+  };
 
   const fetchProfile = async () => {
     try {
@@ -73,10 +101,18 @@ const ProfilePage = () => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setEditedProfile({
-      ...editedProfile,
+
+    setEditedProfile((prev) => ({
+      ...prev,
       [name]: value,
-    });
+    }));
+
+    const error = validateField(name, value);
+
+    setFormErrors((prev) => ({
+      ...prev,
+      [name]: error,
+    }));
   };
 
   const handleAvatarChange = (e) => {
@@ -94,31 +130,30 @@ const ProfilePage = () => {
   };
 
   const handleSubmit = async (e) => {
+    console.log("Submit form:", editedProfile);
     e.preventDefault();
+
+    const errors = validateForm();
+    if (errors.length > 0) {
+      errors.forEach((err) => toast.error(err));
+      return;
+    }
+
     try {
       setLoading(true);
-      
-      // Chuẩn bị data theo format API yêu cầu
+
       const updateData = {
-        dob: editedProfile.dob || "",
-        address: editedProfile.address || "",
-        phoneNumber: editedProfile.phoneNumber || "",
-        gender: editedProfile.gender || "",
-        avatar: editedProfile.avatar || null
+        dob: editedProfile.dob,
+        address: editedProfile.address,
+        phoneNumber: editedProfile.phoneNumber,
+        gender: editedProfile.gender,
+        avatar: editedProfile.avatar,
       };
 
-      console.log("Update data being sent:", updateData); // Debug data gửi đi
-
-      // Gọi API update profile
       const response = await updateProfileApi.updateProfile(updateData);
-      console.log("API Response:", response); // Debug response
-
-      if (response && response.isSuccess) { // Thay đổi điều kiện kiểm tra
-        // Cập nhật state profile với data mới
-        setProfile(prev => ({
-          ...prev,
-          ...updateData
-        }));
+      console.log("API update profile", response);
+      if (response && response.isSuccess) {
+        setProfile((prev) => ({ ...prev, ...updateData }));
         setIsEditing(false);
         toast.success("Cập nhật hồ sơ thành công");
       } else {
@@ -157,11 +192,16 @@ const ProfilePage = () => {
         </div>
 
         {isEditing ? (
-          <form onSubmit={handleSubmit} className="max-w-3xl mx-auto bg-white rounded-lg shadow-lg p-6">
+          <form
+            onSubmit={handleSubmit}
+            className="max-w-3xl mx-auto bg-white rounded-lg shadow-lg p-6"
+          >
             <div className="flex flex-col items-center mb-6">
               <div className="relative">
                 <img
-                  src={editedProfile.avatar || "https://via.placeholder.com/150"}
+                  src={
+                    editedProfile.avatar || "https://via.placeholder.com/150"
+                  }
                   alt="Profile"
                   className="w-32 h-32 rounded-full object-cover border-4 border-amber-200 shadow-lg"
                 />
@@ -211,8 +251,17 @@ const ProfilePage = () => {
                   name="phoneNumber"
                   value={editedProfile.phoneNumber || ""}
                   onChange={handleInputChange}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200"
+                  className={`w-full p-3 border ${
+                    formErrors.phoneNumber
+                      ? "border-red-500"
+                      : "border-gray-300"
+                  } rounded-lg focus:ring-2 focus:ring-amber-500 transition-all duration-200`}
                 />
+                {formErrors.phoneNumber && (
+                  <p className="text-sm text-red-600 mt-1">
+                    {formErrors.phoneNumber}
+                  </p>
+                )}
               </div>
               <div className="form-group">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -235,8 +284,13 @@ const ProfilePage = () => {
                   name="dob"
                   value={editedProfile.dob || ""}
                   onChange={handleInputChange}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200"
+                  className={`w-full p-3 border ${
+                    formErrors.dob ? "border-red-500" : "border-gray-300"
+                  } rounded-lg focus:ring-2 focus:ring-amber-500 transition-all duration-200`}
                 />
+                {formErrors.dob && (
+                  <p className="text-sm text-red-600 mt-1">{formErrors.dob}</p>
+                )}
               </div>
               <div className="form-group">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -246,13 +300,20 @@ const ProfilePage = () => {
                   name="gender"
                   value={editedProfile.gender || ""}
                   onChange={handleInputChange}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200"
+                  className={`w-full p-3 border ${
+                    formErrors.gender ? "border-red-500" : "border-gray-300"
+                  } rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200`}
                 >
                   <option value="">Chọn giới tính</option>
                   <option value="Male">Nam</option>
                   <option value="Female">Nữ</option>
                   <option value="Other">Khác</option>
                 </select>
+                {formErrors.gender && (
+                  <p className="text-sm text-red-600 mt-1">
+                    {formErrors.gender}
+                  </p>
+                )}
               </div>
               <div className="form-group">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -263,8 +324,15 @@ const ProfilePage = () => {
                   name="address"
                   value={editedProfile.address || ""}
                   onChange={handleInputChange}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200"
+                  className={`w-full p-3 border ${
+                    formErrors.address ? "border-red-500" : "border-gray-300"
+                  } rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200`}
                 />
+                {formErrors.address && (
+                  <p className="text-sm text-red-600 mt-1">
+                    {formErrors.address}
+                  </p>
+                )}
               </div>
               <div className="form-group">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -322,7 +390,9 @@ const ProfilePage = () => {
                   <div className="flex items-center p-3 bg-gray-50 rounded-lg hover:bg-amber-50 transition-colors duration-200">
                     <FaUser className="w-4 h-4 text-amber-600 mr-2" />
                     <div>
-                      <p className="text-xs font-medium text-gray-500">Họ và tên</p>
+                      <p className="text-xs font-medium text-gray-500">
+                        Họ và tên
+                      </p>
                       <p className="text-sm text-gray-800 font-semibold mt-0.5">
                         {profile.fullName || "Chưa cung cấp"}
                       </p>
@@ -340,7 +410,9 @@ const ProfilePage = () => {
                   <div className="flex items-center p-3 bg-gray-50 rounded-lg hover:bg-amber-50 transition-colors duration-200">
                     <FaPhone className="w-4 h-4 text-amber-600 mr-2" />
                     <div>
-                      <p className="text-xs font-medium text-gray-500">Số điện thoại</p>
+                      <p className="text-xs font-medium text-gray-500">
+                        Số điện thoại
+                      </p>
                       <p className="text-sm text-gray-800 font-semibold mt-0.5">
                         {profile.phoneNumber || "Chưa cung cấp"}
                       </p>
@@ -349,7 +421,9 @@ const ProfilePage = () => {
                   <div className="flex items-center p-3 bg-gray-50 rounded-lg hover:bg-amber-50 transition-colors duration-200">
                     <FaIdCard className="w-4 h-4 text-amber-600 mr-2" />
                     <div>
-                      <p className="text-xs font-medium text-gray-500">Mã sinh viên</p>
+                      <p className="text-xs font-medium text-gray-500">
+                        Mã sinh viên
+                      </p>
                       <p className="text-sm text-gray-800 font-semibold mt-0.5">
                         {profile.studentCode || "Chưa cung cấp"}
                       </p>
@@ -358,7 +432,9 @@ const ProfilePage = () => {
                   <div className="flex items-center p-3 bg-gray-50 rounded-lg hover:bg-amber-50 transition-colors duration-200">
                     <FaBirthdayCake className="w-4 h-4 text-amber-600 mr-2" />
                     <div>
-                      <p className="text-xs font-medium text-gray-500">Ngày sinh</p>
+                      <p className="text-xs font-medium text-gray-500">
+                        Ngày sinh
+                      </p>
                       <p className="text-sm text-gray-800 font-semibold mt-0.5">
                         {profile.dob || "Chưa cung cấp"}
                       </p>
@@ -367,7 +443,9 @@ const ProfilePage = () => {
                   <div className="flex items-center p-3 bg-gray-50 rounded-lg hover:bg-amber-50 transition-colors duration-200">
                     <FaVenusMars className="w-4 h-4 text-amber-600 mr-2" />
                     <div>
-                      <p className="text-xs font-medium text-gray-500">Giới tính</p>
+                      <p className="text-xs font-medium text-gray-500">
+                        Giới tính
+                      </p>
                       <p className="text-sm text-gray-800 font-semibold mt-0.5">
                         {profile.gender || "Chưa cung cấp"}
                       </p>
@@ -376,7 +454,9 @@ const ProfilePage = () => {
                   <div className="flex items-center p-3 bg-gray-50 rounded-lg hover:bg-amber-50 transition-colors duration-200">
                     <FaMapMarkerAlt className="w-4 h-4 text-amber-600 mr-2" />
                     <div>
-                      <p className="text-xs font-medium text-gray-500">Địa chỉ</p>
+                      <p className="text-xs font-medium text-gray-500">
+                        Địa chỉ
+                      </p>
                       <p className="text-sm text-gray-800 font-semibold mt-0.5">
                         {profile.address || "Chưa cung cấp"}
                       </p>

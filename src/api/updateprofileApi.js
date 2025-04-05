@@ -2,17 +2,10 @@ import axiosClient from "./axiosClient";
 
 const updateProfileApi = {
   updateProfile: (data) => {
-    const url = "/api/Authentication/update-profile";
-    return axiosClient.put(url, {
-      dob: data.dob || "",
-      address: data.address || "",
-      phoneNumber: data.phoneNumber || "",
-      gender: data.gender || "",
-      avatar: data.avatar || null
-    }, {
+    const token = localStorage.getItem("token");
+    return axiosClient.put("/Authentication/update-profile", data, {
       headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${localStorage.getItem("token")}`,
+        Authorization: `Bearer ${token}`,
       },
     });
   },
