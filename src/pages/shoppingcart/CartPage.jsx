@@ -3,18 +3,21 @@ import { useNavigate } from "react-router-dom";
 import { FaTrash, FaMinus, FaPlus, FaArrowLeft } from "react-icons/fa";
 import useCartStore from "../../store/useCartStore";
 import { toast } from "react-toastify";
+import orderApis from "../../api/orderApi";
 
 const CartPage = () => {
   const navigate = useNavigate();
-  const { 
+  const {
+    initializeCart,
     getCurrentCart,
-    removeFromCart, 
-    addToCart, 
-    decreaseQuantity, 
-    getTotalPrice 
+    removeFromCart,
+    addToCart,
+    decreaseQuantity,
+    getTotalPrice,
   } = useCartStore();
 
   const items = getCurrentCart();
+  const userData = localStorage.getItem("user");
 
   const formatPrice = (price) => {
     return new Intl.NumberFormat("vi-VN", {
@@ -26,6 +29,60 @@ const CartPage = () => {
   const handleRemoveItem = (productId) => {
     removeFromCart(productId);
     toast.success("Removed item from cart");
+  };
+
+  const handleCheckout = () => {
+    if (items && items.length > 0) {
+      var orderDetail = [];
+      const sum = items.reduce((accumulator, currentValue) => {
+        return accumulator + currentValue.quantity * currentValue.totalPrice;
+      }, 0);
+
+      const user = JSON.parse(userData);
+      console.log("user", user);
+      const order = {
+        userId: user.userId ?? 1,
+        totalPrice: sum,
+        field: "string",
+        orderAddress: "string",
+        status: "Active",
+      };
+
+      orderApis
+        .createOrder(order)
+        .then((data) => {
+          items.map((item) => {
+            orderDetail.push({
+              orderId: data.data.orderId,
+              productId: item.productId,
+              quantity: item.quantity,
+              priceItem: item.totalPrice,
+            });
+          });
+          orderApis.createOrderDetail([...orderDetail]);
+          toast.success("Tạo đơn hàng thành công!", {
+            position: "top-right",
+            autoClose: 1500,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+          });
+
+          navigate(`/checkout/${data.data.orderId}`);
+        })
+        .catch((err) =>
+          toast.error("Tạo đơn hàng lỗi", {
+            position: "top-right",
+            autoClose: 1500,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+          })
+        );
+    }
+    toast.warning("Giỏ hàng không có sản phẩm");
   };
 
   if (items.length === 0) {
@@ -118,17 +175,40 @@ const CartPage = () => {
           {/* Order Summary */}
           <div className="lg:col-span-1">
             <div className="bg-white border border-gray-200 rounded p-6 sticky top-4">
-              <h2 className="text-lg font-semibold text-black mb-4">
+              <h2 className="text-lg font-semibold text-black mb-6">
                 Tổng quan đơn hàng
               </h2>
-              <div className="flex justify-between border-t border-gray-200 pt-4">
+              
+              {/* Thêm danh sách items */}
+              <div className="space-y-3 mb-4">
+                {items.map((item) => (
+                  <div key={item.productId} className="flex justify-between text-sm">
+                    <div className="flex items-start">
+                      <span className="text-gray-600">
+                        {item.productName}
+                        <span className="text-gray-400 ml-1">x{item.quantity}</span>
+                      </span>
+                    </div>
+                    <span className="text-gray-800 font-medium">
+                      {formatPrice(item.totalPrice * item.quantity)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Divider */}
+              <div className="border-t border-gray-200 my-4 mb-4"></div>
+
+              {/* Total */}
+              <div className="flex justify-between">
                 <span className="text-black font-medium">Tổng cộng</span>
                 <span className="text-amber-600 font-semibold">
                   {formatPrice(getTotalPrice())}
                 </span>
               </div>
+
               <button
-                onClick={() => navigate("/checkout")}
+                onClick={() => handleCheckout()}
                 className="w-full bg-slate-600 text-white py-3 rounded mt-6 hover:bg-slate-700 transition-colors duration-200"
               >
                 Thanh toán

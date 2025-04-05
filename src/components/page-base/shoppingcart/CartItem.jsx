@@ -5,14 +5,14 @@ const CartItem = ({ product, onRemove, onUpdateQuantity }) => {
   if (!product) {
     return <div className="text-black">Product not found</div>;
   }
-  const { id, name, price, quantity, image } = product;
+  const { id, name, price, quantity, imageProduct } = product;
 
   return (
     <div className="bg-white border border-gray-200 rounded p-4 flex items-center space-x-4 hover:border-amber-600 transition-colors duration-300">
       {/* Image */}
       <div className="w-20 h-20 flex-shrink-0">
         <img
-          src={image}
+          src={imageProduct}
           alt={name}
           className="w-full h-full object-contain rounded"
         />

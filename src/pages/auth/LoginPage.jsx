@@ -99,7 +99,7 @@ export default function LoginPage() {
         JSON.stringify({
           email: decodedToken.email,
           username: decodedToken.username,
-          userId: decodedToken.userid,
+          userId: decodedToken.nameidentifier,
           roleId: userRoleId,
           role: userRole,
         })
