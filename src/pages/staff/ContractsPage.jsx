@@ -26,6 +26,7 @@ const ContractsPage = () => {
   const [selectedContract, setSelectedContract] = useState(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [contractToDelete, setContractToDelete] = useState(null);
+  const [selectedUserInfo, setSelectedUserInfo] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -162,28 +163,37 @@ const ContractsPage = () => {
     }
   };
 
-  const handleRequestSelect = (request) => {
+  const handleRequestSelect = async (request) => {
     console.log("Selected Request:", request);
-  
-    // Reset form và set giá trị mới
-    setContractForm({
-      requestId: request.requestId,
-      itemId: request.itemId,
-      itemValue: 0,
-      terms: `Contract for ${request.itemName}`,
-      conditionBorrow: "good",
-      expectedReturnDate: format(new Date(), "yyyy-MM-dd"),
-      userId: request.userId
-    });
-  
-    // Set selected request
-    setSelectedRequest(request);
-    
-    // Đảm bảo mở modal
-    setIsModalOpen(true);
-    
-    console.log("Modal should open:", true);
-    console.log("New Contract Form:", contractForm);
+
+    try {
+      // Fetch thông tin user khi select request
+      const userResponse = await userApi.getUserById(request.userId);
+      if (userResponse.isSuccess) {
+        setSelectedUserInfo(userResponse.data);
+      }
+
+      // Reset form và set giá trị mới
+      setContractForm({
+        requestId: request.requestId,
+        itemId: request.itemId,
+        itemValue: 0,
+        terms: `Contract for ${request.itemName}`,
+        conditionBorrow: "good",
+        expectedReturnDate: format(new Date(), "yyyy-MM-dd"),
+        userId: request.userId
+      });
+
+      // Set selected request
+      setSelectedRequest(request);
+      
+      // Mở modal
+      setIsModalOpen(true);
+      
+    } catch (error) {
+      console.error("Error fetching user details:", error);
+      toast.error("Failed to load user details");
+    }
   };
 
   const handleCreateContract = async (e) => {
@@ -532,80 +542,167 @@ const ContractsPage = () => {
 
       {/* Create Contract Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg w-full max-w-2xl">
-            <h2 className="text-xl font-bold mb-4">Create New Contract</h2>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[100vh] overflow-y-auto">
+            {/* Header */}
+            <div className="p-4 border-b">
+              <h2 className="text-xl font-semibold text-gray-800">Create New Contract</h2>
+            </div>
             
-            <form onSubmit={handleCreateContract}>
-              <div className="space-y-4">
-                {/* Item Value */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Item Value
-                  </label>
-                  <input
-                    type="number"
-                    value={contractForm.itemValue}
-                    onChange={(e) => setContractForm({
-                      ...contractForm,
-                      itemValue: e.target.value
-                    })}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500"
-                    required
-                  />
-                </div>
+            {/* Content */}
+            <div className="p-4 space-y-4">
+              {/* Info Section - 2 columns */}
+              <div className="grid md:grid-cols-2 gap-4">
+                {/* Student Information Card */}
+                {selectedUserInfo && (
+                  <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
+                    <h3 className="text-sm font-semibold mb-3 text-blue-800 flex items-center gap-2">
+                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"/>
+                      </svg>
+                      Student Information
+                    </h3>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <p className="text-xs text-gray-500">Full Name</p>
+                        <p className="text-sm font-medium">{selectedUserInfo.fullName}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500">Email</p>
+                        <p className="text-sm font-medium">{selectedUserInfo.email}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500">Phone Number</p>
+                        <p className="text-sm font-medium">{selectedUserInfo.phoneNumber}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500">Role</p>
+                        <p className="text-sm font-medium capitalize">{selectedUserInfo.role}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
 
-                {/* Terms */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Terms
-                  </label>
-                  <input
-                    type="text"
-                    value={contractForm.terms}
-                    onChange={(e) => setContractForm({
-                      ...contractForm,
-                      terms: e.target.value
-                    })}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500"
-                  />
-                </div>
-
-                {/* Expected Return Date */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Expected Return Date
-                  </label>
-                  <input
-                    type="date"
-                    value={contractForm.expectedReturnDate.split('T')[0]}
-                    onChange={(e) => setContractForm({
-                      ...contractForm,
-                      expectedReturnDate: e.target.value
-                    })}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500"
-                    required
-                  />
-                </div>
+                {/* Request Information Card */}
+                {selectedRequest && (
+                  <div className="bg-amber-50 p-4 rounded-lg border border-amber-100">
+                    <h3 className="text-sm font-semibold mb-3 text-amber-800 flex items-center gap-2">
+                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/>
+                        <path fillRule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5z" clipRule="evenodd"/>
+                      </svg>
+                      Request Information
+                    </h3>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <p className="text-xs text-gray-500">Request ID</p>
+                        <p className="text-sm font-medium">#{selectedRequest.requestId}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500">Item Name</p>
+                        <p className="text-sm font-medium">{selectedRequest.itemName}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500">Start Date</p>
+                        <p className="text-sm font-medium">
+                          {format(new Date(selectedRequest.startDate), "dd/MM/yyyy")}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500">End Date</p>
+                        <p className="text-sm font-medium">
+                          {format(new Date(selectedRequest.endDate), "dd/MM/yyyy")}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
 
-              {/* Buttons */}
-              <div className="mt-6 flex justify-end space-x-3">
-                <button
-                  type="button"
-                  onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-amber-600 text-white rounded-md hover:bg-amber-700"
-                >
-                  Create Contract
-                </button>
-              </div>
-            </form>
+              {/* Contract Form */}
+              <form onSubmit={handleCreateContract} className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                <h3 className="text-sm font-semibold mb-4 text-gray-800 flex items-center gap-2">
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clipRule="evenodd"/>
+                  </svg>
+                  Contract Details
+                </h3>
+                
+                <div className="space-y-3">
+                  {/* Item Value */}
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">
+                      Item Value <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="number"
+                      step="100000"
+                      value={contractForm.itemValue}
+                      onChange={(e) => setContractForm({
+                        ...contractForm,
+                        itemValue: e.target.value
+                      })}
+                      className="w-full px-3 py-2 text-sm rounded border border-gray-300 focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                      required
+                    />
+                  </div>
+
+                  {/* Terms */}
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">
+                      Terms <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={contractForm.terms}
+                      onChange={(e) => setContractForm({
+                        ...contractForm,
+                        terms: e.target.value
+                      })}
+                      className="w-full px-3 py-2 text-sm rounded border border-gray-300 focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                      required
+                    />
+                  </div>
+
+                  {/* Expected Return Date */}
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">
+                      Expected Return Date <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="date"
+                      value={contractForm.expectedReturnDate.split('T')[0]}
+                      onChange={(e) => setContractForm({
+                        ...contractForm,
+                        expectedReturnDate: e.target.value
+                      })}
+                      className="w-full px-3 py-2 text-sm rounded border border-gray-300 focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                      required
+                    />
+                  </div>
+                </div>
+              </form>
+            </div>
+
+            {/* Footer */}
+            <div className="p-4 border-t bg-gray-50 flex justify-end space-x-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsModalOpen(false);
+                  setSelectedUserInfo(null);
+                }}
+                className="px-4 py-2 text-sm border border-gray-300 rounded text-gray-700 hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleCreateContract}
+                className="px-4 py-2 text-sm bg-amber-600 text-white rounded hover:bg-amber-700 transition-colors"
+              >
+                Create Contract
+              </button>
+            </div>
           </div>
         </div>
       )}
