@@ -5,11 +5,11 @@ import CartSummary from "../shoppingcart/CartSummary";
 import ShippingInformation from "./ShippingInformation";
 import PaymentInformation from "./PaymentInformation";
 import OrderSummary from "./OrderSummary";
-import ErrorMessage from "./ErrorMessage";
 import orderApis from "../../../api/orderApi";
 import { toast } from "react-toastify";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import useCartStore from "../../../store/useCartStore";
+import { FaShoppingCart, FaLock, FaCreditCard, FaTruck } from "react-icons/fa";
 
 const CheckoutForm = ({
   orderId,
@@ -20,10 +20,23 @@ const CheckoutForm = ({
 }) => {
   const { initializeCart } = useCartStore();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const userData = localStorage.getItem("user");
   
   const [orderTotal, setOrderTotal] = useState(0);
   
+  useEffect(() => {
+    // Kiểm tra status từ PayOS redirect
+    const status = searchParams.get('status');
+    const cancel = searchParams.get('cancel');
+    
+    if (cancel === 'true' || status === 'cancel') {
+      toast.info("Bạn đã hủy thanh toán");
+      navigate('/laptopshop');
+      return;
+    }
+  }, [searchParams, navigate]);
+
   useEffect(() => {
     const newTotal = cartItems.reduce(
       (total, item) => total + item.totalPrice * item.quantity,
@@ -95,166 +108,128 @@ const CheckoutForm = ({
   };
 
   const buttonVariants = {
-    hover: { scale: 1.05, transition: { duration: 0.2 } },
-    tap: { scale: 0.95 },
+    hover: { scale: 1.02, transition: { duration: 0.2 } },
+    tap: { scale: 0.98 },
   };
 
   return (
     <motion.div
-      className="min-h-screen bg-gray-50 py-12"
+      className="min-h-screen bg-gradient-to-b from-gray-60 to-gray-100 py-4"
       variants={containerVariants}
       initial="hidden"
       animate="visible"
     >
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        <motion.h1
-          className="text-3xl font-bold text-black text-center mb-8"
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">  
+        <motion.div
+          className="text-center mb-12"
           initial={{ y: -20, opacity: 0 }}
           animate={{ y: 0, opacity: 1, transition: { duration: 0.5 } }}
         >
-          Checkout
-        </motion.h1>
+          <h1 className="text-4xl font-bold text-indigo-900 mb-4">Checkout</h1>
+        </motion.div>
 
-        <div className="flex flex-col lg:flex-row gap-8">
-          {/* Left Column - Forms */}
-          <div className="flex-grow space-y-6">
-            {/* Cart Items */}
-            <motion.div
-              className="bg-white rounded-2xl shadow-md p-6"
-              variants={sectionVariants}
-            >
-              <h2 className="text-xl font-semibold text-black mb-4">
-                Your Cart
-              </h2>
-              {cartItems.length === 0 ? (
-                <p className="text-slate-600 text-center">
-                  Your cart is empty.
-                </p>
-              ) : (
-                <div className="space-y-4">
-                  {cartItems.map((item) => (
-                    <motion.div
-                      key={item.id}
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{
-                        opacity: 1,
-                        x: 0,
-                        transition: { duration: 0.3 },
-                      }}
-                      exit={{
-                        opacity: 0,
-                        x: 20,
-                        transition: { duration: 0.3 },
-                      }}
-                    >
-                      <CartItem
-                        product={item}
-                        onUpdateQuantity={onUpdateQuantity}
-                        onRemove={onRemove}
-                      />
-                    </motion.div>
-                  ))}
+        <motion.div 
+          className="bg-white/80 backdrop-blur-md rounded-2xl shadow-xl border border-indigo-50 overflow-hidden"
+          variants={sectionVariants}
+        >
+          <div className="grid grid-cols-1 lg:grid-cols-5">
+            {/* Left Column - Cart Items */}
+            <div className="p-8 lg:col-span-3 bg-white/95 border-r border-indigo-100 min-h-[calc(100vh-200px)]">
+              <div className="h-full flex flex-col">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-2xl font-bold text-indigo-900">Your Cart</h2>
+                  <span className="text-sm text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full">
+                    {cartItems.length} items
+                  </span>
                 </div>
-              )}
-            </motion.div>
-
-            {/* Shipping Information */}
-            {/* <motion.div
-              className="bg-white rounded-2xl shadow-md p-6"
-              variants={sectionVariants}
-            >
-              <h2 className="text-xl font-semibold text-black mb-4">
-                Shipping Information
-              </h2>
-              <ShippingInformation />
-            </motion.div> */}
-
-            {/* Payment Information */}
-            {/* <motion.div
-              className="bg-white rounded-2xl shadow-md p-6"
-              variants={sectionVariants}
-            >
-              <h2 className="text-xl font-semibold text-black mb-4">
-                Payment Information
-              </h2>
-              <PaymentInformation />
-            </motion.div> */}
-          </div>
-
-          {/* Right Column - Order Summary */}
-          <motion.div
-            className="w-full lg:w-96"
-            initial={{ opacity: 0, x: 50 }}
-            animate={{
-              opacity: 1,
-              x: 0,
-              transition: { duration: 0.5, delay: 0.3 },
-            }}
-          >
-            <div className="bg-white rounded-2xl shadow-md sticky top-6 p-6 space-y-6">
-              <h2 className="text-xl font-semibold text-black">
-                Order Summary
-              </h2>
-
-              <OrderSummary
-                totalPrice={orderTotal}
-                shippingCost={shippingCost}
-                grandTotal={orderTotal + shippingCost}
-              />
-
-              {/* Error Messages */}
-              {/* {errors.length > 0 && (
-                <motion.div
-                  className="bg-red-50 border border-red-200 rounded-md p-4"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1, transition: { duration: 0.3 } }}
-                >
-                  {errors.map((error, index) => (
-                    <ErrorMessage key={index} message={error} />
-                  ))}
-                </motion.div>
-              )} */}
-
-              {/* Place Order Button */}
-              <motion.button
-                onClick={() => {
-                  if (validateOrder()) {
-                    handlePlaceOrder();
-                  }
-                }}
-                disabled={cartItems.length === 0}
-                className={`w-full py-3 px-4 rounded-md shadow-md ${
-                  cartItems.length === 0
-                    ? "bg-gray-400 cursor-not-allowed"
-                    : "bg-amber-600 hover:bg-amber-700"
-                } text-white focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2`}
-                variants={buttonVariants}
-                whileHover={cartItems.length > 0 ? "hover" : {}}
-                whileTap={cartItems.length > 0 ? "tap" : {}}
-              >
-                Place Order
-              </motion.button>
-
-              {/* Secure Checkout Notice */}
-              <div className="flex items-center justify-center space-x-2 text-amber-600">
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8V7a4 4 0 00-8 0v4h8z"
-                  />
-                </svg>
-                <span className="text-sm">Secure Checkout</span>
+                
+                {cartItems.length === 0 ? (
+                  <div className="flex-1 flex items-center justify-center">
+                    <div className="text-center">
+                      <FaShoppingCart className="w-16 h-16 mx-auto text-indigo-200 mb-4" />
+                      <p className="text-indigo-600 text-lg">Your cart is empty</p>
+                      <button 
+                        onClick={() => navigate('/laptopshop')}
+                        className="mt-4 text-indigo-600 hover:text-indigo-700 font-medium"
+                      >
+                        Continue Shopping
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex-1 overflow-auto pr-4 scrollbar-thin scrollbar-thumb-indigo-200 scrollbar-track-indigo-50">
+                    <div className="space-y-6">
+                      {cartItems.map((item) => (
+                        <motion.div
+                          key={item.id}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -20 }}
+                          className="border-b border-indigo-100 last:border-0 pb-6 last:pb-0"
+                        >
+                          <CartItem
+                            product={item}
+                            onUpdateQuantity={onUpdateQuantity}
+                            onRemove={onRemove}
+                          />
+                        </motion.div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
-          </motion.div>
-        </div>
+
+            {/* Right Column - Order Summary */}
+            <div className="lg:col-span-2 bg-indigo-50/50">
+              <div className="p-8 sticky top-0">
+                <h2 className="text-2xl font-bold text-indigo-900 mb-6">Order Summary</h2>
+
+                <OrderSummary
+                  totalPrice={orderTotal}
+                  shippingCost={shippingCost}
+                  grandTotal={orderTotal + shippingCost}
+                />
+
+                <motion.button
+                  onClick={() => {
+                    if (validateOrder()) {
+                      handlePlaceOrder();
+                    }
+                  }}
+                  disabled={cartItems.length === 0}
+                  className={`w-full py-4 px-6 rounded-xl shadow-md flex items-center justify-center space-x-2 mt-8 ${
+                    cartItems.length === 0
+                      ? "bg-gray-300 cursor-not-allowed"
+                      : "bg-indigo-600 hover:bg-indigo-700 transform transition-all duration-200"
+                  } text-white font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2`}
+                  variants={buttonVariants}
+                  whileHover={cartItems.length > 0 ? "hover" : {}}
+                  whileTap={cartItems.length > 0 ? "tap" : {}}
+                >
+                  <span>Place Order</span>
+                  <FaLock className="w-4 h-4" />
+                </motion.button>
+
+                {/* Payment Methods */}
+                <div className="mt-8 pt-6 border-t border-indigo-100">
+                  <h3 className="text-sm font-medium text-indigo-900 mb-4">We Accept</h3>
+                  <div className="flex items-center space-x-4">
+                    <img src="/visa.png" alt="Visa" className="h-8 object-contain opacity-80 hover:opacity-100 transition-opacity" />
+                    <img src="/mastercard.png" alt="Mastercard" className="h-8 object-contain opacity-80 hover:opacity-100 transition-opacity" />
+                    <img src="/momo.png" alt="Momo" className="h-8 object-contain opacity-80 hover:opacity-100 transition-opacity" />
+                  </div>
+                </div>
+
+                {/* Secure Checkout Notice */}
+                <div className="mt-6 flex items-center justify-center space-x-2 text-indigo-600 bg-indigo-50 p-3 rounded-lg">
+                  <FaLock className="w-4 h-4" />
+                  <span className="text-sm font-medium">Secure Checkout</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </motion.div>
       </div>
     </motion.div>
   );
