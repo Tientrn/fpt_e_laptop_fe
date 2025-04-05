@@ -14,6 +14,7 @@ const CardDetail = () => {
   const [error, setError] = useState(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [feedbacks, setFeedbacks] = useState([]);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -90,6 +91,22 @@ const CardDetail = () => {
     navigate(`/borrow-request/create/${id}`);
   };
 
+  const handlePrevImage = () => {
+    const allImages = [laptop.itemImage, ...images.map(img => img.imageUrl)];
+    setCurrentImageIndex((prev) => 
+      prev === 0 ? allImages.length - 1 : prev - 1
+    );
+    setSelectedImage(allImages[currentImageIndex === 0 ? allImages.length - 1 : currentImageIndex - 1]);
+  };
+
+  const handleNextImage = () => {
+    const allImages = [laptop.itemImage, ...images.map(img => img.imageUrl)];
+    setCurrentImageIndex((prev) => 
+      prev === allImages.length - 1 ? 0 : prev + 1
+    );
+    setSelectedImage(allImages[currentImageIndex === allImages.length - 1 ? 0 : currentImageIndex + 1]);
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-white p-4 flex items-center justify-center">
@@ -161,17 +178,72 @@ const CardDetail = () => {
               </svg>
               Back to Listing
             </button>
-            <div className="border border-gray-200 rounded overflow-hidden mb-4">
+            <div className="border border-gray-200 rounded overflow-hidden mb-4 relative">
               <img
                 src={selectedImage}
                 alt={laptop.itemName}
                 className="w-full h-96 object-contain"
               />
+              
+              {/* Navigation Buttons */}
+              <div className="absolute inset-y-0 left-0 flex items-center">
+                <button
+                  onClick={handlePrevImage}
+                  className="bg-black bg-opacity-30 hover:bg-opacity-50 text-white p-2 rounded-r transform transition-transform hover:scale-105 focus:outline-none"
+                  aria-label="Previous image"
+                >
+                  <svg
+                    className="w-6 h-6"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M15 19l-7-7 7-7"
+                    />
+                  </svg>
+                </button>
+              </div>
+
+              <div className="absolute inset-y-0 right-0 flex items-center">
+                <button
+                  onClick={handleNextImage}
+                  className="bg-black bg-opacity-30 hover:bg-opacity-50 text-white p-2 rounded-l transform transition-transform hover:scale-105 focus:outline-none"
+                  aria-label="Next image"
+                >
+                  <svg
+                    className="w-6 h-6"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M9 5l7 7-7 7"
+                    />
+                  </svg>
+                </button>
+              </div>
+
+              {/* Image Counter */}
+              <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2">
+                <div className="bg-black bg-opacity-50 text-white px-3 py-1 rounded-full text-sm">
+                  {currentImageIndex + 1} / {[laptop.itemImage, ...images.map(img => img.imageUrl)].length}
+                </div>
+              </div>
             </div>
             <div className="flex space-x-2 overflow-x-auto">
               <button
-                onClick={() => setSelectedImage(laptop.itemImage)}
-                className={`w-16 h-16 rounded overflow-hidden border-2 ${
+                onClick={() => {
+                  setSelectedImage(laptop.itemImage);
+                  setCurrentImageIndex(0);
+                }}
+                className={`w-16 h-16 rounded overflow-hidden border-2 flex-shrink-0 ${
                   selectedImage === laptop.itemImage
                     ? "border-amber-600"
                     : "border-gray-200"
@@ -183,11 +255,14 @@ const CardDetail = () => {
                   className="w-full h-full object-cover"
                 />
               </button>
-              {images.slice(0, 4).map((image) => (
+              {images.map((image, index) => (
                 <button
                   key={image.itemImageId}
-                  onClick={() => setSelectedImage(image.imageUrl)}
-                  className={`w-16 h-16 rounded overflow-hidden border-2 ${
+                  onClick={() => {
+                    setSelectedImage(image.imageUrl);
+                    setCurrentImageIndex(index + 1);
+                  }}
+                  className={`w-16 h-16 rounded overflow-hidden border-2 flex-shrink-0 ${
                     selectedImage === image.imageUrl
                       ? "border-amber-600"
                       : "border-gray-200"

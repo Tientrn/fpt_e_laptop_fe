@@ -23,6 +23,16 @@ const ShopLayout = () => {
 
   const menuItems = [
     {
+      path: "/shop/profile",
+      name: "Shop Profile",
+      icon: <FaUserCircle className="w-5 h-5" />,
+    },
+    {
+      path: "/shop/create-profile",
+      name: "Create Shop Info",
+      icon: <FaPlusCircle className="w-5 h-5" />,
+    },
+    {
       path: "/shop/products",
       name: "My Products",
       icon: <FaBoxOpen className="w-5 h-5" />,
@@ -41,17 +51,7 @@ const ShopLayout = () => {
       path: "/shop/analytics",
       name: "Analytics",
       icon: <FaChartPie className="w-5 h-5" />,
-    },
-    {
-      path: "/shop/create-profile",
-      name: "Create Shop Info",
-      icon: <FaPlusCircle className="w-5 h-5" />,
-    },
-    {
-      path: "/shop/profile",
-      name: "Shop Profile",
-      icon: <FaUserCircle className="w-5 h-5" />,
-    },
+    }
   ];
 
   const handleLogout = () => {
@@ -86,7 +86,7 @@ const ShopLayout = () => {
       {/* Sidebar */}
       <div
         className={`$${
-          isSidebarOpen ? "w-64" : "w-16"
+          isSidebarOpen ? "w-80" : "w-16"
         } bg-slate-600 text-white transition-all duration-300 ease-in-out flex flex-col`}
       >
         <div className="p-4 flex items-center justify-between border-b border-slate-500">

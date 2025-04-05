@@ -59,93 +59,99 @@ export default function LoginPage() {
     e.preventDefault();
     try {
       const response = await loginApi.login({ email, password });
-      const token = response.token || response.data?.token;
-
-      if (!token) {
-        throw new Error("Token không tồn tại trong response");
-      }
-
-      const decodedToken = jwtDecode(token);
-      let userRoleId;
-      const userRole =
-        decodedToken[
-          "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
-        ];
-      switch (userRole) {
-        case "Admin":
-          userRoleId = 1;
-          break;
-        case "Student":
-          userRoleId = 2;
-          break;
-        case "Sponsor":
-          userRoleId = 3;
-          break;
-        case "Staff":
-          userRoleId = 4;
-          break;
-        case "Manager":
-          userRoleId = 5;
-        case "Shop":
-          userRoleId = 6;
-          break;
-        default:
-          throw new Error("Invalid role");
-      }
-
-      localStorage.setItem("token", token);
-      localStorage.setItem(
-        "user",
-        JSON.stringify({
-          email: decodedToken.email,
-          username: decodedToken.username,
-          userId: decodedToken.nameidentifier,
-          roleId: userRoleId,
-          role: userRole,
-        })
-      );
-
-      setError("");
-      toast.success("Đăng nhập thành công!", {
-        position: "top-right",
-        autoClose: 1500,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-      });
-
-      setTimeout(() => {
-        switch (userRoleId) {
-          case 1:
-            navigate("/dashboard");
-            break;
-          case 2:
-            navigate("/home");
-            break;
-          case 3:
-            navigate("/sponsor");
-            break;
-          case 4:
-            navigate("/staff");
-            break;
-          case 5:
-            navigate("/dashboard");
-            break;
-          case 6:
-            navigate("/shop");
-            break;
-          default:
-            navigate("/home");
+      
+      if (response.code === 200 && response.data) {
+        const token = response.data.token;
+        if (!token) {
+          throw new Error("Token không tồn tại trong response");
         }
-      }, 1500);
 
-      // Khởi tạo cart cho user mới đăng nhập
-      initializeCart(decodedToken.userid);
+        const decodedToken = jwtDecode(token);
+        console.log("Decoded token:", decodedToken); // Debug để xem cấu trúc token
+
+        // Lấy role trực tiếp từ decoded token
+        const userRole = decodedToken.role;
+        const userId = decodedToken.userId || "5"; // Lấy userId trực tiếp hoặc sử dụng giá trị mặc định từ token
+        
+        console.log("User Role from token:", userRole); // Debug role
+        
+        // Map role string to roleId
+        const roleMapping = {
+          "Admin": 1,
+          "Student": 2,
+          "Sponsor": 3,
+          "Staff": 4,
+          "Manager": 5,
+          "Shop": 6
+        };
+
+        const userRoleId = roleMapping[userRole];
+        
+        if (!userRoleId) {
+          throw new Error(`Role không hợp lệ: ${userRole}`);
+        }
+
+        // Lưu thông tin vào localStorage
+        localStorage.setItem("token", token);
+        localStorage.setItem(
+          "user",
+          JSON.stringify({
+            email: decodedToken.email,
+            userId: userId,
+            roleId: userRoleId,
+            role: userRole,
+            fullName: decodedToken.fullName
+          })
+        );
+
+        setError("");
+        toast.success("Đăng nhập thành công!", {
+          position: "top-right",
+          autoClose: 1500,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+        });
+
+        // Khởi tạo cart nếu cần
+        if (userRoleId === 2) { // Chỉ khởi tạo cart cho Student
+          initializeCart(userId);
+        }
+
+        // Redirect sau khi đăng nhập thành công
+        setTimeout(() => {
+          switch (userRoleId) {
+            case 1: // Admin
+              navigate("/dashboard");
+              break;
+            case 2: // Student
+              navigate("/home");
+              break;
+            case 3: // Sponsor
+              navigate("/sponsor");
+              break;
+            case 4: // Staff
+              navigate("/staff");
+              break;
+            case 5: // Manager
+              navigate("/dashboard");
+              break;
+            case 6: // Shop
+              navigate("/shop");
+              break;
+            default:
+              navigate("/home");
+          }
+        }, 1500);
+
+      } else {
+        throw new Error(response.message || "Đăng nhập thất bại");
+      }
     } catch (err) {
       console.error("Login Error:", err);
-      setError(err.response?.data?.message || "Đăng nhập thất bại");
-      toast.error(err.response?.data?.message || "Đăng nhập thất bại");
+      setError(err.message || "Đăng nhập thất bại");
+      toast.error(err.message || "Đăng nhập thất bại");
     }
   };
 

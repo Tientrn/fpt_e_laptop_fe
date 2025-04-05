@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import CartItem from "../shoppingcart/CartItem";
 import CartSummary from "../shoppingcart/CartSummary";
@@ -18,48 +18,70 @@ const CheckoutForm = ({
   onRemove,
   shippingCost,
 }) => {
-   const {
-      initializeCart
-    } = useCartStore();
-  
-    const userData = localStorage.getItem("user");
+  const { initializeCart } = useCartStore();
   const navigate = useNavigate();
-  const totalPrice = cartItems.reduce(
-    (total, item) => total + item.totalPrice * item.quantity,
-    0
-  );
-  const grandTotal = totalPrice + shippingCost;
-  const [errors, setErrors] = useState([]);
+  const userData = localStorage.getItem("user");
+  
+  const [orderTotal, setOrderTotal] = useState(0);
+  
+  useEffect(() => {
+    const newTotal = cartItems.reduce(
+      (total, item) => total + item.totalPrice * item.quantity,
+      0
+    );
+    setOrderTotal(newTotal);
+  }, [cartItems]);
 
-  const validateForm = () => {
-    const newErrors = [];
-    if (cartItems.length === 0) newErrors.push("Your cart is empty.");
-    // Có thể thêm các validation khác (shipping, payment) nếu cần
-    return newErrors;
+  const handlePlaceOrder = async () => {
+    try {
+      if (cartItems.length === 0) {
+        toast.error("Giỏ hàng của bạn đang trống!");
+        return;
+      }
+
+      const currentTotal = cartItems.reduce(
+        (total, item) => total + item.totalPrice * item.quantity,
+        0
+      );
+
+      const paymentResponse = await orderApis.createPayment({
+        orderId, 
+        paymentMethod: 1,
+        amount: currentTotal
+      });
+
+      if (paymentResponse.data) {
+        const urlResponse = await orderApis.createPaymentUrl({
+          paymentId: paymentResponse.data.paymentId,
+          redirectUrl: window.location,
+          amount: currentTotal
+        });
+
+        if (urlResponse.data) {
+          initializeCart(userData.userId);
+          window.open(urlResponse.data, "_blank");
+          navigate("/laptopshop");
+        } else {
+          throw new Error("Không thể tạo URL thanh toán");
+        }
+      }
+    } catch (error) {
+      console.error("Payment error:", error);
+      toast.error("Có lỗi xảy ra trong quá trình thanh toán!");
+    }
   };
 
-  // const handlePlaceOrder = () => {
-  //   const formErrors = validateForm();
-  //   if (formErrors.length > 0) {
-  //     setErrors(formErrors);
-  //   } else {
-  //     setErrors([]);
-  //     console.log("Order placed successfully!");
-  //     // Thêm logic thực tế để xử lý đặt hàng (API call, redirect, v.v.)
-  //   }
-  // };
-
-  const handlePlaceOrder = () => {
-      orderApis.createPayment({orderId, paymentMethod: 1}).then((data) => {
-        orderApis.createPaymentUrl({paymentId: data.data.paymentId, redirectUrl: window.location}).then((data) => {
-          initializeCart(userData.userId)
-          window.open(data.data, "_blank");
-          navigate("/laptopshop")
-        })
-      }).catch(() => {
-        toast.error("Thanh toán lỗi");
-      })
+  const validateOrder = () => {
+    if (cartItems.length === 0) {
+      toast.error("Giỏ hàng của bạn đang trống!");
+      return false;
     }
+    if (orderTotal <= 0) {
+      toast.error("Tổng giá trị đơn hàng không hợp lệ!");
+      return false;
+    }
+    return true;
+  };
 
   // Animation variants
   const containerVariants = {
@@ -137,7 +159,7 @@ const CheckoutForm = ({
             </motion.div>
 
             {/* Shipping Information */}
-            <motion.div
+            {/* <motion.div
               className="bg-white rounded-2xl shadow-md p-6"
               variants={sectionVariants}
             >
@@ -145,10 +167,10 @@ const CheckoutForm = ({
                 Shipping Information
               </h2>
               <ShippingInformation />
-            </motion.div>
+            </motion.div> */}
 
             {/* Payment Information */}
-            <motion.div
+            {/* <motion.div
               className="bg-white rounded-2xl shadow-md p-6"
               variants={sectionVariants}
             >
@@ -156,7 +178,7 @@ const CheckoutForm = ({
                 Payment Information
               </h2>
               <PaymentInformation />
-            </motion.div>
+            </motion.div> */}
           </div>
 
           {/* Right Column - Order Summary */}
@@ -175,13 +197,13 @@ const CheckoutForm = ({
               </h2>
 
               <OrderSummary
-                totalPrice={totalPrice}
+                totalPrice={orderTotal}
                 shippingCost={shippingCost}
-                grandTotal={grandTotal}
+                grandTotal={orderTotal + shippingCost}
               />
 
               {/* Error Messages */}
-              {errors.length > 0 && (
+              {/* {errors.length > 0 && (
                 <motion.div
                   className="bg-red-50 border border-red-200 rounded-md p-4"
                   initial={{ opacity: 0 }}
@@ -191,17 +213,24 @@ const CheckoutForm = ({
                     <ErrorMessage key={index} message={error} />
                   ))}
                 </motion.div>
-              )}
+              )} */}
 
               {/* Place Order Button */}
               <motion.button
-                onClick={handlePlaceOrder}
-                className="w-full py-3 px-4 bg-amber-600 text-white rounded-md 
-                           focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 
-                           shadow-md"
+                onClick={() => {
+                  if (validateOrder()) {
+                    handlePlaceOrder();
+                  }
+                }}
+                disabled={cartItems.length === 0}
+                className={`w-full py-3 px-4 rounded-md shadow-md ${
+                  cartItems.length === 0
+                    ? "bg-gray-400 cursor-not-allowed"
+                    : "bg-amber-600 hover:bg-amber-700"
+                } text-white focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2`}
                 variants={buttonVariants}
-                whileHover="hover"
-                whileTap="tap"
+                whileHover={cartItems.length > 0 ? "hover" : {}}
+                whileTap={cartItems.length > 0 ? "tap" : {}}
               >
                 Place Order
               </motion.button>

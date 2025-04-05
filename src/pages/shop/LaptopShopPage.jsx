@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from "react";
 import productApi from "../../api/productApi";
 import { FaShoppingCart } from "react-icons/fa";
-import { toast } from "react-toastify";
+import { toast, ToastContainer } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import useCartStore from "../../store/useCartStore";
 import SearchBar from "../../components/page-base/listlaptopborrow/SearchBar";
 import SortOptions from "../../components/page-base/listlaptopborrow/SortOptions";
+import 'react-toastify/dist/ReactToastify.css';
 
 const LaptopShopPage = () => {
   const [products, setProducts] = useState([]);
@@ -165,7 +166,35 @@ const LaptopShopPage = () => {
                   {formatPrice(product.price)}
                 </span>
                 <button
-                  onClick={(e) => handleAddToCart(e, product)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (product.quantity > 0) {
+                      addToCart({
+                        productId: product.productId,
+                        productName: product.productName,
+                        price: product.price,
+                        imageProduct: product.imageProduct,
+                        quantity: 1,
+                        cpu: product.cpu,
+                        ram: product.ram,
+                        storage: product.storage
+                      });
+                      toast.success(`Đã thêm ${product.productName} vào giỏ hàng`, {
+                        position: "top-right",
+                        autoClose: 2000,
+                        hideProgressBar: false,
+                        closeOnClick: true,
+                        pauseOnHover: true,
+                        draggable: true,
+                        progress: undefined,
+                        theme: "light",
+                        style: {
+                          fontSize: '14px',
+                          fontWeight: '500'
+                        }
+                      });
+                    }
+                  }}
                   disabled={product.quantity <= 0}
                   className={`px-3 py-2 rounded-md transition ${
                     product.quantity > 0
@@ -186,6 +215,19 @@ const LaptopShopPage = () => {
           <p>No products found.</p>
         </div>
       )}
+
+      <ToastContainer
+        position="top-right"
+        autoClose={2000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
+      />
     </div>
   );
 };
