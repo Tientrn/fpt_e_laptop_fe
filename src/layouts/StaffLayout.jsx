@@ -9,6 +9,7 @@ import {
   FaFileContract,
   FaMoneyBillWave,
   FaPlusCircle,
+  FaStore,
 } from "react-icons/fa";
 import { toast } from "react-toastify";
 
@@ -23,11 +24,15 @@ const StaffLayout = () => {
       name: "Borrow Requests",
       icon: <FaClipboardList className="w-5 h-5" />,
     },
-    //sua icon
     {
       path: "/staff/donate-items",
-      name: "Donate Manager",
+      name: "Donate Management",
       icon: <FaMoneyBillWave className="w-5 h-5" />,
+    },
+    {
+      path: "/staff/shop",
+      name: "Shop Management",
+      icon: <FaStore className="w-5 h-5" />,
     },
     {
       path: "/staff/borrow-history",

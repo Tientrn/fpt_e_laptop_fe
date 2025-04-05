@@ -21,38 +21,51 @@ const ShopLayout = () => {
   const user = JSON.parse(localStorage.getItem("user"));
   const isShop = user?.roles?.includes("shop") || user?.roleId === 6;
 
-  const menuItems = [
-    {
-      path: "/shop/profile",
-      name: "Shop Profile",
-      icon: <FaUserCircle className="w-5 h-5" />,
-    },
-    {
-      path: "/shop/create-profile",
-      name: "Create Shop Info",
-      icon: <FaPlusCircle className="w-5 h-5" />,
-    },
-    {
-      path: "/shop/products",
-      name: "My Products",
-      icon: <FaBoxOpen className="w-5 h-5" />,
-    },
-    {
-      path: "/shop/orders",
-      name: "Orders",
-      icon: <FaClipboardCheck className="w-5 h-5" />,
-    },
-    {
-      path: "/shop/add-product",
-      name: "Add Product",
-      icon: <FaPlusSquare className="w-5 h-5" />,
-    },
-    {
-      path: "/shop/analytics",
-      name: "Analytics",
-      icon: <FaChartPie className="w-5 h-5" />,
+  const getMenuItems = () => {
+    const baseMenuItems = [
+      {
+        path: "/shop/profile",
+        name: "Shop Profile",
+        icon: <FaUserCircle className="w-5 h-5" />,
+        requiresShop: true
+      },
+      {
+        path: "/shop/products",
+        name: "My Products",
+        icon: <FaBoxOpen className="w-5 h-5" />,
+        requiresShop: true
+      },
+      {
+        path: "/shop/orders",
+        name: "Orders",
+        icon: <FaClipboardCheck className="w-5 h-5" />,
+        requiresShop: true
+      },
+      {
+        path: "/shop/add-product",
+        name: "Add Product",
+        icon: <FaPlusSquare className="w-5 h-5" />,
+        requiresShop: true
+      },
+      {
+        path: "/shop/analytics",
+        name: "Analytics",
+        icon: <FaChartPie className="w-5 h-5" />,
+        requiresShop: true
+      }
+    ];
+
+    if (!isShop) {
+      baseMenuItems.splice(1, 0, {
+        path: "/shop/create-profile",
+        name: "Create Shop Info",
+        icon: <FaPlusCircle className="w-5 h-5" />,
+        requiresShop: false
+      });
     }
-  ];
+
+    return baseMenuItems;
+  };
 
   const handleLogout = () => {
     try {
@@ -85,7 +98,7 @@ const ShopLayout = () => {
     <div className="flex h-screen bg-white">
       {/* Sidebar */}
       <div
-        className={`$${
+        className={`${
           isSidebarOpen ? "w-80" : "w-16"
         } bg-slate-600 text-white transition-all duration-300 ease-in-out flex flex-col`}
       >
@@ -102,22 +115,36 @@ const ShopLayout = () => {
         </div>
 
         <nav className="mt-4 flex-1">
-          {menuItems.map((item) => (
-            <Link
-              key={item.path}
-              to={item.path}
-              className={`flex items-center px-4 py-3 text-sm font-medium ${
-                location.pathname === item.path
-                  ? "bg-amber-600 text-white"
-                  : "text-white hover:bg-slate-700"
-              } transition-colors`}
-            >
-              {item.icon}
-              <span className={`ml-3 ${!isSidebarOpen && "hidden"}`}>
-                {item.name}
-              </span>
-            </Link>
-          ))}
+          {getMenuItems().map((item) => {
+            const isDisabled = item.requiresShop && !isShop;
+            
+            return (
+              <Link
+                key={item.path}
+                to={isDisabled ? "#" : item.path}
+                onClick={(e) => {
+                  if (isDisabled) {
+                    e.preventDefault();
+                    toast.warning("Vui lòng tạo thông tin shop trước!");
+                  }
+                }}
+                className={`flex items-center px-4 py-3 text-sm font-medium ${
+                  location.pathname === item.path
+                    ? "bg-amber-600 text-white"
+                    : "text-white hover:bg-slate-700"
+                } ${
+                  isDisabled 
+                    ? "opacity-50 cursor-not-allowed" 
+                    : "cursor-pointer"
+                } transition-colors`}
+              >
+                {item.icon}
+                <span className={`ml-3 ${!isSidebarOpen && "hidden"}`}>
+                  {item.name}
+                </span>
+              </Link>
+            );
+          })}
         </nav>
       </div>
 
