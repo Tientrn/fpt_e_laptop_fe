@@ -19,22 +19,22 @@ function HeaderHomePage() {
 
   // Get cart count from cart store
   const cartCount = useCartStore((state) => state.getCartCount());
-  const resetCart = useCartStore(state => state.resetCart);
+  const resetCart = useCartStore((state) => state.resetCart);
 
   const handleLogout = () => {
     // Clear localStorage ngoại trừ cart-storage
-    const cartData = localStorage.getItem('cart-storage');
+    const cartData = localStorage.getItem("cart-storage");
     localStorage.clear();
-    localStorage.setItem('cart-storage', cartData);
-    
+    localStorage.setItem("cart-storage", cartData);
+
     // Clear cookies
     document.cookie.split(";").forEach((c) => {
       document.cookie = c
         .replace(/^ +/, "")
         .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
     });
-    
-    navigate('/login');
+
+    navigate("/login");
   };
 
   // Kiểm tra token không hợp lệ hoặc hết hạn
@@ -57,16 +57,6 @@ function HeaderHomePage() {
     <header>
       <div className="bg-[#1e293b] text-white px-4 lg:px-6">
         <div className="mx-auto max-w-screen-lg flex space-x-6">
-          <a
-            href="/registershop"
-            className="font-semibold text-lg hover:text-amber-600 flex items-center h-10"
-          >
-            <StoreIcon className="mr-1" />
-            <span className="drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]">
-              Shop
-            </span>
-          </a>
-          <span className="mt-1 font-semibold">|</span>
           <button
             onClick={() => navigate("/sponsor/register")}
             className="font-semibold text-lg hover:text-amber-600 flex items-center h-10"

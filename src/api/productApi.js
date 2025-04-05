@@ -5,7 +5,14 @@ const productApi = {
   getAllProducts: () => {
     return axiosClient.get("/products");
   },
-
+  // Create products
+  createProduct: (data) => {
+    return axiosClient.post("/products", data, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+  },
   // Get product by id
   getProductById: (id) => {
     return axiosClient.get(`/products/${id}`);

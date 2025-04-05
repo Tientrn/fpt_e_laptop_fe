@@ -12,6 +12,7 @@ import { SponsorLayout } from "./layouts/SponsorLayout";
 import StaffLayout from "./layouts/StaffLayout";
 import AdminLayout from "./layouts/AdminLayout";
 import StudentLayout from "./layouts/StudentLayout";
+import ShopLayout from "./layouts/ShopLayout";
 {
   /* Admin */
 }
@@ -21,6 +22,16 @@ import RegisterPage from "./pages/auth/RegisterPage";
 import AnalyticPage from "./pages/admin/AnalyticPage";
 import ContentPage from "./pages/admin/ContentPage";
 import ReportPage from "./pages/admin/ReportPage";
+{
+  /* Shop */
+}
+import MyProducts from "./components/shop/dashboardshop/MyProductShop";
+import ShopOrders from "./components/shop/dashboardshop/ShopOrders";
+import AddProduct from "./components/shop/dashboardshop/AddProduct";
+import ShopAnalytics from "./components/shop/dashboardshop/ShopAnalytics";
+import CreateShopInfo from "./components/shop/dashboardshop/CreateShopInfo";
+import ShopProfile from "./components/shop/dashboardshop/ShopProfile";
+
 {
   /* Student */
 }
@@ -42,7 +53,6 @@ import CreateDonateItem from "./pages/staff/CreateDonateItem";
 {
   /* Sponsor */
 }
-import RegisterShopPage from "./pages/shop/RegisterShopPage";
 import RegisterSponsor from "./pages/sponsor/RegisterSponsor";
 import LaptopInfo from "./pages/sponsor/LaptopInfo";
 import LaptopStatus from "./pages/sponsor/LaptopStatus";
@@ -128,14 +138,6 @@ const App = () => {
           }
         />
         <Route
-          path="/registershop"
-          element={
-            <PrivateRoute>
-              <RegisterShopPage />
-            </PrivateRoute>
-          }
-        />
-        <Route
           path="/borrow/:id/confirm"
           element={
             <PrivateRoute>
@@ -151,6 +153,15 @@ const App = () => {
             </HomePageLayout>
           }
         />
+        {/* Shop Routes */}
+        <Route path="/shop" element={<ShopLayout />}>
+          <Route path="products" element={<MyProducts />} />
+          <Route path="orders" element={<ShopOrders />} />
+          <Route path="add-product" element={<AddProduct />} />
+          <Route path="analytics" element={<ShopAnalytics />} />
+          <Route path="create-profile" element={<CreateShopInfo />} />
+          <Route path="profile" element={<ShopProfile />} />
+        </Route>
 
         {/* Sponsor Routes */}
         <Route path="/sponsor" element={<SponsorLayout />}>

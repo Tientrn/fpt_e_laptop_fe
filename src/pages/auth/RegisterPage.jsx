@@ -2,29 +2,28 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { motion } from "framer-motion"; // Thêm framer-motion
+import { motion } from "framer-motion";
 import registerApi from "../../api/registerApi";
 
 const RegisterPage = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     email: "",
-    password: "",
     fullName: "",
-    phone: "",
+    dob: "",
     address: "",
-    roleId: 3,
-    isStudent: false,
-    studentCode: "",
-    university: "",
-    studentCardImage: "",
+    phoneNumber: "",
+    roleId: "", // 2 - student, 3 - sponsor, 6 - shop
+    gender: "",
+    avatar: "",
+    password: "",
   });
 
   const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
+    const { name, value } = e.target;
     setFormData({
       ...formData,
-      [name]: type === "checkbox" ? checked : value,
+      [name]: value,
     });
   };
 
@@ -35,13 +34,12 @@ const RegisterPage = () => {
         email: formData.email,
         password: formData.password,
         fullName: formData.fullName,
-        phone: formData.phone,
+        dob: formData.dob,
         address: formData.address,
-        roleId: formData.roleId,
-        isStudent: formData.isStudent,
-        studentCode: formData.isStudent ? formData.studentCode : null,
-        university: formData.isStudent ? formData.university : null,
-        studentCardImage: formData.isStudent ? formData.studentCardImage : null,
+        phoneNumber: formData.phoneNumber,
+        gender: formData.gender,
+        avatar: formData.avatar,
+        roleId: parseInt(formData.roleId),
       };
 
       const response = await registerApi.register(registerData);
@@ -60,12 +58,11 @@ const RegisterPage = () => {
       console.error("Registration failed:", err);
       toast.error(
         err.response?.data?.message ||
-          "Đăng ký không thành công. Vui lòng thử lại."
+          "Đăng ký không thành công vui lòng thử lại!."
       );
     }
   };
 
-  // Animation variants
   const containerVariants = {
     hidden: { opacity: 0, y: 50 },
     visible: {
@@ -97,7 +94,6 @@ const RegisterPage = () => {
         initial="hidden"
         animate="visible"
       >
-        {/* Left Side - Illustration */}
         <div className="hidden md:block w-1/2 bg-amber-100 p-8 relative overflow-hidden">
           <motion.div
             className="flex flex-col items-center justify-center h-full"
@@ -120,7 +116,6 @@ const RegisterPage = () => {
               Create an account to start sharing and borrowing laptops.
             </p>
           </motion.div>
-          {/* Animated background circles */}
           <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
             <motion.div
               className="w-32 h-32 bg-amber-200 rounded-full absolute -top-16 -left-16 opacity-50"
@@ -139,7 +134,6 @@ const RegisterPage = () => {
           </div>
         </div>
 
-        {/* Right Side - Register Form */}
         <motion.div
           className="w-full md:w-1/2 p-8 space-y-6 overflow-y-auto max-h-screen"
           variants={formVariants}
@@ -162,6 +156,7 @@ const RegisterPage = () => {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-5">
+            <input type="hidden" name="avatar" value={formData.avatar} />
             <div>
               <label className="block text-sm font-medium text-black mb-1">
                 Email
@@ -172,9 +167,7 @@ const RegisterPage = () => {
                 value={formData.email}
                 onChange={handleChange}
                 required
-                className="w-full px-4 py-2 border border-slate-300 rounded-md text-black 
-                           focus:outline-none focus:ring-2 focus:ring-amber-500 transition 
-                           placeholder:text-slate-400 shadow-sm"
+                className="w-full px-4 py-2 border border-slate-300 rounded-md text-black focus:outline-none focus:ring-2 focus:ring-amber-500"
                 placeholder="Your email"
               />
             </div>
@@ -189,9 +182,7 @@ const RegisterPage = () => {
                 value={formData.password}
                 onChange={handleChange}
                 required
-                className="w-full px-4 py-2 border border-slate-300 rounded-md text-black 
-                           focus:outline-none focus:ring-2 focus:ring-amber-500 transition 
-                           placeholder:text-slate-400 shadow-sm"
+                className="w-full px-4 py-2 border border-slate-300 rounded-md text-black focus:outline-none focus:ring-2 focus:ring-amber-500"
                 placeholder="Your password"
               />
             </div>
@@ -206,26 +197,22 @@ const RegisterPage = () => {
                 value={formData.fullName}
                 onChange={handleChange}
                 required
-                className="w-full px-4 py-2 border border-slate-300 rounded-md text-black 
-                           focus:outline-none focus:ring-2 focus:ring-amber-500 transition 
-                           placeholder:text-slate-400 shadow-sm"
+                className="w-full px-4 py-2 border border-slate-300 rounded-md text-black focus:outline-none focus:ring-2 focus:ring-amber-500"
                 placeholder="Your full name"
               />
             </div>
 
             <div>
               <label className="block text-sm font-medium text-black mb-1">
-                Phone
+                Phone Number
               </label>
               <input
                 type="tel"
-                name="phone"
-                value={formData.phone}
+                name="phoneNumber"
+                value={formData.phoneNumber}
                 onChange={handleChange}
                 required
-                className="w-full px-4 py-2 border border-slate-300 rounded-md text-black 
-                           focus:outline-none focus:ring-2 focus:ring-amber-500 transition 
-                           placeholder:text-slate-400 shadow-sm"
+                className="w-full px-4 py-2 border border-slate-300 rounded-md text-black focus:outline-none focus:ring-2 focus:ring-amber-500"
                 placeholder="Your phone number"
               />
             </div>
@@ -240,91 +227,89 @@ const RegisterPage = () => {
                 value={formData.address}
                 onChange={handleChange}
                 required
-                className="w-full px-4 py-2 border border-slate-300 rounded-md text-black 
-                           focus:outline-none focus:ring-2 focus:ring-amber-500 transition 
-                           placeholder:text-slate-400 shadow-sm"
+                className="w-full px-4 py-2 border border-slate-300 rounded-md text-black focus:outline-none focus:ring-2 focus:ring-amber-500"
                 placeholder="Your address"
               />
             </div>
 
-            <div className="flex items-center">
-              <input
-                type="checkbox"
-                name="isStudent"
-                checked={formData.isStudent}
-                onChange={handleChange}
-                className="h-4 w-4 text-amber-600 rounded border-slate-300 focus:ring-amber-500"
-              />
-              <label className="ml-2 block text-sm font-medium text-black">
-                Are you a student?
+            <div>
+              <label className="block text-sm font-medium text-black mb-1">
+                Date of Birth (dd-mm-yyyy)
               </label>
+              <input
+                type="text"
+                name="dob"
+                value={formData.dob}
+                onChange={handleChange}
+                required
+                className="w-full px-4 py-2 border border-slate-300 rounded-md text-black focus:outline-none focus:ring-2 focus:ring-amber-500"
+                placeholder="16-08-2002"
+              />
             </div>
 
-            {formData.isStudent && (
-              <motion.div
-                className="space-y-4"
-                initial={{ opacity: 0, height: 0 }}
-                animate={{
-                  opacity: 1,
-                  height: "auto",
-                  transition: { duration: 0.3 },
-                }}
+            <div>
+              <label className="block text-sm font-medium text-black mb-1">
+                Gender
+              </label>
+              <select
+                name="gender"
+                value={formData.gender}
+                onChange={handleChange}
+                required
+                className="w-full px-4 py-2 border border-slate-300 rounded-md text-black focus:outline-none focus:ring-2 focus:ring-amber-500"
               >
-                <div>
-                  <label className="block text-sm font-medium text-black mb-1">
-                    Student Code
-                  </label>
-                  <input
-                    type="text"
-                    name="studentCode"
-                    value={formData.studentCode}
-                    onChange={handleChange}
-                    className="w-full px-4 py-2 border border-slate-300 rounded-md text-black 
-                               focus:outline-none focus:ring-2 focus:ring-amber-500 transition 
-                               placeholder:text-slate-400 shadow-sm"
-                    placeholder="Your student code"
-                  />
-                </div>
+                <option value="">-- Select gender --</option>
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-black mb-1">
-                    University
-                  </label>
-                  <input
-                    type="text"
-                    name="university"
-                    value={formData.university}
-                    onChange={handleChange}
-                    className="w-full px-4 py-2 border border-slate-300 rounded-md text-black 
-                               focus:outline-none focus:ring-2 focus:ring-amber-500 transition 
-                               placeholder:text-slate-400 shadow-sm"
-                    placeholder="Your university"
-                  />
-                </div>
+            <div>
+              <label className="block text-sm font-medium text-black mb-1">
+                Avatar (URL)
+              </label>
+              <input
+                type="url"
+                name="avatar"
+                value={formData.avatar}
+                onChange={handleChange}
+                className="w-full px-4 py-2 border border-slate-300 rounded-md text-black focus:outline-none focus:ring-2 focus:ring-amber-500"
+                placeholder="https://example.com/avatar.jpg"
+              />
+            </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-black mb-1">
-                    Student Card Image URL
-                  </label>
-                  <input
-                    type="url"
-                    name="studentCardImage"
-                    value={formData.studentCardImage}
-                    onChange={handleChange}
-                    className="w-full px-4 py-2 border border-slate-300 rounded-md text-black 
-                               focus:outline-none focus:ring-2 focus:ring-amber-500 transition 
-                               placeholder:text-slate-400 shadow-sm"
-                    placeholder="https://example.com/image.jpg"
-                  />
-                </div>
-              </motion.div>
+            {formData.avatar && (
+              <div className="flex justify-center">
+                <img
+                  src={formData.avatar}
+                  alt="Avatar Preview"
+                  className="h-24 w-24 rounded-full object-cover mt-2 shadow"
+                />
+              </div>
             )}
+
+            <div>
+              <label className="block text-sm font-medium text-black mb-1">
+                Role
+              </label>
+              <select
+                name="roleId"
+                value={formData.roleId}
+                onChange={handleChange}
+                required
+                className="w-full px-4 py-2 border border-slate-300 rounded-md text-black focus:outline-none focus:ring-2 focus:ring-amber-500"
+              >
+                <option value="">-- Select role --</option>
+                <option value="2">Student</option>
+                <option value="3">Sponsor</option>
+                <option value="6">Shop</option>
+              </select>
+            </div>
 
             <motion.button
               type="submit"
-              className="w-full py-2 px-4 bg-amber-600 text-white rounded-md 
-                         focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 
-                         shadow-md"
+              className="w-full py-2 px-4 bg-amber-600 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 shadow-md"
               variants={buttonVariants}
               whileHover="hover"
               whileTap="tap"

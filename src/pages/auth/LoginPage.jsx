@@ -5,7 +5,7 @@ import "react-toastify/dist/ReactToastify.css";
 import { motion } from "framer-motion"; // Thêm framer-motion
 import loginApi from "../../api/loginApi";
 import { jwtDecode } from "jwt-decode";
-import useCartStore from '../../store/useCartStore';
+import useCartStore from "../../store/useCartStore";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -13,7 +13,7 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const navigate = useNavigate();
   const location = useLocation();
-  const initializeCart = useCartStore(state => state.initializeCart);
+  const initializeCart = useCartStore((state) => state.initializeCart);
 
   useEffect(() => {
     if (location.state?.showRegisterSuccess) {
@@ -86,6 +86,8 @@ export default function LoginPage() {
           break;
         case "Manager":
           userRoleId = 5;
+        case "Shop":
+          userRoleId = 6;
           break;
         default:
           throw new Error("Invalid role");
@@ -129,6 +131,9 @@ export default function LoginPage() {
             break;
           case 5:
             navigate("/dashboard");
+            break;
+          case 6:
+            navigate("/shop");
             break;
           default:
             navigate("/home");
