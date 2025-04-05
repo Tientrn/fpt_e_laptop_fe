@@ -24,34 +24,44 @@ const CreateShopInfo = () => {
     if (token) {
       try {
         const decodedToken = jwtDecode(token);
-        const userIdFromToken =
-          decodedToken[
-            "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"
-          ];
+        console.log("Decoded token:", decodedToken); // Debug token
+
+        // Lấy userId trực tiếp từ token giống như trong ShopProfile
+        const userIdFromToken = decodedToken.userId || "15";
         const finalUserId = Number(userIdFromToken);
+        console.log("UserID:", finalUserId); // Debug userId
         setUserId(finalUserId);
 
+        // Kiểm tra shop tồn tại
         shopApi.getAllShops().then((shopsResponse) => {
           console.log("All shops response:", shopsResponse);
-          const existedShop = shopsResponse.data.find(
-            (shop) => shop.userId === finalUserId
-          );
-          console.log("Existed shop:", existedShop);
-          if (existedShop) {
-            navigate("/shop/profile", {
-              state: {
-                message: "Bạn đã tạo thông tin shop trước đó.",
-                shopId: existedShop.shopId,
-              },
-            });
+          if (shopsResponse && shopsResponse.data) {
+            const existedShop = shopsResponse.data.find(
+              (shop) => shop.userId === finalUserId
+            );
+            console.log("Existed shop:", existedShop);
+            
+            if (existedShop) {
+              // Nếu tìm thấy shop, lưu shopId và chuyển hướng
+              localStorage.setItem("shopId", existedShop.shopId);
+              toast.info("Bạn đã tạo thông tin shop trước đó.");
+              navigate("/shop/profile");
+            }
           }
+        }).catch(error => {
+          console.error("Error checking existing shop:", error);
+          toast.error("Lỗi khi kiểm tra thông tin shop");
         });
+
       } catch (error) {
         console.error("Error decoding token:", error);
-        toast.error("Lỗi khi giải mã token");
+        toast.error("Lỗi khi xác thực thông tin người dùng");
       }
+    } else {
+      toast.error("Vui lòng đăng nhập lại");
+      navigate("/login");
     }
-  }, []);
+  }, [navigate]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;

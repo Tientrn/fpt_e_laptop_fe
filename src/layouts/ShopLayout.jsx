@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate, Outlet } from "react-router-dom";
 import {
   FaBoxOpen,
@@ -12,14 +12,41 @@ import {
   FaUserCircle,
 } from "react-icons/fa";
 import { toast } from "react-toastify";
+import shopApi from "../api/shopApi";
 
 const ShopLayout = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [hasShop, setHasShop] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
 
   const user = JSON.parse(localStorage.getItem("user"));
   const isShop = user?.roles?.includes("shop") || user?.roleId === 6;
+
+  useEffect(() => {
+    const checkShopExists = async () => {
+      try {
+        const userId = user?.userId;
+        if (!userId) return;
+
+        const shopsResponse = await shopApi.getAllShops();
+        if (shopsResponse && shopsResponse.data) {
+          const existingShop = shopsResponse.data.find(
+            shop => shop.userId === Number(userId)
+          );
+          setHasShop(!!existingShop);
+          
+          if (!existingShop && location.pathname !== "/shop/create-profile") {
+            navigate("/shop/create-profile");
+          }
+        }
+      } catch (error) {
+        console.error("Error checking shop:", error);
+      }
+    };
+
+    checkShopExists();
+  }, [user, location.pathname, navigate]);
 
   const getMenuItems = () => {
     const baseMenuItems = [
@@ -55,7 +82,7 @@ const ShopLayout = () => {
       }
     ];
 
-    if (!isShop) {
+    if (!hasShop) {
       baseMenuItems.splice(1, 0, {
         path: "/shop/create-profile",
         name: "Create Shop Info",
@@ -71,6 +98,7 @@ const ShopLayout = () => {
     try {
       localStorage.removeItem("token");
       localStorage.removeItem("user");
+      localStorage.removeItem("shopId");
       toast.success("Logged out successfully");
       navigate("/login");
     } catch (error) {
@@ -116,7 +144,7 @@ const ShopLayout = () => {
 
         <nav className="mt-4 flex-1">
           {getMenuItems().map((item) => {
-            const isDisabled = item.requiresShop && !isShop;
+            const isDisabled = item.requiresShop && !hasShop;
             
             return (
               <Link
@@ -154,8 +182,7 @@ const ShopLayout = () => {
         <header className="bg-white border-b border-slate-200 shadow-sm">
           <div className="flex items-center justify-between px-6 py-4">
             <div className="text-sm text-amber-600 font-medium">
-              {/* {menuItems.find((item) => item.path === location.pathname)
-                ?.name || "Shop Dashboard"} */}
+              {!hasShop && "Vui lòng tạo thông tin shop để tiếp tục"}
             </div>
             <div className="p-4 border-slate-500">
               <button
@@ -174,7 +201,21 @@ const ShopLayout = () => {
         {/* Page Content */}
         <main className="flex-1 overflow-x-hidden overflow-y-auto bg-white">
           <div className="p-6">
-            <Outlet />
+            {!hasShop && location.pathname !== "/shop/create-profile" ? (
+              <div className="text-center py-10">
+                <h2 className="text-xl font-semibold text-gray-800 mb-4">
+                  Bạn cần tạo thông tin shop trước khi sử dụng các tính năng khác
+                </h2>
+                <Link
+                  to="/shop/create-profile"
+                  className="inline-block bg-amber-600 text-white px-6 py-2 rounded-md hover:bg-amber-700 transition-colors"
+                >
+                  Tạo thông tin shop
+                </Link>
+              </div>
+            ) : (
+              <Outlet />
+            )}
           </div>
         </main>
       </div>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { toast } from "react-toastify";
+import { toast, ToastContainer } from "react-toastify";
 import productApi from "../../../api/productApi"; // createProduct, createProductImage
 import categoryApi from "../../../api/categoryApi"; // getAllCategories
 import { jwtDecode } from "jwt-decode";
@@ -182,7 +182,7 @@ const AddProduct = () => {
           />
         </div>
 
-        <div>
+        {/* <div>
           <label className="block text-sm font-medium text-black mb-1">
             Additional Images (optional)
           </label>
@@ -193,7 +193,7 @@ const AddProduct = () => {
             onChange={handleExtraImagesChange}
             className="w-full px-3 py-2 border border-slate-300 rounded-md"
           />
-        </div>
+        </div> */}
 
         <button
           type="submit"
@@ -202,6 +202,15 @@ const AddProduct = () => {
           Submit Product
         </button>
       </form>
+      <ToastContainer
+        position="top-right"
+        autoClose={1500}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        pauseOnHover
+        draggable
+      />
     </div>
   );
 };
