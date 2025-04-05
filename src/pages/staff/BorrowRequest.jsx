@@ -203,8 +203,6 @@ const BorrowRequest = () => {
               <option value="Pending">Pending</option>
               <option value="Approved">Approved</option>
               <option value="Rejected">Rejected</option>
-              <option value="Borrowing">Borrowing</option>
-              <option value="Returned">Returned</option>
             </select>
           </div>
         </div>
@@ -350,8 +348,6 @@ const BorrowRequest = () => {
                   )}
                   <option value="Approved">Approved</option>
                   <option value="Rejected">Rejected</option>
-                  <option value="Borrowing">Borrowing</option>
-                  <option value="Returned">Returned</option>
                 </select>
               </div>
               {editFormData.status === "Rejected" && (
