@@ -62,9 +62,9 @@ const StudentLayout = () => {
           isSidebarOpen ? "w-64" : "w-16"
         } bg-slate-600 text-white transition-all duration-300 ease-in-out`}
       >
-        <div className="p-4 flex justify-between items-center">
+        <div className="p-4 flex justify-between items-center ml-4">
           <h2 className={`text-xl font-semibold ${!isSidebarOpen && "hidden"}`}>
-            Sinh viên
+            Student
           </h2>
           <button
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
