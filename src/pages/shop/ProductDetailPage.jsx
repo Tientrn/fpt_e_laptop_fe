@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { toast } from "react-toastify";
+import { toast, ToastContainer } from "react-toastify";
 import { useParams, useNavigate } from "react-router-dom";
 import { FaShoppingCart, FaStar } from "react-icons/fa";
 import productApi from "../../api/productApi";
@@ -227,7 +227,7 @@ const ProductDetailPage = () => {
 
           // Fetch related products
           try {
-            const relatedResponse = await productApi.getProductImagesById(id); 
+            const relatedResponse = await productApi.getProductImagesById(id);
             if (
               isMounted &&
               relatedResponse.isSuccess &&
@@ -268,11 +268,14 @@ const ProductDetailPage = () => {
   const handleAddToCart = () => {
     if (product && product.quantity > 0) {
       addToCart({
-        id: product.productId,
-        name: product.productName,
+        productId: product.productId,
+        productName: product.productName,
         price: product.price,
-        image: product.imageProduct,
+        imageProduct: product.imageProduct,
         quantity: 1,
+        cpu: product.cpu,
+        ram: product.ram,
+        storage: product.storage,
       });
       toast.success("Added to cart successfully!");
     } else {
@@ -307,19 +310,33 @@ const ProductDetailPage = () => {
 
   // Thêm hàm xử lý next/prev image
   const handlePrevImage = () => {
-    const allImages = [product.imageProduct, ...images.map(img => img.imageUrl)];
-    setCurrentImageIndex((prev) => 
+    const allImages = [
+      product.imageProduct,
+      ...images.map((img) => img.imageUrl),
+    ];
+    setCurrentImageIndex((prev) =>
       prev === 0 ? allImages.length - 1 : prev - 1
     );
-    setSelectedImage(allImages[currentImageIndex === 0 ? allImages.length - 1 : currentImageIndex - 1]);
+    setSelectedImage(
+      allImages[
+        currentImageIndex === 0 ? allImages.length - 1 : currentImageIndex - 1
+      ]
+    );
   };
 
   const handleNextImage = () => {
-    const allImages = [product.imageProduct, ...images.map(img => img.imageUrl)];
-    setCurrentImageIndex((prev) => 
+    const allImages = [
+      product.imageProduct,
+      ...images.map((img) => img.imageUrl),
+    ];
+    setCurrentImageIndex((prev) =>
       prev === allImages.length - 1 ? 0 : prev + 1
     );
-    setSelectedImage(allImages[currentImageIndex === allImages.length - 1 ? 0 : currentImageIndex + 1]);
+    setSelectedImage(
+      allImages[
+        currentImageIndex === allImages.length - 1 ? 0 : currentImageIndex + 1
+      ]
+    );
   };
 
   if (loading) {
@@ -459,7 +476,13 @@ const ProductDetailPage = () => {
                   {/* Image Counter */}
                   <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2">
                     <div className="bg-black bg-opacity-50 text-white px-3 py-1 rounded-full text-sm">
-                      {currentImageIndex + 1} / {[product.imageProduct, ...images.map(img => img.imageUrl)].length}
+                      {currentImageIndex + 1} /{" "}
+                      {
+                        [
+                          product.imageProduct,
+                          ...images.map((img) => img.imageUrl),
+                        ].length
+                      }
                     </div>
                   </div>
                 </>
@@ -629,6 +652,15 @@ Perfect for students and professionals alike.`}
           </div>
         )}
       </div>
+      <ToastContainer
+        position="top-right"
+        autoClose={1500}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        pauseOnHover
+        draggable
+      />
     </div>
   );
 };

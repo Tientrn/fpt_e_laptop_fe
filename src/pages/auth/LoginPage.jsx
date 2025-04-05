@@ -6,7 +6,7 @@ import { motion } from "framer-motion"; // Thêm framer-motion
 import loginApi from "../../api/loginApi";
 import { jwtDecode } from "jwt-decode";
 import useCartStore from "../../store/useCartStore";
-import Modal from "../../components/common/Modal"; 
+import Modal from "../../components/common/Modal";
 import shopApi from "../../api/shopApi";
 
 export default function LoginPage() {
@@ -71,93 +71,11 @@ export default function LoginPage() {
     e.preventDefault();
     try {
       const response = await loginApi.login({ email, password });
-<<<<<<< HEAD
-      const token = response.token || response.data?.token;
 
-      if (!token) {
-        throw new Error("Token không tồn tại trong response");
-      }
-
-      const decodedToken = jwtDecode(token);
-      let userRoleId;
-      const userRole =
-        decodedToken[
-          "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
-        ];
-      switch (userRole) {
-        case "Admin":
-          userRoleId = 1;
-          break;
-        case "Student":
-          userRoleId = 2;
-          break;
-        case "Sponsor":
-          userRoleId = 3;
-          break;
-        case "Staff":
-          userRoleId = 4;
-          break;
-        case "Manage":
-          userRoleId = 5;
-          break;
-        case "Shop":
-          userRoleId = 6;
-          break;
-        default:
-          throw new Error("Invalid role");
-      }
-
-      localStorage.setItem("token", token);
-      localStorage.setItem(
-        "user",
-        JSON.stringify({
-          email: decodedToken.email,
-          username: decodedToken.username,
-          userId: decodedToken.nameidentifier,
-          roleId: userRoleId,
-          role: userRole,
-        })
-      );
-
-      setError("");
-      toast.success("Đăng nhập thành công!", {
-        position: "top-right",
-        autoClose: 1500,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-      });
-
-      setTimeout(() => {
-        switch (userRoleId) {
-          case 1:
-            navigate("/dashboard");
-            break;
-          case 2:
-            navigate("/home");
-            break;
-          case 3:
-            navigate("/sponsor");
-            break;
-          case 4:
-            navigate("/staff");
-            break;
-          case 5:
-            navigate("/manager");
-            break;
-          case 6:
-            navigate("/shop");
-            break;
-          default:
-            navigate("/home");
-=======
-      
       if (response.code === 200 && response.data) {
         const token = response.data.token;
         if (!token) {
           throw new Error("Token không tồn tại trong response");
->>>>>>> bf2354aba14f49d1fcbe5303e4b3775affc24b17
         }
 
         const decodedToken = jwtDecode(token);
@@ -165,12 +83,12 @@ export default function LoginPage() {
         const userId = decodedToken.userId;
 
         const roleMapping = {
-          "Admin": 1,
-          "Student": 2,
-          "Sponsor": 3,
-          "Staff": 4,
-          "Manager": 5,
-          "Shop": 6
+          Admin: 1,
+          Student: 2,
+          Sponsor: 3,
+          Staff: 4,
+          Manage: 5,
+          Shop: 6,
         };
 
         const userRoleId = roleMapping[userRole];
@@ -184,7 +102,7 @@ export default function LoginPage() {
             userId: userId,
             roleId: userRoleId,
             role: userRole,
-            fullName: decodedToken.fullName
+            fullName: decodedToken.fullName,
           })
         );
 
@@ -196,7 +114,7 @@ export default function LoginPage() {
           try {
             const shopsResponse = await shopApi.getAllShops();
             const existingShop = shopsResponse.data.find(
-              shop => shop.userId === Number(userId)
+              (shop) => shop.userId === Number(userId)
             );
 
             if (!existingShop) {
@@ -230,7 +148,7 @@ export default function LoginPage() {
                 navigate("/staff");
                 break;
               case 5:
-                navigate("/dashboard");
+                navigate("/manager");
                 break;
               default:
                 navigate("/home");
@@ -248,9 +166,9 @@ export default function LoginPage() {
   // Thêm hàm xử lý form shop
   const handleShopInputChange = (e) => {
     const { name, value } = e.target;
-    setShopFormData(prev => ({
+    setShopFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
@@ -261,7 +179,7 @@ export default function LoginPage() {
       const userId = JSON.parse(localStorage.getItem("user")).userId;
       const payload = {
         ...shopFormData,
-        userId: userId
+        userId: userId,
       };
 
       const response = await shopApi.createShop(payload);
@@ -335,7 +253,7 @@ export default function LoginPage() {
             <p className="text-sm text-amber-600 text-center mt-2">
               Sign in to share and borrow laptops effortlessly.
             </p>
-            
+
             {/* Thêm nút Back to Home */}
             <motion.button
               onClick={() => navigate("/")}
@@ -343,13 +261,18 @@ export default function LoginPage() {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-5 w-5"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
                 <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
               </svg>
               Back to Home
             </motion.button>
           </motion.div>
-          
+
           {/* Giữ nguyên phần animated background circles */}
           <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
             <motion.div
