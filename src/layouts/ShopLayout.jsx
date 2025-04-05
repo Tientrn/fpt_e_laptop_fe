@@ -127,8 +127,8 @@ const ShopLayout = () => {
         <header className="bg-white border-b border-slate-200 shadow-sm">
           <div className="flex items-center justify-between px-6 py-4">
             <div className="text-sm text-amber-600 font-medium">
-              {menuItems.find((item) => item.path === location.pathname)
-                ?.name || "Shop Dashboard"}
+              {/* {menuItems.find((item) => item.path === location.pathname)
+                ?.name || "Shop Dashboard"} */}
             </div>
             <div className="p-4 border-slate-500">
               <button

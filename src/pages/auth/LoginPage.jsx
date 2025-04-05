@@ -203,8 +203,22 @@ export default function LoginPage() {
             <p className="text-sm text-amber-600 text-center mt-2">
               Sign in to share and borrow laptops effortlessly.
             </p>
+            
+            {/* Thêm nút Back to Home */}
+            <motion.button
+              onClick={() => navigate("/")}
+              className="mt-6 px-6 py-2 bg-amber-600 text-white rounded-full flex items-center gap-2 hover:bg-amber-700 transition-colors shadow-md"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
+              </svg>
+              Back to Home
+            </motion.button>
           </motion.div>
-          {/* Animated background circles */}
+          
+          {/* Giữ nguyên phần animated background circles */}
           <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
             <motion.div
               className="w-32 h-32 bg-amber-200 rounded-full absolute -top-16 -left-16 opacity-50"
