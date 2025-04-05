@@ -51,24 +51,12 @@ const OrderSummary = ({ totalPrice = 0, shippingCost = 0, grandTotal = 0 }) => {
 
         {/* Payment Methods */}
         <div className="mt-6 pt-4 border-t border-gray-300">
-          <p className="text-sm text-gray-700 mb-3">We Accept</p>
-          <div className="flex items-center space-x-2">
-            <img
-              src="/visa.svg"
-              alt="Visa"
-              className="h-8 w-auto grayscale hover:grayscale-0 transition-all"
-            />
-            <img
-              src="/mastercard.svg"
-              alt="Mastercard"
-              className="h-8 w-auto grayscale hover:grayscale-0 transition-all"
-            />
-            <img
-              src="/momo.svg"
-              alt="Momo"
-              className="h-8 w-auto grayscale hover:grayscale-0 transition-all"
-            />
-          </div>
+        <h3 className="text-sm font-medium text-gray-900 mb-4">We Accept</h3>
+          <div className="flex items-center space-x-4 justify-center">
+                    <img src="/visa.png" alt="Visa" className="h-8 object-contain" />
+                    <img src="/mastercard.png" alt="Mastercard" className="h-8 object-contain" />
+                    <img src="/momo.png" alt="Momo" className="h-8 object-contain" />
+                  </div>
         </div>
 
         {/* Secure Transaction */}
