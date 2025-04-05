@@ -276,6 +276,7 @@ const ProductDetailPage = () => {
         cpu: product.cpu,
         ram: product.ram,
         storage: product.storage,
+        quantityAvailable: product.quantity,
       });
       toast.success("Added to cart successfully!");
     } else {

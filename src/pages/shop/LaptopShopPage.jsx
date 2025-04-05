@@ -6,7 +6,7 @@ import { useNavigate } from "react-router-dom";
 import useCartStore from "../../store/useCartStore";
 import SearchBar from "../../components/page-base/listlaptopborrow/SearchBar";
 import SortOptions from "../../components/page-base/listlaptopborrow/SortOptions";
-import 'react-toastify/dist/ReactToastify.css';
+import "react-toastify/dist/ReactToastify.css";
 
 const LaptopShopPage = () => {
   const [products, setProducts] = useState([]);
@@ -177,22 +177,26 @@ const LaptopShopPage = () => {
                         quantity: 1,
                         cpu: product.cpu,
                         ram: product.ram,
-                        storage: product.storage
+                        storage: product.storage,
+                        quantityAvailable: product.quantity,
                       });
-                      toast.success(`Đã thêm ${product.productName} vào giỏ hàng`, {
-                        position: "top-right",
-                        autoClose: 2000,
-                        hideProgressBar: false,
-                        closeOnClick: true,
-                        pauseOnHover: true,
-                        draggable: true,
-                        progress: undefined,
-                        theme: "light",
-                        style: {
-                          fontSize: '14px',
-                          fontWeight: '500'
+                      toast.success(
+                        `Đã thêm ${product.productName} vào giỏ hàng`,
+                        {
+                          position: "top-right",
+                          autoClose: 2000,
+                          hideProgressBar: false,
+                          closeOnClick: true,
+                          pauseOnHover: true,
+                          draggable: true,
+                          progress: undefined,
+                          theme: "light",
+                          style: {
+                            fontSize: "14px",
+                            fontWeight: "500",
+                          },
                         }
-                      });
+                      );
                     }
                   }}
                   disabled={product.quantity <= 0}

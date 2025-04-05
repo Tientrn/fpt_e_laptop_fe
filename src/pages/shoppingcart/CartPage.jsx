@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaTrash, FaMinus, FaPlus, FaArrowLeft } from "react-icons/fa";
 import useCartStore from "../../store/useCartStore";
@@ -6,6 +6,7 @@ import { toast } from "react-toastify";
 import orderApis from "../../api/orderApi";
 
 const CartPage = () => {
+  const [quantityErrors, setQuantityErrors] = useState({});
   const navigate = useNavigate();
   const {
     initializeCart,
@@ -18,6 +19,26 @@ const CartPage = () => {
 
   const items = getCurrentCart();
   const userData = localStorage.getItem("user");
+
+  const handleDecreaseQuantity = (item) => {
+    decreaseQuantity(item.productId);
+    // Xóa lỗi nếu có khi giảm số lượng xuống dưới tồn kho
+    setQuantityErrors((prev) => ({ ...prev, [item.productId]: null }));
+  };
+
+  const handleIncreaseQuantity = (item) => {
+    if (item.quantity < item.quantityAvailable) {
+      addToCart(item);
+      // Xóa lỗi nếu có
+      setQuantityErrors((prev) => ({ ...prev, [item.productId]: null }));
+    } else {
+      // Gán lỗi cho đúng sản phẩm
+      setQuantityErrors((prev) => ({
+        ...prev,
+        [item.productId]: "Vượt quá số lượng tồn kho",
+      }));
+    }
+  };
 
   const formatPrice = (price) => {
     return new Intl.NumberFormat("vi-VN", {
@@ -138,10 +159,11 @@ const CartPage = () => {
                     <p>RAM: {item.ram}</p>
                     <p>Storage: {item.storage}</p>
                   </div>
-                  <div className="flex items-center justify-between">
+
+                  <div className="flex flex-col items-start">
                     <div className="flex items-center gap-2">
                       <button
-                        onClick={() => decreaseQuantity(item.productId)}
+                        onClick={() => handleDecreaseQuantity(item)}
                         disabled={item.quantity <= 1}
                         className="w-6 h-6 flex items-center justify-center rounded border border-gray-200 text-black hover:bg-amber-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
                       >
@@ -151,15 +173,18 @@ const CartPage = () => {
                         {item.quantity}
                       </span>
                       <button
-                        onClick={() => addToCart(item)}
+                        onClick={() => handleIncreaseQuantity(item)}
                         className="w-6 h-6 flex items-center justify-center rounded border border-gray-200 text-black hover:bg-amber-50 transition-colors duration-200"
                       >
                         <FaPlus className="w-3 h-3" />
                       </button>
                     </div>
-                    <span className="text-amber-600 font-semibold text-sm">
-                      {formatPrice(item.totalPrice)}
-                    </span>
+
+                    {quantityErrors[item.productId] && (
+                      <span className="text-xs text-red-600 mt-1 ml-1">
+                        {quantityErrors[item.productId]}
+                      </span>
+                    )}
                   </div>
                 </div>
                 <button
@@ -178,15 +203,20 @@ const CartPage = () => {
               <h2 className="text-lg font-semibold text-black mb-6">
                 Tổng quan đơn hàng
               </h2>
-              
+
               {/* Thêm danh sách items */}
               <div className="space-y-3 mb-4">
                 {items.map((item) => (
-                  <div key={item.productId} className="flex justify-between text-sm">
+                  <div
+                    key={item.productId}
+                    className="flex justify-between text-sm"
+                  >
                     <div className="flex items-start">
                       <span className="text-gray-600">
                         {item.productName}
-                        <span className="text-gray-400 ml-1">x{item.quantity}</span>
+                        <span className="text-gray-400 ml-1">
+                          x{item.quantity}
+                        </span>
                       </span>
                     </div>
                     <span className="text-gray-800 font-medium">
