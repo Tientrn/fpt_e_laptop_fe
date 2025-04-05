@@ -6,6 +6,8 @@ import { motion } from "framer-motion"; // Thêm framer-motion
 import loginApi from "../../api/loginApi";
 import { jwtDecode } from "jwt-decode";
 import useCartStore from "../../store/useCartStore";
+import Modal from "../../components/common/Modal"; 
+import shopApi from "../../api/shopApi";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -14,6 +16,16 @@ export default function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const initializeCart = useCartStore((state) => state.initializeCart);
+  const [showShopModal, setShowShopModal] = useState(false);
+  const [shopFormData, setShopFormData] = useState({
+    shopName: "",
+    shopAddress: "",
+    shopPhone: "",
+    businessLicense: "",
+    bankName: "",
+    bankNumber: "",
+    status: "active",
+  });
 
   useEffect(() => {
     if (location.state?.showRegisterSuccess) {
@@ -59,6 +71,7 @@ export default function LoginPage() {
     e.preventDefault();
     try {
       const response = await loginApi.login({ email, password });
+<<<<<<< HEAD
       const token = response.token || response.data?.token;
 
       if (!token) {
@@ -138,15 +151,133 @@ export default function LoginPage() {
             break;
           default:
             navigate("/home");
+=======
+      
+      if (response.code === 200 && response.data) {
+        const token = response.data.token;
+        if (!token) {
+          throw new Error("Token không tồn tại trong response");
+>>>>>>> bf2354aba14f49d1fcbe5303e4b3775affc24b17
         }
-      }, 1500);
 
-      // Khởi tạo cart cho user mới đăng nhập
-      initializeCart(decodedToken.userid);
+        const decodedToken = jwtDecode(token);
+        const userRole = decodedToken.role;
+        const userId = decodedToken.userId;
+
+        const roleMapping = {
+          "Admin": 1,
+          "Student": 2,
+          "Sponsor": 3,
+          "Staff": 4,
+          "Manager": 5,
+          "Shop": 6
+        };
+
+        const userRoleId = roleMapping[userRole];
+
+        // Lưu thông tin vào localStorage
+        localStorage.setItem("token", token);
+        localStorage.setItem(
+          "user",
+          JSON.stringify({
+            email: decodedToken.email,
+            userId: userId,
+            roleId: userRoleId,
+            role: userRole,
+            fullName: decodedToken.fullName
+          })
+        );
+
+        setError("");
+        toast.success("Đăng nhập thành công!");
+
+        // Nếu là Shop role, kiểm tra thông tin shop
+        if (userRoleId === 6) {
+          try {
+            const shopsResponse = await shopApi.getAllShops();
+            const existingShop = shopsResponse.data.find(
+              shop => shop.userId === Number(userId)
+            );
+
+            if (!existingShop) {
+              // Nếu chưa có thông tin shop, chuyển đến dashboard và hiện modal
+              navigate("/shop/create-profile");
+              setShowShopModal(true);
+            } else {
+              // Nếu đã có thông tin shop, lưu shopId và chuyển đến dashboard
+              localStorage.setItem("shopId", existingShop.shopId);
+              navigate("/shop/profile");
+            }
+          } catch (error) {
+            console.error("Error checking shop info:", error);
+            toast.error("Có lỗi xảy ra khi kiểm tra thông tin shop");
+          }
+        } else {
+          // Xử lý redirect cho các role khác
+          setTimeout(() => {
+            switch (userRoleId) {
+              case 1:
+                navigate("/dashboard");
+                break;
+              case 2:
+                initializeCart(userId);
+                navigate("/home");
+                break;
+              case 3:
+                navigate("/sponsor");
+                break;
+              case 4:
+                navigate("/staff");
+                break;
+              case 5:
+                navigate("/dashboard");
+                break;
+              default:
+                navigate("/home");
+            }
+          }, 1500);
+        }
+      }
     } catch (err) {
       console.error("Login Error:", err);
-      setError(err.response?.data?.message || "Đăng nhập thất bại");
-      toast.error(err.response?.data?.message || "Đăng nhập thất bại");
+      setError(err.message || "Đăng nhập thất bại");
+      toast.error(err.message || "Đăng nhập thất bại");
+    }
+  };
+
+  // Thêm hàm xử lý form shop
+  const handleShopInputChange = (e) => {
+    const { name, value } = e.target;
+    setShopFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  // Hàm submit form shop
+  const handleShopSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const userId = JSON.parse(localStorage.getItem("user")).userId;
+      const payload = {
+        ...shopFormData,
+        userId: userId
+      };
+
+      const response = await shopApi.createShop(payload);
+
+      if (response.code === 200 || response.code === 201) {
+        const createdShopId = response.data.shopId;
+        localStorage.setItem("shopId", createdShopId);
+        setShowShopModal(false);
+        toast.success("Tạo thông tin shop thành công!");
+        window.location.reload(); // Reload để cập nhật UI
+      } else {
+        throw new Error(response.message || "Tạo shop thất bại");
+      }
+    } catch (error) {
+      console.error("Error creating shop:", error);
+      toast.error(error.message || "Không thể tạo thông tin shop");
     }
   };
 
@@ -204,8 +335,22 @@ export default function LoginPage() {
             <p className="text-sm text-amber-600 text-center mt-2">
               Sign in to share and borrow laptops effortlessly.
             </p>
+            
+            {/* Thêm nút Back to Home */}
+            <motion.button
+              onClick={() => navigate("/")}
+              className="mt-6 px-6 py-2 bg-amber-600 text-white rounded-full flex items-center gap-2 hover:bg-amber-700 transition-colors shadow-md"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
+              </svg>
+              Back to Home
+            </motion.button>
           </motion.div>
-          {/* Animated background circles */}
+          
+          {/* Giữ nguyên phần animated background circles */}
           <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
             <motion.div
               className="w-32 h-32 bg-amber-200 rounded-full absolute -top-16 -left-16 opacity-50"
@@ -346,6 +491,108 @@ export default function LoginPage() {
         </motion.div>
       </motion.div>
       <ToastContainer />
+
+      {/* Thêm Modal đăng ký shop */}
+      <Modal
+        isOpen={showShopModal}
+        onClose={() => {}} // Không cho phép đóng modal
+        title="Tạo thông tin Shop"
+      >
+        <form onSubmit={handleShopSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Tên Shop
+            </label>
+            <input
+              type="text"
+              name="shopName"
+              value={shopFormData.shopName}
+              onChange={handleShopInputChange}
+              required
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Địa chỉ Shop
+            </label>
+            <input
+              type="text"
+              name="shopAddress"
+              value={shopFormData.shopAddress}
+              onChange={handleShopInputChange}
+              required
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Số điện thoại
+            </label>
+            <input
+              type="text"
+              name="shopPhone"
+              value={shopFormData.shopPhone}
+              onChange={handleShopInputChange}
+              required
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Giấy phép kinh doanh
+            </label>
+            <input
+              type="text"
+              name="businessLicense"
+              value={shopFormData.businessLicense}
+              onChange={handleShopInputChange}
+              required
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Tên ngân hàng
+            </label>
+            <input
+              type="text"
+              name="bankName"
+              value={shopFormData.bankName}
+              onChange={handleShopInputChange}
+              required
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Số tài khoản
+            </label>
+            <input
+              type="text"
+              name="bankNumber"
+              value={shopFormData.bankNumber}
+              onChange={handleShopInputChange}
+              required
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500"
+            />
+          </div>
+
+          <div className="mt-5 sm:mt-6">
+            <button
+              type="submit"
+              className="inline-flex justify-center w-full rounded-md border border-transparent shadow-sm px-4 py-2 bg-amber-600 text-base font-medium text-white hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 sm:text-sm"
+            >
+              Tạo Shop
+            </button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 }

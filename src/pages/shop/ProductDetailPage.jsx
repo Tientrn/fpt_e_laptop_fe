@@ -185,6 +185,7 @@ const ProductDetailPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const addToCart = useCartStore((state) => state.addToCart);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   useEffect(() => {
     let isMounted = true;
@@ -226,7 +227,7 @@ const ProductDetailPage = () => {
 
           // Fetch related products
           try {
-            const relatedResponse = await productApi.getRelatedProducts(id); // Placeholder API call
+            const relatedResponse = await productApi.getProductImagesById(id); 
             if (
               isMounted &&
               relatedResponse.isSuccess &&
@@ -303,6 +304,23 @@ const ProductDetailPage = () => {
 
   const averageRating = calculateAverageRating();
   const isAvailable = product && product.quantity > 0;
+
+  // Thêm hàm xử lý next/prev image
+  const handlePrevImage = () => {
+    const allImages = [product.imageProduct, ...images.map(img => img.imageUrl)];
+    setCurrentImageIndex((prev) => 
+      prev === 0 ? allImages.length - 1 : prev - 1
+    );
+    setSelectedImage(allImages[currentImageIndex === 0 ? allImages.length - 1 : currentImageIndex - 1]);
+  };
+
+  const handleNextImage = () => {
+    const allImages = [product.imageProduct, ...images.map(img => img.imageUrl)];
+    setCurrentImageIndex((prev) => 
+      prev === allImages.length - 1 ? 0 : prev + 1
+    );
+    setSelectedImage(allImages[currentImageIndex === allImages.length - 1 ? 0 : currentImageIndex + 1]);
+  };
 
   if (loading) {
     return (
@@ -387,13 +405,64 @@ const ProductDetailPage = () => {
               </svg>
               Back to Shop
             </button>
-            <div className="bg-white border border-gray-200 rounded overflow-hidden">
+            <div className="bg-white border border-gray-200 rounded overflow-hidden relative">
               {selectedImage ? (
-                <img
-                  src={selectedImage}
-                  alt={product.productName}
-                  className="w-full h-full object-contain"
-                />
+                <>
+                  <img
+                    src={selectedImage}
+                    alt={product.productName}
+                    className="w-full h-full object-contain"
+                  />
+                  {/* Navigation Buttons */}
+                  <div className="absolute inset-y-0 left-0 flex items-center">
+                    <button
+                      onClick={handlePrevImage}
+                      className="bg-black bg-opacity-30 hover:bg-opacity-50 text-white p-2 rounded-r transform transition-transform hover:scale-105"
+                      aria-label="Previous image"
+                    >
+                      <svg
+                        className="w-6 h-6"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M15 19l-7-7 7-7"
+                        />
+                      </svg>
+                    </button>
+                  </div>
+                  <div className="absolute inset-y-0 right-0 flex items-center">
+                    <button
+                      onClick={handleNextImage}
+                      className="bg-black bg-opacity-30 hover:bg-opacity-50 text-white p-2 rounded-l transform transition-transform hover:scale-105"
+                      aria-label="Next image"
+                    >
+                      <svg
+                        className="w-6 h-6"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M9 5l7 7-7 7"
+                        />
+                      </svg>
+                    </button>
+                  </div>
+                  {/* Image Counter */}
+                  <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2">
+                    <div className="bg-black bg-opacity-50 text-white px-3 py-1 rounded-full text-sm">
+                      {currentImageIndex + 1} / {[product.imageProduct, ...images.map(img => img.imageUrl)].length}
+                    </div>
+                  </div>
+                </>
               ) : (
                 <div className="w-full h-96 flex items-center justify-center bg-gray-100">
                   <span className="text-gray-400">No image available</span>
