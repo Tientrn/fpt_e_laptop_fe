@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { toast } from "react-toastify";
 import { format } from "date-fns";
 import borrowcontractApi from "../../api/borrowcontractApi";
-import borrowRequestApi from "../../api/borrowRequestApi";
+import borrowrequestApi from "../../api/borrowrequestApi";
 import userApi from "../../api/userApi";
 import deposittransactionApi from "../../api/deposittransactionApi";
 
@@ -51,17 +51,22 @@ const ContractsPage = () => {
       for (const contract of contracts) {
         if (contract.userId && !userInfoMap[contract.userId]) {
           try {
-            console.log(`Fetching user info for contract ${contract.contractId}, userId: ${contract.userId}`);
+            console.log(
+              `Fetching user info for contract ${contract.contractId}, userId: ${contract.userId}`
+            );
             const response = await userApi.getUserById(contract.userId);
             if (response.isSuccess) {
               console.log(`User info received:`, response.data);
-              setUserInfoMap(prev => ({
+              setUserInfoMap((prev) => ({
                 ...prev,
-                [contract.userId]: response.data
+                [contract.userId]: response.data,
               }));
             }
           } catch (error) {
-            console.error(`Error fetching user info for contract ${contract.contractId}:`, error);
+            console.error(
+              `Error fetching user info for contract ${contract.contractId}:`,
+              error
+            );
           }
         }
       }
@@ -98,7 +103,7 @@ const ContractsPage = () => {
   const fetchApprovedRequests = async () => {
     try {
       const [requestResponse, contractResponse] = await Promise.all([
-        borrowRequestApi.getAllBorrowRequests(),
+        borrowrequestApi.getAllBorrowRequests(),
         borrowcontractApi.getAllBorrowContracts(),
       ]);
 
@@ -151,7 +156,7 @@ const ContractsPage = () => {
         const depositsMap = response.data.reduce((acc, deposit) => {
           acc[deposit.contractId] = {
             ...deposit,
-            status: deposit.status || "Completed"  // <- Đây là vấn đề
+            status: deposit.status || "Completed", // <- Đây là vấn đề
           };
           return acc;
         }, {});
@@ -181,15 +186,14 @@ const ContractsPage = () => {
         terms: `Contract for ${request.itemName}`,
         conditionBorrow: "good",
         expectedReturnDate: format(new Date(), "yyyy-MM-dd"),
-        userId: request.userId
+        userId: request.userId,
       });
 
       // Set selected request
       setSelectedRequest(request);
-      
+
       // Mở modal
       setIsModalOpen(true);
-      
     } catch (error) {
       console.error("Error fetching user details:", error);
       toast.error("Failed to load user details");
@@ -268,9 +272,10 @@ const ContractsPage = () => {
     try {
       // Xóa deposit trước nếu có
       if (deposits[contract.contractId]) {
-        const deleteDepositResponse = await deposittransactionApi.deleteDepositTransaction(
-          deposits[contract.contractId].depositId
-        );
+        const deleteDepositResponse =
+          await deposittransactionApi.deleteDepositTransaction(
+            deposits[contract.contractId].depositId
+          );
         if (!deleteDepositResponse.isSuccess) {
           toast.error("Failed to delete associated deposit");
           return;
@@ -278,7 +283,9 @@ const ContractsPage = () => {
       }
 
       // Sau đó xóa contract
-      const response = await borrowcontractApi.deleteBorrowContract(contract.contractId);
+      const response = await borrowcontractApi.deleteBorrowContract(
+        contract.contractId
+      );
       if (response.isSuccess) {
         toast.success("Contract and associated deposit deleted successfully");
         await Promise.all([fetchContracts(), fetchDeposits()]);
@@ -295,7 +302,7 @@ const ContractsPage = () => {
   const handleDetailClick = async (contract) => {
     try {
       // Lấy thông tin request tương ứng với contract
-      const response = await borrowRequestApi.getBorrowRequestById(
+      const response = await borrowrequestApi.getBorrowRequestById(
         contract.requestId
       );
       if (response.isSuccess) {
@@ -313,23 +320,19 @@ const ContractsPage = () => {
 
   const handleDepositCreated = async () => {
     try {
-      await Promise.all([
-        fetchContracts(),
-        fetchDeposits()
-      ]);
+      await Promise.all([fetchContracts(), fetchDeposits()]);
 
       // Cập nhật status của contract thành Borrowing
-      const updatedContracts = contracts.map(contract => {
+      const updatedContracts = contracts.map((contract) => {
         if (deposits[contract.contractId]) {
           return {
             ...contract,
-            status: "Borrowing"
+            status: "Borrowing",
           };
         }
         return contract;
       });
       setContracts(updatedContracts);
-      
     } catch (error) {
       console.error("Error updating after deposit creation:", error);
       toast.error("Failed to update contract status");
@@ -339,22 +342,24 @@ const ContractsPage = () => {
   const handleCreateDeposit = async (contractId) => {
     try {
       // Tạo deposit transaction
-      const createResponse = await deposittransactionApi.createDepositTransaction({
-        contractId: contractId,
-        amount: selectedContract.itemValue,
-        status: "Pending",
-        depositDate: new Date().toISOString()
-      });
+      const createResponse =
+        await deposittransactionApi.createDepositTransaction({
+          contractId: contractId,
+          amount: selectedContract.itemValue,
+          status: "Pending",
+          depositDate: new Date().toISOString(),
+        });
 
       if (createResponse.isSuccess) {
         // Cập nhật status của deposit thành Completed
-        const updateResponse = await deposittransactionApi.updateDepositTransaction(
-          createResponse.data.depositId,
-          {
-            ...createResponse.data,
-            status: "Completed"
-          }
-        );
+        const updateResponse =
+          await deposittransactionApi.updateDepositTransaction(
+            createResponse.data.depositId,
+            {
+              ...createResponse.data,
+              status: "Completed",
+            }
+          );
 
         if (updateResponse.isSuccess) {
           toast.success("Deposit created and completed successfully");
@@ -494,14 +499,18 @@ const ContractsPage = () => {
                       )}
                     </td>
                     <td className="px-4 py-3 text-sm">
-  <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
-    deposits[contract.contractId] 
-      ? "bg-green-100 text-green-800"
-      : "bg-yellow-100 text-yellow-800"
-  }`}>
-    {deposits[contract.contractId] ? "Completed" : "Pending"}
-  </span>
-</td>
+                      <span
+                        className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                          deposits[contract.contractId]
+                            ? "bg-green-100 text-green-800"
+                            : "bg-yellow-100 text-yellow-800"
+                        }`}
+                      >
+                        {deposits[contract.contractId]
+                          ? "Completed"
+                          : "Pending"}
+                      </span>
+                    </td>
                     <td className="px-4 py-3 text-sm">
                       <div className="flex space-x-2">
                         <button
@@ -546,9 +555,11 @@ const ContractsPage = () => {
           <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[100vh] overflow-y-auto">
             {/* Header */}
             <div className="p-4 border-b">
-              <h2 className="text-xl font-semibold text-gray-800">Create New Contract</h2>
+              <h2 className="text-xl font-semibold text-gray-800">
+                Create New Contract
+              </h2>
             </div>
-            
+
             {/* Content */}
             <div className="p-4 space-y-4">
               {/* Info Section - 2 columns */}
@@ -557,27 +568,39 @@ const ContractsPage = () => {
                 {selectedUserInfo && (
                   <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
                     <h3 className="text-sm font-semibold mb-3 text-blue-800 flex items-center gap-2">
-                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"/>
+                      <svg
+                        className="w-4 h-4"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" />
                       </svg>
                       Student Information
                     </h3>
                     <div className="grid grid-cols-2 gap-3">
                       <div>
                         <p className="text-xs text-gray-500">Full Name</p>
-                        <p className="text-sm font-medium">{selectedUserInfo.fullName}</p>
+                        <p className="text-sm font-medium">
+                          {selectedUserInfo.fullName}
+                        </p>
                       </div>
                       <div>
                         <p className="text-xs text-gray-500">Email</p>
-                        <p className="text-sm font-medium">{selectedUserInfo.email}</p>
+                        <p className="text-sm font-medium">
+                          {selectedUserInfo.email}
+                        </p>
                       </div>
                       <div>
                         <p className="text-xs text-gray-500">Phone Number</p>
-                        <p className="text-sm font-medium">{selectedUserInfo.phoneNumber}</p>
+                        <p className="text-sm font-medium">
+                          {selectedUserInfo.phoneNumber}
+                        </p>
                       </div>
                       <div>
                         <p className="text-xs text-gray-500">Role</p>
-                        <p className="text-sm font-medium capitalize">{selectedUserInfo.role}</p>
+                        <p className="text-sm font-medium capitalize">
+                          {selectedUserInfo.role}
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -587,31 +610,49 @@ const ContractsPage = () => {
                 {selectedRequest && (
                   <div className="bg-amber-50 p-4 rounded-lg border border-amber-100">
                     <h3 className="text-sm font-semibold mb-3 text-amber-800 flex items-center gap-2">
-                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/>
-                        <path fillRule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5z" clipRule="evenodd"/>
+                      <svg
+                        className="w-4 h-4"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
+                        <path
+                          fillRule="evenodd"
+                          d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5z"
+                          clipRule="evenodd"
+                        />
                       </svg>
                       Request Information
                     </h3>
                     <div className="grid grid-cols-2 gap-3">
                       <div>
                         <p className="text-xs text-gray-500">Request ID</p>
-                        <p className="text-sm font-medium">#{selectedRequest.requestId}</p>
+                        <p className="text-sm font-medium">
+                          #{selectedRequest.requestId}
+                        </p>
                       </div>
                       <div>
                         <p className="text-xs text-gray-500">Item Name</p>
-                        <p className="text-sm font-medium">{selectedRequest.itemName}</p>
+                        <p className="text-sm font-medium">
+                          {selectedRequest.itemName}
+                        </p>
                       </div>
                       <div>
                         <p className="text-xs text-gray-500">Start Date</p>
                         <p className="text-sm font-medium">
-                          {format(new Date(selectedRequest.startDate), "dd/MM/yyyy")}
+                          {format(
+                            new Date(selectedRequest.startDate),
+                            "dd/MM/yyyy"
+                          )}
                         </p>
                       </div>
                       <div>
                         <p className="text-xs text-gray-500">End Date</p>
                         <p className="text-sm font-medium">
-                          {format(new Date(selectedRequest.endDate), "dd/MM/yyyy")}
+                          {format(
+                            new Date(selectedRequest.endDate),
+                            "dd/MM/yyyy"
+                          )}
                         </p>
                       </div>
                     </div>
@@ -620,14 +661,25 @@ const ContractsPage = () => {
               </div>
 
               {/* Contract Form */}
-              <form onSubmit={handleCreateContract} className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+              <form
+                onSubmit={handleCreateContract}
+                className="bg-gray-50 p-4 rounded-lg border border-gray-200"
+              >
                 <h3 className="text-sm font-semibold mb-4 text-gray-800 flex items-center gap-2">
-                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clipRule="evenodd"/>
+                  <svg
+                    className="w-4 h-4"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"
+                      clipRule="evenodd"
+                    />
                   </svg>
                   Contract Details
                 </h3>
-                
+
                 <div className="space-y-3">
                   {/* Item Value */}
                   <div>
@@ -638,10 +690,12 @@ const ContractsPage = () => {
                       type="number"
                       step="100000"
                       value={contractForm.itemValue}
-                      onChange={(e) => setContractForm({
-                        ...contractForm,
-                        itemValue: e.target.value
-                      })}
+                      onChange={(e) =>
+                        setContractForm({
+                          ...contractForm,
+                          itemValue: e.target.value,
+                        })
+                      }
                       className="w-full px-3 py-2 text-sm rounded border border-gray-300 focus:ring-2 focus:ring-amber-500 focus:border-transparent"
                       required
                     />
@@ -655,10 +709,12 @@ const ContractsPage = () => {
                     <input
                       type="text"
                       value={contractForm.terms}
-                      onChange={(e) => setContractForm({
-                        ...contractForm,
-                        terms: e.target.value
-                      })}
+                      onChange={(e) =>
+                        setContractForm({
+                          ...contractForm,
+                          terms: e.target.value,
+                        })
+                      }
                       className="w-full px-3 py-2 text-sm rounded border border-gray-300 focus:ring-2 focus:ring-amber-500 focus:border-transparent"
                       required
                     />
@@ -667,15 +723,18 @@ const ContractsPage = () => {
                   {/* Expected Return Date */}
                   <div>
                     <label className="block text-xs font-medium text-gray-700 mb-1">
-                      Expected Return Date <span className="text-red-500">*</span>
+                      Expected Return Date{" "}
+                      <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="date"
-                      value={contractForm.expectedReturnDate.split('T')[0]}
-                      onChange={(e) => setContractForm({
-                        ...contractForm,
-                        expectedReturnDate: e.target.value
-                      })}
+                      value={contractForm.expectedReturnDate.split("T")[0]}
+                      onChange={(e) =>
+                        setContractForm({
+                          ...contractForm,
+                          expectedReturnDate: e.target.value,
+                        })
+                      }
                       className="w-full px-3 py-2 text-sm rounded border border-gray-300 focus:ring-2 focus:ring-amber-500 focus:border-transparent"
                       required
                     />
@@ -885,10 +944,12 @@ const ContractsPage = () => {
       {isDeleteModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-lg max-w-md w-full">
-            <h2 className="text-xl font-bold text-gray-800 mb-4">Confirm Delete</h2>
+            <h2 className="text-xl font-bold text-gray-800 mb-4">
+              Confirm Delete
+            </h2>
             <p className="text-gray-600 mb-6">
-              Are you sure you want to delete this contract? This will also delete any associated deposits.
-              This action cannot be undone.
+              Are you sure you want to delete this contract? This will also
+              delete any associated deposits. This action cannot be undone.
             </p>
             <div className="flex justify-end space-x-3">
               <button
