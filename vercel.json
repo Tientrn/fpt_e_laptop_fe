@@ -1,0 +1,14 @@
+{
+    "functions": {
+      "api/**/*.js": {
+        "runtime": "vercel-edge"
+      }
+    },
+    "routes": [
+      {
+        "src": "/api/(.*)",
+        "dest": "/api/proxy.js"
+      }
+    ]
+  }
+  
