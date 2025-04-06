@@ -11,14 +11,4 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
-
-  server: {
-    proxy: {
-      "/api/proxy": {
-        target: "http://fptsharelaptop.somee.com",
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api\/proxy/, "/api"),
-      },
-    },
-  },
 });
