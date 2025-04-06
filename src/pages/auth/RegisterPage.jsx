@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import registerApi from "../../api/registerApi";
 
 const RegisterPage = () => {
+  const [errors, setErrors] = useState({});
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     email: "",
@@ -18,7 +19,75 @@ const RegisterPage = () => {
     avatar: "",
     password: "",
   });
+  const [studentData, setStudentData] = useState({
+    studentCode: "",
+    identityCard: "",
+    enrollmentDate: "",
+    studentCardImage: null, // lưu file
+  });
 
+  const validate = () => {
+    const newErrors = {};
+
+    // Email
+    if (!formData.email.match(/^\S+@\S+\.\S+$/)) {
+      newErrors.email = "Email không hợp lệ";
+    }
+
+    // Password
+    if (formData.password.length < 6) {
+      newErrors.password = "Mật khẩu phải có ít nhất 6 ký tự";
+    }
+
+    // Phone number
+    if (!formData.phoneNumber.match(/^\d{9,15}$/)) {
+      newErrors.phoneNumber = "Số điện thoại không hợp lệ";
+    }
+
+    // DOB (dùng ISO format hoặc kiểm tra định dạng dd-mm-yyyy)
+    if (
+      !formData.dob.match(/^\d{2}-\d{2}-\d{4}$/) &&
+      !formData.dob.match(/^\d{4}-\d{2}-\d{2}$/)
+    ) {
+      newErrors.dob = "Ngày sinh không đúng định dạng";
+    }
+
+    // Student fields nếu là student
+    if (parseInt(formData.roleId) === 2) {
+      if (!studentData.studentCode.match(/^[A-Za-z]{2}\d{6}$/)) {
+        newErrors.studentCode =
+          "Mã sinh viên phải gồm 2 chữ cái đầu và 6 số phía sau (VD: IT230001)";
+      }
+      if (!studentData.identityCard.match(/^\d{9,12}$/)) {
+        newErrors.identityCard = "CMND/CCCD không hợp lệ";
+      }
+      if (!studentData.enrollmentDate) {
+        newErrors.enrollmentDate = "Vui lòng chọn ngày nhập học";
+      }
+      if (!studentData.studentCardImage) {
+        newErrors.studentCardImage = "Vui lòng tải lên ảnh thẻ sinh viên";
+      } else if (
+        !["image/jpeg", "image/png", "image/jpg"].includes(
+          studentData.studentCardImage.type
+        )
+      ) {
+        newErrors.studentCardImage = "Ảnh phải là định dạng jpg/jpeg/png";
+      } else if (studentData.studentCardImage.size > 2 * 1024 * 1024) {
+        newErrors.studentCardImage = "Ảnh không được vượt quá 2MB";
+      }
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleStudentChange = (e) => {
+    const { name, value, files } = e.target;
+    setStudentData({
+      ...studentData,
+      [name]: files ? files[0] : value,
+    });
+  };
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({
@@ -29,20 +98,44 @@ const RegisterPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!validate()) return;
     try {
-      const registerData = {
-        email: formData.email,
-        password: formData.password,
-        fullName: formData.fullName,
-        dob: formData.dob,
-        address: formData.address,
-        phoneNumber: formData.phoneNumber,
-        gender: formData.gender,
-        avatar: formData.avatar,
-        roleId: parseInt(formData.roleId),
-      };
+      const roleId = parseInt(formData.roleId);
 
-      const response = await registerApi.register(registerData);
+      if (roleId === 2) {
+        // Nếu là Student thì gọi API student
+        const form = new FormData();
+        form.append("email", formData.email);
+        form.append("password", formData.password);
+        form.append("fullName", formData.fullName);
+        form.append("dob", formData.dob);
+        form.append("address", formData.address);
+        form.append("phoneNumber", formData.phoneNumber);
+        form.append("gender", formData.gender);
+        form.append("avatar", formData.avatar);
+        form.append("studentCode", studentData.studentCode);
+        form.append("identityCard", studentData.identityCard);
+        form.append("enrollmentDate", studentData.enrollmentDate);
+        form.append("studentCardImage", studentData.studentCardImage);
+
+        await registerApi.registerStudent(form);
+      } else {
+        // Nếu là Sponsor hoặc Shop thì gọi API thường
+        const registerData = {
+          email: formData.email,
+          password: formData.password,
+          fullName: formData.fullName,
+          dob: formData.dob,
+          address: formData.address,
+          phoneNumber: formData.phoneNumber,
+          gender: formData.gender,
+          avatar: formData.avatar,
+          roleId: roleId,
+        };
+
+        await registerApi.register(registerData);
+      }
+
       toast.success("Đăng ký thành công! Chuyển đến trang đăng nhập...", {
         position: "top-right",
         autoClose: 1500,
@@ -167,9 +260,16 @@ const RegisterPage = () => {
                 value={formData.email}
                 onChange={handleChange}
                 required
-                className="w-full px-4 py-2 border border-slate-300 rounded-md text-black focus:outline-none focus:ring-2 focus:ring-amber-500"
+                className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 ${
+                  errors.email
+                    ? "border-red-500 ring-red-500"
+                    : "border-slate-300 focus:ring-amber-500"
+                }`}
                 placeholder="Your email"
               />
+              {errors.email && (
+                <p className="text-red-500 text-sm mt-1">{errors.email}</p>
+              )}
             </div>
 
             <div>
@@ -182,9 +282,16 @@ const RegisterPage = () => {
                 value={formData.password}
                 onChange={handleChange}
                 required
-                className="w-full px-4 py-2 border border-slate-300 rounded-md text-black focus:outline-none focus:ring-2 focus:ring-amber-500"
+                className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 ${
+                  errors.password
+                    ? "border-red-500 ring-red-500"
+                    : "border-slate-300 focus:ring-amber-500"
+                }`}
                 placeholder="Your password"
               />
+              {errors.password && (
+                <p className="text-red-500 text-sm mt-1">{errors.password}</p>
+              )}
             </div>
 
             <div>
@@ -212,9 +319,18 @@ const RegisterPage = () => {
                 value={formData.phoneNumber}
                 onChange={handleChange}
                 required
-                className="w-full px-4 py-2 border border-slate-300 rounded-md text-black focus:outline-none focus:ring-2 focus:ring-amber-500"
-                placeholder="Your phone number"
+                className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 ${
+                  errors.phoneNumber
+                    ? "border-red-500 ring-red-500"
+                    : "border-slate-300 focus:ring-amber-500"
+                }`}
+                placeholder="Your phoneNumber"
               />
+              {errors.phoneNumber && (
+                <p className="text-red-500 text-sm mt-1">
+                  {errors.phoneNumber}
+                </p>
+              )}
             </div>
 
             <div>
@@ -242,9 +358,16 @@ const RegisterPage = () => {
                 value={formData.dob}
                 onChange={handleChange}
                 required
-                className="w-full px-4 py-2 border border-slate-300 rounded-md text-black focus:outline-none focus:ring-2 focus:ring-amber-500"
-                placeholder="16-08-2002"
+                className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 ${
+                  errors.dob
+                    ? "border-red-500 ring-red-500"
+                    : "border-slate-300 focus:ring-amber-500"
+                }`}
+                placeholder="Your Dob"
               />
+              {errors.dob && (
+                <p className="text-red-500 text-sm mt-1">{errors.dob}</p>
+              )}
             </div>
 
             <div>
@@ -306,7 +429,103 @@ const RegisterPage = () => {
                 <option value="6">Shop</option>
               </select>
             </div>
+            {formData.roleId === "2" && (
+              <>
+                <div>
+                  <label className="block text-sm font-medium text-black mb-1">
+                    Student Code
+                  </label>
+                  <input
+                    type="text"
+                    name="studentCode"
+                    value={studentData.studentCode}
+                    onChange={handleStudentChange}
+                    required
+                    className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 ${
+                      errors.studentCode
+                        ? "border-red-500 ring-red-500"
+                        : "border-slate-300 focus:ring-amber-500"
+                    }`}
+                    placeholder="Your studentCode"
+                  />
+                  {errors.studentCode && (
+                    <p className="text-red-500 text-sm mt-1">
+                      {errors.studentCode}
+                    </p>
+                  )}
+                </div>
 
+                <div>
+                  <label className="block text-sm font-medium text-black mb-1">
+                    Identity Card
+                  </label>
+                  <input
+                    type="text"
+                    name="identityCard"
+                    value={studentData.identityCard}
+                    onChange={handleStudentChange}
+                    required
+                    className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 ${
+                      errors.identityCard
+                        ? "border-red-500 ring-red-500"
+                        : "border-slate-300 focus:ring-amber-500"
+                    }`}
+                    placeholder="Your identityCard"
+                  />
+                  {errors.identityCard && (
+                    <p className="text-red-500 text-sm mt-1">
+                      {errors.identityCard}
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-black mb-1">
+                    Enrollment Date
+                  </label>
+                  <input
+                    type="date"
+                    name="enrollmentDate"
+                    value={studentData.enrollmentDate}
+                    onChange={handleStudentChange}
+                    required
+                    className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 ${
+                      errors.enrollmentDate
+                        ? "border-red-500 ring-red-500"
+                        : "border-slate-300 focus:ring-amber-500"
+                    }`}
+                    placeholder="Your enrollmentDate"
+                  />
+                  {errors.enrollmentDate && (
+                    <p className="text-red-500 text-sm mt-1">
+                      {errors.enrollmentDate}
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-black mb-1">
+                    Student Card Image
+                  </label>
+                  <input
+                    type="file"
+                    name="studentCardImage"
+                    accept="image/*"
+                    onChange={handleStudentChange}
+                    required
+                    className="w-full"
+                  />
+                  <p className="text-sm text-slate-500 mt-1">
+                    Vui lòng chụp rõ ảnh, thấy rõ thông tin trên thẻ.
+                  </p>
+                  {errors.studentCardImage && (
+                    <p className="text-red-500 text-sm mt-1">
+                      {errors.studentCardImage}
+                    </p>
+                  )}
+                </div>
+              </>
+            )}
             <motion.button
               type="submit"
               className="w-full py-2 px-4 bg-amber-600 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 shadow-md"

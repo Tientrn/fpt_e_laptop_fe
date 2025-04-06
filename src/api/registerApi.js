@@ -8,7 +8,11 @@ const registerApi = {
 
   // Register for student
   registerStudent: (data) => {
-    return axiosClient.post("/Authentication/register/student", data);
+    return axiosClient.post("/Authentication/register/student", data, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
   },
 };
 
