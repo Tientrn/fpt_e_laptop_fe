@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { toast } from "react-toastify";
 import { format } from "date-fns";
-import borrowrequestApi from "../../api/borrowRequestApi";
 import userinfoApi from "../../api/userinfoApi";
 import borrowhistoryApi from "../../api/borrowhistoryApi";
 
@@ -199,16 +198,36 @@ const RequestsPage = () => {
                 </div>
                 <div className="h-16 w-16 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
                   {request.status === "Pending" ? (
-                    <svg className="h-8 w-8" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z"/>
+                    <svg
+                      className="h-8 w-8"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" />
                     </svg>
                   ) : request.status === "Approved" ? (
-                    <svg className="h-8 w-8" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"/>
+                    <svg
+                      className="h-8 w-8"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                        clipRule="evenodd"
+                      />
                     </svg>
                   ) : (
-                    <svg className="h-8 w-8" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd"/>
+                    <svg
+                      className="h-8 w-8"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                        clipRule="evenodd"
+                      />
                     </svg>
                   )}
                 </div>
@@ -219,26 +238,36 @@ const RequestsPage = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Personal Info Card */}
               <div className="bg-gray-50 rounded-lg p-6">
-                <h3 className="text-lg font-semibold text-gray-800 mb-4">Thông tin cá nhân</h3>
+                <h3 className="text-lg font-semibold text-gray-800 mb-4">
+                  Thông tin cá nhân
+                </h3>
                 <div className="space-y-4">
                   <div>
                     <p className="text-sm text-gray-500">Họ và tên</p>
-                    <p className="text-base font-medium text-gray-800">{userInfo.fullName}</p>
+                    <p className="text-base font-medium text-gray-800">
+                      {userInfo.fullName}
+                    </p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-500">Mã sinh viên</p>
-                    <p className="text-base font-medium text-gray-800">{userInfo.studentCode}</p>
+                    <p className="text-base font-medium text-gray-800">
+                      {userInfo.studentCode}
+                    </p>
                   </div>
                 </div>
               </div>
 
               {/* Request Info Card */}
               <div className="bg-gray-50 rounded-lg p-6">
-                <h3 className="text-lg font-semibold text-gray-800 mb-4">Thông tin mượn</h3>
+                <h3 className="text-lg font-semibold text-gray-800 mb-4">
+                  Thông tin mượn
+                </h3>
                 <div className="space-y-4">
                   <div>
                     <p className="text-sm text-gray-500">Thiết bị</p>
-                    <p className="text-base font-medium text-gray-800">{request.itemName}</p>
+                    <p className="text-base font-medium text-gray-800">
+                      {request.itemName}
+                    </p>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
@@ -265,8 +294,18 @@ const RequestsPage = () => {
                   onClick={handleCancelRequest}
                   className="bg-red-500 hover:bg-red-600 text-white px-6 py-2.5 rounded-lg font-medium transition-colors duration-200 flex items-center gap-2"
                 >
-                  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  <svg
+                    className="h-5 w-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
                   </svg>
                   Hủy yêu cầu
                 </button>
@@ -276,29 +315,62 @@ const RequestsPage = () => {
             {/* Rules Section */}
             <div className="mt-8 bg-blue-50 border border-blue-100 rounded-lg p-6">
               <h4 className="text-lg font-semibold text-blue-900 mb-4 flex items-center gap-2">
-                <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd"/>
+                <svg
+                  className="h-5 w-5"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                    clipRule="evenodd"
+                  />
                 </svg>
                 Quy định mượn laptop
               </h4>
               <ul className="space-y-3">
                 <li className="flex items-center gap-2 text-blue-800">
-                  <svg className="h-5 w-5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"/>
+                  <svg
+                    className="h-5 w-5 flex-shrink-0"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                      clipRule="evenodd"
+                    />
                   </svg>
                   Bạn chỉ có thể mượn một laptop tại một thời điểm
                 </li>
                 <li className="flex items-center gap-2 text-blue-800">
-                  <svg className="h-5 w-5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"/>
+                  <svg
+                    className="h-5 w-5 flex-shrink-0"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                      clipRule="evenodd"
+                    />
                   </svg>
                   Bạn phải trả laptop hiện tại trước khi mượn chiếc khác
                 </li>
                 <li className="flex items-center gap-2 text-blue-800">
-                  <svg className="h-5 w-5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"/>
+                  <svg
+                    className="h-5 w-5 flex-shrink-0"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                      clipRule="evenodd"
+                    />
                   </svg>
-                  Trạng thái sẽ chuyển thành 'Đã trả' sau khi bạn hoàn trả laptop
+                  Trạng thái sẽ chuyển thành 'Đã trả' sau khi bạn hoàn trả
+                  laptop
                 </li>
               </ul>
             </div>
