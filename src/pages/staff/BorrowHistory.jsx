@@ -4,6 +4,7 @@ import { format } from "date-fns";
 import { FaSearch } from "react-icons/fa";
 import borrowhistoryApi from "../../api/borrowhistoryApi";
 import userinfoApi from "../../api/userinfoApi";
+import borrowrequestApi from "../../api/borrowrequestApi";
 
 const BorrowHistory = () => {
   const [borrowHistory, setBorrowHistory] = useState([]);
@@ -78,7 +79,7 @@ const BorrowHistory = () => {
 
   const fetchBorrowRequests = async () => {
     try {
-      const response = await borrowRequestApi.getAllBorrowRequests();
+      const response = await borrowrequestApi.getAllBorrowRequests();
       if (response.isSuccess) {
         const requestMap = response.data.reduce(
           (map, request) => ({

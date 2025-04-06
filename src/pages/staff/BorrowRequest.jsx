@@ -1,11 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { toast } from 'react-toastify';
-import { format } from 'date-fns';
-import {
-  FaSearch,
-  FaFilter,
-} from 'react-icons/fa';
-import borrowrequestApi from "../../api/borrowRequestApi"; 
+import React, { useState, useEffect } from "react";
+import { toast } from "react-toastify";
+import { format } from "date-fns";
+import { FaSearch, FaFilter } from "react-icons/fa";
+import borrowrequestApi from "../../api/borrowrequestApi";
 import userApi from "../../api/userApi";
 
 const BorrowRequest = () => {
@@ -36,13 +33,16 @@ const BorrowRequest = () => {
           try {
             const response = await userApi.getUserById(request.userId);
             if (response.isSuccess) {
-              setUserInfoMap(prev => ({
+              setUserInfoMap((prev) => ({
                 ...prev,
-                [request.userId]: response.data
+                [request.userId]: response.data,
               }));
             }
           } catch (error) {
-            console.error(`Error fetching user info for ID ${request.userId}:`, error);
+            console.error(
+              `Error fetching user info for ID ${request.userId}:`,
+              error
+            );
           }
         }
       }
@@ -84,8 +84,10 @@ const BorrowRequest = () => {
       setLoading(true);
       console.log("Deleting request with ID:", deletingRequestId);
 
-      const response = await borrowrequestApi.deleteBorrowRequest(deletingRequestId);
-      
+      const response = await borrowrequestApi.deleteBorrowRequest(
+        deletingRequestId
+      );
+
       if (response && response.isSuccess) {
         toast.success("Request deleted successfully");
         await fetchBorrowRequests();
@@ -121,24 +123,27 @@ const BorrowRequest = () => {
     if (!editingRequest) return;
 
     try {
-      const updateData = { 
+      const updateData = {
         status: editFormData.status,
-        rejectionReason: editFormData.status === "Rejected" ? editFormData.rejectionReason : null
+        rejectionReason:
+          editFormData.status === "Rejected"
+            ? editFormData.rejectionReason
+            : null,
       };
 
       const response = await borrowrequestApi.updateBorrowRequest(
         editingRequest.requestId,
         updateData
       );
-      
+
       if (response.isSuccess) {
         toast.success("Request status updated successfully");
         await fetchBorrowRequests(); // Refresh borrow requests list
         setIsEditModalOpen(false);
-        
+
         // Nếu status là Approved, refresh trang Contracts để hiển thị request mới
         if (editFormData.status === "Approved") {
-          window.location.href = '/staff/contracts';
+          window.location.href = "/staff/contracts";
         }
       } else {
         toast.error(response.message || "Failed to update request status");
@@ -179,7 +184,6 @@ const BorrowRequest = () => {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-3xl font-semibold text-black">Borrow Requests</h1>
-          
         </div>
         <div className="flex items-center space-x-4">
           <div className="relative w-64">
@@ -214,20 +218,39 @@ const BorrowRequest = () => {
           <table className="w-full">
             <thead>
               <tr className="bg-gray-50">
-                <th className="px-6 py-3 text-left text-md font-semibold text-gray-600">ID</th>
-                <th className="px-6 py-3 text-left text-md font-semibold text-gray-600">Full Name</th>
-                <th className="px-6 py-3 text-left text-md font-semibold text-gray-600">Email</th>
-                <th className="px-6 py-3 text-left text-md font-semibold text-gray-600">Item Name</th>
-                <th className="px-6 py-3 text-left text-md font-semibold text-gray-600">Start Date</th>
-                <th className="px-6 py-3 text-left text-md font-semibold text-gray-600">End Date</th>
-                <th className="px-6 py-3 text-left text-md font-semibold text-gray-600">Status</th>
-                <th className="px-6 py-3 text-left text-md font-semibold text-gray-600">Actions</th>
+                <th className="px-6 py-3 text-left text-md font-semibold text-gray-600">
+                  ID
+                </th>
+                <th className="px-6 py-3 text-left text-md font-semibold text-gray-600">
+                  Full Name
+                </th>
+                <th className="px-6 py-3 text-left text-md font-semibold text-gray-600">
+                  Email
+                </th>
+                <th className="px-6 py-3 text-left text-md font-semibold text-gray-600">
+                  Item Name
+                </th>
+                <th className="px-6 py-3 text-left text-md font-semibold text-gray-600">
+                  Start Date
+                </th>
+                <th className="px-6 py-3 text-left text-md font-semibold text-gray-600">
+                  End Date
+                </th>
+                <th className="px-6 py-3 text-left text-md font-semibold text-gray-600">
+                  Status
+                </th>
+                <th className="px-6 py-3 text-left text-md font-semibold text-gray-600">
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {currentItems.length > 0 ? (
                 currentItems.map((request) => (
-                  <tr key={request.requestId} className="hover:bg-gray-50 transition-colors">
+                  <tr
+                    key={request.requestId}
+                    className="hover:bg-gray-50 transition-colors"
+                  >
                     <td className="px-6 py-3 text-md text-gray-800">
                       {request.requestId}
                     </td>
@@ -241,18 +264,29 @@ const BorrowRequest = () => {
                       {request.itemName}
                     </td>
                     <td className="px-6 py-3 text-md text-gray-800">
-                      {request.startDate ? format(new Date(request.startDate), "dd/MM/yyyy") : "N/A"}
+                      {request.startDate
+                        ? format(new Date(request.startDate), "dd/MM/yyyy")
+                        : "N/A"}
                     </td>
                     <td className="px-6 py-3 text-md text-gray-800">
-                      {request.endDate ? format(new Date(request.endDate), "dd/MM/yyyy") : "N/A"}
+                      {request.endDate
+                        ? format(new Date(request.endDate), "dd/MM/yyyy")
+                        : "N/A"}
                     </td>
                     <td className="px-6 py-3">
-                      <span className={`px-3 py-1 text-md font-medium rounded-full
-                        ${request.status === "Pending" ? "bg-amber-100 text-amber-800" :
-                          request.status === "Approved" ? "bg-green-100 text-green-800" :
-                          request.status === "Rejected" ? "bg-red-100 text-red-800" :
-                          request.status === "Borrowing" ? "bg-blue-100 text-blue-800" :
-                          "bg-gray-100 text-gray-800"}`}
+                      <span
+                        className={`px-3 py-1 text-md font-medium rounded-full
+                        ${
+                          request.status === "Pending"
+                            ? "bg-amber-100 text-amber-800"
+                            : request.status === "Approved"
+                            ? "bg-green-100 text-green-800"
+                            : request.status === "Rejected"
+                            ? "bg-red-100 text-red-800"
+                            : request.status === "Borrowing"
+                            ? "bg-blue-100 text-blue-800"
+                            : "bg-gray-100 text-gray-800"
+                        }`}
                       >
                         {request.status || "Pending"}
                       </span>
@@ -277,7 +311,10 @@ const BorrowRequest = () => {
                 ))
               ) : (
                 <tr>
-                  <td colSpan="8" className="px-6 py-6 text-center text-sm text-gray-500">
+                  <td
+                    colSpan="8"
+                    className="px-6 py-6 text-center text-sm text-gray-500"
+                  >
                     No borrow requests found
                   </td>
                 </tr>
@@ -291,30 +328,36 @@ const BorrowRequest = () => {
       {filteredRequests.length > itemsPerPage && (
         <div className="mt-6 flex items-center justify-between bg-white rounded-lg shadow-sm p-4">
           <p className="text-sm text-gray-600">
-            Showing {indexOfFirstItem + 1} to {Math.min(indexOfLastItem, filteredRequests.length)} of {filteredRequests.length} entries
+            Showing {indexOfFirstItem + 1} to{" "}
+            {Math.min(indexOfLastItem, filteredRequests.length)} of{" "}
+            {filteredRequests.length} entries
           </p>
           <div className="flex gap-2">
             <button
-              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
               disabled={currentPage === 1}
               className="px-3 py-1.5 text-sm font-medium text-white bg-amber-500 rounded-lg hover:bg-amber-600 transition-colors disabled:bg-gray-300"
             >
               Previous
             </button>
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
               <button
                 key={page}
                 onClick={() => setCurrentPage(page)}
                 className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors
-                  ${currentPage === page 
-                    ? 'bg-amber-500 text-white' 
-                    : 'bg-gray-100 text-gray-600 hover:bg-amber-100'}`}
+                  ${
+                    currentPage === page
+                      ? "bg-amber-500 text-white"
+                      : "bg-gray-100 text-gray-600 hover:bg-amber-100"
+                  }`}
               >
                 {page}
               </button>
             ))}
             <button
-              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+              onClick={() =>
+                setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+              }
               disabled={currentPage === totalPages}
               className="px-3 py-1.5 text-sm font-medium text-white bg-amber-500 rounded-lg hover:bg-amber-600 transition-colors disabled:bg-gray-300"
             >
@@ -343,7 +386,7 @@ const BorrowRequest = () => {
                   className="w-full px-3 py-2 border border-slate-300 rounded-md text-black focus:outline-none focus:ring-2 focus:ring-amber-600"
                   required
                 >
-                  {editingRequest.status === 'Pending' && (
+                  {editingRequest.status === "Pending" && (
                     <option value="Pending">Pending</option>
                   )}
                   <option value="Approved">Approved</option>
