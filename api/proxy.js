@@ -5,8 +5,8 @@ export default async function handler(req, res) {
     const response = await fetch(url, {
       method: req.method,
       headers: {
-        ...req.headers,
         "Content-Type": "application/json",
+        Authorization: req.headers.authorization || "",
       },
       body: req.method !== "GET" ? JSON.stringify(req.body) : undefined,
     });
