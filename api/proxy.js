@@ -1,8 +1,8 @@
 export default async function handler(req, res) {
-  const url = "http://fptsharelaptop.somee.com/api" + req.url;
+  const targetUrl = "http://fptsharelaptop.somee.com/api" + req.url;
 
   try {
-    const response = await fetch(url, {
+    const response = await fetch(targetUrl, {
       method: req.method,
       headers: {
         ...req.headers,
