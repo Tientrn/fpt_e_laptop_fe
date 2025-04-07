@@ -2,13 +2,13 @@ import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { format } from "date-fns";
+import { FaStar } from "react-icons/fa";
 import borrowrequestApi from "../../api/borrowrequestApi";
 import feedbackborrowApi from "../../api/feedbackborrowApi";
 
 const BorrowHistoryDetail = () => {
   const { borrowHistoryId, id } = useParams();
   const navigate = useNavigate();
-  console.log("borrowHistoryId:", borrowHistoryId); // Lấy id từ URL params
   const [borrowHistory, setBorrowHistory] = useState(null);
   const [loading, setLoading] = useState(true);
   const [feedback, setFeedback] = useState({
@@ -23,15 +23,13 @@ const BorrowHistoryDetail = () => {
     const fetchBorrowHistoryDetail = async () => {
       try {
         setLoading(true);
-        // Thay đổi ở đây để gọi API getBorrowRequestById từ axiosClient
         const response = await borrowrequestApi.getBorrowRequestById(id);
         if (response?.data) {
-          setBorrowHistory(response.data); // Giả sử response.data chứa chi tiết mượn
+          setBorrowHistory(response.data);
         } else {
           toast.info("Không tìm thấy thông tin chi tiết mượn");
         }
       } catch (error) {
-        console.error("Error fetching borrow history details:", error);
         toast.error("Lỗi khi tải chi tiết mượn");
       } finally {
         setLoading(false);
@@ -54,21 +52,25 @@ const BorrowHistoryDetail = () => {
     }));
   };
 
+  const handleStarClick = (rating) => {
+    setFeedback((prev) => ({
+      ...prev,
+      rating,
+    }));
+  };
+
   const handleSubmitFeedback = async () => {
     try {
-      // Cập nhật dữ liệu phản hồi với borrowHistoryId và itemId
       const feedbackData = {
-        borrowHistoryId: borrowHistoryId, // Lấy borrowHistoryId từ chi tiết mượn
-        itemId: borrowHistory.itemId, // Lấy itemId từ chi tiết mượn
+        borrowHistoryId,
+        itemId: borrowHistory.itemId,
         rating: feedback.rating,
         comments: feedback.comments,
       };
 
-      // Gọi API tạo phản hồi
       const response = await feedbackborrowApi.createFeedbackBorrow(
         feedbackData
       );
-
       if (response?.data) {
         setIsFeedbackSubmitted(true);
         toast.success("Cảm ơn bạn đã gửi phản hồi!");
@@ -76,7 +78,6 @@ const BorrowHistoryDetail = () => {
         toast.error("Có lỗi khi gửi phản hồi");
       }
     } catch (error) {
-      console.error("Error submitting feedback:", error);
       toast.error("Lỗi khi gửi phản hồi");
     }
   };
@@ -100,96 +101,96 @@ const BorrowHistoryDetail = () => {
   }
 
   return (
-    <div className="min-h-screen bg-white py-8">
-      <div className="container mx-auto px-4">
-        <h1 className="text-3xl font-bold text-black mb-6">
+    <div className="min-h-screen bg-white py-10 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-4xl mx-auto">
+        <h1 className="text-3xl font-bold text-black mb-6 text-center">
           Chi tiết lịch sử mượn
         </h1>
 
-        <div className="bg-white p-6 rounded-lg shadow-lg border border-gray-200">
-          <div className="mb-4">
-            <h2 className="text-2xl font-semibold text-black">
+        <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-6 space-y-6">
+          {/* Thông tin sản phẩm */}
+          <div>
+            <h2 className="text-xl font-semibold text-black mb-1">
               Thông tin sản phẩm
             </h2>
-            <p className="text-lg text-gray-800">{borrowHistory.itemName}</p>
+            <p className="text-gray-700 text-base">{borrowHistory.itemName}</p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-4">
+          {/* Thời gian mượn */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             <div>
-              <p className="text-sm text-gray-500">Ngày mượn</p>
-              <p className="text-lg text-black">
+              <p className="text-sm text-gray-500 mb-1">Ngày mượn</p>
+              <p className="text-base text-black">
                 {isValidDate(borrowHistory.startDate)
                   ? format(new Date(borrowHistory.startDate), "dd/MM/yyyy")
-                  : "Ngày không hợp lệ"}
+                  : "Không hợp lệ"}
               </p>
             </div>
             <div>
-              <p className="text-sm text-gray-500">Ngày trả</p>
-              <p className="text-lg text-black">
+              <p className="text-sm text-gray-500 mb-1">Ngày trả</p>
+              <p className="text-base text-black">
                 {isValidDate(borrowHistory.endDate)
                   ? format(new Date(borrowHistory.endDate), "dd/MM/yyyy")
-                  : "Ngày không hợp lệ"}
+                  : "Không hợp lệ"}
               </p>
             </div>
           </div>
 
-          <div className="mb-4">
-            <h3 className="text-xl font-semibold text-black">
+          {/* Người mượn */}
+          <div>
+            <h3 className="text-xl font-semibold text-black mb-2">
               Thông tin người mượn
             </h3>
-            <p className="text-lg text-gray-800">
-              Tên: {borrowHistory.fullName}
-            </p>
-            <p className="text-lg text-gray-800">
-              Email: {borrowHistory.email}
-            </p>
-            <p className="text-lg text-gray-800">
-              Số điện thoại: {borrowHistory.phoneNumber}
-            </p>
+            <ul className="text-gray-700 space-y-1">
+              <li>Tên: {borrowHistory.fullName}</li>
+              <li>Email: {borrowHistory.email}</li>
+              <li>Số điện thoại: {borrowHistory.phoneNumber}</li>
+            </ul>
           </div>
 
+          {/* Gửi phản hồi */}
           {borrowHistory.status === "Approved" && !isFeedbackSubmitted && (
-            <div className="mt-6">
-              <h3 className="text-xl font-semibold text-black">
+            <div>
+              <h3 className="text-xl font-semibold text-black mb-2">
                 Phản hồi của bạn
               </h3>
-              <div className="mt-4">
-                <label className="block text-sm text-gray-500" htmlFor="rating">
-                  Đánh giá (1-5)
+
+              <div className="mb-4">
+                <label className="block text-sm text-gray-500 mb-1">
+                  Đánh giá
                 </label>
-                <input
-                  type="number"
-                  id="rating"
-                  name="rating"
-                  min="1"
-                  max="5"
-                  value={feedback.rating}
-                  onChange={handleFeedbackChange}
-                  className="mt-2 p-2 border border-gray-300 rounded w-full"
-                />
+                <div className="flex space-x-1">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <FaStar
+                      key={star}
+                      onClick={() => handleStarClick(star)}
+                      className={`w-6 h-6 cursor-pointer transition ${
+                        feedback.rating >= star
+                          ? "text-amber-500"
+                          : "text-gray-300"
+                      }`}
+                    />
+                  ))}
+                </div>
               </div>
 
-              <div className="mt-4">
-                <label
-                  className="block text-sm text-gray-500"
-                  htmlFor="comments"
-                >
+              <div>
+                <label className="block text-sm text-gray-500 mb-1">
                   Bình luận
                 </label>
                 <textarea
-                  id="comments"
                   name="comments"
                   value={feedback.comments}
                   onChange={handleFeedbackChange}
-                  className="mt-2 p-2 border border-gray-300 rounded w-full"
                   rows="4"
+                  className="w-full p-2 border border-gray-300 rounded"
                 ></textarea>
               </div>
 
               <div className="mt-6">
                 <button
                   onClick={handleSubmitFeedback}
-                  className="text-white bg-slate-600 px-6 py-3 rounded-lg hover:bg-slate-700"
+                  className="bg-slate-600 hover:bg-amber-600 text-white px-6 py-3 rounded-lg transition"
                 >
                   Gửi phản hồi
                 </button>
@@ -198,17 +199,16 @@ const BorrowHistoryDetail = () => {
           )}
 
           {isFeedbackSubmitted && (
-            <div className="mt-6">
-              <p className="text-lg text-green-600">
-                Cảm ơn bạn đã gửi phản hồi!
-              </p>
+            <div className="text-green-600 font-medium">
+              Cảm ơn bạn đã gửi phản hồi!
             </div>
           )}
 
-          <div className="flex justify-end mt-6">
+          {/* Nút trở lại */}
+          <div className="flex justify-end mt-8">
             <button
               onClick={() => navigate(-1)}
-              className="text-slate-600 border border-slate-600 px-6 py-3 text-sm rounded-lg hover:bg-slate-600 hover:text-white transition"
+              className="text-slate-600 border border-slate-600 px-6 py-2 rounded-lg text-sm hover:bg-slate-600 hover:text-white transition"
             >
               Trở lại
             </button>

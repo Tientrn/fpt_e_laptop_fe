@@ -157,19 +157,46 @@ const RelatedProductCard = ({ product, onClick }) => {
   return (
     <div
       onClick={onClick}
-      className="border border-gray-200 rounded p-4 hover:border-amber-600 cursor-pointer transition-colors"
+      className="bg-white border border-gray-200 rounded-xl overflow-hidden 
+                 cursor-pointer transform transition duration-300 
+                 hover:scale-105 hover:shadow-md group"
     >
-      <img
-        src={product.imageProduct || "https://via.placeholder.com/150"}
-        alt={product.productName}
-        className="w-full h-40 object-contain mb-2"
-      />
-      <h3 className="text-sm font-medium text-black truncate">
-        {product.productName}
-      </h3>
-      <p className="text-amber-600 font-semibold text-sm">
-        {formatPrice(product.price)}
-      </p>
+      {/* Ảnh zoom riêng bên trong */}
+      <div className="w-full h-52 overflow-hidden">
+        <img
+          src={product.imageProduct}
+          alt={product.productName}
+          className="w-full h-full object-cover transform group-hover:scale-110 transition duration-500"
+        />
+      </div>
+
+      {/* Nội dung sản phẩm */}
+      <div className="p-4 space-y-1">
+        <h3 className="text-base font-semibold text-black truncate">
+          {product.productName}
+        </h3>
+
+        <div className="text-sm text-gray-600 space-y-0.5">
+          <p>
+            <span className="font-medium">CPU:</span> {product.cpu}
+          </p>
+          <p>
+            <span className="font-medium">RAM:</span> {product.ram}
+          </p>
+          <p>
+            <span className="font-medium">Storage:</span> {product.storage}
+          </p>
+          <p>
+            <span className="font-medium">Screen:</span> {product.screenSize}"
+          </p>
+        </div>
+
+        <div className="pt-2">
+          <p className="text-amber-600 font-bold text-base">
+            {formatPrice(product.price)}
+          </p>
+        </div>
+      </div>
     </div>
   );
 };
@@ -227,7 +254,7 @@ const ProductDetailPage = () => {
 
           // Fetch related products
           try {
-            const relatedResponse = await productApi.getProductImagesById(id);
+            const relatedResponse = await productApi.getAllProducts(id);
             if (
               isMounted &&
               relatedResponse.isSuccess &&
@@ -339,6 +366,11 @@ const ProductDetailPage = () => {
       ]
     );
   };
+  const sameCategoryProducts = relatedProducts.filter(
+    (p) =>
+      p.categoryName === product?.categoryName &&
+      p.productId !== product?.productId
+  );
 
   if (loading) {
     return (
@@ -640,12 +672,12 @@ Perfect for students and professionals alike.`}
               Related Products
             </h2>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-              {relatedProducts.slice(0, 4).map((relatedProduct) => (
+              {sameCategoryProducts.slice(0, 4).map((relatedProduct) => (
                 <RelatedProductCard
                   key={relatedProduct.productId}
                   product={relatedProduct}
                   onClick={() =>
-                    navigate(`/product/${relatedProduct.productId}`)
+                    navigate(`/laptopshop/${relatedProduct.productId}`)
                   }
                 />
               ))}

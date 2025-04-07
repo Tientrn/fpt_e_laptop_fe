@@ -1,20 +1,18 @@
 import React, { useState } from "react";
 import CheckoutForm from "../../components/page-base/checkout/CheckoutForm";
 import useCartStore from "../../store/useCartStore";
-import orderApis from "../../api/orderApi";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 
-const initialCartItems = [
-];
+const initialCartItems = [];
 
 const CheckoutPage = () => {
   const [cartItems, setCartItems] = useState(initialCartItems);
   const [shippingCost] = useState(5.0);
   const { orderId } = useParams();
   const { getCurrentCart } = useCartStore();
+  const navigate = useNavigate();
 
   const items = getCurrentCart();
-  const userData = localStorage.getItem("user");
 
   const handleUpdateQuantity = (id, newQuantity) => {
     setCartItems(
@@ -29,42 +27,42 @@ const CheckoutPage = () => {
   };
 
   return (
-    <div className="min-h-screen relative">
-      {/* Background Gradient */}
-      <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
-        {/* Animated Grid Pattern */}
-        <div 
-          className="absolute inset-0 opacity-10"
-          style={{
-            backgroundImage: 
-              'linear-gradient(to right, #4f46e5 1px, transparent 1px), linear-gradient(to bottom, #4f46e5 1px, transparent 1px)',
-            backgroundSize: '50px 50px',
-          }}
-        />
-        
-        {/* Radial Gradient Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent" />
-      </div>
+    <div className="min-h-screen bg-white text-black py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-5xl mx-auto space-y-8">
+        {/* Nút quay lại */}
+        <div>
+          <button
+            onClick={() => navigate("/laptopshop")} // hoặc "/cart" tùy luồng
+            className="flex items-center text-slate-600 hover:text-amber-600 text-sm font-medium transition"
+          >
+            <svg
+              className="w-4 h-4 mr-1"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M15 19l-7-7 7-7"
+              />
+            </svg>
+            Quay lại cửa hàng
+          </button>
+        </div>
 
-      {/* Floating Elements */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {/* Top Left Blob */}
-        <div className="absolute -top-24 -left-24 w-96 h-96 bg-blue-400 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-blob" />
-        
-        {/* Bottom Right Blob */}
-        <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-purple-400 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-blob animation-delay-2000" />
-        
-        {/* Center Blob */}
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-indigo-400 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-blob animation-delay-4000" />
+        {/* Tiêu đề thanh toán */}
+        <div className="text-center">
+          <h1 className="text-3xl font-bold">Thanh toán</h1>
+          <div className="w-16 h-1 bg-amber-600 mx-auto mt-2 rounded-full" />
+          <p className="mt-2 text-sm text-gray-500">
+            Vui lòng kiểm tra kỹ thông tin đơn hàng trước khi hoàn tất.
+          </p>
+        </div>
 
-        {/* Additional Decorative Elements */}
-        <div className="absolute top-20 right-20 w-32 h-32 bg-gradient-to-br from-blue-400 to-purple-400 rounded-full opacity-20 animate-pulse" />
-        <div className="absolute bottom-20 left-20 w-32 h-32 bg-gradient-to-br from-indigo-400 to-purple-400 rounded-full opacity-20 animate-pulse animation-delay-2000" />
-      </div>
-
-      {/* Content */}
-      <div className="relative min-h-screen py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-5xl mx-auto backdrop-blur-sm">
+        {/* Form thanh toán */}
+        <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-6">
           <CheckoutForm
             orderId={orderId}
             cartItems={items}

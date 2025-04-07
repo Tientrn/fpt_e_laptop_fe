@@ -12,29 +12,25 @@ import { toast } from "react-toastify";
 
 const StudentLayout = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isBorrowOpen, setIsBorrowOpen] = useState(true); // mở mặc định
   const location = useLocation();
   const navigate = useNavigate();
 
-  const menuItems = [
-    {
-      path: "/student/profile",
-      name: "Profile",
-      icon: <FaUser className="w-5 h-5" />,
-    },
+  const borrowSubItems = [
     {
       path: "/student/requests",
       name: "Borrow Requests",
-      icon: <FaClipboardList className="w-5 h-5" />,
+      icon: <FaClipboardList className="w-4 h-4" />,
     },
     {
       path: "/student/contractstudent",
       name: "Borrow Contracts",
-      icon: <FaFileContract className="w-5 h-5" />,
+      icon: <FaFileContract className="w-4 h-4" />,
     },
     {
       path: "/student/borrowhistorystudent",
       name: "Borrow Historys",
-      icon: <FaFileContract className="w-5 h-5" />,
+      icon: <FaFileContract className="w-4 h-4" />,
     },
   ];
 
@@ -74,23 +70,76 @@ const StudentLayout = () => {
           </button>
         </div>
 
-        <nav className="mt-6">
-          {menuItems.map((item) => (
-            <Link
-              key={item.path}
-              to={item.path}
-              className={`flex items-center px-4 py-3 text-sm ${
-                location.pathname === item.path
-                  ? "bg-amber-600 text-white"
-                  : "text-white hover:bg-slate-700"
-              } transition-colors duration-200`}
+        {/* Sidebar Navigation */}
+        <nav className="mt-6 space-y-1">
+          {/* Profile */}
+          <Link
+            to="/student/profile"
+            className={`flex items-center px-4 py-3 text-sm ${
+              location.pathname === "/student/profile"
+                ? "bg-amber-600 text-white"
+                : "text-white hover:bg-slate-700"
+            } transition-colors duration-200`}
+          >
+            <FaUser className="w-5 h-5" />
+            <span className={`ml-3 ${!isSidebarOpen && "hidden"}`}>
+              Profile
+            </span>
+          </Link>
+
+          {/* Borrow Group */}
+          <div>
+            <button
+              onClick={() => setIsBorrowOpen(!isBorrowOpen)}
+              className="flex items-center w-full px-4 py-3 text-sm text-white hover:bg-slate-700 transition-colors duration-200"
             >
-              {item.icon}
-              <span className={`ml-3 ${!isSidebarOpen && "hidden"}`}>
-                {item.name}
+              <FaFileContract className="w-5 h-5" />
+              <span
+                className={`ml-3 flex-1 text-left ${
+                  !isSidebarOpen && "hidden"
+                }`}
+              >
+                Borrow
               </span>
-            </Link>
-          ))}
+              {isSidebarOpen && (
+                <svg
+                  className={`w-4 h-4 transition-transform duration-200 ${
+                    isBorrowOpen ? "rotate-90" : ""
+                  }`}
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M9 5l7 7-7 7"
+                  />
+                </svg>
+              )}
+            </button>
+
+            {/* Sub-menu */}
+            {isBorrowOpen && isSidebarOpen && (
+              <div className="ml-8 space-y-1">
+                {borrowSubItems.map((item) => (
+                  <Link
+                    key={item.path}
+                    to={item.path}
+                    className={`flex items-center px-3 py-2 text-sm rounded-md ${
+                      location.pathname === item.path
+                        ? "bg-amber-600 text-white"
+                        : "text-white hover:bg-slate-700"
+                    } transition-colors duration-200`}
+                  >
+                    {item.icon}
+                    <span className="ml-2">{item.name}</span>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
         </nav>
       </div>
 
