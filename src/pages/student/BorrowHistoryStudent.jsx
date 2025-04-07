@@ -26,7 +26,10 @@ const BorrowHistoryStudent = () => {
         console.log("Decoded Token:", decodedToken);
 
         // Extract userId (nameidentifier from decoded token)
-        const userIdFromToken = decodedToken.userId;
+        const userIdFromToken =
+          decodedToken[
+            "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"
+          ];
 
         console.log("Decoded userId:", userIdFromToken);
 

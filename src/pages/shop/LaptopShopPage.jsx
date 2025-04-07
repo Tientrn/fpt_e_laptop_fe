@@ -7,6 +7,7 @@ import useCartStore from "../../store/useCartStore";
 import SearchBar from "../../components/page-base/listlaptopborrow/SearchBar";
 import SortOptions from "../../components/page-base/listlaptopborrow/SortOptions";
 import "react-toastify/dist/ReactToastify.css";
+import categoryApi from "../../api/categoryApi";
 
 const LaptopShopPage = () => {
   const [products, setProducts] = useState([]);
@@ -16,6 +17,23 @@ const LaptopShopPage = () => {
   const [sortOption, setSortOption] = useState("default");
   const navigate = useNavigate();
   const addToCart = useCartStore((state) => state.addToCart);
+  const [categories, setCategories] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState(null);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const res = await categoryApi.getAllCategories();
+        if (res.isSuccess) {
+          setCategories(res.data);
+        }
+      } catch (error) {
+        console.error("Error fetching categories:", error);
+      }
+    };
+
+    fetchCategories();
+  }, []);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -69,6 +87,14 @@ const LaptopShopPage = () => {
     setProducts(sortedProducts);
   };
 
+  const handleCategoryClick = (categoryId) => {
+    setSelectedCategory(categoryId);
+    const filtered = allProducts.filter(
+      (product) => product.categoryId === categoryId
+    );
+    setProducts(filtered);
+  };
+
   const handleAddToCart = (event, product) => {
     event.stopPropagation();
     addToCart(product);
@@ -112,22 +138,40 @@ const LaptopShopPage = () => {
           <SortOptions onSort={handleSort} className="w-full md:w-1/3" />
         </div>
 
-        {/* Danh mục sản phẩm
-        <div className="flex flex-wrap justify-center gap-3 mt-5">
-          {categories.map((category) => (
+        {/* Danh mục sản phẩm */}
+        {categories.length > 0 && (
+          <div className="flex flex-wrap justify-center gap-3 mt-6">
             <button
-              key={category}
-              onClick={() => handleCategoryClick(category)}
-              className={`px-4 py-2 rounded-md font-semibold transition ${
-                selectedCategory === category
-                  ? "bg-amber-600 text-white"
-                  : "bg-gray-200 text-gray-800 hover:bg-gray-300"
-              }`}
+              onClick={() => {
+                setSelectedCategory(null);
+                setProducts(allProducts);
+              }}
+              className={`px-4 py-1.5 rounded-full border font-medium transition text-sm
+        ${
+          selectedCategory === null
+            ? "bg-amber-600 text-white border-amber-600"
+            : "bg-white text-slate-700 border-slate-300 hover:bg-slate-100"
+        }`}
             >
-              {category}
+              Tất cả
             </button>
-          ))}
-        </div>*/}
+
+            {categories.map((cat) => (
+              <button
+                key={cat.categoryId}
+                onClick={() => handleCategoryClick(cat.categoryId)}
+                className={`px-4 py-1.5 rounded-full border font-medium transition text-sm
+          ${
+            selectedCategory === cat.categoryId
+              ? "bg-amber-600 text-white border-amber-600"
+              : "bg-white text-slate-700 border-slate-300 hover:bg-slate-100"
+          }`}
+              >
+                {cat.categoryName}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Danh sách sản phẩm */}
