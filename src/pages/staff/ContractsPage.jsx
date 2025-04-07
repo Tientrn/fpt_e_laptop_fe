@@ -49,25 +49,24 @@ const ContractsPage = () => {
   useEffect(() => {
     const fetchUserInfo = async () => {
       for (const contract of contracts) {
-        if (contract.userId && !userInfoMap[contract.userId]) {
-          try {
-            console.log(
-              `Fetching user info for contract ${contract.contractId}, userId: ${contract.userId}`
-            );
-            const response = await userApi.getUserById(contract.userId);
-            if (response.isSuccess) {
-              console.log(`User info received:`, response.data);
+        try {
+          // Get request details first
+          const requestResponse = await borrowrequestApi.getBorrowRequestById(contract.requestId);
+          if (requestResponse.isSuccess) {
+            // Then get user info using userId from the request
+            const userResponse = await userApi.getUserById(requestResponse.data.userId);
+            if (userResponse.isSuccess) {
               setUserInfoMap((prev) => ({
                 ...prev,
-                [contract.userId]: response.data,
+                [contract.contractId]: userResponse.data,
               }));
             }
-          } catch (error) {
-            console.error(
-              `Error fetching user info for contract ${contract.contractId}:`,
-              error
-            );
           }
+        } catch (error) {
+          console.error(
+            `Error fetching user info for contract ${contract.contractId}:`,
+            error
+          );
         }
       }
     };
@@ -178,6 +177,24 @@ const ContractsPage = () => {
         setSelectedUserInfo(userResponse.data);
       }
 
+      // Validate và set ngày mặc định là start date của request
+      const startDate = new Date(request.startDate);
+      const endDate = new Date(request.endDate);
+      const today = new Date();
+
+      // Chọn ngày mặc định là startDate
+      let defaultReturnDate = new Date(startDate);
+      
+      // Nếu startDate đã qua, set mặc định là ngày hiện tại
+      if (startDate < today) {
+        defaultReturnDate = today;
+      }
+
+      // Đảm bảo ngày mặc định không vượt quá endDate
+      if (defaultReturnDate > endDate) {
+        defaultReturnDate = endDate;
+      }
+
       // Reset form và set giá trị mới
       setContractForm({
         requestId: request.requestId,
@@ -185,7 +202,7 @@ const ContractsPage = () => {
         itemValue: 0,
         terms: `Contract for ${request.itemName}`,
         conditionBorrow: "good",
-        expectedReturnDate: format(new Date(), "yyyy-MM-dd"),
+        expectedReturnDate: defaultReturnDate.toISOString().split('T')[0],
         userId: request.userId,
       });
 
@@ -200,64 +217,95 @@ const ContractsPage = () => {
     }
   };
 
+  const handleExpectedReturnDateChange = (e) => {
+    const selectedDate = new Date(e.target.value);
+    const startDate = new Date(selectedRequest.startDate);
+    const endDate = new Date(selectedRequest.endDate);
+
+    if (selectedDate >= startDate && selectedDate <= endDate) {
+      setContractForm({
+        ...contractForm,
+        expectedReturnDate: e.target.value,
+      });
+    } else {
+      toast.error("Selected date must be between start date and end date");
+      // Reset về ngày hợp lệ gần nhất
+      if (selectedDate < startDate) {
+        setContractForm({
+          ...contractForm,
+          expectedReturnDate: selectedRequest.startDate.split('T')[0],
+        });
+      } else if (selectedDate > endDate) {
+        setContractForm({
+          ...contractForm,
+          expectedReturnDate: selectedRequest.endDate.split('T')[0],
+        });
+      }
+    }
+  };
+
   const handleCreateContract = async (e) => {
     e.preventDefault();
     try {
-      if (
-        !contractForm.requestId ||
-        !contractForm.itemId ||
-        !contractForm.itemValue
-      ) {
-        toast.error("Please fill in all required fields");
+      // Validate form
+      if (!contractForm.itemValue || contractForm.itemValue <= 0) {
+        toast.error("Please enter a valid item value");
         return;
       }
 
-      const formattedDate = new Date(
-        contractForm.expectedReturnDate
-      ).toISOString();
+      if (!contractForm.terms.trim()) {
+        toast.error("Please enter contract terms");
+        return;
+      }
+
+      if (!contractForm.expectedReturnDate) {
+        toast.error("Please select an expected return date");
+        return;
+      }
+
+      // Validate return date is within range
+      const returnDate = new Date(contractForm.expectedReturnDate);
+      const startDate = new Date(selectedRequest.startDate);
+      const endDate = new Date(selectedRequest.endDate);
+
+      if (returnDate < startDate || returnDate > endDate) {
+        toast.error("Return date must be between start date and end date");
+        return;
+      }
 
       const contractData = {
         requestId: parseInt(contractForm.requestId),
         itemId: parseInt(contractForm.itemId),
         itemValue: parseInt(contractForm.itemValue),
         conditionBorrow: contractForm.conditionBorrow || "good",
-        terms: contractForm.terms || "summer 2025",
-        expectedReturnDate: formattedDate,
+        terms: contractForm.terms,
+        expectedReturnDate: format(new Date(contractForm.expectedReturnDate), "yyyy-MM-dd'T'HH:mm:ss.SSSxxx"),
         userId: selectedRequest.userId,
       };
 
-      const response = await borrowcontractApi.createBorrowContract(
-        contractData
-      );
+      console.log("Submitting contract data:", contractData);
+
+      const response = await borrowcontractApi.createBorrowContract(contractData);
+      
       if (response.isSuccess) {
         toast.success("Contract created successfully");
         setIsModalOpen(false);
 
         // Cập nhật lại state contracts và approvedRequests
-        setContracts((prevContracts) => [...prevContracts, response.data]);
-        setApprovedRequests((prevRequests) =>
-          prevRequests.filter(
-            (request) => request.requestId !== contractForm.requestId
-          )
-        );
-
-        // Refresh data
         await Promise.all([
           fetchContracts(),
           fetchApprovedRequests(),
           fetchDeposits(),
         ]);
 
+        // Reset form
         setContractForm({
           requestId: 0,
           itemId: 0,
           terms: "",
           conditionBorrow: "",
           itemValue: 0,
-          expectedReturnDate: format(
-            new Date(),
-            "yyyy-MM-dd'T'HH:mm:ss.SSSxxx"
-          ),
+          expectedReturnDate: format(new Date(), "yyyy-MM-dd"),
         });
       } else {
         toast.error(response.message || "Failed to create contract");
@@ -484,13 +532,13 @@ const ContractsPage = () => {
                       {contract.contractId}
                     </td>
                     <td className="px-4 py-3 text-sm text-black">
-                      {userInfoMap[contract.userId]?.fullName || "Loading..."}
+                      {userInfoMap[contract.contractId]?.fullName || "Loading..."}
                     </td>
                     <td className="px-4 py-3 text-sm text-black">
-                      {userInfoMap[contract.userId]?.email || "Loading..."}
+                      {userInfoMap[contract.contractId]?.email || "Loading..."}
                     </td>
                     <td className="px-4 py-3 text-sm text-black">
-                      {contract.itemValue}
+                      {contract.itemValue?.toLocaleString()}
                     </td>
                     <td className="px-4 py-3 text-sm text-black">
                       {format(
@@ -599,7 +647,7 @@ const ContractsPage = () => {
                       <div>
                         <p className="text-xs text-gray-500">Role</p>
                         <p className="text-sm font-medium capitalize">
-                          {selectedUserInfo.role}
+                          {selectedUserInfo.roleName}
                         </p>
                       </div>
                     </div>
@@ -628,7 +676,7 @@ const ContractsPage = () => {
                       <div>
                         <p className="text-xs text-gray-500">Request ID</p>
                         <p className="text-sm font-medium">
-                          #{selectedRequest.requestId}
+                          {selectedRequest.requestId}
                         </p>
                       </div>
                       <div>
@@ -729,15 +777,15 @@ const ContractsPage = () => {
                     <input
                       type="date"
                       value={contractForm.expectedReturnDate.split("T")[0]}
-                      onChange={(e) =>
-                        setContractForm({
-                          ...contractForm,
-                          expectedReturnDate: e.target.value,
-                        })
-                      }
+                      min={selectedRequest?.startDate.split("T")[0]}
+                      max={selectedRequest?.endDate.split("T")[0]}
+                      onChange={handleExpectedReturnDateChange}
                       className="w-full px-3 py-2 text-sm rounded border border-gray-300 focus:ring-2 focus:ring-amber-500 focus:border-transparent"
                       required
                     />
+                    <p className="mt-1 text-xs text-gray-500">
+                      Choose a date between {format(new Date(selectedRequest?.startDate), "dd/MM/yyyy")} and {format(new Date(selectedRequest?.endDate), "dd/MM/yyyy")}
+                    </p>
                   </div>
                 </div>
               </form>

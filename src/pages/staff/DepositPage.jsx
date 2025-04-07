@@ -5,6 +5,7 @@ import { format } from "date-fns";
 import borrowcontractApi from "../../api/borrowcontractApi";
 import deposittransactionApi from "../../api/deposittransactionApi";
 import userApi from "../../api/userApi";
+import borrowrequestApi from "../../api/borrowrequestApi";
 
 const DepositPage = () => {
   const { contractId } = useParams();
@@ -72,9 +73,17 @@ const DepositPage = () => {
     e.preventDefault();
     try {
       setLoading(true);
-      console.log("Creating deposit with data:", depositForm); // Debug log
+      
+      // Lấy thông tin contract trước để có requestId
+      const contractResponse = await borrowcontractApi.getBorrowContractById(contractId);
+      if (!contractResponse.isSuccess) {
+        toast.error("Failed to get contract details");
+        return;
+      }
+      const requestId = contractResponse.data.requestId;
+      console.log("Contract details:", contractResponse.data); // Debug log
 
-      // Tạo deposit transaction trước
+      // Tạo deposit transaction
       const createResponse = await deposittransactionApi.createDepositTransaction(depositForm);
       
       if (createResponse.isSuccess) {
@@ -88,22 +97,34 @@ const DepositPage = () => {
           const currentDeposit = getResponse.data;
           console.log("Current deposit data:", currentDeposit); // Debug log
 
-          // Update status thành Completed
-          const updateResponse = await deposittransactionApi.updateDepositTransaction(
-            newDepositId, // Sử dụng ID trong path parameter
+          // Update status của deposit thành Completed
+          const updateDepositResponse = await deposittransactionApi.updateDepositTransaction(
+            newDepositId,
             {
               ...currentDeposit,
               status: "Completed"
             }
           );
 
-          console.log("Update response:", updateResponse); // Debug log
+          if (updateDepositResponse.isSuccess) {
+            // Update request status sang Borrowing
+            console.log("Updating request status for requestId:", requestId); // Debug log
+            const requestUpdateResponse = await borrowrequestApi.updateBorrowRequest(
+              requestId,
+              {
+                status: "Borrowing"
+              }
+            );
 
-          if (updateResponse.isSuccess) {
-            toast.success("Deposit recorded and completed successfully");
-            navigate("/staff/contracts");
+            if (requestUpdateResponse.isSuccess) {
+              toast.success("Deposit recorded and request status updated successfully");
+              navigate("/staff/contracts");
+            } else {
+              console.error("Failed to update request status:", requestUpdateResponse);
+              toast.error("Failed to update request status");
+            }
           } else {
-            console.error("Failed to update deposit:", updateResponse);
+            console.error("Failed to update deposit:", updateDepositResponse);
             toast.error("Failed to update deposit status");
           }
         } else {

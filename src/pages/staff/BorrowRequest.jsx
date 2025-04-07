@@ -206,6 +206,7 @@ const BorrowRequest = () => {
               <option value="all">All Status</option>
               <option value="Pending">Pending</option>
               <option value="Approved">Approved</option>
+              <option value="Borrowing">Borrowing</option>
               <option value="Rejected">Rejected</option>
             </select>
           </div>
