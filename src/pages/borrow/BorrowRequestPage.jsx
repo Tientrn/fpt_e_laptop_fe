@@ -255,7 +255,7 @@ const BorrowRequestPage = () => {
             <div className="px-6 py-4 border-b border-gray-100 bg-gray-50">
               <h2 className="text-xl font-semibold text-gray-900 flex items-center">
                 <Laptop className="w-5 h-5 mr-2 text-amber-600" />
-                Laptop Details
+                Laptop Infomation
               </h2>
             </div>
             <div className="p-6">
@@ -310,7 +310,7 @@ const BorrowRequestPage = () => {
             <div className="px-6 py-4 border-b border-gray-100 bg-gray-50">
               <h2 className="text-xl font-semibold text-gray-900 flex items-center">
                 <User className="w-5 h-5 mr-2 text-amber-600" />
-                Borrower Information
+                Student Information
               </h2>
             </div>
             <div className="p-6">
@@ -340,7 +340,7 @@ const BorrowRequestPage = () => {
             <div className="px-6 py-4 border-b border-gray-100 bg-gray-50">
               <h2 className="text-xl font-semibold text-gray-900 flex items-center">
                 <Calendar className="w-5 h-5 mr-2 text-amber-600" />
-                Borrow Details
+                Borrow Detail
               </h2>
             </div>
             <div className="p-6">
@@ -388,7 +388,16 @@ const BorrowRequestPage = () => {
                     </p>
                   </div>
                 </div>
-
+                <div className="mt-6">
+                  <h3 className="text-lg font-medium text-gray-900">Terms and Conditions</h3>
+                  <ul className="list-disc list-inside text-sm text-gray-700 mt-2 space-y-1">
+                    <li>You must return the laptop in the same condition as received.</li>
+                    <li>Any damage or loss will be your responsibility.</li>
+                    <li>The borrowing period is strictly between the selected start and end dates.</li>
+                    <li>Extensions must be requested and approved before the end date.</li>
+                    <li>Failure to return the laptop on time may result in penalties.</li>
+                  </ul>
+                </div>
                 <div className="flex items-start space-x-3">
                   <div className="flex items-center h-5">
                     <input
@@ -403,7 +412,6 @@ const BorrowRequestPage = () => {
                     I agree to care for and return the laptop in good condition.
                   </label>
                 </div>
-
                 <div className="flex items-center justify-end space-x-4">
                   <button
                     type="button"
