@@ -50,6 +50,7 @@ export default function LoginPage() {
 
     const token = localStorage.getItem("token");
     const userData = localStorage.getItem("user");
+
     if (token && userData) {
       try {
         const user = JSON.parse(userData);

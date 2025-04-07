@@ -33,10 +33,7 @@ const Contractstudent = () => {
       try {
         const decodedToken = jwtDecode(token);
         console.log("Decoded Token:", decodedToken);
-        const userIdFromToken =
-          decodedToken[
-            "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"
-          ];
+        const userIdFromToken = decodedToken.userId;
         console.log("Decoded userId:", userIdFromToken);
         setUserId(Number(userIdFromToken));
       } catch (error) {
