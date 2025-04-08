@@ -1,26 +1,50 @@
-import axiosClient from './axiosClient';
+import axiosClient from "./axiosClient";
 
 const orderApis = {
+  // Get all orders
 
-    // Create new order
-    createOrder: (data) => {
-        return axiosClient.post('/orders', data);
-    },
+  getAllOrders: () => {
+    return axiosClient.get("/orders");
+  },
+  // Get orders by id
+  getOrderById: (id) => {
+    return axiosClient.get(`/orders/${id}`);
+  },
+  // Create new order
+  createOrder: (data) => {
+    return axiosClient.post("/orders", data);
+  },
 
-    // Create payment
-    createPayment: (data) => {
-        return axiosClient.post(`/Payment/create?orderID=${data.orderId}&paymenMethodId=${data.paymentMethod}`);
-    },
+  // Create payment
+  createPayment: (data) => {
+    return axiosClient.post(
+      `/Payment/create?orderID=${data.orderId}&paymenMethodId=${data.paymentMethod}`
+    );
+  },
 
-    // Create payment url
-    createPaymentUrl: (data) => {
-        return axiosClient.get(`/Payment/${data.paymentId}/payment-url?redirectUrl=${data.redirectUrl}`);
-    },
+  // Create payment url
+  createPaymentUrl: (data) => {
+    return axiosClient.get(
+      `/Payment/${data.paymentId}/payment-url?redirectUrl=${data.redirectUrl}`
+    );
+  },
 
-    // Create order detail
-    createOrderDetail: (data) => {
-        return axiosClient.post('/orderdetails', data);
-    },
+  // Create order detail
+  createOrderDetail: (data) => {
+    return axiosClient.post("/orderdetails", data);
+  },
+
+  // Get order detail
+  getAllOrderDetail: () => {
+    return axiosClient.get("/orderdetails");
+  },
+  deleteOrder: (id) => {
+    return axiosClient.delete(`/orders/${id}`);
+  },
+
+  deleteOrderDetail: (id) => {
+    return axiosClient.delete(`/orderdetails/${id}`);
+  },
 };
 
-export default orderApis; 
+export default orderApis;

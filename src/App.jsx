@@ -44,6 +44,8 @@ import Contractstudent from "./pages/student/Contractstudent";
 import RequestsPage from "./pages/student/RequestsPage";
 import BorrowHistoryStudent from "./pages/student/BorrowHistoryStudent";
 import BorrowHistoryDetail from "./pages/student/BorrowHistoryDetail";
+import OrderStudent from "./pages/student/OrderStudent";
+import OrderDetailStudent from "./pages/student/OrderDetailStudent";
 {
   /* Staff */
 }
@@ -209,6 +211,8 @@ const App = () => {
             path="borrowhistorydetailstudent/:borrowHistoryId/:id"
             element={<BorrowHistoryDetail />}
           />
+          <Route path="orders" element={<OrderStudent />} />
+          <Route path="orderdetail/:orderId" element={<OrderDetailStudent />} />
         </Route>
 
         <Route

@@ -140,6 +140,18 @@ const StudentLayout = () => {
               </div>
             )}
           </div>
+
+          <Link
+            to="/student/orders"
+            className={`flex items-center px-4 py-3 text-sm ${
+              location.pathname === "/student/orders"
+                ? "bg-amber-600 text-white"
+                : "text-white hover:bg-slate-700"
+            } transition-colors duration-200`}
+          >
+            <FaClipboardList className="w-5 h-5" />
+            <span className={`ml-3 ${!isSidebarOpen && "hidden"}`}>Orders</span>
+          </Link>
         </nav>
       </div>
 
