@@ -113,8 +113,8 @@ function HeaderHomePage() {
 
             <div className="flex flex-col md:flex-row items-center gap-4 ml-2">
               {/* Luôn hiển thị giỏ hàng */}
-              <a
-                href="/cart"
+              <button
+                onClick={() => navigate("/cart")}
                 className="text-white relative hover:text-purple-300"
               >
                 <ShoppingCartCheckoutIcon />
@@ -123,8 +123,7 @@ function HeaderHomePage() {
                     {cartCount}
                   </span>
                 )}
-              </a>
-
+              </button>
               {!isLoggedIn ? (
                 <>
                   <button

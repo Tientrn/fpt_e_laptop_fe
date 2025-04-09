@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { CheckCircle, XCircle, RefreshCw, Search, PlusCircle } from "lucide-react";
+import { CheckCircle, XCircle, RefreshCw, PlusCircle } from "lucide-react";
 import donateformApi from "../../api/donateformApi";
 import { useNavigate } from "react-router-dom";
 
@@ -9,7 +9,7 @@ const DonateItem = () => {
   const navigate = useNavigate();
   const [donations, setDonations] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("All");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
@@ -17,7 +17,10 @@ const DonateItem = () => {
     const fetchDonations = async () => {
       try {
         const response = await donateformApi.getAllDonateForms();
-        setDonations(response.data);
+        const sorted = response.data.sort(
+          (a, b) => b.donationFormId - a.donationFormId
+        );
+        setDonations(sorted);
         toast.success("Donations loaded successfully", {
           toastId: "donations-loaded",
         });
@@ -60,10 +63,7 @@ const DonateItem = () => {
     if (!window.confirm("Are you sure you want to delete this donation?"))
       return;
     try {
-      console.log("Deleting donation with ID:", donationId); // debug
       const response = await donateformApi.deleteDonateForm(donationId);
-      console.log("Delete response:", response); // debug
-
       setDonations((prev) =>
         prev.filter((d) => d.donationFormId !== donationId)
       );
@@ -78,55 +78,47 @@ const DonateItem = () => {
   };
 
   const filteredDonations = donations.filter((d) =>
-    d.itemName.toLowerCase().includes(searchTerm.toLowerCase())
+    statusFilter === "All" ? true : d.status === statusFilter
   );
 
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentItems = filteredDonations.slice(indexOfFirstItem, indexOfLastItem);
+  const currentItems = filteredDonations.slice(
+    indexOfFirstItem,
+    indexOfLastItem
+  );
   const totalPages = Math.ceil(filteredDonations.length / itemsPerPage);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-6">
       <div className="max-w-7xl mx-auto">
-        {/* Header Section */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">Donation Management</h1>
+          <h1 className="text-2xl font-bold text-gray-900">
+            Donation Management
+          </h1>
           <p className="mt-2 text-gray-600">
             Review and manage incoming donation requests
           </p>
         </div>
 
-        {/* Search and Controls Section */}
+        {/* Filter Section */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-          <div className="flex flex-col sm:flex-row gap-4 items-center">
-            <div className="relative flex-1 w-full">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
-              <input
-                type="text"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Search by Item Name..."
-                className="pl-10 pr-4 py-2 border border-gray-200 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-              />
-            </div>
+          <div className="flex items-center gap-4">
+            <label className="text-sm font-medium text-gray-700">
+              Filter by Status:
+            </label>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="border rounded px-3 py-1 text-sm"
+            >
+              <option value="All">All</option>
+              <option value="Pending">Pending</option>
+              <option value="Approved">Approved</option>
+              <option value="Rejected">Rejected</option>
+            </select>
             <button
-              onClick={() => {
-                setSearchTerm("");
-                setCurrentPage(1);
-                setLoading(true);
-                const fetchAll = async () => {
-                  try {
-                    const response = await donateformApi.getAllDonateForms();
-                    setDonations(response.data);
-                  } catch (error) {
-                    console.error("Error reloading donations:", error);
-                  } finally {
-                    setLoading(false);
-                  }
-                };
-                fetchAll();
-              }}
+              onClick={() => window.location.reload()}
               className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors duration-200"
             >
               <RefreshCw size={18} className="animate-spin-hover" /> Reload
@@ -134,10 +126,9 @@ const DonateItem = () => {
           </div>
         </div>
 
-        {/* Table Section */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-900">Pending Donations</h2>
+            <h2 className="text-lg font-semibold text-gray-900">Donations</h2>
           </div>
 
           <div className="overflow-x-auto">
@@ -151,7 +142,6 @@ const DonateItem = () => {
                 <thead className="bg-gray-50">
                   <tr>
                     {[
-                      "Donation ID",
                       "Item Name",
                       "Description",
                       "Quantity",
@@ -171,16 +161,18 @@ const DonateItem = () => {
                 <tbody className="divide-y divide-gray-200">
                   {currentItems.length === 0 ? (
                     <tr>
-                      <td colSpan="7" className="px-6 py-8 text-center">
-                        <p className="text-gray-500 text-base">No donations found</p>
+                      <td colSpan="6" className="px-6 py-8 text-center">
+                        <p className="text-gray-500 text-base">
+                          No donations found
+                        </p>
                       </td>
                     </tr>
                   ) : (
                     currentItems.map((donation) => (
-                      <tr key={donation.donationFormId} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-900">
-                          {donation.donationFormId}
-                        </td>
+                      <tr
+                        key={donation.donationFormId}
+                        className="hover:bg-gray-50"
+                      >
                         <td className="px-6 py-4 whitespace-nowrap text-gray-700">
                           {donation.itemName}
                         </td>
@@ -208,36 +200,44 @@ const DonateItem = () => {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center gap-3">
-                          <button
-                              onClick={() => deleteDonation(donation.donationFormId)}
+                            <button
+                              onClick={() =>
+                                deleteDonation(donation.donationFormId)
+                              }
                               className="inline-flex items-center px-3 py-1.5 bg-red-50 text-red-700 rounded-lg hover:bg-red-100 transition-colors duration-200"
                               title="Delete Donation"
                             >
-                              <XCircle size={16} className="mr-1.5" />
-                              Delete
+                              <XCircle size={16} className="mr-1.5" /> Delete
                             </button>
                             {donation.status === "Pending" && (
                               <button
-                                onClick={() => updateStatus(donation.donationFormId, "Approved")}
+                                onClick={() =>
+                                  updateStatus(
+                                    donation.donationFormId,
+                                    "Approved"
+                                  )
+                                }
                                 className="inline-flex items-center px-3 py-1.5 bg-green-50 text-green-700 rounded-lg hover:bg-green-100 transition-colors duration-200"
                                 title="Approve Donation"
                               >
-                                <CheckCircle size={16} className="mr-1.5" />
+                                <CheckCircle size={16} className="mr-1.5" />{" "}
                                 Approve
                               </button>
                             )}
                             {donation.status === "Approved" && (
                               <button
-                                onClick={() => navigate("/staff/create-itemdonate", {
-                                  state: {
-                                    donateFormId: donation.donationFormId,
-                                    sponsorId: donation.userId
-                                  }
-                                })}
+                                onClick={() =>
+                                  navigate("/staff/create-itemdonate", {
+                                    state: {
+                                      donateFormId: donation.donationFormId,
+                                      sponsorId: donation.userId,
+                                    },
+                                  })
+                                }
                                 className="inline-flex items-center px-3 py-1.5 bg-indigo-50 text-indigo-700 rounded-lg hover:bg-indigo-100 transition-colors duration-200"
                                 title="Create Item"
                               >
-                                <PlusCircle size={16} className="mr-1.5" />
+                                <PlusCircle size={16} className="mr-1.5" />{" "}
                                 Create Item
                               </button>
                             )}
@@ -251,7 +251,6 @@ const DonateItem = () => {
             )}
           </div>
 
-          {/* Pagination Section */}
           {filteredDonations.length > 0 && (
             <div className="px-6 py-4 flex flex-col sm:flex-row justify-between items-center gap-4 border-t border-gray-200 bg-gray-50">
               <div className="text-sm text-gray-500">
@@ -261,7 +260,9 @@ const DonateItem = () => {
               </div>
               <div className="flex gap-2">
                 <button
-                  onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                  onClick={() =>
+                    setCurrentPage((prev) => Math.max(prev - 1, 1))
+                  }
                   disabled={currentPage === 1}
                   className="px-3 py-1 text-sm bg-white border border-gray-200 text-gray-600 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
@@ -281,7 +282,9 @@ const DonateItem = () => {
                   </button>
                 ))}
                 <button
-                  onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                  onClick={() =>
+                    setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                  }
                   disabled={currentPage === totalPages}
                   className="px-3 py-1 text-sm bg-white border border-gray-200 text-gray-600 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
@@ -292,7 +295,6 @@ const DonateItem = () => {
           )}
         </div>
       </div>
-
       <ToastContainer />
     </div>
   );

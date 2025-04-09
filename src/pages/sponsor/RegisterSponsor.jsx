@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import donateformApi from "../../api/donateformApi";
+import { jwtDecode } from "jwt-decode";
 
 export const RegisterSponsor = () => {
   const [formData, setFormData] = useState({
@@ -24,18 +25,25 @@ export const RegisterSponsor = () => {
     setIsSubmitting(true);
 
     try {
-      // Prepare data for API
+      const token = localStorage.getItem("token");
+      if (!token) {
+        toast.error("Bạn cần đăng nhập để gửi tài trợ.");
+        return;
+      }
+
+      const decoded = jwtDecode(token);
+      const sponsorId = Number(decoded.userId); // 👈 Lấy sponsorId từ token
+
       const donateFormData = {
+        sponsorId, // 👈 Thêm sponsorId vào body
         itemName: formData.itemName,
         itemDescription: formData.itemDescription,
         quantity: formData.quantity,
       };
 
-      // Make API call to create donate form
-      const response = await donateformApi.createDonateForm(donateFormData);
+      await donateformApi.createDonateForm(donateFormData);
 
       toast.success("Sponsorship submission successful!");
-      // Optional: Reset form after successful submission
       setFormData({
         itemName: "",
         itemDescription: "",
@@ -48,7 +56,6 @@ export const RegisterSponsor = () => {
       setIsSubmitting(false);
     }
   };
-
   return (
     <div className="p-8 bg-white rounded-xl shadow-md max-w-3xl mx-auto">
       {/* Header Section */}

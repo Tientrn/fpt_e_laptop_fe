@@ -45,11 +45,6 @@ const StaffLayout = () => {
       name: "Donate Management",
       icon: <FaMoneyBillWave className="w-4 h-4" />,
     },
-    {
-      path: "/staff/create-itemdonate",
-      name: "Create Donate Item",
-      icon: <FaPlusCircle className="w-4 h-4" />,
-    },
   ];
 
   const menuItems = [
@@ -98,7 +93,11 @@ const StaffLayout = () => {
             strokeWidth="2"
             viewBox="0 0 24 24"
           >
-            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M9 5l7 7-7 7"
+            />
           </svg>
         )}
       </button>
@@ -189,9 +188,7 @@ const StaffLayout = () => {
             className="flex items-center w-full px-4 py-3 text-sm font-medium text-white hover:bg-slate-700 transition-colors"
           >
             <FaSignOutAlt className="w-5 h-5" />
-            <span className={`ml-3 ${!isSidebarOpen && "hidden"}`}>
-              Logout
-            </span>
+            <span className={`ml-3 ${!isSidebarOpen && "hidden"}`}>Logout</span>
           </button>
         </div>
       </div>
@@ -202,9 +199,12 @@ const StaffLayout = () => {
         <header className="bg-white border-b border-slate-200 shadow-sm">
           <div className="flex items-center justify-between px-6 py-2">
             <div className="text-sm text-amber-600 font-medium">
-              {menuItems.find((item) => item.path === location.pathname)?.name ||
-                borrowSubItems.find((item) => item.path === location.pathname)?.name ||
-                donateSubItems.find((item) => item.path === location.pathname)?.name ||
+              {menuItems.find((item) => item.path === location.pathname)
+                ?.name ||
+                borrowSubItems.find((item) => item.path === location.pathname)
+                  ?.name ||
+                donateSubItems.find((item) => item.path === location.pathname)
+                  ?.name ||
                 "Staff Dashboard"}
             </div>
           </div>
