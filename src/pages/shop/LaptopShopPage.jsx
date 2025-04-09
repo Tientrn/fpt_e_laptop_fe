@@ -207,7 +207,6 @@ const LaptopShopPage = () => {
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-<<<<<<< HEAD
                     const cart = getCurrentCart();
                     const existingItem = cart.find(
                       (item) => item.productId === product.productId
@@ -216,8 +215,10 @@ const LaptopShopPage = () => {
 
                     if (currentQty >= product.quantity) {
                       toast.error(
-                        "Số lượng trong giỏ hàng đã đạt giới hạn tồn kho!",
-=======
+                        "Số lượng trong giỏ hàng đã đạt giới hạn tồn kho!"
+                      );
+                      return;
+                    }
                     if (product.quantity > 0) {
                       addToCart({
                         productId: product.productId,
@@ -230,18 +231,14 @@ const LaptopShopPage = () => {
                         storage: product.storage,
                         quantityAvailable: product.quantity,
                       });
-                      toast.success(
-                        `Added ${product.productName} to cart`,
->>>>>>> kiet
-                        {
-                          position: "top-right",
-                          autoClose: 2000,
-                          style: {
-                            fontSize: "14px",
-                            fontWeight: "500",
-                          },
-                        }
-                      );
+                      toast.success(`Added ${product.productName} to cart`, {
+                        position: "top-right",
+                        autoClose: 2000,
+                        style: {
+                          fontSize: "14px",
+                          fontWeight: "500",
+                        },
+                      });
                       return;
                     }
 

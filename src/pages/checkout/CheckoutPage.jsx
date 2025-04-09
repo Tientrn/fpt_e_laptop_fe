@@ -79,11 +79,7 @@ const CheckoutPage = () => {
                 d="M15 19l-7-7 7-7"
               />
             </svg>
-<<<<<<< HEAD
-            Quay lại giỏ hàng
-=======
             Back to shop
->>>>>>> kiet
           </button>
         </div>
 

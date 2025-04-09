@@ -101,26 +101,6 @@ const CartPage = () => {
 
     let orderDetail = [];
 
-      orderApis
-        .createOrder(order)
-        .then((data) => {
-          items.map((item) => {
-            orderDetail.push({
-              orderId: data.data.orderId,
-              productId: item.productId,
-              quantity: item.quantity,
-              priceItem: item.totalPrice,
-            });
-          });
-          orderApis.createOrderDetail([...orderDetail]);
-          toast.success("Order created successfully!", {
-            position: "top-right",
-            autoClose: 1500,
-            hideProgressBar: false,
-            closeOnClick: true,
-            pauseOnHover: true,
-            draggable: true,
-          });
     orderApis
       .createOrder(order)
       .then((data) => {
@@ -133,25 +113,26 @@ const CartPage = () => {
           });
         });
 
-        orderApis.createOrderDetail([...orderDetail]);
-
+        return orderApis.createOrderDetail(orderDetail);
+      })
+      .then(() => {
         toast.success("Tạo đơn hàng thành công!", {
           position: "top-right",
           autoClose: 1500,
         });
 
-        // ✅ Không xoá cart ở đây, chỉ điều hướng sang checkout
-        navigate(`/checkout/${data.data.orderId}`, {
+        navigate(`/checkout/${orderDetail[0].orderId}`, {
           state: { products: selectedCartItems },
         });
       })
-      .catch((err) =>
+      .catch((err) => {
+        console.error(err);
         toast.error("Tạo đơn hàng lỗi", {
           position: "top-right",
           autoClose: 1500,
-        })
-      );
-  });
+        });
+      });
+  };
 
   if (items.length === 0) {
     return (
@@ -309,6 +290,6 @@ const CartPage = () => {
       </div>
     </div>
   );
-}};
+};
 
 export default CartPage;
