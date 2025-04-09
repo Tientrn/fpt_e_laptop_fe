@@ -143,30 +143,6 @@ const CreateDonateItem = () => {
       <div className="bg-white rounded-lg shadow-sm border border-gray-200">
         <form onSubmit={handleSubmit} className="p-8">
           {/* Form Header Section */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Donate Form ID
-              </label>
-              <input
-                type="text"
-                value={donateFormId || ""}
-                className="mt-1 block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md text-gray-600"
-                disabled
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Sponsor ID
-              </label>
-              <input
-                type="text"
-                value={sponsorId || ""}
-                className="mt-1 block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md text-gray-600"
-                disabled
-              />
-            </div>
-          </div>
 
           {/* Main Form Fields */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
