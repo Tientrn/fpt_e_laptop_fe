@@ -73,13 +73,13 @@ const RequestsPage = () => {
                 endDate: latestRequest.endDate,
               });
             } else {
-              toast.info("Không tìm thấy yêu cầu nào cho người dùng hiện tại");
+              toast.info("No requests found for the current user");
             }
           }
         }
       } catch (error) {
         console.error("Error:", error);
-        toast.error("Lỗi khi tải dữ liệu");
+        toast.error("Error loading data");
       } finally {
         setLoading(false);
       }
@@ -94,7 +94,7 @@ const RequestsPage = () => {
     const token = localStorage.getItem("token");
 
     if (!token) {
-      toast.error("Không tìm thấy token, bạn cần đăng nhập lại.");
+      toast.error("Token not found, please log in again.");
       return;
     }
 
@@ -109,7 +109,7 @@ const RequestsPage = () => {
       // 1. Xóa yêu cầu mượn
       const response = await borrowrequestApi.deleteBorrowRequest(request.id);
       if (response?.isSuccess) {
-        toast.success("Hủy yêu cầu thành công!");
+        toast.success("Request canceled successfully!");
 
         // 2. Xóa lịch sử mượn tương ứng
         const borrowHistory = borrowHistories.find(
@@ -130,7 +130,7 @@ const RequestsPage = () => {
             config
           );
           if (historyResponse?.isSuccess) {
-            toast.success("Xóa lịch sử mượn thành công!");
+            toast.success("Borrow history deleted successfully!");
 
             // Cập nhật lại borrowHistories sau khi xóa
             setBorrowHistories((prevHistories) => {
@@ -139,20 +139,20 @@ const RequestsPage = () => {
               );
             });
           } else {
-            toast.error("Không thể xóa lịch sử mượn.");
+            toast.error("Unable to delete borrow history.");
           }
         } else {
-          toast.error("Không tìm thấy lịch sử mượn để xóa.");
+          toast.error("Borrow history not found for deletion.");
         }
 
         // Cập nhật lại trạng thái yêu cầu
         setRequest((prev) => ({ ...prev, status: "Canceled" }));
       } else {
-        toast.error("Không thể hủy yêu cầu.");
+        toast.error("Unable to cancel request.");
       }
     } catch (error) {
       console.error("Lỗi khi hủy yêu cầu:", error);
-      toast.error("Lỗi khi hủy yêu cầu.");
+      toast.error("Error canceling request.");
     }
   };
   if (loading) {
@@ -166,7 +166,7 @@ const RequestsPage = () => {
   if (!request || !userInfo) {
     return (
       <div className="min-h-screen bg-white flex justify-center items-center">
-        <p className="text-gray-500 text-sm">Không tìm thấy yêu cầu nào</p>
+        <p className="text-gray-500 text-sm">No requests found</p>
       </div>
     );
   }
@@ -178,7 +178,7 @@ const RequestsPage = () => {
           {/* Header Section */}
           <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
             <h1 className="text-2xl font-bold text-gray-800 mb-4">
-              Trạng thái yêu cầu mượn của tôi
+              My Borrow Request Status
             </h1>
             <div className="h-1 w-32 bg-amber-500 rounded-full mb-6"></div>
 
@@ -186,14 +186,14 @@ const RequestsPage = () => {
             <div className="bg-gradient-to-r from-amber-500 to-amber-600 rounded-lg p-6 text-white mb-8">
               <div className="flex justify-between items-center">
                 <div>
-                  <p className="text-sm opacity-90">Trạng thái hiện tại</p>
+                  <p className="text-sm opacity-90">Current Status</p>
                   <span className="text-xl font-semibold">
                     {request.status === "Pending"
-                      ? "Đang chờ duyệt"
+                      ? "Pending Approval"
                       : request.status === "Approved"
-                      ? "Đã duyệt"
+                      ? "Approved"
                       : request.status === "Rejected"
-                      ? "Bị từ chối"
+                      ? "Rejected"
                       : request.status}
                   </span>
                 </div>
@@ -240,17 +240,17 @@ const RequestsPage = () => {
               {/* Personal Info Card */}
               <div className="bg-gray-50 rounded-lg p-6">
                 <h3 className="text-lg font-semibold text-gray-800 mb-4">
-                  Thông tin cá nhân
+                  Personal Information
                 </h3>
                 <div className="space-y-4">
                   <div>
-                    <p className="text-sm text-gray-500">Họ và tên</p>
+                    <p className="text-sm text-gray-500">Full Name</p>
                     <p className="text-base font-medium text-gray-800">
                       {userInfo.fullName}
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500">Mã sinh viên</p>
+                    <p className="text-sm text-gray-500">Student Code</p>
                     <p className="text-base font-medium text-gray-800">
                       {userInfo.studentCode}
                     </p>
@@ -261,24 +261,24 @@ const RequestsPage = () => {
               {/* Request Info Card */}
               <div className="bg-gray-50 rounded-lg p-6">
                 <h3 className="text-lg font-semibold text-gray-800 mb-4">
-                  Thông tin mượn
+                  Borrow Information
                 </h3>
                 <div className="space-y-4">
                   <div>
-                    <p className="text-sm text-gray-500">Thiết bị</p>
+                    <p className="text-sm text-gray-500">Device</p>
                     <p className="text-base font-medium text-gray-800">
                       {request.itemName}
                     </p>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <p className="text-sm text-gray-500">Ngày bắt đầu</p>
+                      <p className="text-sm text-gray-500">Start Date</p>
                       <p className="text-base text-gray-800">
                         {format(new Date(request.startDate), "dd/MM/yyyy")}
                       </p>
                     </div>
                     <div>
-                      <p className="text-sm text-gray-500">Ngày kết thúc</p>
+                      <p className="text-sm text-gray-500">End Date</p>
                       <p className="text-base text-gray-800">
                         {format(new Date(request.endDate), "dd/MM/yyyy")}
                       </p>
@@ -308,7 +308,7 @@ const RequestsPage = () => {
                       d="M6 18L18 6M6 6l12 12"
                     />
                   </svg>
-                  Hủy yêu cầu
+                  Cancel Request
                 </button>
               </div>
             )}
@@ -327,7 +327,7 @@ const RequestsPage = () => {
                     clipRule="evenodd"
                   />
                 </svg>
-                Quy định mượn laptop
+                Laptop Borrowing Rules
               </h4>
               <ul className="space-y-3">
                 <li className="flex items-center gap-2 text-blue-800">
@@ -342,7 +342,7 @@ const RequestsPage = () => {
                       clipRule="evenodd"
                     />
                   </svg>
-                  Bạn chỉ có thể mượn một laptop tại một thời điểm
+                  You can only borrow one laptop at a time
                 </li>
                 <li className="flex items-center gap-2 text-blue-800">
                   <svg
@@ -356,7 +356,7 @@ const RequestsPage = () => {
                       clipRule="evenodd"
                     />
                   </svg>
-                  Bạn phải trả laptop hiện tại trước khi mượn chiếc khác
+                  You must return the current laptop before borrowing another
                 </li>
                 <li className="flex items-center gap-2 text-blue-800">
                   <svg
@@ -370,8 +370,7 @@ const RequestsPage = () => {
                       clipRule="evenodd"
                     />
                   </svg>
-                  Trạng thái sẽ chuyển thành 'Đã trả' sau khi bạn hoàn trả
-                  laptop
+                  The status will change to 'Returned' after you return the laptop
                 </li>
               </ul>
             </div>

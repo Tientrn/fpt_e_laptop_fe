@@ -26,13 +26,13 @@ const CreateShopInfo = () => {
         const decodedToken = jwtDecode(token);
         console.log("Decoded token:", decodedToken); // Debug token
 
-        // Lấy userId trực tiếp từ token giống như trong ShopProfile
+        // Get userId directly from token as in ShopProfile
         const userIdFromToken = decodedToken.userId || "15";
         const finalUserId = Number(userIdFromToken);
         console.log("UserID:", finalUserId); // Debug userId
         setUserId(finalUserId);
 
-        // Kiểm tra shop tồn tại
+        // Check if shop exists
         shopApi.getAllShops().then((shopsResponse) => {
           console.log("All shops response:", shopsResponse);
           if (shopsResponse && shopsResponse.data) {
@@ -42,23 +42,23 @@ const CreateShopInfo = () => {
             console.log("Existed shop:", existedShop);
             
             if (existedShop) {
-              // Nếu tìm thấy shop, lưu shopId và chuyển hướng
+              // If shop is found, save shopId and redirect
               localStorage.setItem("shopId", existedShop.shopId);
-              toast.info("Bạn đã tạo thông tin shop trước đó.");
+              toast.info("You have already created shop information.");
               navigate("/shop/profile");
             }
           }
         }).catch(error => {
           console.error("Error checking existing shop:", error);
-          toast.error("Lỗi khi kiểm tra thông tin shop");
+          toast.error("Error checking shop information");
         });
 
       } catch (error) {
         console.error("Error decoding token:", error);
-        toast.error("Lỗi khi xác thực thông tin người dùng");
+        toast.error("Error verifying user information");
       }
     } else {
-      toast.error("Vui lòng đăng nhập lại");
+      toast.error("Please log in again");
       navigate("/login");
     }
   }, [navigate]);
@@ -98,7 +98,7 @@ const CreateShopInfo = () => {
         setTimeout(() => {
           navigate("/shop/profile", {
             state: {
-              message: "Tạo thông tin shop thành công!",
+              message: "Shop information created successfully!",
               shopId: createdShopId,
             },
           });

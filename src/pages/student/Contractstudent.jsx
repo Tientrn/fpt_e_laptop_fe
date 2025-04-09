@@ -38,7 +38,7 @@ const Contractstudent = () => {
         setUserId(Number(userIdFromToken));
       } catch (error) {
         console.error("Error decoding token:", error);
-        toast.error("Lỗi khi giải mã token");
+        toast.error("Error decoding token");
       }
     }
   }, []);
@@ -73,7 +73,7 @@ const Contractstudent = () => {
       console.log("Phản hồi từ API:", response);
 
       if (!response || !response.data) {
-        throw new Error("Không nhận được dữ liệu từ server");
+        throw new Error("No data received from server");
       }
 
       if (response.isSuccess) {
@@ -105,13 +105,11 @@ const Contractstudent = () => {
         console.log("Dữ liệu sau ánh xạ và lọc:", transformedContracts);
         setContracts(transformedContracts);
       } else {
-        throw new Error(
-          response.data.message || "Lấy dữ liệu hợp đồng thất bại"
-        );
+        throw new Error(response.data.message || "Failed to fetch contract data");
       }
     } catch (error) {
       console.error("Error fetching contracts:", error);
-      toast.error(error.message || "Không thể tải danh sách hợp đồng");
+      toast.error(error.message || "Unable to load contract list");
     } finally {
       setLoading(false);
     }
@@ -125,15 +123,15 @@ const Contractstudent = () => {
   };
 
   const handleDownloadContract = (id) => {
-    toast.info(`Đang tải hợp đồng #${id}...`);
+    toast.info(`Downloading contract #${id}...`);
     setTimeout(() => {
-      toast.success("Tải hợp đồng thành công");
+      toast.success("Contract downloaded successfully");
     }, 1500);
   };
 
   const handleConfirmReturn = async (id) => {
     if (
-      window.confirm("Bạn có chắc chắn muốn xác nhận trả laptop này không?")
+      window.confirm("Are you sure you want to confirm returning this laptop?")
     ) {
       try {
         await new Promise((resolve) => setTimeout(resolve, 500));
@@ -152,10 +150,10 @@ const Contractstudent = () => {
               : contract
           )
         );
-        toast.success("Xác nhận trả thành công");
+        toast.success("Return confirmed successfully");
       } catch (error) {
         console.error("Error confirming return:", error);
-        toast.error("Không thể xác nhận trả");
+        toast.error("Unable to confirm return");
       }
     }
   };
@@ -187,7 +185,7 @@ const Contractstudent = () => {
   return (
     <div className="min-h-screen bg-white">
       <div className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold text-black mb-6">Hợp đồng của tôi</h1>
+        <h1 className="text-3xl font-bold text-black mb-6">My Contracts</h1>
 
         {/* Search and Filter Section */}
         <div className="flex flex-col md:flex-row gap-4 mb-6">
@@ -195,7 +193,7 @@ const Contractstudent = () => {
             <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
             <input
               type="text"
-              placeholder="Tìm theo tên laptop hoặc mã hợp đồng..."
+              placeholder="Search by laptop name or contract number..."
               className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded focus:border-amber-600 focus:outline-none text-sm"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -208,9 +206,9 @@ const Contractstudent = () => {
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
             >
-              <option value="all">Tất cả trạng thái</option>
-              <option value="active">Đang hoạt động</option>
-              <option value="completed">Đã hoàn thành</option>
+              <option value="all">All Status</option>
+              <option value="active">Active</option>
+              <option value="completed">Completed</option>
             </select>
           </div>
         </div>
@@ -227,19 +225,19 @@ const Contractstudent = () => {
                 <thead className="bg-gray-100">
                   <tr>
                     <th className="px-4 py-2 text-left text-xs text-gray-500 uppercase">
-                      Mã hợp đồng
+                      Contract Number
                     </th>
                     <th className="px-4 py-2 text-left text-xs text-gray-500 uppercase">
-                      Thời gian
+                      Time Period
                     </th>
                     <th className="px-4 py-2 text-left text-xs text-gray-500 uppercase">
-                      Tiền cọc
+                      Deposit
                     </th>
                     <th className="px-4 py-2 text-left text-xs text-gray-500 uppercase">
-                      Trạng thái
+                      Status
                     </th>
                     <th className="px-4 py-2 text-left text-xs text-gray-500 uppercase">
-                      Hành động
+                      Actions
                     </th>
                   </tr>
                 </thead>
@@ -269,8 +267,8 @@ const Contractstudent = () => {
                             }`}
                           >
                             {contract.status === "active"
-                              ? "Đang hoạt động"
-                              : "Đã hoàn thành"}
+                              ? "Active"
+                              : "Completed"}
                           </span>
                         </td>
                         <td className="px-4 py-3 text-sm">
@@ -278,7 +276,7 @@ const Contractstudent = () => {
                             <button
                               onClick={() => handleViewDetails(contract)}
                               className="text-gray-500 hover:text-amber-600"
-                              title="Xem chi tiết"
+                              title="View Details"
                             >
                               <FaEye className="w-5 h-5" />
                             </button>
@@ -287,7 +285,7 @@ const Contractstudent = () => {
                                 handleDownloadContract(contract.id)
                               }
                               className="text-gray-500 hover:text-amber-600"
-                              title="Tải hợp đồng"
+                              title="Download Contract"
                             >
                               <FaFileDownload className="w-5 h-5" />
                             </button>
@@ -295,7 +293,7 @@ const Contractstudent = () => {
                               <button
                                 onClick={() => handleConfirmReturn(contract.id)}
                                 className="text-gray-500 hover:text-amber-600"
-                                title="Xác nhận trả"
+                                title="Confirm Return"
                               >
                                 <FaCheckCircle className="w-5 h-5" />
                               </button>
@@ -310,7 +308,7 @@ const Contractstudent = () => {
                         colSpan="5" // Sửa colSpan thành 5 vì đã bỏ cột Laptop
                         className="px-4 py-3 text-center text-sm text-gray-500"
                       >
-                        Không tìm thấy hợp đồng nào
+                        No contracts found
                       </td>
                     </tr>
                   )}
@@ -322,9 +320,9 @@ const Contractstudent = () => {
             {filteredContracts.length > 0 && (
               <div className="flex justify-between items-center mt-4 text-sm text-gray-500">
                 <div>
-                  Hiển thị {indexOfFirstItem + 1} đến{" "}
-                  {Math.min(indexOfLastItem, filteredContracts.length)} trong
-                  tổng số {filteredContracts.length} hợp đồng
+                  Showing {indexOfFirstItem + 1} to{" "}
+                  {Math.min(indexOfLastItem, filteredContracts.length)} of{" "}
+                  {filteredContracts.length} contracts
                 </div>
                 <div className="flex gap-2">
                   <button
@@ -334,7 +332,7 @@ const Contractstudent = () => {
                     disabled={currentPage === 1}
                     className="px-3 py-1 border border-gray-200 rounded hover:bg-amber-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
                   >
-                    Trước
+                    Previous
                   </button>
                   {[...Array(totalPages)].map((_, i) => (
                     <button
@@ -356,7 +354,7 @@ const Contractstudent = () => {
                     disabled={currentPage === totalPages}
                     className="px-3 py-1 border border-gray-200 rounded hover:bg-amber-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
                   >
-                    Sau
+                    Next
                   </button>
                 </div>
               </div>
@@ -370,7 +368,7 @@ const Contractstudent = () => {
             <div className="bg-white rounded p-6 max-w-lg w-full mx-4">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-lg font-semibold text-black">
-                  Chi tiết hợp đồng
+                  Contract Details
                 </h2>
                 <button
                   onClick={() => setIsModalOpen(false)}
@@ -382,13 +380,13 @@ const Contractstudent = () => {
               <div className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                   <div>
-                    <p className="text-xs text-gray-500">Mã hợp đồng</p>
+                    <p className="text-xs text-gray-500">Contract Number</p>
                     <p className="text-sm text-black font-medium">
                       {selectedContract.contractNumber}
                     </p>
                   </div>
                   <div>
-                    <p className="text-xs text-gray-500">Trạng thái</p>
+                    <p className="text-xs text-gray-500">Status</p>
                     <span
                       className={`px-2 py-1 text-xs font-medium rounded-full ${
                         selectedContract.status === "active"
@@ -397,8 +395,8 @@ const Contractstudent = () => {
                       }`}
                     >
                       {selectedContract.status === "active"
-                        ? "Đang hoạt động"
-                        : "Đã hoàn thành"}
+                        ? "Active"
+                        : "Completed"}
                     </span>
                   </div>
                 </div>
@@ -410,7 +408,7 @@ const Contractstudent = () => {
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                   <div>
-                    <p className="text-xs text-gray-500">Thời gian mượn</p>
+                    <p className="text-xs text-gray-500">Borrow Period</p>
                     <p className="text-sm text-black">
                       {format(
                         new Date(selectedContract.startDate),
@@ -421,7 +419,7 @@ const Contractstudent = () => {
                     </p>
                   </div>
                   <div>
-                    <p className="text-xs text-gray-500">Tiền cọc</p>
+                    <p className="text-xs text-gray-500">Deposit</p>
                     <p className="text-sm text-black font-medium">
                       {formatCurrency(selectedContract.depositAmount)}
                     </p>
@@ -429,7 +427,7 @@ const Contractstudent = () => {
                 </div>
                 <div>
                   <p className="text-xs text-gray-500">
-                    Tình trạng laptop trước khi mượn
+                    Laptop Condition Before Borrowing
                   </p>
                   <p className="text-sm text-black">
                     {selectedContract.laptopCondition.beforeBorrow}
@@ -440,7 +438,7 @@ const Contractstudent = () => {
                 {borrowRequestDetails && (
                   <>
                     <div>
-                      <p className="text-xs text-gray-500">Tên người mượn</p>
+                      <p className="text-xs text-gray-500">Borrower Name</p>
                       <p className="text-sm text-black font-medium">
                         {borrowRequestDetails.fullName}
                       </p>
@@ -452,13 +450,13 @@ const Contractstudent = () => {
                       </p>
                     </div>
                     <div>
-                      <p className="text-xs text-gray-500">Số điện thoại</p>
+                      <p className="text-xs text-gray-500">Phone Number</p>
                       <p className="text-sm text-black font-medium">
                         {borrowRequestDetails.phoneNumber}
                       </p>
                     </div>
                     <div>
-                      <p className="text-xs text-gray-500">Laptop được mượn</p>
+                      <p className="text-xs text-gray-500">Borrowed Laptop</p>
                       <p className="text-sm text-black font-medium">
                         {borrowRequestDetails.itemName}
                       </p>
@@ -472,13 +470,13 @@ const Contractstudent = () => {
                   className="px-4 py-2 bg-slate-600 text-white rounded hover:bg-slate-700 transition-colors duration-200 text-sm flex items-center"
                 >
                   <FaFileDownload className="mr-2" />
-                  Tải hợp đồng
+                  Download Contract
                 </button>
                 <button
                   onClick={() => setIsModalOpen(false)}
                   className="px-4 py-2 border border-gray-200 rounded text-black hover:bg-amber-50 transition-colors duration-200 text-sm"
                 >
-                  Đóng
+                  Close
                 </button>
               </div>
             </div>

@@ -148,7 +148,7 @@ const LaptopShopPage = () => {
             : "bg-white text-slate-700 border-slate-300 hover:bg-slate-100"
         }`}
             >
-              Tất cả
+              All
             </button>
 
             {categories.map((cat) => (
@@ -207,6 +207,7 @@ const LaptopShopPage = () => {
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
+<<<<<<< HEAD
                     const cart = getCurrentCart();
                     const existingItem = cart.find(
                       (item) => item.productId === product.productId
@@ -216,6 +217,22 @@ const LaptopShopPage = () => {
                     if (currentQty >= product.quantity) {
                       toast.error(
                         "Số lượng trong giỏ hàng đã đạt giới hạn tồn kho!",
+=======
+                    if (product.quantity > 0) {
+                      addToCart({
+                        productId: product.productId,
+                        productName: product.productName,
+                        price: product.price,
+                        imageProduct: product.imageProduct,
+                        quantity: 1,
+                        cpu: product.cpu,
+                        ram: product.ram,
+                        storage: product.storage,
+                        quantityAvailable: product.quantity,
+                      });
+                      toast.success(
+                        `Added ${product.productName} to cart`,
+>>>>>>> kiet
                         {
                           position: "top-right",
                           autoClose: 2000,

@@ -52,7 +52,7 @@ const CartPage = () => {
     } else {
       setQuantityErrors((prev) => ({
         ...prev,
-        [item.productId]: "Vượt quá số lượng tồn kho",
+        [item.productId]: "Out of stock",
       }));
     }
   };
@@ -101,6 +101,26 @@ const CartPage = () => {
 
     let orderDetail = [];
 
+      orderApis
+        .createOrder(order)
+        .then((data) => {
+          items.map((item) => {
+            orderDetail.push({
+              orderId: data.data.orderId,
+              productId: item.productId,
+              quantity: item.quantity,
+              priceItem: item.totalPrice,
+            });
+          });
+          orderApis.createOrderDetail([...orderDetail]);
+          toast.success("Order created successfully!", {
+            position: "top-right",
+            autoClose: 1500,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+          });
     orderApis
       .createOrder(order)
       .then((data) => {
@@ -131,20 +151,20 @@ const CartPage = () => {
           autoClose: 1500,
         })
       );
-  };
+  });
 
   if (items.length === 0) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center p-6">
           <h2 className="text-2xl font-semibold text-black mb-4">
-            Giỏ hàng của bạn trống
+            Your cart is empty
           </h2>
           <button
             onClick={() => navigate("/laptopshop")}
             className="flex items-center gap-2 mx-auto text-black hover:text-amber-600 transition-colors duration-200"
           >
-            <FaArrowLeft /> Tiếp tục mua sắm
+            <FaArrowLeft /> Continue shopping
           </button>
         </div>
       </div>
@@ -160,7 +180,7 @@ const CartPage = () => {
             onClick={() => navigate("/laptopshop")}
             className="flex items-center gap-2 text-black hover:text-amber-600 transition-colors duration-200"
           >
-            <FaArrowLeft /> Tiếp tục mua sắm
+            <FaArrowLeft /> Continue shopping
           </button>
         </div>
 
@@ -234,9 +254,10 @@ const CartPage = () => {
           <div className="lg:col-span-1">
             <div className="bg-white border border-gray-200 rounded p-6 sticky top-4">
               <h2 className="text-lg font-semibold text-black mb-6">
-                Tổng quan đơn hàng
+                Order Summary
               </h2>
 
+              {/* Add list items */}
               <div className="space-y-3 mb-4">
                 {items
                   .filter((item) => selectedItems.includes(item.productId))
@@ -263,7 +284,7 @@ const CartPage = () => {
               <div className="border-t border-gray-200 my-4 mb-4"></div>
 
               <div className="flex justify-between">
-                <span className="text-black font-medium">Tổng cộng</span>
+                <span className="text-black font-medium">Total</span>
                 <span className="text-amber-600 font-semibold">
                   {formatPrice(
                     items
@@ -288,6 +309,6 @@ const CartPage = () => {
       </div>
     </div>
   );
-};
+}};
 
 export default CartPage;

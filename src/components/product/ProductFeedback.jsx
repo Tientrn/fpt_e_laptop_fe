@@ -86,12 +86,12 @@ const ProductFeedback = ({ productId, onFeedbacksLoaded }) => {
   return (
     <div className="product-feedback bg-white p-6">
       <h2 className="text-lg font-semibold text-black mb-4">
-        Đánh giá sản phẩm
+        Product Feedback
       </h2>
 
       {feedbacks.length === 0 ? (
         <p className="text-gray-500 text-center py-4">
-          Chưa có đánh giá nào cho sản phẩm này
+          No feedback available for this product
         </p>
       ) : (
         <div className="space-y-6">
@@ -115,9 +115,9 @@ const ProductFeedback = ({ productId, onFeedbacksLoaded }) => {
                       <div className="flex items-center justify-between">
                         <h3 className="font-medium text-black">
                           {feedback.isAnonymous === true
-                            ? "Ẩn danh"
+                            ? "Anonymous"
                             : userNames[feedback.userId] ||
-                              `Người dùng ${feedback.userId}`}
+                              `User ${feedback.userId}`}
                         </h3>
                         <span className="text-sm text-gray-500">
                           {moment(feedback.createdDate).format("DD/MM/YYYY")}
