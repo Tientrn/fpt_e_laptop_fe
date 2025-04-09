@@ -434,10 +434,10 @@ const ContractsPage = () => {
         <h2 className="text-lg font-semibold text-black mb-4">
           Approved Requests
         </h2>
-        <div className="overflow-x-auto">
+        <div className="overflow-auto shadow-md rounded-lg">
           <table className="min-w-full divide-y divide-slate-200">
             <thead className="bg-slate-50">
-              <tr>
+            <tr className="bg-gradient-to-r from-gray-500 to-green-500 text-white">
                 {[
                   "ID",
                   "Full Name",
@@ -448,7 +448,7 @@ const ContractsPage = () => {
                 ].map((header) => (
                   <th
                     key={header}
-                    className="px-4 py-2 text-left text-xs font-medium text-slate-600 uppercase tracking-wider"
+                    className="px-4 py-2 text-left text-xs font-medium text-white uppercase tracking-wider"
                   >
                     {header}
                   </th>
@@ -503,10 +503,10 @@ const ContractsPage = () => {
             <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-amber-600"></div>
           </div>
         ) : (
-          <div className="overflow-x-auto">
+          <div className="overflow-auto shadow-md rounded-lg">
             <table className="min-w-full divide-y divide-slate-200">
               <thead className="bg-slate-50">
-                <tr>
+              <tr className="bg-gradient-to-r from-gray-500 to-green-500 text-white">
                   {[
                     "Contract ID",
                     "Full Name",
@@ -518,7 +518,7 @@ const ContractsPage = () => {
                   ].map((header) => (
                     <th
                       key={header}
-                      className="px-4 py-2 text-left text-xs font-medium text-slate-600 uppercase tracking-wider"
+                      className="px-4 py-2 text-left text-xs font-medium text-white uppercase tracking-wider"
                     >
                       {header}
                     </th>

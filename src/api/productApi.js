@@ -17,6 +17,18 @@ const productApi = {
   getProductById: (id) => {
     return axiosClient.get(`/products/${id}`);
   },
+  // Update product by id
+  updateProduct: (id, data) => {
+    return axiosClient.put(`/products/${id}`, data, {
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+  },
+  // Delete product by id
+  deleteProduct: (id) => {
+    return axiosClient.delete(`/products/${id}`);
+  },
 };
 
 export default productApi;

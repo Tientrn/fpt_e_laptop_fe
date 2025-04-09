@@ -127,11 +127,9 @@ const DonateItem = () => {
         </div>
 
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-900">Donations</h2>
-          </div>
+          
 
-          <div className="overflow-x-auto">
+          <div className="overflow-auto shadow-md rounded-lg">
             {loading ? (
               <div className="px-6 py-8 text-center">
                 <div className="animate-spin inline-block w-6 h-6 border-2 border-indigo-600 border-t-transparent rounded-full mb-2"></div>
@@ -140,7 +138,7 @@ const DonateItem = () => {
             ) : (
               <table className="w-full text-sm">
                 <thead className="bg-gray-50">
-                  <tr>
+                <tr className="bg-gradient-to-r from-gray-500 to-green-500 text-white">
                     {[
                       "Item Name",
                       "Description",
@@ -151,7 +149,7 @@ const DonateItem = () => {
                     ].map((title) => (
                       <th
                         key={title}
-                        className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider"
+                        className="px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider"
                       >
                         {title}
                       </th>

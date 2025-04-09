@@ -141,7 +141,7 @@ const BorrowHistory = () => {
         <div className="bg-white border border-slate-200 rounded-md shadow-sm overflow-x-auto">
           <table className="min-w-full divide-y divide-slate-200">
             <thead className="bg-slate-50">
-              <tr>
+            <tr className="bg-gradient-to-r from-gray-500 to-green-500 text-white">
                 {[
                   "History ID",
                   "Request ID",
@@ -153,7 +153,7 @@ const BorrowHistory = () => {
                 ].map((header) => (
                   <th
                     key={header}
-                    className="px-4 py-2 text-left text-xs font-medium text-slate-600 uppercase tracking-wider"
+                    className="px-4 py-2 text-left text-xs font-medium text-white uppercase tracking-wider"
                   >
                     {header}
                   </th>
@@ -163,25 +163,25 @@ const BorrowHistory = () => {
             <tbody className="divide-y divide-slate-200">
               {currentItems.map((item) => (
                 <tr key={item.borrowHistoryId} className="hover:bg-slate-50">
-                  <td className="px-4 py-3 text-sm text-black">
+                  <td className="px-4 py-3 text-sm text-white">
                     #{item.borrowHistoryId}
                   </td>
-                  <td className="px-4 py-3 text-sm text-black">
+                  <td className="px-4 py-3 text-sm text-white">
                     #{item.requestId}
                   </td>
-                  <td className="px-4 py-3 text-sm text-black">
+                  <td className="px-4 py-3 text-sm text-white">
                     {userInfoMap[item.userId]?.fullName || "N/A"}
                   </td>
-                  <td className="px-4 py-3 text-sm text-black">
+                  <td className="px-4 py-3 text-sm text-white">
                     {userInfoMap[item.userId]?.email || "N/A"}
                   </td>
-                  <td className="px-4 py-3 text-sm text-black">
+                  <td className="px-4 py-3 text-sm text-white">
                     {requestsMap[item.requestId]?.itemName || "N/A"}
                   </td>
-                  <td className="px-4 py-3 text-sm text-black">
+                  <td className="px-4 py-3 text-sm text-white">
                     {format(new Date(item.borrowDate), "dd/MM/yyyy HH:mm:ss")}
                   </td>
-                  <td className="px-4 py-3 text-sm text-black">
+                  <td className="px-4 py-3 text-sm text-white">
                     {item.returnDate
                       ? format(new Date(item.returnDate), "dd/MM/yyyy HH:mm:ss")
                       : "-"}
