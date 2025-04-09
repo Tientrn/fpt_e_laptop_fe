@@ -125,7 +125,7 @@ const LaptopInfo = () => {
                   </div>
                   <span
                     className={`text-sm px-3 py-1 rounded-full font-medium ${
-                      form.status === "Accepted"
+                      form.status === "Approved"
                         ? "bg-green-100 text-green-700"
                         : form.status === "Rejected"
                         ? "bg-red-100 text-red-600"
@@ -134,7 +134,7 @@ const LaptopInfo = () => {
                   >
                     {form.status === "Pending"
                       ? "Đang chờ duyệt"
-                      : form.status === "Accepted"
+                      : form.status === "Approved"
                       ? "Đã chấp nhận"
                       : "Đã từ chối"}
                   </span>
