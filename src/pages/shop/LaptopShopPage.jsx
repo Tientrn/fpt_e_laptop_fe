@@ -17,6 +17,7 @@ const LaptopShopPage = () => {
   const [sortOption, setSortOption] = useState("default");
   const navigate = useNavigate();
   const addToCart = useCartStore((state) => state.addToCart);
+  const getCurrentCart = useCartStore((state) => state.getCurrentCart);
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState(null);
 
@@ -93,12 +94,6 @@ const LaptopShopPage = () => {
       (product) => product.categoryId === categoryId
     );
     setProducts(filtered);
-  };
-
-  const handleAddToCart = (event, product) => {
-    event.stopPropagation();
-    addToCart(product);
-    toast.success(`Added ${product.productName} to cart`);
   };
 
   const navigateToDetail = (productId) => {
@@ -212,36 +207,50 @@ const LaptopShopPage = () => {
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    if (product.quantity > 0) {
-                      addToCart({
-                        productId: product.productId,
-                        productName: product.productName,
-                        price: product.price,
-                        imageProduct: product.imageProduct,
-                        quantity: 1,
-                        cpu: product.cpu,
-                        ram: product.ram,
-                        storage: product.storage,
-                        quantityAvailable: product.quantity,
-                      });
-                      toast.success(
-                        `Đã thêm ${product.productName} vào giỏ hàng`,
+                    const cart = getCurrentCart();
+                    const existingItem = cart.find(
+                      (item) => item.productId === product.productId
+                    );
+                    const currentQty = existingItem ? existingItem.quantity : 0;
+
+                    if (currentQty >= product.quantity) {
+                      toast.error(
+                        "Số lượng trong giỏ hàng đã đạt giới hạn tồn kho!",
                         {
                           position: "top-right",
                           autoClose: 2000,
-                          hideProgressBar: false,
-                          closeOnClick: true,
-                          pauseOnHover: true,
-                          draggable: true,
-                          progress: undefined,
-                          theme: "light",
                           style: {
                             fontSize: "14px",
                             fontWeight: "500",
                           },
                         }
                       );
+                      return;
                     }
+
+                    addToCart({
+                      productId: product.productId,
+                      productName: product.productName,
+                      price: product.price,
+                      imageProduct: product.imageProduct,
+                      quantity: 1,
+                      cpu: product.cpu,
+                      ram: product.ram,
+                      storage: product.storage,
+                      quantityAvailable: product.quantity,
+                    });
+
+                    toast.success(
+                      `Đã thêm ${product.productName} vào giỏ hàng`,
+                      {
+                        position: "top-right",
+                        autoClose: 2000,
+                        style: {
+                          fontSize: "14px",
+                          fontWeight: "500",
+                        },
+                      }
+                    );
                   }}
                   disabled={product.quantity <= 0}
                   className={`px-3 py-2 rounded-md transition ${

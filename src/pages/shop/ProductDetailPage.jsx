@@ -213,6 +213,7 @@ const ProductDetailPage = () => {
   const [error, setError] = useState(null);
   const addToCart = useCartStore((state) => state.addToCart);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const getCurrentCart = useCartStore((state) => state.getCurrentCart);
 
   useEffect(() => {
     let isMounted = true;
@@ -293,24 +294,44 @@ const ProductDetailPage = () => {
   }, [id]);
 
   const handleAddToCart = () => {
-    if (product && product.quantity > 0) {
-      addToCart({
-        productId: product.productId,
-        productName: product.productName,
-        price: product.price,
-        imageProduct: product.imageProduct,
-        quantity: 1,
-        cpu: product.cpu,
-        ram: product.ram,
-        storage: product.storage,
-        quantityAvailable: product.quantity,
-      });
-      toast.success("Added to cart successfully!");
-    } else {
+    if (!product || product.quantity <= 0) {
       toast.error("This product is out of stock");
+      return;
     }
-  };
 
+    const cart = getCurrentCart();
+    const existingItem = cart.find(
+      (item) => item.productId === product.productId
+    );
+    const currentQty = existingItem ? existingItem.quantity : 0;
+
+    if (currentQty >= product.quantity) {
+      toast.error("Số lượng trong giỏ hàng đã đạt giới hạn tồn kho!", {
+        position: "top-right",
+        autoClose: 2000,
+        style: { fontSize: "14px", fontWeight: "500" },
+      });
+      return;
+    }
+
+    addToCart({
+      productId: product.productId,
+      productName: product.productName,
+      price: product.price,
+      imageProduct: product.imageProduct,
+      quantity: 1,
+      cpu: product.cpu,
+      ram: product.ram,
+      storage: product.storage,
+      quantityAvailable: product.quantity,
+    });
+
+    toast.success("Đã thêm vào giỏ hàng thành công!", {
+      position: "top-right",
+      autoClose: 2000,
+      style: { fontSize: "14px", fontWeight: "500" },
+    });
+  };
   const formatPrice = (price) => {
     return new Intl.NumberFormat("vi-VN", {
       style: "currency",
