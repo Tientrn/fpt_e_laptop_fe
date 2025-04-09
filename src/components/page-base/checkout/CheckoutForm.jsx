@@ -31,7 +31,7 @@ const CheckoutForm = ({
     const cancel = searchParams.get('cancel');
     
     if (cancel === 'true' || status === 'cancel') {
-      toast.info("Bạn đã hủy thanh toán");
+      toast.info("You have canceled the payment");
       navigate('/laptopshop');
       return;
     }
@@ -48,7 +48,7 @@ const CheckoutForm = ({
   const handlePlaceOrder = async () => {
     try {
       if (cartItems.length === 0) {
-        toast.error("Giỏ hàng của bạn đang trống!");
+        toast.error("Your cart is empty!");
         return;
       }
 
@@ -73,24 +73,27 @@ const CheckoutForm = ({
         if (urlResponse.data) {
           initializeCart(userData.userId);
           window.open(urlResponse.data, "_blank");
-          navigate("/laptopshop");
+          toast.success("Payment successful! Redirecting to home page...");
+          setTimeout(() => {
+            navigate("/");
+          }, 2000);
         } else {
-          throw new Error("Không thể tạo URL thanh toán");
+          throw new Error("Cannot create payment URL");
         }
       }
     } catch (error) {
       console.error("Payment error:", error);
-      toast.error("Có lỗi xảy ra trong quá trình thanh toán!");
+      toast.error("An error occurred during the payment process!");
     }
   };
 
   const validateOrder = () => {
     if (cartItems.length === 0) {
-      toast.error("Giỏ hàng của bạn đang trống!");
+      toast.error("Your cart is empty!");
       return false;
     }
     if (orderTotal <= 0) {
-      toast.error("Tổng giá trị đơn hàng không hợp lệ!");
+      toast.error("The order total is invalid!");
       return false;
     }
     return true;
@@ -125,7 +128,7 @@ const CheckoutForm = ({
           initial={{ y: -20, opacity: 0 }}
           animate={{ y: 0, opacity: 1, transition: { duration: 0.5 } }}
         >
-          <h1 className="text-4xl font-bold text-indigo-900 mb-4">Checkout</h1>
+          {/* <h1 className="text-4xl font-bold text-indigo-900 mb-4">Checkout</h1> */}
         </motion.div>
 
         <motion.div 

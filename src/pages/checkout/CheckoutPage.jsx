@@ -48,16 +48,16 @@ const CheckoutPage = () => {
                 d="M15 19l-7-7 7-7"
               />
             </svg>
-            Quay lại cửa hàng
+            Back to shop
           </button>
         </div>
 
         {/* Tiêu đề thanh toán */}
         <div className="text-center">
-          <h1 className="text-3xl font-bold">Thanh toán</h1>
+          <h1 className="text-3xl font-bold">Checkout</h1>
           <div className="w-16 h-1 bg-amber-600 mx-auto mt-2 rounded-full" />
           <p className="mt-2 text-sm text-gray-500">
-            Vui lòng kiểm tra kỹ thông tin đơn hàng trước khi hoàn tất.
+            Please check your order information before completing.
           </p>
         </div>
 

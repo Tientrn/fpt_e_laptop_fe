@@ -76,12 +76,12 @@ const ShopProfile = () => {
           }
         } catch (shopError) {
           console.error("Error fetching shops:", shopError);
-          toast.error("Không thể tải thông tin shop");
+          toast.error("Unable to load shop information");
         }
 
       } catch (error) {
         console.error("Main error:", error);
-        toast.error(error.message || "Có lỗi xảy ra khi tải thông tin");
+        toast.error(error.message || "An error occurred while loading information");
       } finally {
         setLoading(false);
       }
@@ -106,7 +106,7 @@ const ShopProfile = () => {
         </h1>
         <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
           <p className="text-red-500 font-medium">
-            Không tìm thấy thông tin shop. Vui lòng tạo mới.
+            Shop information not found. Please create a new one.
           </p>
         </div>
       </div>
@@ -149,29 +149,29 @@ const ShopProfile = () => {
             <div className="space-y-6">
               <div className="bg-gray-50 p-6 rounded-xl">
                 <h3 className="text-lg font-semibold text-gray-800 mb-4 border-b pb-2">
-                  Thông tin kinh doanh
+                  Business Information
                 </h3>
                 <div className="space-y-4">
                   <div>
-                    <p className="text-sm text-gray-500">Tên shop</p>
+                    <p className="text-sm text-gray-500">Shop Name</p>
                     <p className="text-base font-medium text-gray-800">
                       {shop.shopName}
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500">Tên ngân hàng</p>
+                    <p className="text-sm text-gray-500">Bank Name</p>
                     <p className="text-base font-medium text-gray-800">
                       {shop.bankName}
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500">Số tài khoản</p>
+                    <p className="text-sm text-gray-500">Account Number</p>
                     <p className="text-base font-medium text-gray-800">
                       {shop.bankNumber}
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500">Số điện thoại</p>
+                    <p className="text-sm text-gray-500">Phone Number</p>
                     <p className="text-base font-medium text-gray-800">
                       {shop.shopPhone}
                     </p>
@@ -184,7 +184,7 @@ const ShopProfile = () => {
             <div className="space-y-6">
               <div className="bg-gray-50 p-6 rounded-xl">
                 <h3 className="text-lg font-semibold text-gray-800 mb-4 border-b pb-2">
-                  Thông tin bổ sung
+                  Additional Information
                 </h3>
                 <div className="space-y-4">
                   <div>
@@ -194,19 +194,19 @@ const ShopProfile = () => {
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500">Địa chỉ</p>
+                    <p className="text-sm text-gray-500">Address</p>
                     <p className="text-base font-medium text-gray-800">
                       {shop.shopAddress}
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500">Mã số thuế</p>
+                    <p className="text-sm text-gray-500">Tax Code</p>
                     <p className="text-base font-medium text-gray-800">
                       {shop.businessLicense}
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500">Trạng thái</p>
+                    <p className="text-sm text-gray-500">Status</p>
                     <span
                       className={`inline-block px-3 py-1 text-sm font-medium rounded-full ${
                         shop.status === "Active"

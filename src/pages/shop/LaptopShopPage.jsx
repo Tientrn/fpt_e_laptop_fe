@@ -153,7 +153,7 @@ const LaptopShopPage = () => {
             : "bg-white text-slate-700 border-slate-300 hover:bg-slate-100"
         }`}
             >
-              Tất cả
+              All
             </button>
 
             {categories.map((cat) => (
@@ -225,7 +225,7 @@ const LaptopShopPage = () => {
                         quantityAvailable: product.quantity,
                       });
                       toast.success(
-                        `Đã thêm ${product.productName} vào giỏ hàng`,
+                        `Added ${product.productName} to cart`,
                         {
                           position: "top-right",
                           autoClose: 2000,
