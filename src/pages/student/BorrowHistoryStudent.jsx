@@ -44,25 +44,19 @@ const BorrowHistoryStudent = () => {
         try {
           setLoading(true);
           const response = await borrowhistoryApi.getAllBorrowHistories();
-          console.log("API Response:", response);
           if (response?.isSuccess && response.data) {
-            // Filter the borrow histories by the logged-in userId
             const filteredHistories = response.data.filter(
               (history) => history.userId === userId
             );
-            response.data.forEach((history) => {
-              console.log(
-                "history.userId:",
-                history.userId,
-                "Type:",
-                typeof history.userId
-              );
-            });
-            console.log("userId:", userId, "Type:", typeof userId);
-            console.log(`filteredHistiries:${filteredHistories}`);
-            setBorrowHistories(filteredHistories);
 
-            if (filteredHistories.length === 0) {
+            // 🔽 Sort từ mới nhất đến cũ nhất
+            const sortedHistories = filteredHistories.sort(
+              (a, b) => b.borrowHistoryId - a.borrowHistoryId
+            );
+
+            setBorrowHistories(sortedHistories);
+
+            if (sortedHistories.length === 0) {
               toast.info("Không có lịch sử mượn nào cho người dùng này");
             }
           } else {
@@ -78,7 +72,8 @@ const BorrowHistoryStudent = () => {
 
       fetchBorrowHistories();
     }
-  }, [userId]); // Trigger the effect when userId changes
+  }, [userId]);
+  // Trigger the effect when userId changes
 
   // Check if the date is valid
   const isValidDate = (date) => {

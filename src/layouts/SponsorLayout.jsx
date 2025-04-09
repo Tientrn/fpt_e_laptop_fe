@@ -15,12 +15,12 @@ export const SponsorLayout = () => {
     {
       path: "/sponsor/register",
       icon: <HandshakeIcon />,
-      label: "Become a Sponsor",
+      label: "Laptop Donation Request",
     },
     {
       path: "/sponsor/laptop-info",
       icon: <LaptopIcon />,
-      label: "Register New Laptop",
+      label: "My Donations",
     },
     {
       path: "/sponsor/laptop-status",
