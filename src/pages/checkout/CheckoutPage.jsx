@@ -6,28 +6,55 @@ const CheckoutPage = () => {
   const { orderId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
-  const selectedProducts = location.state?.products || []; // sản phẩm đã tick
+  const selectedProducts = location.state?.products;
 
   const [cartItems, setCartItems] = useState([]);
   const [shippingCost] = useState(5.0);
 
+  // Helper: sync localStorage
+  const syncLocalStorage = (items) => {
+    localStorage.setItem("checkout_products", JSON.stringify(items));
+  };
+
   useEffect(() => {
-    // Load sản phẩm từ location.state
-    setCartItems(selectedProducts);
+    if (selectedProducts?.length > 0) {
+      setCartItems(selectedProducts);
+      syncLocalStorage(selectedProducts);
+    } else {
+      const stored = localStorage.getItem("checkout_products");
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored);
+          setCartItems(parsed);
+        } catch {
+          setCartItems([]);
+        }
+      }
+    }
   }, [selectedProducts]);
 
   const handleUpdateQuantity = (id, newQuantity) => {
-    setCartItems((prev) =>
-      prev.map((item) =>
+    setCartItems((prev) => {
+      const updated = prev.map((item) =>
         item.productId === id
           ? { ...item, quantity: Math.max(newQuantity, 1) }
           : item
-      )
-    );
+      );
+      syncLocalStorage(updated);
+      return updated;
+    });
   };
 
   const handleRemoveItem = (id) => {
-    setCartItems((prev) => prev.filter((item) => item.productId !== id));
+    setCartItems((prev) => {
+      const updated = prev.filter((item) => item.productId !== id);
+      syncLocalStorage(updated);
+      return updated;
+    });
+  };
+
+  const handleClearCheckoutData = () => {
+    localStorage.removeItem("checkout_products");
   };
 
   return (
@@ -73,6 +100,7 @@ const CheckoutPage = () => {
             onUpdateQuantity={handleUpdateQuantity}
             onRemove={handleRemoveItem}
             shippingCost={shippingCost}
+            onSuccess={handleClearCheckoutData} // ✅ chỉ xoá sau khi thanh toán thành công
           />
         </div>
       </div>

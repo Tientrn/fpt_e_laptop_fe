@@ -7,12 +7,33 @@ import OrderSummary from "./OrderSummary";
 import { FaShoppingCart, FaLock } from "react-icons/fa";
 import orderApis from "../../../api/orderApi";
 
-const CheckoutForm = ({ orderId, cartItems, shippingCost }) => {
+const CheckoutForm = ({
+  orderId,
+  cartItems: initialCartItems,
+  shippingCost,
+  onSuccess,
+}) => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { initializeCart } = useCartStore();
   const userData = localStorage.getItem("user");
   const [orderTotal, setOrderTotal] = useState(0);
+  const [cartItems, setCartItems] = useState([]);
+
+  useEffect(() => {
+    const storedItems = JSON.parse(
+      localStorage.getItem("checkout_products") || "[]"
+    );
+    if (initialCartItems?.length > 0) {
+      setCartItems(initialCartItems);
+      localStorage.setItem(
+        "checkout_products",
+        JSON.stringify(initialCartItems)
+      );
+    } else if (storedItems.length > 0) {
+      setCartItems(storedItems);
+    }
+  }, [initialCartItems]);
 
   useEffect(() => {
     const status = searchParams.get("status");
@@ -57,7 +78,8 @@ const CheckoutForm = ({ orderId, cartItems, shippingCost }) => {
         });
 
         if (urlResponse.data) {
-          initializeCart(userData.userId);
+          initializeCart(userData?.userId);
+          if (onSuccess) onSuccess();
           window.open(urlResponse.data, "_blank");
           navigate("/laptopshop");
         } else {
@@ -141,7 +163,7 @@ const CheckoutForm = ({ orderId, cartItems, shippingCost }) => {
             />
 
             <motion.button
-              onClick={() => handlePlaceOrder()}
+              onClick={handlePlaceOrder}
               disabled={cartItems.length === 0}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}

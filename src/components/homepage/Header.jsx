@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import ShoppingCartCheckoutIcon from "@mui/icons-material/ShoppingCartCheckout";
-import StoreIcon from "@mui/icons-material/Store";
 import HandshakeIcon from "@mui/icons-material/Handshake";
 import PersonIcon from "@mui/icons-material/Person";
 import { jwtDecode } from "jwt-decode";
@@ -10,24 +9,21 @@ import useCartStore from "../../store/useCartStore";
 function HeaderHomePage() {
   const [nav, setNav] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const [isSponsorOpen, setIsSponsorOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(() => {
-    return localStorage.getItem("token") !== null;
+    return !!localStorage.getItem("token");
   });
-  const location = useLocation();
-  const navigate = useNavigate();
 
-  // Get cart count from cart store
+  const navigate = useNavigate();
+  const location = useLocation();
+
   const cartCount = useCartStore((state) => state.getCartCount());
   const resetCart = useCartStore((state) => state.resetCart);
 
   const handleLogout = () => {
-    // Clear localStorage ngoại trừ cart-storage
     const cartData = localStorage.getItem("cart-storage");
     localStorage.clear();
     localStorage.setItem("cart-storage", cartData);
 
-    // Clear cookies
     document.cookie.split(";").forEach((c) => {
       document.cookie = c
         .replace(/^ +/, "")
@@ -37,19 +33,20 @@ function HeaderHomePage() {
     navigate("/login");
   };
 
-  // Kiểm tra token không hợp lệ hoặc hết hạn
   useEffect(() => {
     const token = localStorage.getItem("token");
-    if (token) {
-      try {
-        const decodedToken = jwtDecode(token);
-        const currentTime = Date.now() / 1000;
-        if (decodedToken.exp < currentTime) {
-          handleLogout();
-        }
-      } catch (error) {
+    if (!token) return; // ✅ nếu chưa login thì cứ để yên
+
+    try {
+      const decoded = jwtDecode(token);
+      const currentTime = Date.now() / 1000;
+      if (decoded.exp < currentTime) {
         handleLogout();
       }
+    } catch (err) {
+      // Nếu lỗi decode thì clear token nhưng KHÔNG navigate về login
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
     }
   }, []);
 
@@ -68,6 +65,7 @@ function HeaderHomePage() {
           </button>
         </div>
       </div>
+
       <nav className="bg-[#1e293b] text-white px-4 lg:px-6 py-2.5">
         <div className="flex flex-wrap justify-between items-center mx-auto max-w-screen-lg">
           <span className="self-center text-xl font-bold whitespace-nowrap text-white">
@@ -91,7 +89,6 @@ function HeaderHomePage() {
                 <a
                   href="/"
                   className="block py-2 pr-4 pl-3 text-white font-semibold drop-shadow-[0_1px_1px_rgba(0,0,0,0.8)] hover:text-amber-600"
-                  aria-current="page"
                 >
                   Home
                 </a>
@@ -113,7 +110,9 @@ function HeaderHomePage() {
                 </a>
               </li>
             </ul>
+
             <div className="flex flex-col md:flex-row items-center gap-4 ml-2">
+              {/* Luôn hiển thị giỏ hàng */}
               <a
                 href="/cart"
                 className="text-white relative hover:text-purple-300"
@@ -131,14 +130,12 @@ function HeaderHomePage() {
                   <button
                     onClick={() => navigate("/login")}
                     className="rounded-full bg-amber-600 bg-opacity-70 py-2 px-4 text-center text-sm text-white transition-all hover:bg-opacity-90 hover:shadow-lg"
-                    type="button"
                   >
                     Sign In
                   </button>
                   <button
                     onClick={() => navigate("/register")}
                     className="rounded-full bg-amber-600 bg-opacity-70 py-2 px-4 text-center text-sm text-white transition-all hover:bg-opacity-90 hover:shadow-lg"
-                    type="button"
                   >
                     Sign Up
                   </button>
@@ -192,7 +189,7 @@ function HeaderHomePage() {
                     fillRule="evenodd"
                     d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
                     clipRule="evenodd"
-                  ></path>
+                  />
                 </svg>
               ) : (
                 <svg
@@ -205,7 +202,7 @@ function HeaderHomePage() {
                     fillRule="evenodd"
                     d="M3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 15a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z"
                     clipRule="evenodd"
-                  ></path>
+                  />
                 </svg>
               )}
             </button>

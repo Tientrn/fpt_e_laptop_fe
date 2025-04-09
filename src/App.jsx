@@ -129,11 +129,9 @@ const App = () => {
         <Route
           path="/cart"
           element={
-            <PrivateRoute>
-              <HomePageLayout>
-                <Cart />
-              </HomePageLayout>
-            </PrivateRoute>
+            <HomePageLayout>
+              <Cart />
+            </HomePageLayout>
           }
         />
         <Route

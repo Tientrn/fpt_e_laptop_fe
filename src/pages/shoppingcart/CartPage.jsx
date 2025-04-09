@@ -111,7 +111,6 @@ const CartPage = () => {
             quantity: item.quantity,
             priceItem: item.totalPrice,
           });
-          removeFromCart(item.productId);
         });
 
         orderApis.createOrderDetail([...orderDetail]);
@@ -121,6 +120,7 @@ const CartPage = () => {
           autoClose: 1500,
         });
 
+        // ✅ Không xoá cart ở đây, chỉ điều hướng sang checkout
         navigate(`/checkout/${data.data.orderId}`, {
           state: { products: selectedCartItems },
         });
