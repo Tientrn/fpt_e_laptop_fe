@@ -1,29 +1,33 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import CheckoutForm from "../../components/page-base/checkout/CheckoutForm";
-import useCartStore from "../../store/useCartStore";
-import { useParams, useNavigate } from "react-router-dom";
-
-const initialCartItems = [];
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 
 const CheckoutPage = () => {
-  const [cartItems, setCartItems] = useState(initialCartItems);
-  const [shippingCost] = useState(5.0);
   const { orderId } = useParams();
-  const { getCurrentCart } = useCartStore();
   const navigate = useNavigate();
+  const location = useLocation();
+  const selectedProducts = location.state?.products || []; // sản phẩm đã tick
 
-  const items = getCurrentCart();
+  const [cartItems, setCartItems] = useState([]);
+  const [shippingCost] = useState(5.0);
+
+  useEffect(() => {
+    // Load sản phẩm từ location.state
+    setCartItems(selectedProducts);
+  }, [selectedProducts]);
 
   const handleUpdateQuantity = (id, newQuantity) => {
-    setCartItems(
-      cartItems.map((item) =>
-        item.id === id ? { ...item, quantity: Math.max(newQuantity, 1) } : item
+    setCartItems((prev) =>
+      prev.map((item) =>
+        item.productId === id
+          ? { ...item, quantity: Math.max(newQuantity, 1) }
+          : item
       )
     );
   };
 
   const handleRemoveItem = (id) => {
-    setCartItems(cartItems.filter((item) => item.id !== id));
+    setCartItems((prev) => prev.filter((item) => item.productId !== id));
   };
 
   return (
@@ -32,7 +36,7 @@ const CheckoutPage = () => {
         {/* Nút quay lại */}
         <div>
           <button
-            onClick={() => navigate("/laptopshop")} // hoặc "/cart" tùy luồng
+            onClick={() => navigate("/cart")}
             className="flex items-center text-slate-600 hover:text-amber-600 text-sm font-medium transition"
           >
             <svg
@@ -48,7 +52,7 @@ const CheckoutPage = () => {
                 d="M15 19l-7-7 7-7"
               />
             </svg>
-            Quay lại cửa hàng
+            Quay lại giỏ hàng
           </button>
         </div>
 
@@ -65,7 +69,7 @@ const CheckoutPage = () => {
         <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-6">
           <CheckoutForm
             orderId={orderId}
-            cartItems={items}
+            cartItems={cartItems}
             onUpdateQuantity={handleUpdateQuantity}
             onRemove={handleRemoveItem}
             shippingCost={shippingCost}

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaTrash, FaMinus, FaPlus, FaArrowLeft } from "react-icons/fa";
 import useCartStore from "../../store/useCartStore";
@@ -9,7 +9,6 @@ const CartPage = () => {
   const [quantityErrors, setQuantityErrors] = useState({});
   const navigate = useNavigate();
   const {
-    initializeCart,
     getCurrentCart,
     removeFromCart,
     addToCart,
@@ -20,19 +19,37 @@ const CartPage = () => {
   const items = getCurrentCart();
   const userData = localStorage.getItem("user");
 
+  const [selectedItems, setSelectedItems] = useState(
+    items.map((item) => item.productId)
+  );
+
+  // Đảm bảo selectedItems luôn khớp với giỏ hàng khi thay đổi
+  useEffect(() => {
+    setSelectedItems((prevSelected) =>
+      items
+        .filter((item) => prevSelected.includes(item.productId))
+        .map((item) => item.productId)
+    );
+  }, [items]);
+
+  const handleToggleSelect = (productId) => {
+    setSelectedItems((prevSelected) =>
+      prevSelected.includes(productId)
+        ? prevSelected.filter((id) => id !== productId)
+        : [...prevSelected, productId]
+    );
+  };
+
   const handleDecreaseQuantity = (item) => {
     decreaseQuantity(item.productId);
-    // Xóa lỗi nếu có khi giảm số lượng xuống dưới tồn kho
     setQuantityErrors((prev) => ({ ...prev, [item.productId]: null }));
   };
 
   const handleIncreaseQuantity = (item) => {
     if (item.quantity < item.quantityAvailable) {
       addToCart(item);
-      // Xóa lỗi nếu có
       setQuantityErrors((prev) => ({ ...prev, [item.productId]: null }));
     } else {
-      // Gán lỗi cho đúng sản phẩm
       setQuantityErrors((prev) => ({
         ...prev,
         [item.productId]: "Vượt quá số lượng tồn kho",
@@ -48,62 +65,72 @@ const CartPage = () => {
   };
 
   const handleRemoveItem = (productId) => {
-    removeFromCart(productId);
-    toast.success("Removed item from cart");
+    const confirmDelete = window.confirm(
+      "Bạn có chắc chắn muốn xóa sản phẩm này khỏi giỏ hàng?"
+    );
+    if (confirmDelete) {
+      removeFromCart(productId);
+      setSelectedItems((prev) => prev.filter((id) => id !== productId));
+      toast.success("Đã xóa sản phẩm khỏi giỏ hàng");
+    }
   };
 
   const handleCheckout = () => {
-    if (items && items.length > 0) {
-      var orderDetail = [];
-      const sum = items.reduce((accumulator, currentValue) => {
-        return accumulator + currentValue.quantity * currentValue.totalPrice;
-      }, 0);
+    const selectedCartItems = items.filter((item) =>
+      selectedItems.includes(item.productId)
+    );
 
-      const user = JSON.parse(userData);
-      console.log("user", user);
-      const order = {
-        userId: user.userId ?? 1,
-        totalPrice: sum,
-        field: "string",
-        orderAddress: "string",
-        status: "Active",
-      };
-
-      orderApis
-        .createOrder(order)
-        .then((data) => {
-          items.map((item) => {
-            orderDetail.push({
-              orderId: data.data.orderId,
-              productId: item.productId,
-              quantity: item.quantity,
-              priceItem: item.totalPrice,
-            });
-          });
-          orderApis.createOrderDetail([...orderDetail]);
-          toast.success("Tạo đơn hàng thành công!", {
-            position: "top-right",
-            autoClose: 1500,
-            hideProgressBar: false,
-            closeOnClick: true,
-            pauseOnHover: true,
-            draggable: true,
-          });
-
-          navigate(`/checkout/${data.data.orderId}`);
-        })
-        .catch((err) =>
-          toast.error("Tạo đơn hàng lỗi", {
-            position: "top-right",
-            autoClose: 1500,
-            hideProgressBar: false,
-            closeOnClick: true,
-            pauseOnHover: true,
-            draggable: true,
-          })
-        );
+    if (selectedCartItems.length === 0) {
+      toast.warning("Vui lòng chọn ít nhất một sản phẩm để thanh toán");
+      return;
     }
-    toast.warning("Giỏ hàng không có sản phẩm");
+
+    const sum = selectedCartItems.reduce(
+      (acc, curr) => acc + curr.quantity * curr.totalPrice,
+      0
+    );
+
+    const user = JSON.parse(userData);
+    const order = {
+      userId: user?.userId ?? 1,
+      totalPrice: sum,
+      field: "string",
+      orderAddress: "string",
+      status: "Active",
+    };
+
+    let orderDetail = [];
+
+    orderApis
+      .createOrder(order)
+      .then((data) => {
+        selectedCartItems.forEach((item) => {
+          orderDetail.push({
+            orderId: data.data.orderId,
+            productId: item.productId,
+            quantity: item.quantity,
+            priceItem: item.totalPrice,
+          });
+          removeFromCart(item.productId);
+        });
+
+        orderApis.createOrderDetail([...orderDetail]);
+
+        toast.success("Tạo đơn hàng thành công!", {
+          position: "top-right",
+          autoClose: 1500,
+        });
+
+        navigate(`/checkout/${data.data.orderId}`, {
+          state: { products: selectedCartItems },
+        });
+      })
+      .catch((err) =>
+        toast.error("Tạo đơn hàng lỗi", {
+          position: "top-right",
+          autoClose: 1500,
+        })
+      );
   };
 
   if (items.length === 0) {
@@ -145,6 +172,12 @@ const CartPage = () => {
                 key={item.productId}
                 className="bg-white border border-gray-200 rounded p-4 flex items-center space-x-4 hover:border-amber-600 transition-colors duration-300"
               >
+                <input
+                  type="checkbox"
+                  checked={selectedItems.includes(item.productId)}
+                  onChange={() => handleToggleSelect(item.productId)}
+                  className="w-4 h-4 text-amber-600 accent-amber-600"
+                />
                 <img
                   src={item.imageProduct}
                   alt={item.productName}
@@ -204,41 +237,47 @@ const CartPage = () => {
                 Tổng quan đơn hàng
               </h2>
 
-              {/* Thêm danh sách items */}
               <div className="space-y-3 mb-4">
-                {items.map((item) => (
-                  <div
-                    key={item.productId}
-                    className="flex justify-between text-sm"
-                  >
-                    <div className="flex items-start">
-                      <span className="text-gray-600">
-                        {item.productName}
-                        <span className="text-gray-400 ml-1">
-                          x{item.quantity}
+                {items
+                  .filter((item) => selectedItems.includes(item.productId))
+                  .map((item) => (
+                    <div
+                      key={item.productId}
+                      className="flex justify-between text-sm"
+                    >
+                      <div className="flex items-start">
+                        <span className="text-gray-600">
+                          {item.productName}
+                          <span className="text-gray-400 ml-1">
+                            x{item.quantity}
+                          </span>
                         </span>
+                      </div>
+                      <span className="text-gray-800 font-medium">
+                        {formatPrice(item.totalPrice * item.quantity)}
                       </span>
                     </div>
-                    <span className="text-gray-800 font-medium">
-                      {formatPrice(item.totalPrice * item.quantity)}
-                    </span>
-                  </div>
-                ))}
+                  ))}
               </div>
 
-              {/* Divider */}
               <div className="border-t border-gray-200 my-4 mb-4"></div>
 
-              {/* Total */}
               <div className="flex justify-between">
                 <span className="text-black font-medium">Tổng cộng</span>
                 <span className="text-amber-600 font-semibold">
-                  {formatPrice(getTotalPrice())}
+                  {formatPrice(
+                    items
+                      .filter((item) => selectedItems.includes(item.productId))
+                      .reduce(
+                        (acc, item) => acc + item.totalPrice * item.quantity,
+                        0
+                      )
+                  )}
                 </span>
               </div>
 
               <button
-                onClick={() => handleCheckout()}
+                onClick={handleCheckout}
                 className="w-full bg-slate-600 text-white py-3 rounded mt-6 hover:bg-slate-700 transition-colors duration-200"
               >
                 Thanh toán
