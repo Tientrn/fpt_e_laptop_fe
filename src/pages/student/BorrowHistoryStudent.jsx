@@ -33,7 +33,7 @@ const BorrowHistoryStudent = () => {
         setUserId(Number(userIdFromToken)); // Set userId in state
       } catch (error) {
         console.error("Error decoding token:", error);
-        toast.error("Lỗi khi giải mã token");
+        toast.error("Error decoding token");
       }
     }
   }, []); // Empty dependency array ensures this effect runs once on component mount
@@ -57,14 +57,14 @@ const BorrowHistoryStudent = () => {
             setBorrowHistories(sortedHistories);
 
             if (sortedHistories.length === 0) {
-              toast.info("Không có lịch sử mượn nào cho người dùng này");
+              toast.info("No borrow history for this user");
             }
           } else {
-            toast.info("Không có lịch sử mượn nào");
+            toast.info("No borrow history available");
           }
         } catch (error) {
           console.error("Error fetching borrow histories:", error);
-          toast.error("Lỗi khi tải lịch sử mượn");
+          toast.error("Error loading borrow history");
         } finally {
           setLoading(false);
         }
@@ -92,7 +92,7 @@ const BorrowHistoryStudent = () => {
   if (borrowHistories.length === 0) {
     return (
       <div className="min-h-screen bg-white flex justify-center items-center">
-        <p className="text-gray-500 text-sm">Không có lịch sử mượn nào</p>
+        <p className="text-gray-500 text-sm">No borrow history available</p>
       </div>
     );
   }
@@ -100,7 +100,7 @@ const BorrowHistoryStudent = () => {
   return (
     <div className="min-h-screen bg-white py-8">
       <div className="container mx-auto px-4">
-        <h1 className="text-3xl font-bold text-black mb-6">Lịch sử mượn</h1>
+        <h1 className="text-3xl font-bold text-black mb-6">Borrow History</h1>
 
         <div className="space-y-6">
           {borrowHistories.map((history) => (
@@ -123,7 +123,7 @@ const BorrowHistoryStudent = () => {
               <div className="mt-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                   <div>
-                    <p className="text-sm text-gray-500">Ngày mượn</p>
+                    <p className="text-sm text-gray-500">Borrow Date</p>
                     <p className="text-lg text-black">
                       {isValidDate(history.borrowDate)
                         ? format(new Date(history.borrowDate), "dd/MM/yyyy")
@@ -131,7 +131,7 @@ const BorrowHistoryStudent = () => {
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500">Ngày trả</p>
+                    <p className="text-sm text-gray-500">Return Date</p>
                     <p className="text-lg text-black">
                       {isValidDate(history.returnDate)
                         ? format(new Date(history.returnDate), "dd/MM/yyyy")

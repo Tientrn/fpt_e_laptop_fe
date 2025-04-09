@@ -31,49 +31,49 @@ const RegisterPage = () => {
 
     // Email
     if (!formData.email.match(/^\S+@\S+\.\S+$/)) {
-      newErrors.email = "Email không hợp lệ";
+      newErrors.email = "Invalid email";
     }
 
     // Password
     if (formData.password.length < 6) {
-      newErrors.password = "Mật khẩu phải có ít nhất 6 ký tự";
+      newErrors.password = "Password must be at least 6 characters";
     }
 
     // Phone number
     if (!formData.phoneNumber.match(/^\d{9,15}$/)) {
-      newErrors.phoneNumber = "Số điện thoại không hợp lệ";
+      newErrors.phoneNumber = "Invalid phone number";
     }
 
-    // DOB (dùng ISO format hoặc kiểm tra định dạng dd-mm-yyyy)
+    // DOB (use ISO format or check dd-mm-yyyy format)
     if (
       !formData.dob.match(/^\d{2}-\d{2}-\d{4}$/) &&
       !formData.dob.match(/^\d{4}-\d{2}-\d{2}$/)
     ) {
-      newErrors.dob = "Ngày sinh không đúng định dạng";
+      newErrors.dob = "Invalid date of birth format";
     }
 
-    // Student fields nếu là student
+    // Student fields if student
     if (parseInt(formData.roleId) === 2) {
       if (!studentData.studentCode.match(/^[A-Za-z]{2}\d{6}$/)) {
         newErrors.studentCode =
-          "Mã sinh viên phải gồm 2 chữ cái đầu và 6 số phía sau (VD: IT230001)";
+          "Student code must consist of 2 letters followed by 6 digits (e.g., IT230001)";
       }
       if (!studentData.identityCard.match(/^\d{9,12}$/)) {
-        newErrors.identityCard = "CMND/CCCD không hợp lệ";
+        newErrors.identityCard = "Invalid ID card number";
       }
       if (!studentData.enrollmentDate) {
-        newErrors.enrollmentDate = "Vui lòng chọn ngày nhập học";
+        newErrors.enrollmentDate = "Please select enrollment date";
       }
       if (!studentData.studentCardImage) {
-        newErrors.studentCardImage = "Vui lòng tải lên ảnh thẻ sinh viên";
+        newErrors.studentCardImage = "Please upload student card image";
       } else if (
         !["image/jpeg", "image/png", "image/jpg"].includes(
           studentData.studentCardImage.type
         )
       ) {
-        newErrors.studentCardImage = "Ảnh phải là định dạng jpg/jpeg/png";
+        newErrors.studentCardImage = "Image must be in jpg/jpeg/png format";
       } else if (studentData.studentCardImage.size > 2 * 1024 * 1024) {
-        newErrors.studentCardImage = "Ảnh không được vượt quá 2MB";
+        newErrors.studentCardImage = "Image must not exceed 2MB";
       }
     }
 
@@ -103,7 +103,7 @@ const RegisterPage = () => {
       const roleId = parseInt(formData.roleId);
 
       if (roleId === 2) {
-        // Nếu là Student thì gọi API student
+        // If Student, call student API
         const form = new FormData();
         form.append("email", formData.email);
         form.append("password", formData.password);
@@ -120,7 +120,7 @@ const RegisterPage = () => {
 
         await registerApi.registerStudent(form);
       } else {
-        // Nếu là Sponsor hoặc Shop thì gọi API thường
+        // If Sponsor or Shop, call regular API
         const registerData = {
           email: formData.email,
           password: formData.password,
@@ -136,7 +136,7 @@ const RegisterPage = () => {
         await registerApi.register(registerData);
       }
 
-      toast.success("Đăng ký thành công! Chuyển đến trang đăng nhập...", {
+      toast.success("Registration successful! Redirecting to login page...", {
         position: "top-right",
         autoClose: 1500,
       });
@@ -151,7 +151,7 @@ const RegisterPage = () => {
       console.error("Registration failed:", err);
       toast.error(
         err.response?.data?.message ||
-          "Đăng ký không thành công vui lòng thử lại!."
+          "Registration failed, please try again!"
       );
     }
   };
@@ -516,7 +516,7 @@ const RegisterPage = () => {
                     className="w-full"
                   />
                   <p className="text-sm text-slate-500 mt-1">
-                    Vui lòng chụp rõ ảnh, thấy rõ thông tin trên thẻ.
+                    Please ensure the image is clear and all information on the card is visible.
                   </p>
                   {errors.studentCardImage && (
                     <p className="text-red-500 text-sm mt-1">

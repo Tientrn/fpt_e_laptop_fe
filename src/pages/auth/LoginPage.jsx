@@ -29,7 +29,7 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (location.state?.showRegisterSuccess) {
-      toast.success("Đăng ký thành công! Vui lòng đăng nhập.", {
+      toast.success("Registration successful! Please log in.", {
         position: "top-right",
         autoClose: 1500,
         hideProgressBar: false,
@@ -76,7 +76,7 @@ export default function LoginPage() {
       if (response.code === 200 && response.data) {
         const token = response.data.token;
         if (!token) {
-          throw new Error("Token không tồn tại trong response");
+          throw new Error("Token does not exist in response");
         }
 
         const decodedToken = jwtDecode(token);
@@ -94,7 +94,7 @@ export default function LoginPage() {
 
         const userRoleId = roleMapping[userRole];
 
-        // Lưu thông tin vào localStorage
+        // Save information to localStorage
         localStorage.setItem("token", token);
         localStorage.setItem(
           "user",
@@ -108,9 +108,9 @@ export default function LoginPage() {
         );
 
         setError("");
-        toast.success("Đăng nhập thành công!");
+        toast.success("Login successful!");
 
-        // Nếu là Shop role, kiểm tra thông tin shop
+        // If Shop role, check shop information
         if (userRoleId === 6) {
           try {
             const shopsResponse = await shopApi.getAllShops();
@@ -119,20 +119,20 @@ export default function LoginPage() {
             );
 
             if (!existingShop) {
-              // Nếu chưa có thông tin shop, chuyển đến dashboard và hiện modal
+              // If no shop information, redirect to dashboard and show modal
               navigate("/shop/create-profile");
               setShowShopModal(true);
             } else {
-              // Nếu đã có thông tin shop, lưu shopId và chuyển đến dashboard
+              // If shop information exists, save shopId and redirect to dashboard
               localStorage.setItem("shopId", existingShop.shopId);
               navigate("/shop/profile");
             }
           } catch (error) {
             console.error("Error checking shop info:", error);
-            toast.error("Có lỗi xảy ra khi kiểm tra thông tin shop");
+            toast.error("An error occurred while checking shop information");
           }
         } else {
-          // Xử lý redirect cho các role khác
+          // Handle redirect for other roles
           setTimeout(() => {
             switch (userRoleId) {
               case 1:
@@ -159,12 +159,12 @@ export default function LoginPage() {
       }
     } catch (err) {
       console.error("Login Error:", err);
-      setError(err.message || "Đăng nhập thất bại");
-      toast.error(err.message || "Đăng nhập thất bại");
+      setError(err.message || "Login failed");
+      toast.error(err.message || "Login failed");
     }
   };
 
-  // Thêm hàm xử lý form shop
+  // Add shop form handling function
   const handleShopInputChange = (e) => {
     const { name, value } = e.target;
     setShopFormData((prev) => ({
@@ -173,7 +173,7 @@ export default function LoginPage() {
     }));
   };
 
-  // Hàm submit form shop
+  // Shop form submit function
   const handleShopSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -189,18 +189,18 @@ export default function LoginPage() {
         const createdShopId = response.data.shopId;
         localStorage.setItem("shopId", createdShopId);
         setShowShopModal(false);
-        toast.success("Tạo thông tin shop thành công!");
-        window.location.reload(); // Reload để cập nhật UI
+        toast.success("Shop information created successfully!");
+        window.location.reload(); // Reload to update UI
       } else {
-        throw new Error(response.message || "Tạo shop thất bại");
+        throw new Error(response.message || "Shop creation failed");
       }
     } catch (error) {
       console.error("Error creating shop:", error);
-      toast.error(error.message || "Không thể tạo thông tin shop");
+      toast.error(error.message || "Unable to create shop information");
     }
   };
 
-  // Animation variants cho các thành phần
+  // Animation variants for components
   const containerVariants = {
     hidden: { opacity: 0, y: 50 },
     visible: {
@@ -255,7 +255,7 @@ export default function LoginPage() {
               Sign in to share and borrow laptops effortlessly.
             </p>
 
-            {/* Thêm nút Back to Home */}
+            {/* Add Back to Home button */}
             <motion.button
               onClick={() => navigate("/")}
               className="mt-6 px-6 py-2 bg-amber-600 text-white rounded-full flex items-center gap-2 hover:bg-amber-700 transition-colors shadow-md"
@@ -274,7 +274,7 @@ export default function LoginPage() {
             </motion.button>
           </motion.div>
 
-          {/* Giữ nguyên phần animated background circles */}
+          {/* Keep animated background circles */}
           <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
             <motion.div
               className="w-32 h-32 bg-amber-200 rounded-full absolute -top-16 -left-16 opacity-50"
@@ -416,16 +416,16 @@ export default function LoginPage() {
       </motion.div>
       <ToastContainer />
 
-      {/* Thêm Modal đăng ký shop */}
+      {/* Add Shop registration Modal */}
       <Modal
         isOpen={showShopModal}
-        onClose={() => {}} // Không cho phép đóng modal
-        title="Tạo thông tin Shop"
+        onClose={() => {}} // Do not allow closing modal
+        title="Create Shop Information"
       >
         <form onSubmit={handleShopSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700">
-              Tên Shop
+              Shop Name
             </label>
             <input
               type="text"
@@ -439,7 +439,7 @@ export default function LoginPage() {
 
           <div>
             <label className="block text-sm font-medium text-gray-700">
-              Địa chỉ Shop
+              Shop Address
             </label>
             <input
               type="text"
@@ -453,7 +453,7 @@ export default function LoginPage() {
 
           <div>
             <label className="block text-sm font-medium text-gray-700">
-              Số điện thoại
+              Phone Number
             </label>
             <input
               type="text"
@@ -467,7 +467,7 @@ export default function LoginPage() {
 
           <div>
             <label className="block text-sm font-medium text-gray-700">
-              Giấy phép kinh doanh
+              Business License
             </label>
             <input
               type="text"
@@ -481,7 +481,7 @@ export default function LoginPage() {
 
           <div>
             <label className="block text-sm font-medium text-gray-700">
-              Tên ngân hàng
+              Bank Name
             </label>
             <input
               type="text"
@@ -495,7 +495,7 @@ export default function LoginPage() {
 
           <div>
             <label className="block text-sm font-medium text-gray-700">
-              Số tài khoản
+              Bank Account Number
             </label>
             <input
               type="text"
@@ -512,7 +512,7 @@ export default function LoginPage() {
               type="submit"
               className="inline-flex justify-center w-full rounded-md border border-transparent shadow-sm px-4 py-2 bg-amber-600 text-base font-medium text-white hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 sm:text-sm"
             >
-              Tạo Shop
+              Create Shop
             </button>
           </div>
         </form>

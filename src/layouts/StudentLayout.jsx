@@ -38,10 +38,10 @@ const StudentLayout = () => {
     try {
       localStorage.removeItem("token");
       localStorage.removeItem("user");
-      toast.success("Đăng xuất thành công");
+      toast.success("Logout successfully");
       navigate("/login");
     } catch (error) {
-      toast.error("Lỗi khi đăng xuất");
+      toast.error("Logout error");
       console.error("Logout error:", error);
     }
   };
@@ -165,14 +165,14 @@ const StudentLayout = () => {
               className="flex items-center px-3 py-2 mr-4 text-sm text-black border border-gray-200 rounded hover:bg-amber-50 transition-colors duration-200"
             >
               <FaHome className="w-4 h-4 mr-2" />
-              Trang chủ
+              Home
             </button>
             <button
               onClick={handleLogout}
               className="flex items-center px-3 py-2 text-sm text-black border border-gray-200 rounded hover:bg-amber-50 transition-colors duration-200"
             >
               <FaSignOutAlt className="w-4 h-4 mr-2" />
-              Đăng xuất
+              Logout
             </button>
           </div>
         </header>
