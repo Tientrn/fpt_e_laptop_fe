@@ -23,11 +23,6 @@ const StaffLayout = () => {
 
   const borrowSubItems = [
     {
-      path: "/staff/borrow-requests",
-      name: "Borrow Requests",
-      icon: <FaClipboardList className="w-4 h-4" />,
-    },
-    {
       path: "/staff/contracts",
       name: "Borrow Contracts",
       icon: <FaFileContract className="w-4 h-4" />,

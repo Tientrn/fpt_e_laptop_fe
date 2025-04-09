@@ -50,13 +50,16 @@ import OrderDetailStudent from "./pages/student/OrderDetailStudent";
   /* Staff */
 }
 import BorrowHistory from "./pages/staff/BorrowHistory";
-import BorrowRequest from "./pages/staff/BorrowRequest";
 import Statistics from "./pages/staff/Statistics";
 import ContractsPage from "./pages/staff/ContractsPage";
 import DepositPage from "./pages/staff/DepositPage";
 import DonateItem from "./pages/staff/DonateItem";
 import CreateDonateItem from "./pages/staff/CreateDonateItem";
 import ShopManager from "./pages/staff/ShopManager";
+{
+  /* Manager */
+}
+import BorrowRequest from "./pages/manager/BorrowRequest";
 {
   /* Sponsor */
 }
@@ -177,16 +180,22 @@ const App = () => {
         </Route>
 
         {/* Managerment Routes */}
-        <Route path="/manager" element={<ManagerLayout />}></Route>
+        <Route path="/manager" element={<ManagerLayout />}>
+          <Route
+            index
+            element={<Navigate to="/manager/borrow-requests" replace />}
+          />
+          <Route path="borrow-requests" element={<BorrowRequest />} />
+
+        </Route>
 
         {/* Staff Routes */}
         <Route path="/staff" element={<StaffLayout />}>
           <Route
             index
-            element={<Navigate to="/staff/borrow-requests" replace />}
+            element={<Navigate to="/staff" replace />}
           />
           <Route path="donate-items" element={<DonateItem />} />
-          <Route path="borrow-requests" element={<BorrowRequest />} />
           <Route path="borrow-history" element={<BorrowHistory />} />
           <Route path="statistics" element={<Statistics />} />
           <Route path="contracts" element={<ContractsPage />} />

@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate, Outlet } from "react-router-dom";
 import {
   FaUsersCog,
   FaClipboardCheck,
+  FaClipboardList,
   FaChartPie,
   FaSignOutAlt,
   FaBars,
@@ -22,6 +23,11 @@ const ManagerLayout = () => {
       path: "/manager/overview",
       name: "Overview",
       icon: <FaChartPie className="w-5 h-5" />,
+    },
+    {
+      path: "/manager/borrow-requests",
+      name: "Borrow Requests",
+      icon: <FaClipboardList className="w-4 h-4" />,
     },
     {
       path: "/manager/staff-management",
