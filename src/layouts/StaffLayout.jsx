@@ -2,13 +2,11 @@ import React, { useState } from "react";
 import { Link, useLocation, useNavigate, Outlet } from "react-router-dom";
 import {
   FaHistory,
-  FaClipboardList,
   FaChartLine,
   FaSignOutAlt,
   FaBars,
   FaFileContract,
   FaMoneyBillWave,
-  FaPlusCircle,
   FaStore,
   FaHandHoldingHeart,
 } from "react-icons/fa";
@@ -44,8 +42,13 @@ const StaffLayout = () => {
 
   const menuItems = [
     {
-      path: "/staff/shop",
-      name: "Shop Management",
+      path: "/staff/items",
+      name: "Item Management",
+      icon: <FaStore className="w-5 h-5" />,
+    },
+    {
+      path: "/staff/products",
+      name: "Product Management",
       icon: <FaStore className="w-5 h-5" />,
     },
     {

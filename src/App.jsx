@@ -21,11 +21,9 @@ import HomePage from "./pages/homepage/HomePage";
 import LoginPage from "./pages/auth/LoginPage";
 import RegisterPage from "./pages/auth/RegisterPage";
 import AnalyticPage from "./pages/admin/AnalyticPage";
-import ContentPage from "./pages/admin/ContentPage";
+import ShopManager from "./pages/admin/ShopManager";
 import ReportPage from "./pages/admin/ReportPage";
-{
-  /* Admin */
-}
+import AdminPage from "./pages/admin/AdminPage";
 {
   /* Shop */
 }
@@ -55,7 +53,8 @@ import ContractsPage from "./pages/staff/ContractsPage";
 import DepositPage from "./pages/staff/DepositPage";
 import DonateItem from "./pages/staff/DonateItem";
 import CreateDonateItem from "./pages/staff/CreateDonateItem";
-import ShopManager from "./pages/staff/ShopManager";
+import ItemManagement from "./pages/staff/ItemManagement";
+import ProductManagement from "./pages/staff/ProductManagement";
 {
   /* Manager */
 }
@@ -199,7 +198,8 @@ const App = () => {
           <Route path="borrow-history" element={<BorrowHistory />} />
           <Route path="statistics" element={<Statistics />} />
           <Route path="contracts" element={<ContractsPage />} />
-          <Route path="shop" element={<ShopManager />} />
+          <Route path="items" element={<ItemManagement />} />
+          <Route path="products" element={<ProductManagement />} />
           <Route path="create-itemdonate" element={<CreateDonateItem />} />
           <Route path="deposits/create/:contractId" element={<DepositPage />} />
         </Route>
@@ -232,7 +232,17 @@ const App = () => {
           element={
             // <PrivateRoute>
             <AdminLayout>
-              <Navigate to="/admin/analytics" replace />
+              <Navigate to="/admin/accounts" replace />
+            </AdminLayout>
+            // </PrivateRoute>
+          }
+        />
+        <Route
+          path="/admin/accounts"
+          element={
+            // <PrivateRoute>
+            <AdminLayout>
+              <AdminPage />
             </AdminLayout>
             // </PrivateRoute>
           }
@@ -247,13 +257,12 @@ const App = () => {
             // </PrivateRoute>
           }
         />
-
         <Route
-          path="/admin/content"
+          path="/admin/shopmanagement"
           element={
             // <PrivateRoute>
             <AdminLayout>
-              <ContentPage />
+              <ShopManager />
             </AdminLayout>
             // </PrivateRoute>
           }

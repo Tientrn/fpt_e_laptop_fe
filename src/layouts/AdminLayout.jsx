@@ -17,19 +17,19 @@ const AdminLayout = ({ children }) => {
 
   const menuItems = [
     {
-      path: '/admin/analytics',
-      name: 'Analytics',
-      icon: <FaChartLine className="w-5 h-5" />
-    },
-    {
       path: '/admin/accounts',
       name: 'Account',
       icon: <FaUsers className="w-5 h-5" />
     },
     {
-      path: '/admin/content',
-      name: 'Content',
+      path: '/admin/shopmanagement',
+      name: 'Shop ',
       icon: <FaFileAlt className="w-5 h-5" />
+    },
+    {
+      path: '/admin/analytics',
+      name: 'Analytics',
+      icon: <FaChartLine className="w-5 h-5" />
     },
     {
       path: '/admin/reports',
