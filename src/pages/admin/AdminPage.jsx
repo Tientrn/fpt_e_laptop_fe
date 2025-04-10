@@ -54,27 +54,27 @@ export default function AdminPage() {
           onChange={(e) => setSearchTerm(e.target.value)}
         />
       </div>
-      <div className="overflow-auto shadow-md rounded-lg">
-        <table className="min-w-full table-auto bg-white">
-          <thead>
-            <tr className="bg-gradient-to-r from-gray-500 to-green-500 text-white">
+          <div className="overflow-auto shadow-md rounded-lg">
+            <table className="min-w-full table-auto bg-white">
+              <thead>
+                <tr className="bg-gradient-to-r from-gray-500 to-green-500 text-white">
               <th className="px-6 py-4 text-left font-semibold text-sm tracking-wide">#</th>
               <th className="px-6 py-4 text-left font-semibold text-sm tracking-wide">Full Name</th>
               <th className="px-6 py-4 text-left font-semibold text-sm tracking-wide">Email</th>
               <th className="px-6 py-4 text-left font-semibold text-sm tracking-wide">Phone Number</th>
               <th className="px-6 py-4 text-left font-semibold text-sm tracking-wide">Gender</th>
               <th className="px-6 py-4 text-left font-semibold text-sm tracking-wide">Role</th>
-            </tr>
-          </thead>
-          <tbody>
+                </tr>
+              </thead>
+              <tbody>
             {filteredUsers.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((user, index) => (
-              <tr
+                  <tr
                 key={user.id}
-                className={`${
-                  index % 2 === 0 ? "bg-gray-50" : "bg-white"
-                } hover:bg-blue-50`}
-              >
-                <td className="px-6 py-4 text-gray-700 font-medium">
+                    className={`${
+                      index % 2 === 0 ? "bg-gray-50" : "bg-white"
+                    } hover:bg-blue-50`}
+                  >
+                    <td className="px-6 py-4 text-gray-700 font-medium">
                   {page * rowsPerPage + index + 1}
                 </td>
                 <td className="px-6 py-4 text-gray-700 font-medium">
@@ -88,14 +88,14 @@ export default function AdminPage() {
                 </td>
                 <td className="px-6 py-4 text-gray-700 font-medium">
                   {user.gender}
-                </td>
+                    </td>
                 <td className="px-6 py-4 text-gray-700 font-medium">
                   {user.roleName}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
         <TablePagination
           rowsPerPageOptions={[5, 10, 25]}
           component="div"

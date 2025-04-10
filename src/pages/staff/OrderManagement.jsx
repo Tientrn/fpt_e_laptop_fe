@@ -132,12 +132,9 @@ const OrderManagement = () => {
                   {order.status}
                 </td>
                 <td className="px-6 py-3 text-sm">
-                  <button className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-700 transition-colors">
-                    Detail
-                  </button>
                   <button
                     onClick={() => handleDeleteClick(order)}
-                    className="ml-2 px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-700 transition-colors"
+                    className=" px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-700 transition-colors"
                   >
                     Delete
                   </button>
@@ -205,7 +202,7 @@ const OrderManagement = () => {
           <div className="bg-white p-6 rounded-lg max-w-md w-full">
             <h3 className="text-lg font-bold mb-4">Confirm Delete</h3>
             <p className="mb-6">
-              Are you sure you want to delete order #{orderToDelete?.orderId}?
+              Are you sure you want to delete order {orderToDelete?.orderId}?
               This action cannot be undone.
             </p>
             <div className="flex justify-end space-x-3">
