@@ -218,7 +218,7 @@ const BorrowRequest = () => {
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-            <tr className="bg-gradient-to-r from-gray-500 to-green-500 text-white">
+              <tr className="bg-gradient-to-r from-gray-500 to-green-500 text-white">
                 <th className="px-6 py-3 text-left text-md font-semibold text-white">
                   ID
                 </th>

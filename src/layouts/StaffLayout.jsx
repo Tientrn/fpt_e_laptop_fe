@@ -52,10 +52,15 @@ const StaffLayout = () => {
       icon: <FaStore className="w-5 h-5" />,
     },
     {
-      path: "/staff/statistics",
-      name: "Statistics",
-      icon: <FaChartLine className="w-5 h-5" />,
+      path: "/staff/orders",
+      name: "Order Management",
+      icon: <FaStore className="w-5 h-5" />,
     },
+    // {
+    //   path: "/staff/statistics",
+    //   name: "Statistics",
+    //   icon: <FaChartLine className="w-5 h-5" />,
+    // },
   ];
 
   const handleLogout = () => {

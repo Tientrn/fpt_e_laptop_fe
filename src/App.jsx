@@ -55,6 +55,7 @@ import DonateItem from "./pages/staff/DonateItem";
 import CreateDonateItem from "./pages/staff/CreateDonateItem";
 import ItemManagement from "./pages/staff/ItemManagement";
 import ProductManagement from "./pages/staff/ProductManagement";
+import OrderManagement from "./pages/staff/OrderManagement";
 {
   /* Manager */
 }
@@ -200,6 +201,7 @@ const App = () => {
           <Route path="contracts" element={<ContractsPage />} />
           <Route path="items" element={<ItemManagement />} />
           <Route path="products" element={<ProductManagement />} />
+          <Route path="orders" element={<OrderManagement />} />
           <Route path="create-itemdonate" element={<CreateDonateItem />} />
           <Route path="deposits/create/:contractId" element={<DepositPage />} />
         </Route>
