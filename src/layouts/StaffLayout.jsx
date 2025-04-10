@@ -9,6 +9,9 @@ import {
   FaMoneyBillWave,
   FaStore,
   FaHandHoldingHeart,
+  FaLaptop,
+  FaBoxOpen,
+  FaShoppingCart
 } from "react-icons/fa";
 import { toast } from "react-toastify";
 
@@ -44,17 +47,17 @@ const StaffLayout = () => {
     {
       path: "/staff/items",
       name: "Item Management",
-      icon: <FaStore className="w-5 h-5" />,
+      icon: <FaLaptop className="w-5 h-5" />,
     },
     {
       path: "/staff/products",
       name: "Product Management",
-      icon: <FaStore className="w-5 h-5" />,
+      icon: <FaBoxOpen className="w-5 h-5" />,
     },
     {
       path: "/staff/orders",
       name: "Order Management",
-      icon: <FaStore className="w-5 h-5" />,
+      icon: <FaShoppingCart className="w-5 h-5" />,
     },
     // {
     //   path: "/staff/statistics",

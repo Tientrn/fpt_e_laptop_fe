@@ -21,7 +21,7 @@ const productApi = {
   updateProduct: (id, data) => {
     return axiosClient.put(`/products/${id}`, data, {
       headers: {
-        "Content-Type": "application/json",
+        "Content-Type": "multipart/form-data",
       },
     });
   },

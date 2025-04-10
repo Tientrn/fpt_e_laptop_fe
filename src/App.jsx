@@ -33,7 +33,7 @@ import AddProduct from "./components/shop/dashboardshop/AddProduct";
 import ShopAnalytics from "./components/shop/dashboardshop/ShopAnalytics";
 import CreateShopInfo from "./components/shop/dashboardshop/CreateShopInfo";
 import ShopProfile from "./components/shop/dashboardshop/ShopProfile";
-
+import EditProduct from "./components/shop/dashboardshop/EditProduct";
 {
   /* Student */
 }
@@ -164,6 +164,7 @@ const App = () => {
         {/* Shop Routes */}
         <Route path="/shop" element={<ShopLayout />}>
           <Route path="products" element={<MyProducts />} />
+          <Route path="edit-product/:productId" element={<EditProduct />} />
           <Route path="orders" element={<ShopOrders />} />
           <Route path="add-product" element={<AddProduct />} />
           <Route path="analytics" element={<ShopAnalytics />} />
