@@ -22,12 +22,20 @@ const donateitemsApi = {
 
   // Update donate item
   updateDonateItem: (id, data) => {
-    return axiosClient.put(`/donate-items/${id}`, data);
+    return axiosClient.put(`/donate-items/${id}`, data, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
   },
 
   // Delete donate item
   deleteDonateItem: (id) => {
-    return axiosClient.delete(`/donate-items/${id}`);
+    return axiosClient.delete(`/donate-items/${id}`, {
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
   },
 };
 

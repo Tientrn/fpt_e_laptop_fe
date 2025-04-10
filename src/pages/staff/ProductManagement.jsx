@@ -9,6 +9,8 @@ const ProductManagement = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [productToDelete, setProductToDelete] = useState(null);
 
   useEffect(() => {
     fetchProducts();
@@ -31,38 +33,32 @@ const ProductManagement = () => {
     }
   };
 
-  const handleDeleteConfirm = async (productId) => {
-    try {
-      await productApi.deleteProduct(productId);
-      toast.success("Product deleted successfully!");
-      setProducts(products.filter(product => product.productId !== productId));
-    } catch (error) {
-      console.error("Error deleting product:", error);
-      toast.error("Failed to delete product");
-    }
+  const handleDeleteClick = (product) => {
+    setProductToDelete(product);
+    setIsDeleteModalOpen(true);
   };
 
-  const handleDelete = (productId) => {
-    toast.info(
-      <div className="text-center">
-        <p className="mb-2">Are you sure you want to delete this product?</p>
-        <div className="flex justify-center">
-          <button 
-            onClick={() => handleDeleteConfirm(productId)} 
-            className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md mr-2 transition duration-300"
-          >
-            Confirm
-          </button>
-          <button 
-            onClick={() => toast.dismiss()} 
-            className="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-md transition duration-300"
-          >
-            Cancel
-          </button>
-        </div>
-      </div>,
-      { autoClose: false, closeOnClick: false }
-    );
+  const handleConfirmDelete = async () => {
+    if (!productToDelete) return;
+
+    try {
+      setLoading(true);
+      const response = await productApi.deleteProduct(productToDelete.productId);
+
+      if (response && response.isSuccess) {
+        toast.success("Product deleted successfully!");
+        setProducts(products.filter(product => product.productId !== productToDelete.productId));
+      } else {
+        toast.error(response?.message || "Failed to delete product");
+      }
+    } catch (error) {
+      console.error("Error deleting product:", error);
+      toast.error("Failed to delete product. Please try again.");
+    } finally {
+      setLoading(false);
+      setIsDeleteModalOpen(false);
+      setProductToDelete(null);
+    }
   };
 
   const handleViewDetail = (product) => {
@@ -128,7 +124,7 @@ const ProductManagement = () => {
                     <FaEye className="mr-2" /> Details
                   </button>
                   <button 
-                    onClick={() => handleDelete(product.productId)} 
+                    onClick={() => handleDeleteClick(product)} 
                     className="flex items-center bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded transition duration-300"
                   >
                     <FaTrash className="mr-2" /> Delete
@@ -184,6 +180,33 @@ const ProductManagement = () => {
                   Close
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {isDeleteModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg max-w-md w-full">
+            <h3 className="text-lg font-bold mb-4">Confirm Delete</h3>
+            <p className="mb-6">
+              Are you sure you want to delete product "{productToDelete?.productName}"?
+              This action cannot be undone.
+            </p>
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => setIsDeleteModalOpen(false)}
+                className="px-4 py-2 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmDelete}
+                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
+              >
+                Delete
+              </button>
             </div>
           </div>
         </div>

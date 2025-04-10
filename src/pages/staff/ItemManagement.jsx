@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
 import donateitemsApi from "../../api/donateitemsApi";
 import { toast } from "react-toastify";
-import { FaSearch, FaTrash, FaEye, FaLaptop } from "react-icons/fa";
+import { FaSearch, FaTrash, FaEye, FaLaptop, FaEdit } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
 
 const ItemManagement = () => {
   const [items, setItems] = useState([]);
@@ -9,6 +10,9 @@ const ItemManagement = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedItem, setSelectedItem] = useState(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchItems();
@@ -31,38 +35,32 @@ const ItemManagement = () => {
     }
   };
 
-  const handleDeleteConfirm = async (itemId) => {
-    try {
-      await donateitemsApi.deleteDonateItem(itemId);
-      toast.success("Item deleted successfully!");
-      setItems(items.filter(item => item.itemId !== itemId));
-    } catch (error) {
-      console.error("Error deleting item:", error);
-      toast.error("Failed to delete item");
-    }
+  const handleDeleteClick = (item) => {
+    setItemToDelete(item);
+    setIsDeleteModalOpen(true);
   };
 
-  const handleDelete = (itemId) => {
-    toast.info(
-      <div className="text-center">
-        <p className="mb-2">Are you sure you want to delete this item?</p>
-        <div className="flex justify-center">
-          <button 
-            onClick={() => handleDeleteConfirm(itemId)} 
-            className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md mr-2 transition duration-300"
-          >
-            Confirm
-          </button>
-          <button 
-            onClick={() => toast.dismiss()} 
-            className="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-md transition duration-300"
-          >
-            Cancel
-          </button>
-        </div>
-      </div>,
-      { autoClose: false, closeOnClick: false }
-    );
+  const handleConfirmDelete = async () => {
+    if (!itemToDelete) return;
+
+    try {
+      setLoading(true);
+      const response = await donateitemsApi.deleteDonateItem(itemToDelete.itemId);
+
+      if (response && response.isSuccess) {
+        toast.success("Item deleted successfully!");
+        setItems(items.filter(item => item.itemId !== itemToDelete.itemId));
+      } else {
+        toast.error(response?.message || "Failed to delete item");
+      }
+    } catch (error) {
+      console.error("Error deleting item:", error);
+      toast.error("Failed to delete item. Please try again.");
+    } finally {
+      setLoading(false);
+      setIsDeleteModalOpen(false);
+      setItemToDelete(null);
+    }
   };
 
   const handleViewDetail = (item) => {
@@ -128,7 +126,13 @@ const ItemManagement = () => {
                     <FaEye className="mr-2" /> Details
                   </button>
                   <button 
-                    onClick={() => handleDelete(item.itemId)} 
+                    onClick={() => navigate(`/staff/edit-item/${item.itemId}`)} 
+                    className="flex items-center bg-green-500 hover:bg-green-600 text-white px-3 py-2 rounded transition duration-300 mx-2"
+                  >
+                    <FaEdit className="mr-2" /> Edit
+                  </button>
+                  <button 
+                    onClick={() => handleDeleteClick(item)} 
                     className="flex items-center bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded transition duration-300"
                   >
                     <FaTrash className="mr-2" /> Delete
@@ -185,6 +189,33 @@ const ItemManagement = () => {
                   Close
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {isDeleteModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg max-w-md w-full">
+            <h3 className="text-lg font-bold mb-4">Confirm Delete</h3>
+            <p className="mb-6">
+              Are you sure you want to delete item {itemToDelete?.itemName}?
+              This action cannot be undone.
+            </p>
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => setIsDeleteModalOpen(false)}
+                className="px-4 py-2 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmDelete}
+                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
+              >
+                Delete
+              </button>
             </div>
           </div>
         </div>

@@ -52,6 +52,7 @@ import Statistics from "./pages/staff/Statistics";
 import ContractsPage from "./pages/staff/ContractsPage";
 import DepositPage from "./pages/staff/DepositPage";
 import DonateItem from "./pages/staff/DonateItem";
+import EditDonateItem from "./pages/staff/EditDonateItem";
 import CreateDonateItem from "./pages/staff/CreateDonateItem";
 import ItemManagement from "./pages/staff/ItemManagement";
 import ProductManagement from "./pages/staff/ProductManagement";
@@ -197,6 +198,7 @@ const App = () => {
             element={<Navigate to="/staff" replace />}
           />
           <Route path="donate-items" element={<DonateItem />} />
+          <Route path="edit-item/:itemId" element={<EditDonateItem />} />
           <Route path="borrow-history" element={<BorrowHistory />} />
           <Route path="statistics" element={<Statistics />} />
           <Route path="contracts" element={<ContractsPage />} />

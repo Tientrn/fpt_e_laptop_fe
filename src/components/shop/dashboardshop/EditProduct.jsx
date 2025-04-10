@@ -89,7 +89,7 @@ const EditProduct = () => {
       const response = await productApi.updateProduct(product.productId, formData);
       if (response && response.isSuccess) {
         toast.success("Product updated successfully!");
-        navigate("/shop/my-products");
+        navigate("/shop/products");
       } else {
         toast.error(response?.message || "Failed to update product");
       }
