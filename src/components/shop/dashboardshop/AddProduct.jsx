@@ -6,6 +6,7 @@ import { jwtDecode } from "jwt-decode";
 import productimageApi from "../../../api/productimageApi";
 
 const AddProduct = () => {
+  const [userId, setUserId] = useState(null);
   const [formData, setFormData] = useState({
     productName: "",
     quantity: "",
@@ -48,17 +49,23 @@ const AddProduct = () => {
     setExtraImages([...e.target.files]);
   };
 
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      try {
+        const decoded = jwtDecode(token);
+        const id = Number(decoded.userId);
+        setUserId(id);
+      } catch (error) {
+        console.error("❌ Token decode failed:", error);
+      }
+    }
+  }, []);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const token = localStorage.getItem("token");
-    const decoded = jwtDecode(token);
-    const userId = Number(
-      decoded[
-        "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"
-      ]
-    );
-    const shopId = parseInt(localStorage.getItem("shopId"));
+    const shopId = parseInt(userId);
 
     const form = new FormData();
     form.append("ProductName", formData.productName.trim());

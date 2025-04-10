@@ -5,6 +5,7 @@ import HandshakeIcon from "@mui/icons-material/Handshake";
 import PersonIcon from "@mui/icons-material/Person";
 import { jwtDecode } from "jwt-decode";
 import useCartStore from "../../store/useCartStore";
+import { Link } from "react-router-dom";
 
 function HeaderHomePage() {
   const [nav, setNav] = useState(false);
