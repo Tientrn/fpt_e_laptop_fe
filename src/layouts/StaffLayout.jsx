@@ -2,15 +2,16 @@ import React, { useState } from "react";
 import { Link, useLocation, useNavigate, Outlet } from "react-router-dom";
 import {
   FaHistory,
-  FaClipboardList,
   FaChartLine,
   FaSignOutAlt,
   FaBars,
   FaFileContract,
   FaMoneyBillWave,
-  FaPlusCircle,
   FaStore,
   FaHandHoldingHeart,
+  FaLaptop,
+  FaBoxOpen,
+  FaShoppingCart
 } from "react-icons/fa";
 import { toast } from "react-toastify";
 
@@ -44,15 +45,25 @@ const StaffLayout = () => {
 
   const menuItems = [
     {
-      path: "/staff/shop",
-      name: "Shop Management",
-      icon: <FaStore className="w-5 h-5" />,
+      path: "/staff/items",
+      name: "Item Management",
+      icon: <FaLaptop className="w-5 h-5" />,
     },
     {
-      path: "/staff/statistics",
-      name: "Statistics",
-      icon: <FaChartLine className="w-5 h-5" />,
+      path: "/staff/products",
+      name: "Product Management",
+      icon: <FaBoxOpen className="w-5 h-5" />,
     },
+    {
+      path: "/staff/orders",
+      name: "Order Management",
+      icon: <FaShoppingCart className="w-5 h-5" />,
+    },
+    // {
+    //   path: "/staff/statistics",
+    //   name: "Statistics",
+    //   icon: <FaChartLine className="w-5 h-5" />,
+    // },
   ];
 
   const handleLogout = () => {

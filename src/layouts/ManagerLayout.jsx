@@ -29,31 +29,31 @@ const ManagerLayout = () => {
       name: "Borrow Requests",
       icon: <FaClipboardList className="w-4 h-4" />,
     },
-    {
-      path: "/manager/staff-management",
-      name: "Staff Management",
-      icon: <FaUsersCog className="w-5 h-5" />,
-    },
-    {
-      path: "/manager/organization",
-      name: "Organization",
-      icon: <FaBuilding className="w-5 h-5" />,
-    },
-    {
-      path: "/manager/approvals",
-      name: "Approvals",
-      icon: <FaClipboardCheck className="w-5 h-5" />,
-    },
-    {
-      path: "/manager/create-user",
-      name: "Create User",
-      icon: <FaPlus className="w-5 h-5" />,
-    },
-    {
-      path: "/manager/roles",
-      name: "Roles & Access",
-      icon: <FaUserShield className="w-5 h-5" />,
-    },
+    // {
+    //   path: "/manager/staff-management",
+    //   name: "Staff Management",
+    //   icon: <FaUsersCog className="w-5 h-5" />,
+    // },
+    // {
+    //   path: "/manager/organization",
+    //   name: "Organization",
+    //   icon: <FaBuilding className="w-5 h-5" />,
+    // },
+    // {
+    //   path: "/manager/approvals",
+    //   name: "Approvals",
+    //   icon: <FaClipboardCheck className="w-5 h-5" />,
+    // },
+    // {
+    //   path: "/manager/create-user",
+    //   name: "Create User",
+    //   icon: <FaPlus className="w-5 h-5" />,
+    // },
+    // {
+    //   path: "/manager/roles",
+    //   name: "Roles & Access",
+    //   icon: <FaUserShield className="w-5 h-5" />,
+    // },
   ];
 
   const handleLogout = () => {

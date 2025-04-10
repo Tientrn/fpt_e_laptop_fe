@@ -136,8 +136,8 @@ const CreateDonateItem = () => {
     <div className="p-6 max-w-5xl mx-auto">
       <div className="mb-6">
         <h1 className="text-3xl text-center font-bold text-gray-900">
-          Create Donate Item
-        </h1>
+        Create Donate Item
+      </h1>
       </div>
 
       <div className="bg-white rounded-lg shadow-sm border border-gray-200">
@@ -253,12 +253,12 @@ const CreateDonateItem = () => {
                     className="relative cursor-pointer bg-white rounded-md font-medium text-indigo-600 hover:text-indigo-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-indigo-500"
                   >
                     <span>Upload a file</span>
-                    <input
+            <input
                       id="itemImage"
                       name="itemImage"
-                      type="file"
-                      accept="image/*"
-                      onChange={handleImageUpload}
+              type="file"
+              accept="image/*"
+              onChange={handleImageUpload}
                       className="sr-only"
                     />
                   </label>
@@ -278,7 +278,7 @@ const CreateDonateItem = () => {
                 />
               </div>
             )}
-          </div>
+        </div>
 
           {/* Form Actions */}
           <div className="mt-6 flex justify-end space-x-3">
@@ -289,14 +289,14 @@ const CreateDonateItem = () => {
             >
               Cancel
             </button>
-            <button
-              type="submit"
+          <button
+            type="submit"
               className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-            >
+          >
               Create Item
-            </button>
-          </div>
-        </form>
+          </button>
+        </div>
+      </form>
       </div>
       <ToastContainer />
     </div>

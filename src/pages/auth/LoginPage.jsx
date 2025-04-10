@@ -57,7 +57,7 @@ export default function LoginPage() {
         if (user.roleId === 1) {
           navigate("/dashboard");
         } else if (user.roleId === 4) {
-          navigate("/staff");
+          navigate("/staff/items");
         } else {
           navigate("/");
         }
@@ -146,7 +146,7 @@ export default function LoginPage() {
                 navigate("/sponsor");
                 break;
               case 4:
-                navigate("/staff");
+                navigate("/staff/items");
                 break;
               case 5:
                 navigate("/manager");

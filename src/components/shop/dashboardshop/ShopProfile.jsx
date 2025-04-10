@@ -115,7 +115,7 @@ const ShopProfile = () => {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-4">
-      <h1 className="text-3xl font-bold mb-8 text-amber-600 text-center">
+      <h1 className="text-3xl font-bold mb-4 text-amber-600 text-center">
         Shop Profile
       </h1>
 
@@ -130,7 +130,7 @@ const ShopProfile = () => {
             />
             <span 
               className={`absolute bottom-2 right-2 w-4 h-4 rounded-full ${
-                shop.status === "Active" ? "bg-red-500" : "bg-green-500"
+                shop.status === "Active" ? "bg-green-500" : "bg-red-500"
               } border-2 border-white`}
             />
           </div>
@@ -210,8 +210,8 @@ const ShopProfile = () => {
                     <span
                       className={`inline-block px-3 py-1 text-sm font-medium rounded-full ${
                         shop.status === "Active"
-                          ? "bg-green-100 text-red-700"
-                          : "bg-red-100 text-green-700"
+                          ? "bg-green-100 text-green-700"
+                          : "bg-red-100 text-red-700"
                       }`}
                     >
                       {shop.status}

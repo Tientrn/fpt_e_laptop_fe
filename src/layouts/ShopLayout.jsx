@@ -62,12 +62,12 @@ const ShopLayout = () => {
         icon: <FaBoxOpen className="w-5 h-5" />,
         requiresShop: true
       },
-      {
-        path: "/shop/orders",
-        name: "Orders",
-        icon: <FaClipboardCheck className="w-5 h-5" />,
-        requiresShop: true
-      },
+      // {
+      //   path: "/shop/orders",
+      //   name: "Orders",
+      //   icon: <FaClipboardCheck className="w-5 h-5" />,
+      //   requiresShop: true
+      // },
       {
         path: "/shop/add-product",
         name: "Add Product",

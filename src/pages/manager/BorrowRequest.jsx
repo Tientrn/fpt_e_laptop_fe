@@ -218,29 +218,29 @@ const BorrowRequest = () => {
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="bg-gray-50">
-                <th className="px-6 py-3 text-left text-md font-semibold text-gray-600">
+              <tr className="bg-gradient-to-r from-gray-500 to-green-500 text-white">
+                <th className="px-6 py-3 text-left text-md font-semibold text-white">
                   ID
                 </th>
-                <th className="px-6 py-3 text-left text-md font-semibold text-gray-600">
+                <th className="px-6 py-3 text-left text-md font-semibold text-white">
                   Full Name
                 </th>
-                <th className="px-6 py-3 text-left text-md font-semibold text-gray-600">
+                <th className="px-6 py-3 text-left text-md font-semibold text-white">
                   Email
                 </th>
-                <th className="px-6 py-3 text-left text-md font-semibold text-gray-600">
+                <th className="px-6 py-3 text-left text-md font-semibold text-white">
                   Item Name
                 </th>
-                <th className="px-6 py-3 text-left text-md font-semibold text-gray-600">
+                <th className="px-6 py-3 text-left text-md font-semibold text-white">
                   Start Date
                 </th>
-                <th className="px-6 py-3 text-left text-md font-semibold text-gray-600">
+                <th className="px-6 py-3 text-left text-md font-semibold text-white">
                   End Date
                 </th>
-                <th className="px-6 py-3 text-left text-md font-semibold text-gray-600">
+                <th className="px-6 py-3 text-left text-md font-semibold text-white">
                   Status
                 </th>
-                <th className="px-6 py-3 text-left text-md font-semibold text-gray-600">
+                <th className="px-6 py-3 text-left text-md font-semibold text-white">
                   Actions
                 </th>
               </tr>

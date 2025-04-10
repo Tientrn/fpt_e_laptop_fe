@@ -16,7 +16,7 @@ const ShopManager = () => {
     businessLicense: "",
     bankName: "",
     bankNumber: "",
-    status: ""
+    status: "",
   });
 
   useEffect(() => {
@@ -44,16 +44,16 @@ const ShopManager = () => {
       businessLicense: shop.businessLicense,
       bankName: shop.bankName,
       bankNumber: shop.bankNumber,
-      status: shop.status
+      status: shop.status,
     });
     setIsEditing(true);
   };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setEditForm(prev => ({
+    setEditForm((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
@@ -88,7 +88,7 @@ const ShopManager = () => {
   };
 
   const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('en-GB');
+    return new Date(dateString).toLocaleDateString("en-GB");
   };
 
   if (loading) {
@@ -98,30 +98,30 @@ const ShopManager = () => {
   return (
     <div className="container mx-auto px-4">
       <h1 className="text-3xl font-bold mb-6">Shop Management</h1>
-      
-      <div className="overflow-x-auto">
+
+      <div className="overflow-auto shadow-md rounded-lg">
         <table className="min-w-full bg-white rounded-lg overflow-hidden shadow-lg">
           <thead className="bg-gray-100">
-            <tr>
-              <th className="px-6 py-4 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
+            <tr className="bg-gradient-to-r from-gray-500 to-green-500 text-white">
+              <th className="px-6 py-4 text-left text-sm font-medium text-white uppercase tracking-wider">
                 #
               </th>
-              <th className="px-6 py-4 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-4 text-left text-sm font-medium text-white uppercase tracking-wider">
                 Shop Name
               </th>
-              <th className="px-6 py-4 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-4 text-left text-sm font-medium text-white uppercase tracking-wider">
                 Address
               </th>
-              <th className="px-6 py-4 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-4 text-left text-sm font-medium text-white uppercase tracking-wider">
                 Phone
               </th>
-              <th className="px-6 py-4 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-4 text-left text-sm font-medium text-white uppercase tracking-wider">
                 Created Date
               </th>
-              <th className="px-6 py-4 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-4 text-left text-sm font-medium text-white uppercase tracking-wider">
                 Status
               </th>
-              <th className="px-6 py-4 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-4 text-left text-sm font-medium text-white uppercase tracking-wider">
                 Actions
               </th>
             </tr>
@@ -132,16 +132,26 @@ const ShopManager = () => {
                 <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-500">
                   {shop.shopId}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap font-medium">{shop.shopName}</td>
-                <td className="px-6 py-4 whitespace-nowrap">{shop.shopAddress}</td>
-                <td className="px-6 py-4 whitespace-nowrap">{shop.shopPhone}</td>
-                <td className="px-6 py-4 whitespace-nowrap">{formatDate(shop.createdDate)}</td>
+                <td className="px-6 py-4 whitespace-nowrap font-medium">
+                  {shop.shopName}
+                </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <span className={`px-3 py-1 text-sm font-semibold rounded-full ${
-                    shop.status === "Active" 
-                      ? "bg-green-500 text-white" 
-                      : "bg-red-500 text-white"
-                  }`}>
+                  {shop.shopAddress}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  {shop.shopPhone}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  {formatDate(shop.createdDate)}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <span
+                    className={`px-3 py-1 text-sm font-semibold rounded-full ${
+                      shop.status === "Active"
+                        ? "bg-green-500 text-white"
+                        : "bg-red-500 text-white"
+                    }`}
+                  >
                     {shop.status}
                   </span>
                 </td>
@@ -175,7 +185,9 @@ const ShopManager = () => {
             <form onSubmit={handleSubmit}>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-base font-medium text-gray-700">Shop Name</label>
+                  <label className="block text-base font-medium text-gray-700">
+                    Shop Name
+                  </label>
                   <input
                     type="text"
                     name="shopName"
@@ -185,7 +197,9 @@ const ShopManager = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-base font-medium text-gray-700">Address</label>
+                  <label className="block text-base font-medium text-gray-700">
+                    Address
+                  </label>
                   <input
                     type="text"
                     name="shopAddress"
@@ -195,7 +209,9 @@ const ShopManager = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-base font-medium text-gray-700">Phone Number</label>
+                  <label className="block text-base font-medium text-gray-700">
+                    Phone Number
+                  </label>
                   <input
                     type="text"
                     name="shopPhone"
@@ -205,7 +221,9 @@ const ShopManager = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-base font-medium text-gray-700">Tax Code</label>
+                  <label className="block text-base font-medium text-gray-700">
+                    Tax Code
+                  </label>
                   <input
                     type="text"
                     name="businessLicense"
@@ -215,7 +233,9 @@ const ShopManager = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-base font-medium text-gray-700">Bank Name</label>
+                  <label className="block text-base font-medium text-gray-700">
+                    Bank Name
+                  </label>
                   <input
                     type="text"
                     name="bankName"
@@ -225,7 +245,9 @@ const ShopManager = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-base font-medium text-gray-700">Bank Account</label>
+                  <label className="block text-base font-medium text-gray-700">
+                    Bank Account
+                  </label>
                   <input
                     type="text"
                     name="bankNumber"
@@ -235,7 +257,9 @@ const ShopManager = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-base font-medium text-gray-700">Status</label>
+                  <label className="block text-base font-medium text-gray-700">
+                    Status
+                  </label>
                   <select
                     name="status"
                     value={editForm.status}
@@ -272,7 +296,10 @@ const ShopManager = () => {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-8 max-w-md w-full">
             <h2 className="text-2xl font-bold mb-4">Delete Shop</h2>
-            <p className="mb-6">Are you sure you want to delete the shop "{selectedShop?.shopName}"? This action cannot be undone.</p>
+            <p className="mb-6">
+              Are you sure you want to delete the shop "{selectedShop?.shopName}
+              "? This action cannot be undone.
+            </p>
             <div className="flex justify-end space-x-4">
               <button
                 onClick={() => setIsDeleting(false)}
@@ -294,4 +321,4 @@ const ShopManager = () => {
   );
 };
 
-export default ShopManager; 
+export default ShopManager;

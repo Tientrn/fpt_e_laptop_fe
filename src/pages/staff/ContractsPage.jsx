@@ -194,23 +194,23 @@ const ContractsPage = () => {
       if (defaultReturnDate > endDate) {
         defaultReturnDate = endDate;
       }
-
-      // Reset form và set giá trị mới
-      setContractForm({
-        requestId: request.requestId,
-        itemId: request.itemId,
-        itemValue: 0,
-        terms: `Contract for ${request.itemName}`,
-        conditionBorrow: "good",
+  
+    // Reset form và set giá trị mới
+    setContractForm({
+      requestId: request.requestId,
+      itemId: request.itemId,
+      itemValue: 0,
+      terms: `Contract for ${request.itemName}`,
+      conditionBorrow: "good",
         expectedReturnDate: defaultReturnDate.toISOString().split('T')[0],
         userId: request.userId,
-      });
-
-      // Set selected request
-      setSelectedRequest(request);
-
+    });
+  
+    // Set selected request
+    setSelectedRequest(request);
+    
       // Mở modal
-      setIsModalOpen(true);
+    setIsModalOpen(true);
     } catch (error) {
       console.error("Error fetching user details:", error);
       toast.error("Failed to load user details");
@@ -322,8 +322,8 @@ const ContractsPage = () => {
       if (deposits[contract.contractId]) {
         const deleteDepositResponse =
           await deposittransactionApi.deleteDepositTransaction(
-            deposits[contract.contractId].depositId
-          );
+          deposits[contract.contractId].depositId
+        );
         if (!deleteDepositResponse.isSuccess) {
           toast.error("Failed to delete associated deposit");
           return;
@@ -392,22 +392,22 @@ const ContractsPage = () => {
       // Tạo deposit transaction
       const createResponse =
         await deposittransactionApi.createDepositTransaction({
-          contractId: contractId,
-          amount: selectedContract.itemValue,
-          status: "Pending",
+        contractId: contractId,
+        amount: selectedContract.itemValue,
+        status: "Pending",
           depositDate: new Date().toISOString(),
-        });
+      });
 
       if (createResponse.isSuccess) {
         // Cập nhật status của deposit thành Completed
         const updateResponse =
           await deposittransactionApi.updateDepositTransaction(
-            createResponse.data.depositId,
-            {
-              ...createResponse.data,
+          createResponse.data.depositId,
+          {
+            ...createResponse.data,
               status: "Completed",
-            }
-          );
+          }
+        );
 
         if (updateResponse.isSuccess) {
           toast.success("Deposit created and completed successfully");
@@ -434,10 +434,10 @@ const ContractsPage = () => {
         <h2 className="text-lg font-semibold text-black mb-4">
           Approved Requests
         </h2>
-        <div className="overflow-x-auto">
+        <div className="overflow-auto shadow-md rounded-lg">
           <table className="min-w-full divide-y divide-slate-200">
             <thead className="bg-slate-50">
-              <tr>
+            <tr className="bg-gradient-to-r from-gray-500 to-green-500 text-white">
                 {[
                   "ID",
                   "Full Name",
@@ -448,7 +448,7 @@ const ContractsPage = () => {
                 ].map((header) => (
                   <th
                     key={header}
-                    className="px-4 py-2 text-left text-xs font-medium text-slate-600 uppercase tracking-wider"
+                    className="px-4 py-2 text-left text-xs font-medium text-white uppercase tracking-wider"
                   >
                     {header}
                   </th>
@@ -503,10 +503,10 @@ const ContractsPage = () => {
             <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-amber-600"></div>
           </div>
         ) : (
-          <div className="overflow-x-auto">
+          <div className="overflow-auto shadow-md rounded-lg">
             <table className="min-w-full divide-y divide-slate-200">
               <thead className="bg-slate-50">
-                <tr>
+              <tr className="bg-gradient-to-r from-gray-500 to-green-500 text-white">
                   {[
                     "Contract ID",
                     "Full Name",
@@ -518,7 +518,7 @@ const ContractsPage = () => {
                   ].map((header) => (
                     <th
                       key={header}
-                      className="px-4 py-2 text-left text-xs font-medium text-slate-600 uppercase tracking-wider"
+                      className="px-4 py-2 text-left text-xs font-medium text-white uppercase tracking-wider"
                     >
                       {header}
                     </th>
@@ -549,16 +549,16 @@ const ContractsPage = () => {
                     <td className="px-4 py-3 text-sm">
                       <span
                         className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                          deposits[contract.contractId]
-                            ? "bg-green-100 text-green-800"
-                            : "bg-yellow-100 text-yellow-800"
+    deposits[contract.contractId] 
+      ? "bg-green-100 text-green-800"
+      : "bg-yellow-100 text-yellow-800"
                         }`}
                       >
                         {deposits[contract.contractId]
                           ? "Completed"
                           : "Pending"}
-                      </span>
-                    </td>
+  </span>
+</td>
                     <td className="px-4 py-3 text-sm">
                       <div className="flex space-x-2">
                         <button
@@ -729,87 +729,87 @@ const ContractsPage = () => {
                 </h3>
 
                 <div className="space-y-3">
-                  {/* Item Value */}
-                  <div>
+                {/* Item Value */}
+                <div>
                     <label className="block text-xs font-medium text-gray-700 mb-1">
                       Item Value <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="number"
+                  </label>
+                  <input
+                    type="number"
                       step="100000"
-                      value={contractForm.itemValue}
+                    value={contractForm.itemValue}
                       onChange={(e) =>
                         setContractForm({
-                          ...contractForm,
+                      ...contractForm,
                           itemValue: e.target.value,
                         })
                       }
                       className="w-full px-3 py-2 text-sm rounded border border-gray-300 focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-                      required
-                    />
-                  </div>
+                    required
+                  />
+                </div>
 
-                  {/* Terms */}
-                  <div>
+                {/* Terms */}
+                <div>
                     <label className="block text-xs font-medium text-gray-700 mb-1">
                       Terms <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      value={contractForm.terms}
+                  </label>
+                  <input
+                    type="text"
+                    value={contractForm.terms}
                       onChange={(e) =>
                         setContractForm({
-                          ...contractForm,
+                      ...contractForm,
                           terms: e.target.value,
                         })
                       }
                       className="w-full px-3 py-2 text-sm rounded border border-gray-300 focus:ring-2 focus:ring-amber-500 focus:border-transparent"
                       required
-                    />
-                  </div>
+                  />
+                </div>
 
-                  {/* Expected Return Date */}
-                  <div>
+                {/* Expected Return Date */}
+                <div>
                     <label className="block text-xs font-medium text-gray-700 mb-1">
                       Expected Return Date{" "}
                       <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="date"
+                  </label>
+                  <input
+                    type="date"
                       value={contractForm.expectedReturnDate.split("T")[0]}
                       min={selectedRequest?.startDate.split("T")[0]}
                       max={selectedRequest?.endDate.split("T")[0]}
                       onChange={handleExpectedReturnDateChange}
                       className="w-full px-3 py-2 text-sm rounded border border-gray-300 focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-                      required
-                    />
+                    required
+                  />
                     <p className="mt-1 text-xs text-gray-500">
                       Choose a date between {format(new Date(selectedRequest?.startDate), "dd/MM/yyyy")} and {format(new Date(selectedRequest?.endDate), "dd/MM/yyyy")}
                     </p>
-                  </div>
+                </div>
                 </div>
               </form>
-            </div>
+              </div>
 
             {/* Footer */}
             <div className="p-4 border-t bg-gray-50 flex justify-end space-x-3">
-              <button
-                type="button"
+                <button
+                  type="button"
                 onClick={() => {
                   setIsModalOpen(false);
                   setSelectedUserInfo(null);
                 }}
                 className="px-4 py-2 text-sm border border-gray-300 rounded text-gray-700 hover:bg-gray-50 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
+                >
+                  Cancel
+                </button>
+                <button
                 onClick={handleCreateContract}
                 className="px-4 py-2 text-sm bg-amber-600 text-white rounded hover:bg-amber-700 transition-colors"
-              >
-                Create Contract
-              </button>
-            </div>
+                >
+                  Create Contract
+                </button>
+              </div>
           </div>
         </div>
       )}

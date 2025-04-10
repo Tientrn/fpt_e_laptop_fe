@@ -21,11 +21,9 @@ import HomePage from "./pages/homepage/HomePage";
 import LoginPage from "./pages/auth/LoginPage";
 import RegisterPage from "./pages/auth/RegisterPage";
 import AnalyticPage from "./pages/admin/AnalyticPage";
-import ContentPage from "./pages/admin/ContentPage";
+import ShopManager from "./pages/admin/ShopManager";
 import ReportPage from "./pages/admin/ReportPage";
-{
-  /* Admin */
-}
+import AdminPage from "./pages/admin/AdminPage";
 {
   /* Shop */
 }
@@ -35,7 +33,7 @@ import AddProduct from "./components/shop/dashboardshop/AddProduct";
 import ShopAnalytics from "./components/shop/dashboardshop/ShopAnalytics";
 import CreateShopInfo from "./components/shop/dashboardshop/CreateShopInfo";
 import ShopProfile from "./components/shop/dashboardshop/ShopProfile";
-
+import EditProduct from "./components/shop/dashboardshop/EditProduct";
 {
   /* Student */
 }
@@ -54,8 +52,11 @@ import Statistics from "./pages/staff/Statistics";
 import ContractsPage from "./pages/staff/ContractsPage";
 import DepositPage from "./pages/staff/DepositPage";
 import DonateItem from "./pages/staff/DonateItem";
+import EditDonateItem from "./pages/staff/EditDonateItem";
 import CreateDonateItem from "./pages/staff/CreateDonateItem";
-import ShopManager from "./pages/staff/ShopManager";
+import ItemManagement from "./pages/staff/ItemManagement";
+import ProductManagement from "./pages/staff/ProductManagement";
+import OrderManagement from "./pages/staff/OrderManagement";
 {
   /* Manager */
 }
@@ -164,6 +165,7 @@ const App = () => {
         {/* Shop Routes */}
         <Route path="/shop" element={<ShopLayout />}>
           <Route path="products" element={<MyProducts />} />
+          <Route path="edit-product/:productId" element={<EditProduct />} />
           <Route path="orders" element={<ShopOrders />} />
           <Route path="add-product" element={<AddProduct />} />
           <Route path="analytics" element={<ShopAnalytics />} />
@@ -196,10 +198,13 @@ const App = () => {
             element={<Navigate to="/staff" replace />}
           />
           <Route path="donate-items" element={<DonateItem />} />
+          <Route path="edit-item/:itemId" element={<EditDonateItem />} />
           <Route path="borrow-history" element={<BorrowHistory />} />
           <Route path="statistics" element={<Statistics />} />
           <Route path="contracts" element={<ContractsPage />} />
-          <Route path="shop" element={<ShopManager />} />
+          <Route path="items" element={<ItemManagement />} />
+          <Route path="products" element={<ProductManagement />} />
+          <Route path="orders" element={<OrderManagement />} />
           <Route path="create-itemdonate" element={<CreateDonateItem />} />
           <Route path="deposits/create/:contractId" element={<DepositPage />} />
         </Route>
@@ -232,7 +237,17 @@ const App = () => {
           element={
             // <PrivateRoute>
             <AdminLayout>
-              <Navigate to="/admin/analytics" replace />
+              <Navigate to="/admin/accounts" replace />
+            </AdminLayout>
+            // </PrivateRoute>
+          }
+        />
+        <Route
+          path="/admin/accounts"
+          element={
+            // <PrivateRoute>
+            <AdminLayout>
+              <AdminPage />
             </AdminLayout>
             // </PrivateRoute>
           }
@@ -247,13 +262,12 @@ const App = () => {
             // </PrivateRoute>
           }
         />
-
         <Route
-          path="/admin/content"
+          path="/admin/shopmanagement"
           element={
             // <PrivateRoute>
             <AdminLayout>
-              <ContentPage />
+              <ShopManager />
             </AdminLayout>
             // </PrivateRoute>
           }
