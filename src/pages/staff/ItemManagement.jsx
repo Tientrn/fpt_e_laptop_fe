@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import donateitemsApi from "../../api/donateitemsApi";
+import itemimagesApi from "../../api/itemimagesApi";
 import { toast } from "react-toastify";
 import { FaSearch, FaTrash, FaEye, FaLaptop, FaEdit } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
@@ -9,6 +10,7 @@ const ItemManagement = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedItem, setSelectedItem] = useState(null);
+  const [additionalImages, setAdditionalImages] = useState([]);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState(null);
@@ -63,8 +65,17 @@ const ItemManagement = () => {
     }
   };
 
-  const handleViewDetail = (item) => {
+  const handleViewDetail = async (item) => {
     setSelectedItem(item);
+    try {
+      const response = await itemimagesApi.getItemImagesById(item.itemId);
+      if (response.isSuccess) {
+        setAdditionalImages(response.data);
+      }
+    } catch (error) {
+      console.error("Error fetching additional images:", error);
+      toast.error("Failed to load additional images");
+    }
     setShowDetailModal(true);
   };
 
@@ -126,12 +137,6 @@ const ItemManagement = () => {
                     <FaEye className="mr-2" /> Details
                   </button>
                   <button 
-                    onClick={() => navigate(`/staff/edit-item/${item.itemId}`)} 
-                    className="flex items-center bg-green-500 hover:bg-green-600 text-white px-3 py-2 rounded transition duration-300 mx-2"
-                  >
-                    <FaEdit className="mr-2" /> Edit
-                  </button>
-                  <button 
                     onClick={() => handleDeleteClick(item)} 
                     className="flex items-center bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded transition duration-300"
                   >
@@ -147,7 +152,7 @@ const ItemManagement = () => {
       {/* Detail Modal */}
       {showDetailModal && selectedItem && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-3xl max-h-90vh overflow-y-auto">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-90vh overflow-y-auto">
             <div className="flex justify-between items-center border-b p-4">
               <h2 className="text-2xl font-bold text-gray-800">Laptop Details</h2>
               <button 
@@ -159,13 +164,34 @@ const ItemManagement = () => {
             </div>
             <div className="p-5">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <img 
-                    src={selectedItem.itemImage || "https://via.placeholder.com/400x300?text=No+Image"} 
-                    alt={selectedItem.itemName} 
-                    className="w-full h-auto rounded-lg shadow-md"
-                  />
+                {/* Left Column - Images Gallery */}
+                <div className="space-y-4">
+                  {/* Main Image */}
+                  <div className="w-full">
+                    <img 
+                      src={selectedItem.itemImage || "https://via.placeholder.com/400x300?text=No+Image"} 
+                      alt={selectedItem.itemName} 
+                      className="w-full h-[300px] object-contain rounded-lg shadow-md bg-gray-50"
+                    />
+                  </div>
+                  
+                  {/* Additional Images */}
+                  {additionalImages.length > 0 && (
+                    <div className="flex gap-2 overflow-x-auto py-2">
+                      {additionalImages.map((img, index) => (
+                        <div key={img.itemImageId} className="flex-shrink-0">
+                          <img
+                            src={img.imageUrl}
+                            alt={`Additional ${index + 1}`}
+                            className="w-24 h-24 object-cover rounded-lg border border-gray-200 hover:border-blue-500 transition-all duration-200"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
+
+                {/* Right Column - Details */}
                 <div>
                   <h3 className="text-xl font-semibold mb-4">{selectedItem.itemName}</h3>
                   <div className="space-y-3">
@@ -181,12 +207,19 @@ const ItemManagement = () => {
                   </div>
                 </div>
               </div>
-              <div className="mt-6 flex justify-end">
+              <div className="mt-6 flex justify-end space-x-3">                
                 <button 
                   onClick={() => setShowDetailModal(false)}
                   className="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-md transition duration-300"
                 >
                   Close
+                </button>
+                <button 
+                  onClick={() => navigate(`/staff/edit-item/${selectedItem.itemId}`)}
+                  className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-md transition duration-300"
+                >
+                  <FaEdit className="inline mr-2" />
+                  Edit
                 </button>
               </div>
             </div>

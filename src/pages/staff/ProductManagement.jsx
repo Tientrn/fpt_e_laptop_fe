@@ -159,7 +159,7 @@ const ProductManagement = () => {
                   />
                 </div>
                 <div>
-                  <h3 className="text-xl font-semibold mb-4">{selectedProduct.productName}</h3>
+                  <h3 className="text-xl font-semibold mb-8">{selectedProduct.productName}</h3>
                   <div className="space-y-3">
                     <p><span className="font-medium">Price:</span> {selectedProduct.price?.toLocaleString() || 0} đ</p>
                     <p><span className="font-medium">Quantity:</span> {selectedProduct.quantity || 0}</p>
@@ -167,8 +167,8 @@ const ProductManagement = () => {
                     <p><span className="font-medium">RAM:</span> {selectedProduct.ram || "Not specified"}</p>
                     <p><span className="font-medium">Storage:</span> {selectedProduct.storage || "Not specified"}</p>
                     <p><span className="font-medium">Screen Size:</span> {selectedProduct.screenSize || "Not specified"}</p>
-                    <p><span className="font-medium">Category ID:</span> {selectedProduct.categoryId || "Not specified"}</p>
-                    <p><span className="font-medium">Shop ID:</span> {selectedProduct.shopId || "Not specified"}</p>
+                    {/* <p><span className="font-medium">Category ID:</span> {selectedProduct.categoryId || "Not specified"}</p>
+                    <p><span className="font-medium">Shop ID:</span> {selectedProduct.shopId || "Not specified"}</p> */}
                   </div>
                 </div>
               </div>
