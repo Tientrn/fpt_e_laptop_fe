@@ -11,13 +11,25 @@ const productimageApi = {
     return axiosClient.get(`/product-images/${productId}`);
   },
 
-  // Create products
+  // Create new product image
   createProductImage: (id, data) => {
-    return axiosClient.post(`/product-images/${id}`, data);
+    return axiosClient.post(`/product-images/${id}`, data, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
   },
+
   // Add new product image
-  addProductImage: (id, data) => {
-    return axiosClient.put(`/product-images/${id}`, data);
+  addProductImage: (productId, data) => {
+    return axiosClient.post('/product-images', data, {
+      params: {
+        productId: productId
+      },
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
   },
 
   // Delete product image
