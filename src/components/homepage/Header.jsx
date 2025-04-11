@@ -87,28 +87,28 @@ function HeaderHomePage() {
           >
             <ul className="flex flex-col md:flex-row md:gap-8 gap-4">
               <li>
-                <a
-                  href="/"
+                <Link
+                  to="/"
                   className="block py-2 pr-4 pl-3 text-white font-semibold drop-shadow-[0_1px_1px_rgba(0,0,0,0.8)] hover:text-amber-600"
                 >
                   Home
-                </a>
+                </Link>
               </li>
               <li>
-                <a
-                  href="/laptopshop"
+                <Link
+                  to="/laptopshop"
                   className="block py-2 pr-4 pl-3 text-white font-semibold drop-shadow-[0_1px_1px_rgba(0,0,0,0.8)] hover:text-amber-600"
                 >
                   Laptop Shop
-                </a>
+                </Link>
               </li>
               <li>
-                <a
-                  href="/laptopborrow"
+                <Link
+                  to="/laptopborrow"
                   className="block py-2 pr-4 pl-3 text-white font-semibold drop-shadow-[0_1px_1px_rgba(0,0,0,0.8)] hover:text-amber-600"
                 >
                   Laptop Borrow
-                </a>
+                </Link>
               </li>
             </ul>
 
