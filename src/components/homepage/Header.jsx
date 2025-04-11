@@ -5,6 +5,7 @@ import HandshakeIcon from "@mui/icons-material/Handshake";
 import PersonIcon from "@mui/icons-material/Person";
 import { jwtDecode } from "jwt-decode";
 import useCartStore from "../../store/useCartStore";
+import { Link } from "react-router-dom";
 
 function HeaderHomePage() {
   const [nav, setNav] = useState(false);
@@ -86,28 +87,28 @@ function HeaderHomePage() {
           >
             <ul className="flex flex-col md:flex-row md:gap-8 gap-4">
               <li>
-                <a
-                  href="/"
+                <Link
+                  to="/"
                   className="block py-2 pr-4 pl-3 text-white font-semibold drop-shadow-[0_1px_1px_rgba(0,0,0,0.8)] hover:text-amber-600"
                 >
                   Home
-                </a>
+                </Link>
               </li>
               <li>
-                <a
-                  href="/laptopshop"
+                <Link
+                  to="/laptopshop"
                   className="block py-2 pr-4 pl-3 text-white font-semibold drop-shadow-[0_1px_1px_rgba(0,0,0,0.8)] hover:text-amber-600"
                 >
                   Laptop Shop
-                </a>
+                </Link>
               </li>
               <li>
-                <a
-                  href="/laptopborrow"
+                <Link
+                  to="/laptopborrow"
                   className="block py-2 pr-4 pl-3 text-white font-semibold drop-shadow-[0_1px_1px_rgba(0,0,0,0.8)] hover:text-amber-600"
                 >
                   Laptop Borrow
-                </a>
+                </Link>
               </li>
             </ul>
 
@@ -149,12 +150,13 @@ function HeaderHomePage() {
                   </button>
                   {isProfileOpen && (
                     <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10">
-                      <a
-                        href="/student/profile"
+                      <Link
+                        to="/student/profile"
                         className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                       >
                         My account
-                      </a>
+                      </Link>
+
                       <button
                         onClick={handleLogout}
                         className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
