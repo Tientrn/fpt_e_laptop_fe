@@ -18,7 +18,12 @@ const borrowrequestApi = {
 
   // Update borrow request
   updateBorrowRequest: (id, data) => {
-    return axiosClient.put(`/BorrowRequest/update/${id}`, data);
+    const token = localStorage.getItem("token");
+    return axiosClient.put(`/BorrowRequest/update/${id}`, data, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
   },
 
   // Delete borrow request

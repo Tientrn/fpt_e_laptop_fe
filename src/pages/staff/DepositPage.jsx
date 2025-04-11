@@ -50,7 +50,9 @@ const DepositPage = () => {
   const fetchContractDetails = async () => {
     try {
       setLoading(true);
-      const response = await borrowcontractApi.getBorrowContractById(contractId);
+      const response = await borrowcontractApi.getBorrowContractById(
+        contractId
+      );
       if (response.isSuccess) {
         setContractDetails(response.data);
         setDepositForm((prev) => ({
@@ -73,54 +75,69 @@ const DepositPage = () => {
     e.preventDefault();
     try {
       setLoading(true);
-      
+
       // Lấy thông tin contract trước để có requestId
-      const contractResponse = await borrowcontractApi.getBorrowContractById(contractId);
+      const contractResponse = await borrowcontractApi.getBorrowContractById(
+        contractId
+      );
+      console.log("📦 Contract loaded:", contractResponse.data);
       if (!contractResponse.isSuccess) {
         toast.error("Failed to get contract details");
         return;
       }
       const requestId = contractResponse.data.requestId;
       console.log("Contract details:", contractResponse.data); // Debug log
-
+      console.log("📝 Deposit form before submit:", depositForm);
       // Tạo deposit transaction
-      const createResponse = await deposittransactionApi.createDepositTransaction(depositForm);
-      
+      const createResponse =
+        await deposittransactionApi.createDepositTransaction(depositForm);
+
       if (createResponse.isSuccess) {
         const newDepositId = createResponse.data.depositId;
         console.log("Created deposit with ID:", newDepositId); // Debug log
 
         // Lấy thông tin deposit hiện tại
-        const getResponse = await deposittransactionApi.getDepositTransactionById(newDepositId);
-        
+        const getResponse =
+          await deposittransactionApi.getDepositTransactionById(newDepositId);
+
         if (getResponse.isSuccess) {
           const currentDeposit = getResponse.data;
           console.log("Current deposit data:", currentDeposit); // Debug log
 
           // Update status của deposit thành Completed
-          const updateDepositResponse = await deposittransactionApi.updateDepositTransaction(
-            newDepositId,
-            {
+          const updateDepositResponse =
+            await deposittransactionApi.updateDepositTransaction(newDepositId, {
               ...currentDeposit,
-              status: "Completed"
-            }
+              status: "Completed",
+            });
+          console.log(
+            "📥 Response from updateDepositTransaction:",
+            updateDepositResponse
+          );
+          console.log(
+            "isSuccess value & type:",
+            updateDepositResponse.isSuccess,
+            typeof updateDepositResponse.isSuccess
           );
 
           if (updateDepositResponse.isSuccess) {
             // Update request status sang Borrowing
             console.log("Updating request status for requestId:", requestId); // Debug log
-            const requestUpdateResponse = await borrowrequestApi.updateBorrowRequest(
-              requestId,
-              {
-                status: "Borrowing"
-              }
-            );
+            const requestUpdateResponse =
+              await borrowrequestApi.updateBorrowRequest(requestId, {
+                status: "Borrowing",
+              });
 
             if (requestUpdateResponse.isSuccess) {
-              toast.success("Deposit recorded and request status updated successfully");
+              toast.success(
+                "Deposit recorded and request status updated successfully"
+              );
               navigate("/staff/contracts");
             } else {
-              console.error("Failed to update request status:", requestUpdateResponse);
+              console.error(
+                "Failed to update request status:",
+                requestUpdateResponse
+              );
               toast.error("Failed to update request status");
             }
           } else {
@@ -153,22 +170,32 @@ const DepositPage = () => {
     <div className="min-h-screen bg-white p-6">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-2xl font-semibold text-black">Record Deposit Payment</h1>
-        <span className="text-sm text-amber-600 font-medium">Staff Dashboard</span>
+        <h1 className="text-2xl font-semibold text-black">
+          Record Deposit Payment
+        </h1>
+        <span className="text-sm text-amber-600 font-medium">
+          Staff Dashboard
+        </span>
       </div>
 
       {/* Contract Details */}
       {contractDetails && (
         <div className="mb-6 p-4 bg-white border border-slate-200 rounded-md shadow-sm">
-          <h2 className="text-lg font-semibold text-black mb-3">Contract Details</h2>
+          <h2 className="text-lg font-semibold text-black mb-3">
+            Contract Details
+          </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <p className="text-sm text-slate-600">Contract ID</p>
-              <p className="text-black font-medium">{contractDetails.contractId}</p>
+              <p className="text-black font-medium">
+                {contractDetails.contractId}
+              </p>
             </div>
             <div>
               <p className="text-sm text-slate-600">Item Value</p>
-              <p className="text-black font-medium">${contractDetails.itemValue}</p>
+              <p className="text-black font-medium">
+                ${contractDetails.itemValue}
+              </p>
             </div>
           </div>
         </div>
@@ -177,7 +204,9 @@ const DepositPage = () => {
       {/* User Info */}
       {userInfo && (
         <div className="mb-6 p-4 bg-white border border-slate-200 rounded-md shadow-sm">
-          <h2 className="text-lg font-semibold text-black mb-3">User Information</h2>
+          <h2 className="text-lg font-semibold text-black mb-3">
+            User Information
+          </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <p className="text-sm text-slate-600">Full Name</p>
@@ -192,7 +221,10 @@ const DepositPage = () => {
       )}
 
       {/* Deposit Form */}
-      <form onSubmit={handleSubmit} className="space-y-6 bg-white border border-slate-200 rounded-md shadow-sm p-6">
+      <form
+        onSubmit={handleSubmit}
+        className="space-y-6 bg-white border border-slate-200 rounded-md shadow-sm p-6"
+      >
         <div>
           <label className="block text-sm font-medium text-black mb-1">
             Deposit Amount (30% of item value)
@@ -200,7 +232,12 @@ const DepositPage = () => {
           <input
             type="number"
             value={depositForm.amount}
-            onChange={(e) => setDepositForm({ ...depositForm, amount: parseInt(e.target.value) })}
+            onChange={(e) =>
+              setDepositForm({
+                ...depositForm,
+                amount: parseInt(e.target.value),
+              })
+            }
             className="w-full p-2 border border-slate-300 rounded-md text-black focus:outline-none focus:ring-2 focus:ring-amber-600"
             required
           />
@@ -208,7 +245,6 @@ const DepositPage = () => {
         <div className="flex justify-end space-x-3">
           <button
             type="button"
-            
             className="px-4 py-2 bg-slate-600 text-white rounded-md hover:bg-amber-600 transition-colors"
           >
             Cancel

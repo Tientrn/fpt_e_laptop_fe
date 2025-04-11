@@ -226,7 +226,12 @@ const ListLaptopShop = () => {
 
                   <div className="mt-4 flex justify-between items-center">
                     <span className="text-lg font-bold text-slate-600">
-                      ${laptop.price ? laptop.price.toLocaleString() : "N/A"}
+                      {laptop.price
+                        ? laptop.price.toLocaleString("vi-VN", {
+                            style: "currency",
+                            currency: "VND",
+                          })
+                        : "N/A"}
                     </span>
                     <Link
                       to={`/laptopshop/${laptop.productId}`}
