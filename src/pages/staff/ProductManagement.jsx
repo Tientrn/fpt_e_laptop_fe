@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import productApi from "../../api/productApi";
+import productimageApi from "../../api/productimageApi";
 import { toast } from "react-toastify";
 import { FaSearch, FaTrash, FaEye, FaLaptop } from "react-icons/fa";
 
@@ -8,6 +9,7 @@ const ProductManagement = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedProduct, setSelectedProduct] = useState(null);
+  const [additionalImages, setAdditionalImages] = useState([]);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [productToDelete, setProductToDelete] = useState(null);
@@ -61,8 +63,17 @@ const ProductManagement = () => {
     }
   };
 
-  const handleViewDetail = (product) => {
+  const handleViewDetail = async (product) => {
     setSelectedProduct(product);
+    try {
+      const response = await productimageApi.getProductImagesById(product.productId);
+      if (response.isSuccess) {
+        setAdditionalImages(response.data);
+      }
+    } catch (error) {
+      console.error("Error fetching additional images:", error);
+      toast.error("Failed to load additional images");
+    }
     setShowDetailModal(true);
   };
 
@@ -139,7 +150,7 @@ const ProductManagement = () => {
       {/* Detail Modal */}
       {showDetailModal && selectedProduct && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-3xl max-h-90vh overflow-y-auto">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-90vh overflow-y-auto">
             <div className="flex justify-between items-center border-b p-4">
               <h2 className="text-2xl font-bold text-gray-800">Product Details</h2>
               <button 
@@ -151,15 +162,72 @@ const ProductManagement = () => {
             </div>
             <div className="p-5">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <img 
-                    src={selectedProduct.imageProduct || "https://via.placeholder.com/400x300?text=No+Image"} 
-                    alt={selectedProduct.productName} 
-                    className="w-full h-auto rounded-lg shadow-md"
-                  />
+                {/* Left Column - Images Gallery */}
+                <div className="space-y-4">
+                  {/* Main Image */}
+                  <div className="w-full">
+                    <img 
+                      src={selectedProduct.imageProduct || "https://via.placeholder.com/400x300?text=No+Image"} 
+                      alt={selectedProduct.productName} 
+                      className="w-full h-[300px] object-contain rounded-lg shadow-md bg-gray-50"
+                    />
+                  </div>
+                  
+                  {/* Additional Images */}
+                  {additionalImages.length > 0 && (
+                    <div className="relative">
+                      <div className="flex gap-2 overflow-hidden py-2 px-8">
+                        {additionalImages.map((img, index) => (
+                          <div key={img.productImageId} className="flex-shrink-0">
+                            <img
+                              src={img.imageUrl}
+                              alt={`Additional ${index + 1}`}
+                              className="w-24 h-24 object-cover rounded-lg border border-gray-200 hover:border-blue-500 transition-all duration-200 cursor-pointer"
+                              onClick={() => {
+                                setSelectedProduct({
+                                  ...selectedProduct,
+                                  imageProduct: img.imageUrl
+                                });
+                              }}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                      {additionalImages.length > 4 && (
+                        <>
+                          <button
+                            className="absolute left-0 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-gray-800 p-2 rounded-full shadow-md transition-all duration-200"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              const gallery = e.target.closest('.relative').querySelector('.flex');
+                              gallery.scrollBy({ left: -100, behavior: 'smooth' });
+                            }}
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                              <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
+                            </svg>
+                          </button>
+                          <button
+                            className="absolute right-0 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-gray-800 p-2 rounded-full shadow-md transition-all duration-200"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              const gallery = e.target.closest('.relative').querySelector('.flex');
+                              gallery.scrollBy({ left: 100, behavior: 'smooth' });
+                            }}
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                              <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                            </svg>
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  )}
                 </div>
+
+                {/* Right Column - Details */}
                 <div>
-                  <h3 className="text-xl font-semibold mb-8">{selectedProduct.productName}</h3>
+                  <h3 className="text-xl font-semibold mb-4">{selectedProduct.productName}</h3>
                   <div className="space-y-3">
                     <p><span className="font-medium">Price:</span> {selectedProduct.price?.toLocaleString() || 0} đ</p>
                     <p><span className="font-medium">Quantity:</span> {selectedProduct.quantity || 0}</p>
@@ -167,8 +235,8 @@ const ProductManagement = () => {
                     <p><span className="font-medium">RAM:</span> {selectedProduct.ram || "Not specified"}</p>
                     <p><span className="font-medium">Storage:</span> {selectedProduct.storage || "Not specified"}</p>
                     <p><span className="font-medium">Screen Size:</span> {selectedProduct.screenSize || "Not specified"}</p>
-                    {/* <p><span className="font-medium">Category ID:</span> {selectedProduct.categoryId || "Not specified"}</p>
-                    <p><span className="font-medium">Shop ID:</span> {selectedProduct.shopId || "Not specified"}</p> */}
+                    <p><span className="font-medium">Date Created:</span> {selectedProduct.createdDate ? new Date(selectedProduct.createdDate).toLocaleDateString() : "Not specified"}</p>
+                    <p><span className="font-medium">Last Updated:</span> {selectedProduct.updatedDate ? new Date(selectedProduct.updatedDate).toLocaleDateString() : "Not specified"}</p>
                   </div>
                 </div>
               </div>
