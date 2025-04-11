@@ -177,16 +177,52 @@ const ItemManagement = () => {
                   
                   {/* Additional Images */}
                   {additionalImages.length > 0 && (
-                    <div className="flex gap-2 overflow-x-auto py-2">
-                      {additionalImages.map((img, index) => (
-                        <div key={img.itemImageId} className="flex-shrink-0">
-                          <img
-                            src={img.imageUrl}
-                            alt={`Additional ${index + 1}`}
-                            className="w-24 h-24 object-cover rounded-lg border border-gray-200 hover:border-blue-500 transition-all duration-200"
-                          />
-                        </div>
-                      ))}
+                    <div className="relative">
+                      <div className="flex gap-2 overflow-hidden py-2 px-8">
+                        {additionalImages.map((img, index) => (
+                          <div key={img.itemImageId} className="flex-shrink-0">
+                            <img
+                              src={img.imageUrl}
+                              alt={`Additional ${index + 1}`}
+                              className="w-24 h-24 object-cover rounded-lg border border-gray-200 hover:border-blue-500 transition-all duration-200 cursor-pointer"
+                              onClick={() => {
+                                setSelectedItem({
+                                  ...selectedItem,
+                                  itemImage: img.imageUrl
+                                });
+                              }}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                      {additionalImages.length > 4 && (
+                        <>
+                          <button
+                            className="absolute left-0 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-gray-800 p-2 rounded-full shadow-md transition-all duration-200"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              const gallery = e.target.closest('.relative').querySelector('.flex');
+                              gallery.scrollBy({ left: -100, behavior: 'smooth' });
+                            }}
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                              <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
+                            </svg>
+                          </button>
+                          <button
+                            className="absolute right-0 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-gray-800 p-2 rounded-full shadow-md transition-all duration-200"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              const gallery = e.target.closest('.relative').querySelector('.flex');
+                              gallery.scrollBy({ left: 100, behavior: 'smooth' });
+                            }}
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                              <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                            </svg>
+                          </button>
+                        </>
+                      )}
                     </div>
                   )}
                 </div>
