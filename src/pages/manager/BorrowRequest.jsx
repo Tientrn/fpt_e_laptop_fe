@@ -294,12 +294,14 @@ const BorrowRequest = () => {
                     </td>
                     <td className="px-6 py-3">
                       <div className="flex gap-2">
-                        <button
-                          onClick={() => handleEditClick(request)}
-                          className="px-3 py-1.5 text-md font-medium text-white bg-amber-500 rounded-lg hover:bg-amber-600 transition-colors"
-                        >
-                          Edit
-                        </button>
+                        {request.status === "Pending" && (
+                          <button
+                            onClick={() => handleEditClick(request)}
+                            className="px-3 py-1.5 text-md font-medium text-white bg-amber-500 rounded-lg hover:bg-amber-600 transition-colors"
+                          >
+                            Edit
+                          </button>
+                        )}
                         <button
                           onClick={() => handleDeleteClick(request.requestId)}
                           className="px-3 py-1.5 text-md font-medium text-white bg-red-500 rounded-lg hover:bg-red-600 transition-colors"
