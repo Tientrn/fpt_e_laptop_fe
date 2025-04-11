@@ -4,6 +4,7 @@ import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { motion } from "framer-motion";
 import registerApi from "../../api/registerApi";
+import { Link } from "react-router-dom";
 
 const RegisterPage = () => {
   const [errors, setErrors] = useState({});
@@ -150,8 +151,7 @@ const RegisterPage = () => {
     } catch (err) {
       console.error("Registration failed:", err);
       toast.error(
-        err.response?.data?.message ||
-          "Registration failed, please try again!"
+        err.response?.data?.message || "Registration failed, please try again!"
       );
     }
   };
@@ -516,7 +516,8 @@ const RegisterPage = () => {
                     className="w-full"
                   />
                   <p className="text-sm text-slate-500 mt-1">
-                    Please ensure the image is clear and all information on the card is visible.
+                    Please ensure the image is clear and all information on the
+                    card is visible.
                   </p>
                   {errors.studentCardImage && (
                     <p className="text-red-500 text-sm mt-1">
@@ -539,9 +540,9 @@ const RegisterPage = () => {
 
           <p className="text-center text-sm text-black">
             Already have an account?{" "}
-            <a href="/login" className="text-amber-600 hover:underline">
+            <Link to="/login" className="text-amber-600 hover:underline">
               Sign in
-            </a>
+            </Link>
           </p>
         </motion.div>
       </motion.div>

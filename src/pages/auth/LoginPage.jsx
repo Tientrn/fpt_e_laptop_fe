@@ -8,6 +8,7 @@ import { jwtDecode } from "jwt-decode";
 import useCartStore from "../../store/useCartStore";
 import Modal from "../../components/common/Modal";
 import shopApi from "../../api/shopApi";
+import { Link } from "react-router-dom";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -408,9 +409,9 @@ export default function LoginPage() {
 
           <p className="text-center text-sm text-black">
             New here?{" "}
-            <a href="/register" className="text-amber-600 hover:underline">
+            <Link to="/register" className="text-amber-600 hover:underline">
               Create an account
-            </a>
+            </Link>
           </p>
         </motion.div>
       </motion.div>
