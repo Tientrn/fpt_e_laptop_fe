@@ -143,7 +143,7 @@ const BorrowRequest = () => {
 
         // Nếu status là Approved, refresh trang Contracts để hiển thị request mới
         if (editFormData.status === "Approved") {
-          window.location.href = "/staff/contracts";
+          window.location.href = "/manager/borrow-requests";
         }
       } else {
         toast.error(response.message || "Failed to update request status");
