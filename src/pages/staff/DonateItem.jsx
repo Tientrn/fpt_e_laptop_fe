@@ -127,8 +127,6 @@ const DonateItem = () => {
         </div>
 
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-          
-
           <div className="overflow-auto shadow-md rounded-lg">
             {loading ? (
               <div className="px-6 py-8 text-center">
@@ -138,11 +136,12 @@ const DonateItem = () => {
             ) : (
               <table className="w-full text-sm">
                 <thead className="bg-gray-50">
-                <tr className="bg-gradient-to-r from-gray-500 to-green-500 text-white">
+                  <tr className="bg-gradient-to-r from-gray-500 to-green-500 text-white">
                     {[
                       "Item Name",
                       "Description",
                       "Quantity",
+                      "Image",
                       "Created At",
                       "Status",
                       "Actions",
@@ -179,6 +178,16 @@ const DonateItem = () => {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-gray-700">
                           {donation.quantity}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <img
+                            src={donation.imageDonateForm}
+                            alt="Donation"
+                            className="w-20 h-20 object-cover rounded-md border"
+                            onError={(e) => {
+                              e.target.src = "/no-image.png"; // fallback image nếu lỗi
+                            }}
+                          />
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-gray-700">
                           {new Date(donation.createdAt).toLocaleDateString()}

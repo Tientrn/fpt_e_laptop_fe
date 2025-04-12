@@ -3,9 +3,7 @@ import axios from "axios";
 const axiosClient = axios.create({
   baseURL: "https://fptsharelaptop.io.vn/api",
   timeout: 10000,
-  headers: {
-    "Content-Type": "application/json",
-  },
+
   withCredentials: false, // Thay đổi thành true nếu cần gửi cookies
 });
 

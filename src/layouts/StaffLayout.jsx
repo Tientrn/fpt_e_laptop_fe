@@ -11,7 +11,7 @@ import {
   FaHandHoldingHeart,
   FaLaptop,
   FaBoxOpen,
-  FaShoppingCart
+  FaShoppingCart,
 } from "react-icons/fa";
 import { toast } from "react-toastify";
 
@@ -59,11 +59,11 @@ const StaffLayout = () => {
       name: "Order Management",
       icon: <FaShoppingCart className="w-5 h-5" />,
     },
-    // {
-    //   path: "/staff/statistics",
-    //   name: "Statistics",
-    //   icon: <FaChartLine className="w-5 h-5" />,
-    // },
+    {
+      path: "/staff/report-damages",
+      name: "Report Damages",
+      icon: <FaChartLine className="w-5 h-5" />, // hoặc icon khác phù hợp hơn
+    },
   ];
 
   const handleLogout = () => {

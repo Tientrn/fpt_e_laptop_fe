@@ -88,7 +88,11 @@ const RegisterPage = () => {
 
     // Avatar validation
     if (formData.avatarImage) {
-      if (!["image/jpeg", "image/png", "image/jpg"].includes(formData.avatarImage.type)) {
+      if (
+        !["image/jpeg", "image/png", "image/jpg"].includes(
+          formData.avatarImage.type
+        )
+      ) {
         newErrors.avatarImage = "Avatar must be in jpg/jpeg/png format";
       } else if (formData.avatarImage.size > 2 * 1024 * 1024) {
         newErrors.avatarImage = "Avatar must not exceed 2MB";
@@ -102,14 +106,14 @@ const RegisterPage = () => {
   // Add new function for real-time password validation
   const validateConfirmPassword = (password, confirmPassword) => {
     if (confirmPassword && password !== confirmPassword) {
-      setErrors(prev => ({
+      setErrors((prev) => ({
         ...prev,
-        confirmPassword: "Passwords do not match"
+        confirmPassword: "Passwords do not match",
       }));
     } else {
-      setErrors(prev => ({
+      setErrors((prev) => ({
         ...prev,
-        confirmPassword: undefined
+        confirmPassword: undefined,
       }));
     }
   };
@@ -117,17 +121,17 @@ const RegisterPage = () => {
   const handleStudentChange = (e) => {
     const { name, value, files } = e.target;
     if (name === "studentCardImage" && files?.[0]) {
-      setStudentData(prev => ({
+      setStudentData((prev) => ({
         ...prev,
-        studentCardImage: files[0]
+        studentCardImage: files[0],
       }));
       // Create preview URL for student card image
       const previewUrl = URL.createObjectURL(files[0]);
       setStudentCardPreview(previewUrl);
     } else {
-      setStudentData(prev => ({
+      setStudentData((prev) => ({
         ...prev,
-        [name]: value
+        [name]: value,
       }));
     }
   };
@@ -135,9 +139,9 @@ const RegisterPage = () => {
   const handleAvatarChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
-        avatarImage: file
+        avatarImage: file,
       }));
       // Create preview URL
       const previewUrl = URL.createObjectURL(file);
@@ -147,12 +151,12 @@ const RegisterPage = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => {
+    setFormData((prev) => {
       const newData = {
         ...prev,
         [name]: value,
       };
-      
+
       // Check password match when either password or confirmPassword changes
       if (name === "password" || name === "confirmPassword") {
         validateConfirmPassword(
@@ -160,7 +164,7 @@ const RegisterPage = () => {
           name === "confirmPassword" ? value : newData.confirmPassword
         );
       }
-      
+
       return newData;
     });
   };
@@ -191,10 +195,13 @@ const RegisterPage = () => {
 
         const response = await registerApi.registerStudent(form);
         if (response.isSuccess) {
-          toast.success("Registration successful! Redirecting to login page...", {
-            position: "top-right",
-            autoClose: 1500,
-          });
+          toast.success(
+            "Registration successful! Redirecting to login page...",
+            {
+              position: "top-right",
+              autoClose: 1500,
+            }
+          );
 
           setTimeout(() => {
             navigate("/login", {
@@ -222,10 +229,13 @@ const RegisterPage = () => {
 
         const response = await registerApi.register(form);
         if (response.isSuccess) {
-          toast.success("Registration successful! Redirecting to login page...", {
-            position: "top-right",
-            autoClose: 1500,
-          });
+          toast.success(
+            "Registration successful! Redirecting to login page...",
+            {
+              position: "top-right",
+              autoClose: 1500,
+            }
+          );
 
           setTimeout(() => {
             navigate("/login", {
@@ -240,8 +250,7 @@ const RegisterPage = () => {
     } catch (err) {
       console.error("Registration failed:", err);
       toast.error(
-        err.response?.data?.message ||
-        "Registration failed, please try again!"
+        err.response?.data?.message || "Registration failed, please try again!"
       );
     }
   };
@@ -402,7 +411,9 @@ const RegisterPage = () => {
                 placeholder="Confirm your password"
               />
               {errors.confirmPassword && (
-                <p className="text-red-500 text-sm mt-1">{errors.confirmPassword}</p>
+                <p className="text-red-500 text-sm mt-1">
+                  {errors.confirmPassword}
+                </p>
               )}
             </div>
 
@@ -418,6 +429,21 @@ const RegisterPage = () => {
                 required
                 className="w-full px-4 py-2 border border-slate-300 rounded-md text-black focus:outline-none focus:ring-2 focus:ring-amber-500"
                 placeholder="Your full name"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-black mb-1">
+                Address
+              </label>
+              <input
+                type="text"
+                name="address"
+                value={formData.address}
+                onChange={handleChange}
+                required
+                className="w-full px-4 py-2 border border-slate-300 rounded-md text-black focus:outline-none focus:ring-2 focus:ring-amber-500"
+                placeholder="Your address"
               />
             </div>
 
@@ -488,7 +514,9 @@ const RegisterPage = () => {
                 className="w-full px-4 py-2 border border-slate-300 rounded-md text-black focus:outline-none focus:ring-2 focus:ring-amber-500"
               />
               {errors.avatarImage && (
-                <p className="text-red-500 text-sm mt-1">{errors.avatarImage}</p>
+                <p className="text-red-500 text-sm mt-1">
+                  {errors.avatarImage}
+                </p>
               )}
               {avatarPreview && (
                 <div className="flex justify-center mt-2">
@@ -520,33 +548,6 @@ const RegisterPage = () => {
                 <option value="3">Sponsor</option>
                 <option value="6">Shop</option>
               </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-black mb-1">
-                Avatar Image
-              </label>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleAvatarChange}
-                className="w-full px-4 py-2 border border-slate-300 rounded-md text-black focus:outline-none focus:ring-2 focus:ring-amber-500"
-              />
-              {errors.avatarImage && (
-                <p className="text-red-500 text-sm mt-1">{errors.avatarImage}</p>
-              )}
-              {avatarPreview && (
-                <div className="flex justify-center mt-2">
-                  <img
-                    src={avatarPreview}
-                    alt="Avatar Preview"
-                    className="h-24 w-24 rounded-full object-cover shadow"
-                  />
-                </div>
-              )}
-              <p className="text-sm text-slate-500 mt-1">
-                Please upload an image file (JPG, PNG) less than 2MB
-              </p>
             </div>
 
             {formData.roleId === "2" && (
@@ -622,7 +623,8 @@ const RegisterPage = () => {
                     </div>
                   )}
                   <p className="text-sm text-slate-500 mt-1">
-                    Please ensure the image is clear and all information on the card is visible.
+                    Please ensure the image is clear and all information on the
+                    card is visible.
                   </p>
                 </div>
               </>
