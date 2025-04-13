@@ -1,19 +1,14 @@
 import { useState, useEffect } from "react";
-import FilterListIcon from "@mui/icons-material/FilterList";
-import MemoryIcon from "@mui/icons-material/Memory";
-import DeveloperBoardIcon from "@mui/icons-material/DeveloperBoard";
-import StorageIcon from "@mui/icons-material/Storage";
-import MonitorIcon from "@mui/icons-material/Monitor";
-import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
+import { FaFilter, FaMicrochip, FaMemory, FaHdd, FaDesktop } from "react-icons/fa";
 import PropTypes from "prop-types";
 
-const FiltersSidebar = ({ onFilterChange, currentFilters = {} }) => {
+const CreativeFilterSidebar = ({ onFilterChange, currentFilters = {} }) => {
   const [filters, setFilters] = useState({
     screenSize: "",
-    status: "",
     cpu: "",
     ram: "",
     storage: "",
+    status: "",
     ...currentFilters
   });
 
@@ -36,32 +31,32 @@ const FiltersSidebar = ({ onFilterChange, currentFilters = {} }) => {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-sm overflow-hidden border border-indigo-50">
+    <div className="bg-white rounded-xl overflow-hidden shadow-md border border-indigo-100">
       {/* Header */}
-      <div className="bg-gradient-to-r from-indigo-700 to-purple-800 px-4 py-3 text-white">
+      <div className="bg-gradient-to-r from-indigo-800 to-purple-700 px-4 py-3 text-white">
         <div className="flex items-center justify-between">
           <h3 className="text-base font-semibold flex items-center">
-            <FilterListIcon fontSize="small" className="mr-1.5" />
-            <span>Filters</span>
+            <FaFilter className="mr-2" />
+            <span>Refine Results</span>
           </h3>
           <span className="text-xs bg-white/20 px-2 py-0.5 rounded-full backdrop-blur-sm">
-            Refine search
+            Advanced Filters
           </span>
         </div>
       </div>
 
       {/* Filter Options */}
-      <div className="p-3 space-y-4 text-sm">
+      <div className="p-4 space-y-4">
         {/* CPU Filter */}
         <div className="filter-group">
           <div className="flex items-center mb-2 text-indigo-900 font-medium">
-            <MemoryIcon className="mr-1.5 text-indigo-600" fontSize="small" />
-            <h4 className="text-xs">CPU</h4>
+            <FaMicrochip className="mr-2 text-indigo-600" />
+            <h4>Processor</h4>
           </div>
           
-          <div className="grid grid-cols-2 gap-1.5">
+          <div className="grid grid-cols-2 gap-2">
             <button
-              className={`py-1 px-2 text-xs rounded-md border transition-colors ${
+              className={`py-1.5 px-3 text-sm rounded-full border transition-colors ${
                 filters.cpu === "" 
                   ? "bg-indigo-100 border-indigo-200 text-indigo-800 font-medium"
                   : "border-gray-200 text-gray-700 hover:border-indigo-200 hover:bg-indigo-50"
@@ -71,7 +66,7 @@ const FiltersSidebar = ({ onFilterChange, currentFilters = {} }) => {
               All CPUs
             </button>
             <button
-              className={`py-1 px-2 text-xs rounded-md border transition-colors ${
+              className={`py-1.5 px-3 text-sm rounded-full border transition-colors ${
                 filters.cpu === "i5" 
                   ? "bg-indigo-100 border-indigo-200 text-indigo-800 font-medium"
                   : "border-gray-200 text-gray-700 hover:border-indigo-200 hover:bg-indigo-50"
@@ -81,7 +76,7 @@ const FiltersSidebar = ({ onFilterChange, currentFilters = {} }) => {
               Intel i5
             </button>
             <button
-              className={`py-1 px-2 text-xs rounded-md border transition-colors ${
+              className={`py-1.5 px-3 text-sm rounded-full border transition-colors ${
                 filters.cpu === "i7" 
                   ? "bg-indigo-100 border-indigo-200 text-indigo-800 font-medium"
                   : "border-gray-200 text-gray-700 hover:border-indigo-200 hover:bg-indigo-50"
@@ -91,7 +86,7 @@ const FiltersSidebar = ({ onFilterChange, currentFilters = {} }) => {
               Intel i7
             </button>
             <button
-              className={`py-1 px-2 text-xs rounded-md border transition-colors ${
+              className={`py-1.5 px-3 text-sm rounded-full border transition-colors ${
                 filters.cpu === "i9" 
                   ? "bg-indigo-100 border-indigo-200 text-indigo-800 font-medium"
                   : "border-gray-200 text-gray-700 hover:border-indigo-200 hover:bg-indigo-50"
@@ -106,13 +101,13 @@ const FiltersSidebar = ({ onFilterChange, currentFilters = {} }) => {
         {/* RAM Filter */}
         <div className="filter-group">
           <div className="flex items-center mb-2 text-indigo-900 font-medium">
-            <DeveloperBoardIcon className="mr-1.5 text-indigo-600" fontSize="small" />
-            <h4 className="text-xs">RAM Memory</h4>
+            <FaMemory className="mr-2 text-indigo-600" />
+            <h4>RAM</h4>
           </div>
           
-          <div className="grid grid-cols-2 gap-1.5">
+          <div className="grid grid-cols-2 gap-2">
             <button
-              className={`py-1 px-2 text-xs rounded-md border transition-colors ${
+              className={`py-1.5 px-3 text-sm rounded-full border transition-colors ${
                 filters.ram === "" 
                   ? "bg-indigo-100 border-indigo-200 text-indigo-800 font-medium"
                   : "border-gray-200 text-gray-700 hover:border-indigo-200 hover:bg-indigo-50"
@@ -122,34 +117,34 @@ const FiltersSidebar = ({ onFilterChange, currentFilters = {} }) => {
               All RAM
             </button>
             <button
-              className={`py-1 px-2 text-xs rounded-md border transition-colors ${
+              className={`py-1.5 px-3 text-sm rounded-full border transition-colors ${
                 filters.ram === "8" 
                   ? "bg-indigo-100 border-indigo-200 text-indigo-800 font-medium"
                   : "border-gray-200 text-gray-700 hover:border-indigo-200 hover:bg-indigo-50"
               }`}
               onClick={() => handleFilterChange("ram", "8")}
             >
-              8GB
+              8 GB
             </button>
             <button
-              className={`py-1 px-2 text-xs rounded-md border transition-colors ${
+              className={`py-1.5 px-3 text-sm rounded-full border transition-colors ${
                 filters.ram === "16" 
                   ? "bg-indigo-100 border-indigo-200 text-indigo-800 font-medium"
                   : "border-gray-200 text-gray-700 hover:border-indigo-200 hover:bg-indigo-50"
               }`}
               onClick={() => handleFilterChange("ram", "16")}
             >
-              16GB
+              16 GB
             </button>
             <button
-              className={`py-1 px-2 text-xs rounded-md border transition-colors ${
+              className={`py-1.5 px-3 text-sm rounded-full border transition-colors ${
                 filters.ram === "32" 
                   ? "bg-indigo-100 border-indigo-200 text-indigo-800 font-medium"
                   : "border-gray-200 text-gray-700 hover:border-indigo-200 hover:bg-indigo-50"
               }`}
               onClick={() => handleFilterChange("ram", "32")}
             >
-              32GB
+              32 GB
             </button>
           </div>
         </div>
@@ -157,13 +152,13 @@ const FiltersSidebar = ({ onFilterChange, currentFilters = {} }) => {
         {/* Storage Filter */}
         <div className="filter-group">
           <div className="flex items-center mb-2 text-indigo-900 font-medium">
-            <StorageIcon className="mr-1.5 text-indigo-600" fontSize="small" />
-            <h4 className="text-xs">Storage</h4>
+            <FaHdd className="mr-2 text-indigo-600" />
+            <h4>Storage</h4>
           </div>
           
-          <div className="grid grid-cols-2 gap-1.5">
+          <div className="grid grid-cols-2 gap-2">
             <button
-              className={`py-1 px-2 text-xs rounded-md border transition-colors ${
+              className={`py-1.5 px-3 text-sm rounded-full border transition-colors ${
                 filters.storage === "" 
                   ? "bg-indigo-100 border-indigo-200 text-indigo-800 font-medium"
                   : "border-gray-200 text-gray-700 hover:border-indigo-200 hover:bg-indigo-50"
@@ -173,34 +168,34 @@ const FiltersSidebar = ({ onFilterChange, currentFilters = {} }) => {
               All Storage
             </button>
             <button
-              className={`py-1 px-2 text-xs rounded-md border transition-colors ${
+              className={`py-1.5 px-3 text-sm rounded-full border transition-colors ${
                 filters.storage === "256" 
                   ? "bg-indigo-100 border-indigo-200 text-indigo-800 font-medium"
                   : "border-gray-200 text-gray-700 hover:border-indigo-200 hover:bg-indigo-50"
               }`}
               onClick={() => handleFilterChange("storage", "256")}
             >
-              256GB
+              256 GB
             </button>
             <button
-              className={`py-1 px-2 text-xs rounded-md border transition-colors ${
+              className={`py-1.5 px-3 text-sm rounded-full border transition-colors ${
                 filters.storage === "512" 
                   ? "bg-indigo-100 border-indigo-200 text-indigo-800 font-medium"
                   : "border-gray-200 text-gray-700 hover:border-indigo-200 hover:bg-indigo-50"
               }`}
               onClick={() => handleFilterChange("storage", "512")}
             >
-              512GB
+              512 GB
             </button>
             <button
-              className={`py-1 px-2 text-xs rounded-md border transition-colors ${
-                filters.storage === "1024" 
+              className={`py-1.5 px-3 text-sm rounded-full border transition-colors ${
+                filters.storage === "1" 
                   ? "bg-indigo-100 border-indigo-200 text-indigo-800 font-medium"
                   : "border-gray-200 text-gray-700 hover:border-indigo-200 hover:bg-indigo-50"
               }`}
-              onClick={() => handleFilterChange("storage", "1024")}
+              onClick={() => handleFilterChange("storage", "1")}
             >
-              1TB
+              1 TB
             </button>
           </div>
         </div>
@@ -208,13 +203,13 @@ const FiltersSidebar = ({ onFilterChange, currentFilters = {} }) => {
         {/* Screen Size Filter */}
         <div className="filter-group">
           <div className="flex items-center mb-2 text-indigo-900 font-medium">
-            <MonitorIcon className="mr-1.5 text-indigo-600" fontSize="small" />
-            <h4 className="text-xs">Screen Size</h4>
+            <FaDesktop className="mr-2 text-indigo-600" />
+            <h4>Screen Size</h4>
           </div>
           
-          <div className="grid grid-cols-2 gap-1.5">
+          <div className="grid grid-cols-2 gap-2">
             <button
-              className={`py-1 px-2 text-xs rounded-md border transition-colors ${
+              className={`py-1.5 px-3 text-sm rounded-full border transition-colors ${
                 filters.screenSize === "" 
                   ? "bg-indigo-100 border-indigo-200 text-indigo-800 font-medium"
                   : "border-gray-200 text-gray-700 hover:border-indigo-200 hover:bg-indigo-50"
@@ -224,7 +219,7 @@ const FiltersSidebar = ({ onFilterChange, currentFilters = {} }) => {
               All Sizes
             </button>
             <button
-              className={`py-1 px-2 text-xs rounded-md border transition-colors ${
+              className={`py-1.5 px-3 text-sm rounded-full border transition-colors ${
                 filters.screenSize === "13.3" 
                   ? "bg-indigo-100 border-indigo-200 text-indigo-800 font-medium"
                   : "border-gray-200 text-gray-700 hover:border-indigo-200 hover:bg-indigo-50"
@@ -234,7 +229,7 @@ const FiltersSidebar = ({ onFilterChange, currentFilters = {} }) => {
               13.3&quot;
             </button>
             <button
-              className={`py-1 px-2 text-xs rounded-md border transition-colors ${
+              className={`py-1.5 px-3 text-sm rounded-full border transition-colors ${
                 filters.screenSize === "14" 
                   ? "bg-indigo-100 border-indigo-200 text-indigo-800 font-medium"
                   : "border-gray-200 text-gray-700 hover:border-indigo-200 hover:bg-indigo-50"
@@ -244,7 +239,7 @@ const FiltersSidebar = ({ onFilterChange, currentFilters = {} }) => {
               14&quot;
             </button>
             <button
-              className={`py-1 px-2 text-xs rounded-md border transition-colors ${
+              className={`py-1.5 px-3 text-sm rounded-full border transition-colors ${
                 filters.screenSize === "15.6" 
                   ? "bg-indigo-100 border-indigo-200 text-indigo-800 font-medium"
                   : "border-gray-200 text-gray-700 hover:border-indigo-200 hover:bg-indigo-50"
@@ -259,36 +254,36 @@ const FiltersSidebar = ({ onFilterChange, currentFilters = {} }) => {
         {/* Status Filter */}
         <div className="filter-group">
           <div className="flex items-center mb-2 text-indigo-900 font-medium">
-            <CheckCircleOutlineIcon className="mr-1.5 text-indigo-600" fontSize="small" />
-            <h4 className="text-xs">Status</h4>
+            <FaDesktop className="mr-2 text-indigo-600" />
+            <h4>Status</h4>
           </div>
           
-          <div className="grid grid-cols-2 gap-1.5">
+          <div className="grid grid-cols-2 gap-2">
             <button
-              className={`py-1 px-2 text-xs rounded-md border transition-colors ${
+              className={`py-1.5 px-3 text-sm rounded-full border transition-colors ${
                 filters.status === "" 
                   ? "bg-indigo-100 border-indigo-200 text-indigo-800 font-medium"
                   : "border-gray-200 text-gray-700 hover:border-indigo-200 hover:bg-indigo-50"
               }`}
               onClick={() => handleFilterChange("status", "")}
             >
-              All Status
+              All Statuses
             </button>
             <button
-              className={`py-1 px-2 text-xs rounded-md border transition-colors ${
+              className={`py-1.5 px-3 text-sm rounded-full border transition-colors ${
                 filters.status === "Available" 
-                  ? "bg-green-100 border-green-200 text-green-800 font-medium"
-                  : "border-gray-200 text-gray-700 hover:border-green-200 hover:bg-green-50"
+                  ? "bg-indigo-100 border-indigo-200 text-indigo-800 font-medium"
+                  : "border-gray-200 text-gray-700 hover:border-indigo-200 hover:bg-indigo-50"
               }`}
               onClick={() => handleFilterChange("status", "Available")}
             >
               Available
             </button>
             <button
-              className={`py-1 px-2 text-xs rounded-md border transition-colors ${
+              className={`py-1.5 px-3 text-sm rounded-full border transition-colors ${
                 filters.status === "Unavailable" 
-                  ? "bg-red-100 border-red-200 text-red-800 font-medium"
-                  : "border-gray-200 text-gray-700 hover:border-red-200 hover:bg-red-50"
+                  ? "bg-indigo-100 border-indigo-200 text-indigo-800 font-medium"
+                  : "border-gray-200 text-gray-700 hover:border-indigo-200 hover:bg-indigo-50"
               }`}
               onClick={() => handleFilterChange("status", "Unavailable")}
             >
@@ -297,42 +292,35 @@ const FiltersSidebar = ({ onFilterChange, currentFilters = {} }) => {
           </div>
         </div>
 
-        {/* Reset All Button */}
-        <button
-          onClick={() => {
-            const defaultFilters = {
-              screenSize: "",
-              status: "",
-              cpu: "",
-              ram: "",
-              storage: "",
-            };
-            setFilters(defaultFilters);
-            onFilterChange(defaultFilters);
-          }}
-          className="w-full mt-3 bg-gradient-to-r from-indigo-700 to-purple-800 text-white font-medium 
-          py-2 rounded-md text-xs transition-all duration-200 hover:shadow-sm hover:from-indigo-800 hover:to-purple-900"
-        >
-          Reset All Filters
-        </button>
+        {/* Reset Button - Only show if any filter is active */}
+        {Object.values(filters).some(value => value !== "") && (
+          <div className="mt-6">
+            <button
+              onClick={() => {
+                const resetFilters = {
+                  screenSize: "",
+                  cpu: "",
+                  ram: "",
+                  storage: "",
+                  status: ""
+                };
+                setFilters(resetFilters);
+                onFilterChange(resetFilters);
+              }}
+              className="w-full py-2 rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-sm font-medium hover:from-indigo-700 hover:to-purple-700 transition-all shadow-sm"
+            >
+              Reset All Filters
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
 };
 
-FiltersSidebar.propTypes = {
+CreativeFilterSidebar.propTypes = {
   onFilterChange: PropTypes.func.isRequired,
-  currentFilters: PropTypes.shape({
-    screenSize: PropTypes.string,
-    status: PropTypes.string,
-    cpu: PropTypes.string,
-    ram: PropTypes.string,
-    storage: PropTypes.string
-  })
+  currentFilters: PropTypes.object
 };
 
-FiltersSidebar.defaultProps = {
-  currentFilters: {}
-};
-
-export default FiltersSidebar;
+export default CreativeFilterSidebar; 

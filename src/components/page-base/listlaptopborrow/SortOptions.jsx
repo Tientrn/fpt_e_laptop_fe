@@ -1,43 +1,60 @@
-import React from "react";
+import { useState } from "react";
+import SortIcon from "@mui/icons-material/Sort";
+import PropTypes from "prop-types";
 
-const SortOptions = ({ onSort }) => {
+const SortOptions = ({ onSort, className }) => {
+  const [sortValue, setSortValue] = useState("default");
+
+  const handleSortChange = (e) => {
+    setSortValue(e.target.value);
+    onSort(e.target.value);
+  };
+
   return (
-    <div className="flex justify-between items-center mb-6">
-      <div className="p-4 bg-white rounded-lg shadow-md border border-gray-300">
-        <div className="flex items-center space-x-2">
-          {/* Icon lọc */}
-          <svg
-            className="w-5 h-5 text-black"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12"
-            />
-          </svg>
+    <div className={`${className}`}>
+      <div className="relative flex items-center">
+        <div className="absolute left-3 pointer-events-none">
+          <SortIcon className="text-indigo-500" fontSize="small" />
+        </div>
+        
+        <select
+          value={sortValue}
+          onChange={handleSortChange}
+          className="pl-9 pr-6 py-1.5 bg-white/90 backdrop-blur-sm border border-indigo-100 rounded-lg
+            shadow-sm transition-all duration-200
+            text-indigo-800 text-xs font-medium cursor-pointer
+            focus:ring-1 focus:ring-amber-400 focus:border-amber-400
+            appearance-none"
+        >
+          <option value="default">Sort By</option>
+          <option value="ram-high-to-low">RAM: High to Low</option>
+          <option value="ram-low-to-high">RAM: Low to High</option>
+          <option value="newest">Newest First</option>
+          <option value="oldest">Oldest First</option>
+        </select>
 
-          {/* Dropdown */}
-          <select
-            onChange={(e) => onSort(e.target.value)}
-            className="p-2.5 bg-white border border-gray-300 rounded-lg
-              focus:ring-2 focus:ring-amber-600 focus:border-amber-600 
-              transition-all duration-300 hover:border-gray-400
-              text-black font-medium cursor-pointer shadow-sm"
+        <div className="absolute right-3 pointer-events-none">
+          <svg 
+            className="w-3 h-3 text-indigo-500" 
+            fill="none" 
+            stroke="currentColor" 
+            viewBox="0 0 24 24"
           >
-            <option value="default">Sắp xếp theo</option>
-            <option value="ram-high-to-low">RAM: Cao đến Thấp</option>
-            <option value="processor-high-to-low">CPU: Cao đến Thấp</option>
-            <option value="newest">Mới nhất</option>
-          </select>
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+          </svg>
         </div>
       </div>
     </div>
   );
+};
+
+SortOptions.propTypes = {
+  onSort: PropTypes.func.isRequired,
+  className: PropTypes.string
+};
+
+SortOptions.defaultProps = {
+  className: ""
 };
 
 export default SortOptions;

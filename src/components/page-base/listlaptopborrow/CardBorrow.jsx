@@ -1,5 +1,11 @@
-import React from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import LaptopIcon from "@mui/icons-material/Laptop";
+import MemoryIcon from "@mui/icons-material/Memory";
+import DeveloperBoardIcon from "@mui/icons-material/DeveloperBoard";
+import StorageIcon from "@mui/icons-material/Storage";
+import MonitorIcon from "@mui/icons-material/Monitor";
+import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
+import PropTypes from "prop-types";
 
 const CardBorrow = ({ laptop }) => {
   const navigate = useNavigate();
@@ -10,7 +16,7 @@ const CardBorrow = ({ laptop }) => {
 
   return (
     <div
-      className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition duration-300 h-[500px] flex flex-col cursor-pointer transform hover:scale-105"
+      className="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-all duration-200 h-full flex flex-col cursor-pointer transform hover:scale-102 hover:translate-y-[-3px] border border-indigo-50"
       onClick={handleCardClick}
     >
       <div className="relative h-40">
@@ -19,117 +25,76 @@ const CardBorrow = ({ laptop }) => {
           alt={laptop.itemName}
           className="w-full h-full object-cover"
         />
+        <div className="absolute inset-0 bg-gradient-to-t from-indigo-900/70 to-transparent"></div>
         <div
-          className={`absolute top-4 right-4 px-3 py-1 rounded-md text-sm font-medium text-white
-            ${laptop.status === "Available" ? "bg-amber-600" : "bg-red-500"}`}
+          className={`absolute top-3 right-3 px-2 py-0.5 rounded-full text-xs font-medium text-white
+            ${laptop.status === "Available" 
+              ? "bg-gradient-to-r from-green-500 to-emerald-600" 
+              : "bg-gradient-to-r from-red-500 to-pink-600"}`}
         >
           {laptop.status}
         </div>
       </div>
 
       <div className="p-4 flex flex-col flex-grow">
-        <h3 className="font-semibold text-lg mb-3 text-gray-800 line-clamp-2 min-h-[3rem]  hover:text-amber-600">
+        <h3 className="font-semibold text-base mb-2 text-indigo-900 line-clamp-2 min-h-[2.5rem]">
           {laptop.itemName}
         </h3>
 
-        <div className="space-y-2.5 flex-grow">
-          <div className="flex items-center text-gray-600">
-            <svg
-              className="w-5 h-5 mr-2 flex-shrink-0"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"
-              />
-            </svg>
+        <div className="space-y-2 flex-grow text-sm">
+          <div className="flex items-center text-indigo-700">
+            <MemoryIcon fontSize="small" className="mr-2 flex-shrink-0" />
             <span className="truncate">CPU: {laptop.cpu}</span>
           </div>
-          <div className="flex items-center text-gray-600">
-            <svg
-              className="w-5 h-5 mr-2 flex-shrink-0"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-              />
-            </svg>
+          <div className="flex items-center text-indigo-700">
+            <DeveloperBoardIcon fontSize="small" className="mr-2 flex-shrink-0" />
             <span className="truncate">RAM: {laptop.ram}</span>
           </div>
-          <div className="flex items-center text-gray-600">
-            <svg
-              className="w-5 h-5 mr-2 flex-shrink-0"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4"
-              />
-            </svg>
+          <div className="flex items-center text-indigo-700">
+            <StorageIcon fontSize="small" className="mr-2 flex-shrink-0" />
             <span className="truncate">Storage: {laptop.storage}</span>
           </div>
-          <div className="flex items-center text-gray-600">
-            <svg
-              className="w-5 h-5 mr-2 flex-shrink-0"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-              />
-            </svg>
-            <span className="truncate">Screen Size: {laptop.screenSize}</span>
+          <div className="flex items-center text-indigo-700">
+            <MonitorIcon fontSize="small" className="mr-2 flex-shrink-0" />
+            <span className="truncate">Screen: {laptop.screenSize}</span>
           </div>
-          <div className="flex items-center text-gray-600">
-            <svg
-              className="w-5 h-5 mr-2 flex-shrink-0"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
+          <div className="flex items-center text-indigo-700">
+            <CheckCircleOutlineIcon fontSize="small" className="mr-2 flex-shrink-0" />
             <span className="truncate">
               Condition: {laptop.conditionItem || "N/A"}
             </span>
           </div>
         </div>
 
-        {/* Detail Button - Ngăn chặn sự kiện click lan truyền */}
-        <div className=" flex justify-end">
-          <Link
-            to={`/borrow/${laptop.itemId}`}
-            className="inline-flex items-center px-4 py-2 text-sm bg-slate-600 text-white rounded-full hover:bg-amber-600 transition-colors"
-            onClick={(e) => e.stopPropagation()}
+        <div className="mt-3 flex justify-end">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              navigate(`/borrow/${laptop.itemId}`);
+            }}
+            className="inline-flex items-center gap-1.5 px-4 py-1.5 text-xs bg-gradient-to-r from-indigo-700 to-purple-800 hover:from-indigo-800 hover:to-purple-900 text-white rounded-lg transition-colors shadow-sm"
           >
-            <span>View Detail</span>
-          </Link>
+            <LaptopIcon fontSize="small" />
+            <span>View Details</span>
+          </button>
         </div>
       </div>
     </div>
   );
+};
+
+CardBorrow.propTypes = {
+  laptop: PropTypes.shape({
+    itemId: PropTypes.string.isRequired,
+    itemName: PropTypes.string.isRequired,
+    itemImage: PropTypes.string.isRequired,
+    status: PropTypes.string.isRequired,
+    cpu: PropTypes.string,
+    ram: PropTypes.string,
+    storage: PropTypes.string,
+    screenSize: PropTypes.string,
+    conditionItem: PropTypes.string
+  }).isRequired
 };
 
 export default CardBorrow;
