@@ -13,6 +13,7 @@ const donateformApi = {
 
   // Create new donate form
   createDonateForm: (data) => {
+    console.log(data)
     return axiosClient.post("/DonateForm/create", data);
   },
 
