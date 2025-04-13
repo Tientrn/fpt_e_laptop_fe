@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import orderApis from "../../api/orderApi";
-import { FaInfoCircle } from "react-icons/fa";
+import { FaInfoCircle, FaShoppingBag, FaEye, FaTimesCircle, FaSpinner, FaSearch, FaFilter } from "react-icons/fa";
 import { jwtDecode } from "jwt-decode";
 import { toast, ToastContainer } from "react-toastify";
 import { useNavigate } from "react-router-dom";
@@ -12,6 +12,7 @@ const OrderStudent = () => {
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState(null);
   const [statusFilter, setStatusFilter] = useState("All");
+  const [searchTerm, setSearchTerm] = useState("");
 
   // Decode token lấy userId
   useEffect(() => {
@@ -54,17 +55,28 @@ const OrderStudent = () => {
     fetchOrders();
   }, [userId]);
 
-  // Filter theo trạng thái
+  // Filter và search
   useEffect(() => {
-    if (statusFilter === "All") {
-      setFilteredOrders(orders);
-    } else {
-      const filtered = orders.filter(
+    let result = orders;
+    
+    // Apply status filter
+    if (statusFilter !== "All") {
+      result = result.filter(
         (order) => order.status.toLowerCase() === statusFilter.toLowerCase()
       );
-      setFilteredOrders(filtered);
     }
-  }, [statusFilter, orders]);
+    
+    // Apply search
+    if (searchTerm) {
+      result = result.filter(
+        (order) => 
+          order.orderId.toString().includes(searchTerm) ||
+          order.orderAddress.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+    
+    setFilteredOrders(result);
+  }, [statusFilter, searchTerm, orders]);
 
   const navigate = useNavigate(); // View detail handler
 
@@ -109,115 +121,162 @@ const OrderStudent = () => {
     }
   };
 
-  return (
-    <div className="p-6 bg-white min-h-screen">
-      <h1 className="text-2xl font-bold mb-4 text-black">Your Orders</h1>
+  const getStatusBadgeStyle = (status) => {
+    const baseStyle = "px-3 py-1 rounded-full text-white text-xs font-semibold";
+    switch (status.toLowerCase()) {
+      case "pending":
+        return `${baseStyle} bg-yellow-500`;
+      case "cancelled":
+        return `${baseStyle} bg-red-500`;
+      case "approved":
+      case "delivered":
+        return `${baseStyle} bg-green-500`;
+      case "processing":
+        return `${baseStyle} bg-indigo-500`;
+      default:
+        return `${baseStyle} bg-gray-500`;
+    }
+  };
 
-      {/* Filter dropdown */}
-      <div className="mb-6">
-        <label className="text-sm font-medium text-slate-700 mr-2">
-          Filter by status:
-        </label>
-        <select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-          className="border border-slate-300 rounded px-3 py-1 text-sm text-black focus:outline-none focus:ring-2 focus:ring-amber-600"
-        >
-          <option value="All">All</option>
-          <option value="Pending">Pending</option>
-          <option value="Delivered">Delivered</option>
-          <option value="Processing">Processing</option>
-          <option value="Cancelled">Cancelled</option>
-        </select>
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-indigo-50 to-white flex justify-center items-center">
+        <div className="flex flex-col items-center">
+          <FaSpinner className="animate-spin h-12 w-12 text-indigo-600" />
+          <p className="mt-3 text-indigo-600 font-medium">Loading orders...</p>
+        </div>
       </div>
+    );
+  }
 
-      {loading ? (
-        <p className="text-slate-600">Đang tải đơn hàng...</p>
-      ) : filteredOrders.length === 0 ? (
-        <div className="text-slate-600 flex items-center space-x-2">
-          <FaInfoCircle className="text-amber-600" />
-          <span>Không có đơn hàng nào phù hợp.</span>
-        </div>
-      ) : (
-        <div className="overflow-x-auto">
-          <table className="min-w-full bg-white border border-slate-200 rounded-xl shadow">
-            <thead className="bg-slate-100">
-              <tr>
-                <th className="text-left px-4 py-3 text-sm text-black">
-                  Order ID
-                </th>
-                <th className="text-left px-4 py-3 text-sm text-black">
-                  Ngày tạo
-                </th>
-                <th className="text-left px-4 py-3 text-sm text-black">
-                  Tổng tiền
-                </th>
-                <th className="text-left px-4 py-3 text-sm text-black">
-                  Địa chỉ
-                </th>
-                <th className="text-left px-4 py-3 text-sm text-black">
-                  Trạng thái
-                </th>
-                <th className="text-left px-4 py-3 text-sm text-black">
-                  Hành động
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredOrders.map((order) => (
-                <tr
-                  key={order.orderId}
-                  className="hover:bg-slate-50 border-b border-slate-100"
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-indigo-50 to-white py-8 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-6xl mx-auto">
+        <div className="bg-white rounded-xl shadow-md overflow-hidden">
+          <div className="bg-gradient-to-r from-indigo-600 to-purple-600 py-6 px-8">
+            <h1 className="text-2xl font-bold text-white flex items-center">
+              <FaShoppingBag className="mr-3" /> Your Orders
+            </h1>
+            <p className="text-indigo-100 mt-1">Manage and track your purchases</p>
+          </div>
+
+          {/* Search and Filter */}
+          <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
+            <div className="flex flex-col md:flex-row gap-4">
+              <div className="relative flex-1">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <FaSearch className="text-gray-400" />
+                </div>
+                <input
+                  type="text"
+                  placeholder="Search by order ID or address..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10 w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 py-2 border"
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <FaFilter className="text-gray-500" />
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  className="rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 py-2 border bg-white"
                 >
-                  <td className="px-4 py-3 text-sm text-black">
-                    {order.orderId}
-                  </td>
-                  <td className="px-4 py-3 text-sm text-black">
-                    {new Date(order.createdDate).toLocaleString()}
-                  </td>
-                  <td className="px-4 py-3 text-sm text-black">
-                    {order.totalPrice.toLocaleString()} đ
-                  </td>
-                  <td className="px-4 py-3 text-sm text-black">
-                    {order.orderAddress}
-                  </td>
-                  <td className="px-4 py-3 text-sm">
-                    <span
-                      className={`px-3 py-1 rounded-full text-white text-xs font-semibold ${
-                        order.status.toLowerCase() === "pending"
-                          ? "bg-amber-600"
-                          : order.status.toLowerCase() === "cancelled"
-                          ? "bg-red-600"
-                          : order.status.toLowerCase() === "approved"
-                          ? "bg-green-600"
-                          : "bg-slate-600"
-                      }`}
-                    >
-                      {order.status}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 space-x-2">
-                    <button
-                      onClick={() => handleViewDetail(order)}
-                      className="px-3 py-1 text-sm rounded bg-slate-600 text-white hover:bg-slate-700"
-                    >
-                      View
-                    </button>
-                    {order.status.toLowerCase() === "pending" && (
-                      <button
-                        onClick={() => handleCancelOrder(order.orderId)}
-                        className="px-3 py-1 text-sm rounded bg-red-600 text-white hover:bg-red-700"
-                      >
-                        Cancel
-                      </button>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                  <option value="All">All Statuses</option>
+                  <option value="Pending">Pending</option>
+                  <option value="Delivered">Delivered</option>
+                  <option value="Processing">Processing</option>
+                  <option value="Cancelled">Cancelled</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          {/* Orders List */}
+          <div className="p-6">
+            {filteredOrders.length === 0 ? (
+              <div className="text-center py-10">
+                <div className="text-indigo-400 mb-4">
+                  <FaInfoCircle className="w-12 h-12 mx-auto" />
+                </div>
+                <h3 className="text-xl font-semibold text-gray-800 mb-2">No Orders Found</h3>
+                <p className="text-gray-500 max-w-md mx-auto">
+                  {searchTerm || statusFilter !== "All" 
+                    ? "No orders match your current filters. Try changing your search criteria."
+                    : "You haven't placed any orders yet. Start shopping to see orders here!"}
+                </p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead>
+                    <tr className="bg-gray-50">
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order ID</th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Address</th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {filteredOrders.map((order) => (
+                      <tr key={order.orderId} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm font-medium text-gray-900">#{order.orderId}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm text-gray-500">
+                            {new Date(order.createdDate).toLocaleDateString()}
+                          </div>
+                          <div className="text-xs text-gray-400">
+                            {new Date(order.createdDate).toLocaleTimeString()}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm font-medium text-gray-900">
+                            {order.totalPrice.toLocaleString()} đ
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="text-sm text-gray-900 line-clamp-2 max-w-xs">
+                            {order.orderAddress}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className={getStatusBadgeStyle(order.status)}>
+                            {order.status}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                          <div className="flex space-x-2">
+                            <button
+                              onClick={() => handleViewDetail(order)}
+                              className="text-indigo-600 hover:text-indigo-900 flex items-center"
+                            >
+                              <FaEye className="mr-1" />
+                              View
+                            </button>
+                            {order.status.toLowerCase() === "pending" && (
+                              <button
+                                onClick={() => handleCancelOrder(order.orderId)}
+                                className="text-red-600 hover:text-red-900 flex items-center"
+                              >
+                                <FaTimesCircle className="mr-1" />
+                                Cancel
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
         </div>
-      )}
+      </div>
       <ToastContainer
         position="top-right"
         autoClose={3000}

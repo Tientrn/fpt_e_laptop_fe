@@ -20,8 +20,19 @@ export const SponsorLayout = () => {
   const [notificationCount] = useState(3);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userData, setUserData] = useState(null);
+  const [scrolled, setScrolled] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+  
+  // Detect scroll for header effects
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 10);
+    };
+    
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
   
   useEffect(() => {
     // Check authentication status
@@ -116,7 +127,7 @@ export const SponsorLayout = () => {
 
       {/* Sidebar Toggle Button (Mobile) */}
       <button
-        className="lg:hidden fixed top-4 left-4 z-30 p-2.5 rounded-full bg-amber-600 text-white shadow-lg hover:bg-amber-700 transition-all duration-200 transform hover:scale-105 active:scale-95 flex items-center justify-center"
+        className="lg:hidden fixed top-4 left-4 z-30 p-2.5 rounded-full bg-indigo-700 text-white shadow-lg hover:bg-indigo-600 transition-all duration-200 transform hover:scale-105 active:scale-95 flex items-center justify-center"
         onClick={() => setIsSidebarOpen(!isSidebarOpen)}
         aria-label="Toggle sidebar"
       >
@@ -133,7 +144,7 @@ export const SponsorLayout = () => {
       `}
       >
         {/* Sidebar Header with Logo and Back Button */}
-        <div className="flex items-center h-20 bg-gradient-to-r from-amber-700 via-amber-600 to-amber-500 px-5">
+        <div className="flex items-center h-20 bg-gradient-to-r from-indigo-900 via-indigo-800 to-purple-900 px-5">
           <button
             onClick={() => navigate("/")}
             className="text-white p-2 rounded-full hover:bg-white/20 transition-colors duration-200 active:scale-95 flex items-center justify-center"
@@ -154,9 +165,9 @@ export const SponsorLayout = () => {
 
         {/* User Profile Section - Only show when logged in */}
         {isLoggedIn ? (
-          <div className="px-5 py-4 bg-gradient-to-r from-amber-50 to-white border-b border-gray-200">
+          <div className="px-5 py-4 bg-gradient-to-r from-indigo-50 to-white border-b border-gray-200">
             <div className="flex items-center">
-              <div className="h-12 w-12 rounded-full bg-gradient-to-r from-amber-600 to-amber-400 flex items-center justify-center text-white font-bold text-lg shadow-md">
+              <div className="h-12 w-12 rounded-full bg-gradient-to-r from-indigo-600 to-purple-500 flex items-center justify-center text-white font-bold text-lg shadow-md">
                 {getUserInitial()}
               </div>
               <div className="ml-3 flex-1 overflow-hidden">
@@ -178,19 +189,19 @@ export const SponsorLayout = () => {
             </div>
           </div>
         ) : (
-          <div className="px-5 py-4 bg-gradient-to-r from-amber-50 to-white border-b border-gray-200">
+          <div className="px-5 py-4 bg-gradient-to-r from-indigo-50 to-white border-b border-gray-200">
             <div className="flex flex-col items-center space-y-3">
               <p className="text-sm font-medium text-gray-700">Sign in to access all features</p>
               <div className="flex space-x-2 w-full">
                 <Link 
                   to="/login" 
-                  className="flex-1 py-2 bg-amber-600 text-white rounded-lg text-sm font-medium hover:bg-amber-700 transition-colors flex items-center justify-center"
+                  className="flex-1 py-2 bg-indigo-700 text-white rounded-lg text-sm font-medium hover:bg-indigo-600 transition-all flex items-center justify-center hover:shadow-lg hover:-translate-y-0.5"
                 >
                   <LoginIcon fontSize="small" className="mr-1.5" /> Sign In
                 </Link>
                 <Link 
                   to="/register" 
-                  className="flex-1 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors flex items-center justify-center"
+                  className="flex-1 py-2 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-indigo-900 rounded-lg text-sm font-medium transition-all flex items-center justify-center hover:shadow-lg hover:-translate-y-0.5"
                 >
                   <PersonAddIcon fontSize="small" className="mr-1.5" /> Register
                 </Link>
@@ -209,18 +220,18 @@ export const SponsorLayout = () => {
                 flex items-center px-4 py-3 rounded-xl
                 transition-all duration-200 group
                 ${isActive 
-                  ? "bg-gradient-to-r from-amber-600 to-amber-500 text-white shadow-md" 
-                  : "text-gray-700 hover:bg-amber-50 hover:text-amber-600"
+                  ? "bg-gradient-to-r from-indigo-700 to-purple-700 text-white shadow-md" 
+                  : "text-gray-700 hover:bg-indigo-50 hover:text-indigo-600"
                 }
                 ${!isLoggedIn && "opacity-60 pointer-events-none filter grayscale"}
               `}
             >
-              <span className={`mr-3 text-xl group-hover:scale-110 transition-transform ${!location.pathname.includes(item.path) && "text-amber-600"}`}>
+              <span className={`mr-3 text-xl group-hover:scale-110 transition-transform ${!location.pathname.includes(item.path) && "text-indigo-600"}`}>
                 {item.icon}
               </span>
               <span className="text-sm font-medium">{item.label}</span>
               {item.path === "/sponsor/register" && (
-                <span className="ml-auto bg-white/90 text-amber-600 text-xs font-bold px-2 py-0.5 rounded-full">New</span>
+                <span className="ml-auto bg-white/90 text-indigo-600 text-xs font-bold px-2 py-0.5 rounded-full">New</span>
               )}
             </NavLink>
           ))}
@@ -229,8 +240,8 @@ export const SponsorLayout = () => {
             <p className="px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Support</p>
           </div>
           
-          <button className="w-full flex items-center px-4 py-3 text-gray-700 rounded-xl hover:bg-amber-50 hover:text-amber-600 transition-all duration-200">
-            <span className="mr-3 text-xl text-amber-600">
+          <button className="w-full flex items-center px-4 py-3 text-gray-700 rounded-xl hover:bg-indigo-50 hover:text-indigo-600 transition-all duration-200">
+            <span className="mr-3 text-xl text-indigo-600">
               <HelpOutlineIcon />
             </span>
             <span className="text-sm font-medium">Help & Resources</span>
@@ -258,12 +269,12 @@ export const SponsorLayout = () => {
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Top header */}
-        <header className="bg-white shadow-sm border-b border-gray-100 sticky top-0 z-10">
+        <header className={`bg-white shadow-sm border-b border-gray-100 sticky top-0 z-10 transition-all duration-300 ${scrolled ? 'shadow-xl' : 'shadow-md'}`}>
           <div className="flex justify-between items-center h-16 px-4 md:px-6">
             <div className="flex items-center">
               <h1 className="text-lg font-semibold text-gray-800">{getPageTitle()}</h1>
               <div className="ml-3 hidden md:block">
-                <span className="bg-amber-100 text-amber-800 text-xs px-2.5 py-1 rounded-full font-medium">
+                <span className="bg-indigo-100 text-indigo-800 text-xs px-2.5 py-1 rounded-full font-medium">
                   Sponsor Portal
                 </span>
               </div>
@@ -274,10 +285,10 @@ export const SponsorLayout = () => {
                 <>
                   {/* Notification bell - Only show when logged in */}
                   <div className="relative">
-                    <button className="p-2 rounded-full hover:bg-gray-100 text-gray-600 transition-colors flex items-center justify-center">
+                    <button className="p-2 rounded-full hover:bg-indigo-50 text-gray-600 transition-all hover:scale-110 flex items-center justify-center">
                       <NotificationsIcon fontSize="small" />
                       {notificationCount > 0 && (
-                        <span className="absolute top-0 right-0 transform translate-x-1/4 -translate-y-1/4 bg-red-500 text-xs text-white w-5 h-5 flex items-center justify-center rounded-full font-medium">
+                        <span className="absolute top-0 right-0 transform translate-x-1/4 -translate-y-1/4 bg-gradient-to-br from-amber-400 to-amber-600 text-xs text-white w-5 h-5 flex items-center justify-center rounded-full font-medium shadow-lg animate-pulse">
                           {notificationCount}
                         </span>
                       )}
@@ -286,7 +297,7 @@ export const SponsorLayout = () => {
                   
                   {/* User profile for desktop - Only show when logged in */}
                   <div className="hidden md:flex items-center">
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-r from-amber-600 to-amber-400 flex items-center justify-center text-white font-bold text-sm shadow-sm">
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-r from-indigo-600 to-purple-500 flex items-center justify-center text-white font-bold text-sm shadow-sm">
                       {getUserInitial()}
                     </div>
                     <span className="ml-2 text-sm font-medium text-gray-700">
@@ -295,16 +306,16 @@ export const SponsorLayout = () => {
                   </div>
                 </>
               ) : (
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-3">
                   <Link 
                     to="/login" 
-                    className="px-3 py-1.5 bg-amber-600 text-white rounded-md text-sm font-medium hover:bg-amber-700 transition-colors flex items-center shadow-sm"
+                    className="rounded-full bg-indigo-700 hover:bg-indigo-600 py-2 px-5 text-sm font-medium text-white transition-all hover:shadow-lg hover:-translate-y-0.5 flex items-center"
                   >
                     <LoginIcon fontSize="small" className="w-4 h-4 mr-1.5" /> Sign In
                   </Link>
                   <Link 
                     to="/register" 
-                    className="px-3 py-1.5 bg-gray-100 text-gray-700 rounded-md text-sm font-medium hover:bg-gray-200 transition-colors flex items-center"
+                    className="rounded-full bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-400 py-2 px-5 text-sm font-medium text-indigo-900 transition-all hover:shadow-lg hover:-translate-y-0.5 flex items-center"
                   >
                     <PersonAddIcon fontSize="small" className="w-4 h-4 mr-1.5" /> Register
                   </Link>
@@ -318,23 +329,23 @@ export const SponsorLayout = () => {
         <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 p-4 md:p-6">
           <div className="max-w-7xl mx-auto">
             {!isLoggedIn && location.pathname !== "/sponsor" ? (
-              <div className="bg-amber-50 border border-amber-200 rounded-xl p-6 mb-6 shadow-sm">
+              <div className="bg-indigo-50 border border-indigo-200 rounded-xl p-6 mb-6 shadow-sm">
                 <div className="flex flex-col items-center text-center">
-                  <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mb-4 shadow-inner">
-                    <LoginIcon className="text-amber-600 text-2xl" />
+                  <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mb-4 shadow-inner">
+                    <LoginIcon className="text-indigo-600 text-2xl" />
                   </div>
                   <h3 className="text-lg font-medium text-gray-800 mb-2">Authentication Required</h3>
                   <p className="text-gray-600 mb-5 max-w-md">Please sign in or register to access this feature</p>
                   <div className="flex space-x-3">
                     <Link 
                       to="/login" 
-                      className="px-5 py-2.5 bg-amber-600 text-white rounded-lg font-medium hover:bg-amber-700 transition-colors shadow-sm"
+                      className="px-5 py-2.5 bg-indigo-700 text-white rounded-lg font-medium hover:bg-indigo-600 transition-all shadow-md hover:-translate-y-0.5"
                     >
                       Sign In
                     </Link>
                     <Link 
                       to="/register" 
-                      className="px-5 py-2.5 bg-white border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+                      className="px-5 py-2.5 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-indigo-900 rounded-lg font-medium transition-all shadow-md hover:-translate-y-0.5"
                     >
                       Register
                     </Link>

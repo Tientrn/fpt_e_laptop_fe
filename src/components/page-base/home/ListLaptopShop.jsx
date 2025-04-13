@@ -1,23 +1,30 @@
-import React, { useRef, useState, useEffect } from "react";
+import { useRef, useState, useEffect } from "react";
 import productApi from "../../../api/productApi";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import formatPrice from "../../../utils/formatPrice";
+import PropTypes from "prop-types";
 
-const ListLaptopShop = () => {
+const ListLaptopShop = ({ limit }) => {
   const navigate = useNavigate();
   const scrollContainerRef = useRef(null);
-  const [laptops, setLaptops] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [displayedLaptops, setDisplayedLaptops] = useState([]);
 
   useEffect(() => {
     const fetchLaptops = async () => {
       try {
         setLoading(true);
         const response = await productApi.getAllProducts();
-        console.log("API Response:", response);
-
         if (response.isSuccess) {
-          setLaptops(response.data || []);
+          const laptopData = response.data || [];
+          
+          // If limit is provided, limit the displayed laptops
+          if (limit && limit > 0) {
+            setDisplayedLaptops(laptopData.slice(0, limit));
+          } else {
+            setDisplayedLaptops(laptopData);
+          }
         } else {
           setError("Failed to fetch laptops");
         }
@@ -29,7 +36,7 @@ const ListLaptopShop = () => {
       }
     };
     fetchLaptops();
-  }, []);
+  }, [limit]);
 
   const handleCardClick = (productId) => {
     navigate(`/laptopshop/${productId}`);
@@ -38,8 +45,8 @@ const ListLaptopShop = () => {
   if (loading) {
     return (
       <div className="p-6 text-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-teal-500 mx-auto"></div>
-        <p className="mt-2 text-teal-600">Loading laptops...</p>
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-600 mx-auto"></div>
+        <p className="mt-2 text-purple-600">Loading laptops...</p>
       </div>
     );
   }
@@ -52,7 +59,7 @@ const ListLaptopShop = () => {
     );
   }
 
-  if (!laptops || laptops.length === 0) {
+  if (!displayedLaptops || displayedLaptops.length === 0) {
     return (
       <div className="p-6 text-center text-gray-600">
         <p>No laptops available at the moment.</p>
@@ -61,80 +68,89 @@ const ListLaptopShop = () => {
   }
 
   return (
-    <div className="p-6 space-y-10 bg-white">
-      <h1 className="text-center font-bold text-3xl p-4 font-serif text-black">
-        Laptop Shop
-      </h1>
+    <div className="bg-white">
+      {!limit && (
+        <h1 className="text-center font-bold text-3xl p-4 text-indigo-900">
+          Laptop Shop
+        </h1>
+      )}
 
       <div className="relative max-w-[95%] mx-auto">
-        <button
-          onClick={() => {
-            if (scrollContainerRef.current) {
-              scrollContainerRef.current.scrollBy({
-                left: -300,
-                behavior: "smooth",
-              });
-            }
-          }}
-          className="absolute -left-4 top-1/2 -translate-y-1/2 z-10 
-            w-10 h-10 flex items-center justify-center
-            bg-white rounded-full shadow-lg 
-            hover:bg-white hover:shadow-xl
-            transition-all duration-300 
-            border border-slate-600"
-        >
-          <svg
-            className="w-6 h-6 text-slate-600 group-hover:text-slate-700 transition-colors"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
+        {displayedLaptops.length > 2 && (
+          <button
+            onClick={() => {
+              if (scrollContainerRef.current) {
+                scrollContainerRef.current.scrollBy({
+                  left: -300,
+                  behavior: "smooth",
+                });
+              }
+            }}
+            className="absolute -left-4 top-1/2 -translate-y-1/2 z-10 
+              w-10 h-10 flex items-center justify-center
+              bg-white/90 rounded-full shadow-lg 
+              hover:bg-white hover:shadow-xl
+              transition-all duration-300 
+              border border-indigo-300
+              group"
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d="M15 19l-7-7 7-7"
-            />
-          </svg>
-        </button>
+            <svg
+              className="w-6 h-6 text-indigo-600 group-hover:text-indigo-700 transition-colors"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M15 19l-7-7 7-7"
+              />
+            </svg>
+          </button>
+        )}
 
         <div
           ref={scrollContainerRef}
           className="overflow-x-auto scrollbar-hide scroll-smooth py-6 px-4"
         >
           <div className="flex space-x-8 w-fit">
-            {laptops.map((laptop) => (
+            {displayedLaptops.map((laptop) => (
               <div
                 key={laptop.productId}
-                className="flex-none w-80 bg-white rounded-xl shadow-md overflow-hidden transition-all duration-300 transform hover:scale-105 hover:shadow-2xl cursor-pointer"
+                className="flex-none w-80 bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-all duration-300 h-[540px] flex flex-col cursor-pointer transform hover:scale-105"
                 onClick={() => handleCardClick(laptop.productId)}
               >
                 <div className="relative h-52">
                   <img
-                    src={
-                      laptop.imageProduct ||
-                      "https://via.placeholder.com/300x200"
-                    }
+                    src={laptop.imageProduct}
                     alt={laptop.productName}
-                    className="w-full h-full object-cover transition-all duration-300 transform hover:scale-110"
+                    className="w-full h-full object-cover"
                   />
+                  {laptop.discountPercentage > 0 && (
+                    <div className="absolute top-4 left-4 px-3 py-1 bg-purple-600 text-white rounded-md text-sm font-medium">
+                      -{laptop.discountPercentage}%
+                    </div>
+                  )}
                   <div
-                    className={`absolute top-4 right-4 px-3 py-1 rounded-md text-sm font-medium text-white
-                   ${laptop.quantity > 0 ? "bg-amber-600" : "bg-slate-600"}`}
+                    className={`absolute top-4 right-4 px-3 py-1 rounded-md text-sm font-medium text-white 
+                  ${
+                    laptop.quantity > 0 ? "bg-purple-600" : "bg-gray-600"
+                  }`}
                   >
-                    {laptop.quantity > 0 ? "Available" : "Out of Stock"}
+                    {laptop.quantity > 0 ? "In Stock" : "Out of Stock"}
                   </div>
                 </div>
 
                 <div className="p-6 flex flex-col flex-grow">
-                  <h3 className="font-bold text-xl mb-4 text-black line-clamp-2 min-h-[3.5rem]">
+                  <h3 className="font-bold text-xl mb-4 text-indigo-900 line-clamp-2 min-h-[3.5rem]">
                     {laptop.productName}
                   </h3>
 
                   <div className="space-y-2.5 flex-grow">
                     <div className="flex items-center text-gray-600">
                       <svg
-                        className="w-5 h-5 mr-2 flex-shrink-0"
+                        className="w-5 h-5 mr-2 flex-shrink-0 text-indigo-500"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -146,13 +162,11 @@ const ListLaptopShop = () => {
                           d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"
                         />
                       </svg>
-                      <span className="truncate">
-                        CPU: {laptop.cpu || "N/A"}
-                      </span>
+                      <span className="truncate">CPU: {laptop.cpu}</span>
                     </div>
                     <div className="flex items-center text-gray-600">
                       <svg
-                        className="w-5 h-5 mr-2 flex-shrink-0"
+                        className="w-5 h-5 mr-2 flex-shrink-0 text-indigo-500"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -164,13 +178,11 @@ const ListLaptopShop = () => {
                           d="M12 6v6m0 0v6m0-6h6m-6 0H6"
                         />
                       </svg>
-                      <span className="truncate">
-                        RAM: {laptop.ram || "N/A"}
-                      </span>
+                      <span className="truncate">RAM: {laptop.ram}</span>
                     </div>
                     <div className="flex items-center text-gray-600">
                       <svg
-                        className="w-5 h-5 mr-2 flex-shrink-0"
+                        className="w-5 h-5 mr-2 flex-shrink-0 text-indigo-500"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -183,12 +195,12 @@ const ListLaptopShop = () => {
                         />
                       </svg>
                       <span className="truncate">
-                        Storage: {laptop.storage || "N/A"}
+                        Storage: {laptop.storage}
                       </span>
                     </div>
                     <div className="flex items-center text-gray-600">
                       <svg
-                        className="w-5 h-5 mr-2 flex-shrink-0"
+                        className="w-5 h-5 mr-2 flex-shrink-0 text-indigo-500"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -201,46 +213,30 @@ const ListLaptopShop = () => {
                         />
                       </svg>
                       <span className="truncate">
-                        Screen: {laptop.screenSize || "N/A"}
-                      </span>
-                    </div>
-                    <div className="flex items-center text-gray-600">
-                      <svg
-                        className="w-5 h-5 mr-2 flex-shrink-0"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
-                          d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                        />
-                      </svg>
-                      <span className="truncate">
-                        Category: {laptop.categoryName || "N/A"}
+                        Screen Size: {laptop.screenSize}
                       </span>
                     </div>
                   </div>
 
-                  <div className="mt-4 flex justify-between items-center">
-                    <span className="text-lg font-bold text-slate-600">
-                      {laptop.price
-                        ? laptop.price.toLocaleString("vi-VN", {
-                            style: "currency",
-                            currency: "VND",
-                          })
-                        : "N/A"}
-                    </span>
-                    <Link
-                      to={`/laptopshop/${laptop.productId}`}
-                      className="inline-flex items-center px-4 py-2 text-sm 
-                            bg-slate-600 text-white rounded-full hover:bg-amber-600 transition-all duration-300"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <span>View Details</span>
-                    </Link>
+                  <div className="mt-auto pt-4">
+                    <div className="flex items-center justify-between">
+                      {laptop.discountPercentage > 0 ? (
+                        <div>
+                          <p className="text-lg font-bold text-purple-600">
+                            {formatPrice(
+                              laptop.price * (1 - laptop.discountPercentage / 100)
+                            )}
+                          </p>
+                          <p className="text-sm text-gray-500 line-through">
+                            {formatPrice(laptop.price)}
+                          </p>
+                        </div>
+                      ) : (
+                        <p className="text-lg font-bold text-purple-600">
+                          {formatPrice(laptop.price)}
+                        </p>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -248,67 +244,52 @@ const ListLaptopShop = () => {
           </div>
         </div>
 
-        <button
-          onClick={() => {
-            if (scrollContainerRef.current) {
-              scrollContainerRef.current.scrollBy({
-                left: 300,
-                behavior: "smooth",
-              });
-            }
-          }}
-          className="absolute -right-4 top-1/2 -translate-y-1/2 z-10 
-            w-10 h-10 flex items-center justify-center
-            bg-white rounded-full shadow-lg 
-            hover:bg-white hover:shadow-xl
-            transition-all duration-300 
-            border border-slate-600"
-        >
-          <svg
-            className="w-6 h-6 text-slate-600 group-hover:text-amber-600 transition-colors"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
+        {displayedLaptops.length > 2 && (
+          <button
+            onClick={() => {
+              if (scrollContainerRef.current) {
+                scrollContainerRef.current.scrollBy({
+                  left: 300,
+                  behavior: "smooth",
+                });
+              }
+            }}
+            className="absolute -right-4 top-1/2 -translate-y-1/2 z-10 
+              w-10 h-10 flex items-center justify-center
+              bg-white/90 rounded-full shadow-lg 
+              hover:bg-white hover:shadow-xl
+              transition-all duration-300 
+              border border-indigo-300
+              group"
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d="M9 5l7 7-7 7"
-            />
-          </svg>
-        </button>
-      </div>
-
-      <div className="flex justify-center pt-4">
-        <Link
-          to="/laptopshop"
-          className="px-6 py-3 rounded-full 
-            bg-slate-600 text-white
-            hover:bg-amber-600
-            transition-all duration-300
-            shadow-md hover:shadow-lg
-            font-medium
-            flex items-center space-x-2"
-        >
-          <span>Explore More Shop Options</span>
-          <svg
-            className="w-5 h-5"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d="M17 8l4 4m0 0l-4 4m4-4H3"
-            />
-          </svg>
-        </Link>
+            <svg
+              className="w-6 h-6 text-indigo-600 group-hover:text-indigo-700 transition-colors"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M9 5l7 7-7 7"
+              />
+            </svg>
+          </button>
+        )}
       </div>
     </div>
   );
+};
+
+// Prop type validation
+ListLaptopShop.propTypes = {
+  limit: PropTypes.number
+};
+
+// Default prop for when limit is not provided
+ListLaptopShop.defaultProps = {
+  limit: 0, // 0 means show all laptops
 };
 
 export default ListLaptopShop;

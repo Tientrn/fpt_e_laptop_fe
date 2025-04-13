@@ -1,8 +1,12 @@
-import React, { useState, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import ShoppingCartCheckoutIcon from "@mui/icons-material/ShoppingCartCheckout";
 import HandshakeIcon from "@mui/icons-material/Handshake";
 import PersonIcon from "@mui/icons-material/Person";
+import HomeIcon from "@mui/icons-material/Home";
+import LaptopIcon from "@mui/icons-material/Laptop";
+import MenuIcon from "@mui/icons-material/Menu";
+import CloseIcon from "@mui/icons-material/Close";
 import { jwtDecode } from "jwt-decode";
 import useCartStore from "../../store/useCartStore";
 import { Link } from "react-router-dom";
@@ -10,15 +14,35 @@ import { Link } from "react-router-dom";
 function HeaderHomePage() {
   const [nav, setNav] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(() => {
+  const [scrolled, setScrolled] = useState(false);
+  const [isLoggedIn] = useState(() => {
     return !!localStorage.getItem("token");
   });
 
   const navigate = useNavigate();
-  const location = useLocation();
-
   const cartCount = useCartStore((state) => state.getCartCount());
-  const resetCart = useCartStore((state) => state.resetCart);
+
+  // Detect scroll for header effects
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 10);
+    };
+    
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // Close profile dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (isProfileOpen && !event.target.closest('.profile-container')) {
+        setIsProfileOpen(false);
+      }
+    }
+    
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isProfileOpen]);
 
   const handleLogout = () => {
     const cartData = localStorage.getItem("cart-storage");
@@ -36,7 +60,7 @@ function HeaderHomePage() {
 
   useEffect(() => {
     const token = localStorage.getItem("token");
-    if (!token) return; // ✅ nếu chưa login thì cứ để yên
+    if (!token) return;
 
     try {
       const decoded = jwtDecode(token);
@@ -44,123 +68,163 @@ function HeaderHomePage() {
       if (decoded.exp < currentTime) {
         handleLogout();
       }
-    } catch (err) {
-      // Nếu lỗi decode thì clear token nhưng KHÔNG navigate về login
+    } catch (_) {
+      // Just clear token without handling the error
       localStorage.removeItem("token");
       localStorage.removeItem("user");
     }
   }, []);
 
   return (
-    <header>
-      <div className="bg-[#1e293b] text-white px-4 lg:px-6">
-        <div className="mx-auto max-w-screen-lg flex space-x-6">
+    <header className={`sticky top-0 z-50 transition-all duration-300 ${scrolled ? 'shadow-xl' : 'shadow-md'}`}>
+      {/* Sponsor Bar */}
+      <div className="bg-gradient-to-r from-purple-950 via-indigo-950 to-indigo-900 text-white px-4 lg:px-8 py-1.5">
+        <div className="mx-auto max-w-screen-xl flex justify-end">
           <button
             onClick={() => navigate("/sponsor/register")}
-            className="font-semibold text-lg hover:text-amber-600 flex items-center h-10"
+            className="font-medium text-sm hover:text-amber-300 transition-all flex items-center h-8 gap-1.5 hover:scale-105"
           >
-            <HandshakeIcon className="mr-1" />
-            <span className="drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]">
-              Sponsor
-            </span>
+            <HandshakeIcon className="text-amber-300" fontSize="small" />
+            <span className="drop-shadow-sm">Become a Sponsor</span>
           </button>
         </div>
       </div>
 
-      <nav className="bg-[#1e293b] text-white px-4 lg:px-6 py-2.5">
-        <div className="flex flex-wrap justify-between items-center mx-auto max-w-screen-lg">
-          <span className="self-center text-xl font-bold whitespace-nowrap text-white">
-            <div className="flex items-center">
-              <i className="fas fa-laptop mr-2 text-2xl"></i>
-              <h1 className="text-lg text-amber-400 font-bold drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]">
-                FPT E-Laptop
-              </h1>
+      {/* Main Navigation */}
+      <nav className={`bg-gradient-to-r from-indigo-900 via-indigo-800 to-purple-900 text-white px-4 lg:px-8 py-4 transition-all duration-300 ${scrolled ? 'py-3' : ''}`}>
+        <div className="flex flex-wrap justify-between items-center mx-auto max-w-screen-xl">
+          {/* Logo */}
+          <Link to="/" className="flex items-center group">
+            <div className="flex items-center gap-2 transition-transform duration-300 transform hover:scale-105">
+              <div className="relative w-10 h-10 flex items-center justify-center bg-white rounded-full shadow-md overflow-hidden">
+                <i className="fas fa-laptop text-xl text-indigo-600"></i>
+                <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/20 to-purple-600/20"></div>
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold drop-shadow-md transition-colors group-hover:text-amber-300">
+                  <span className="bg-clip-text text-transparent bg-gradient-to-r from-amber-300 to-amber-500">FPT</span>
+                  <span className="ml-1">E-Laptop</span>
+                </h1>
+              </div>
             </div>
-          </span>
+          </Link>
 
+          {/* Mobile Menu Button */}
+          <div className="md:hidden flex items-center">
+            <button
+              type="button"
+              className="inline-flex items-center p-2 ml-1 text-sm rounded-lg bg-indigo-700/30 hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-amber-400 transition-all"
+              onClick={() => setNav(!nav)}
+            >
+              <span className="sr-only">Toggle menu</span>
+              {nav ? <CloseIcon /> : <MenuIcon />}
+            </button>
+          </div>
+
+          {/* Navigation Links and Actions */}
           <div
-            className={`flex-col md:flex md:flex-row items-center w-full md:w-auto md:order-2 transition-all duration-300 ${
+            className={`${
               nav
-                ? "absolute top-14 left-0 w-full bg-[#1E1E2F] shadow-md p-4 md:relative md:top-0 md:w-auto md:bg-transparent md:shadow-none"
-                : "hidden md:flex gap-6"
-            }`}
+                ? "absolute top-[106px] left-0 w-full bg-gradient-to-b from-indigo-900 to-indigo-950 shadow-2xl p-5 border-t border-indigo-700/50 backdrop-blur-sm"
+                : "hidden md:flex"
+            } md:relative md:top-0 md:w-auto md:bg-transparent md:shadow-none md:border-none md:p-0 md:items-center transition-all duration-300 z-20`}
           >
-            <ul className="flex flex-col md:flex-row md:gap-8 gap-4">
+            <ul className="flex flex-col md:flex-row md:space-x-1 lg:space-x-2 mb-6 md:mb-0">
               <li>
                 <Link
                   to="/"
-                  className="block py-2 pr-4 pl-3 text-white font-semibold drop-shadow-[0_1px_1px_rgba(0,0,0,0.8)] hover:text-amber-600"
+                  className="flex items-center gap-1.5 px-4 py-2.5 md:py-2 text-base font-medium rounded-lg hover:bg-white/10 transition-all hover:text-amber-300"
                 >
-                  Home
+                  <HomeIcon fontSize="small" className="hidden md:block" />
+                  <span>Home</span>
                 </Link>
               </li>
               <li>
                 <Link
                   to="/laptopshop"
-                  className="block py-2 pr-4 pl-3 text-white font-semibold drop-shadow-[0_1px_1px_rgba(0,0,0,0.8)] hover:text-amber-600"
+                  className="flex items-center gap-1.5 px-4 py-2.5 md:py-2 text-base font-medium rounded-lg hover:bg-white/10 transition-all hover:text-amber-300"
                 >
-                  Laptop Shop
+                  <LaptopIcon fontSize="small" className="hidden md:block" />
+                  <span>Laptop Shop</span>
                 </Link>
               </li>
               <li>
                 <Link
                   to="/laptopborrow"
-                  className="block py-2 pr-4 pl-3 text-white font-semibold drop-shadow-[0_1px_1px_rgba(0,0,0,0.8)] hover:text-amber-600"
+                  className="flex items-center gap-1.5 px-4 py-2.5 md:py-2 text-base font-medium rounded-lg hover:bg-white/10 transition-all hover:text-amber-300"
                 >
-                  Laptop Borrow
+                  <i className="fas fa-handshake text-sm hidden md:block"></i>
+                  <span>Laptop Borrow</span>
                 </Link>
               </li>
             </ul>
 
-            <div className="flex flex-col md:flex-row items-center gap-4 ml-2">
-              {/* Luôn hiển thị giỏ hàng */}
-              <button
-                onClick={() => navigate("/cart")}
-                className="text-white relative hover:text-purple-300"
+            <div className="flex items-center md:ml-6 lg:ml-8 gap-3 md:gap-4">
+              {/* Cart Button */}
+              <Link
+                to="/cart"
+                className="text-white p-2 rounded-full hover:bg-white/10 transition-all hover:scale-110 relative"
+                aria-label="Shopping Cart"
               >
                 <ShoppingCartCheckoutIcon />
                 {cartCount > 0 && (
-                  <span className="absolute -top-2 -right-2 inline-block w-5 h-5 text-xs font-semibold text-center text-white bg-red-500 rounded-full leading-5">
+                  <span className="absolute -top-1 -right-1 inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-gradient-to-br from-amber-400 to-amber-600 rounded-full shadow-lg animate-pulse">
                     {cartCount}
                   </span>
                 )}
-              </button>
+              </Link>
+              
+              {/* Login/Register or Profile */}
               {!isLoggedIn ? (
-                <>
-                  <button
-                    onClick={() => navigate("/login")}
-                    className="rounded-full bg-amber-600 bg-opacity-70 py-2 px-4 text-center text-sm text-white transition-all hover:bg-opacity-90 hover:shadow-lg"
+                <div className="flex items-center gap-3">
+                  <Link
+                    to="/login"
+                    className="rounded-full bg-indigo-700 hover:bg-indigo-600 py-2 px-5 text-sm font-medium transition-all hover:shadow-lg hover:-translate-y-0.5"
                   >
                     Sign In
-                  </button>
-                  <button
-                    onClick={() => navigate("/register")}
-                    className="rounded-full bg-amber-600 bg-opacity-70 py-2 px-4 text-center text-sm text-white transition-all hover:bg-opacity-90 hover:shadow-lg"
+                  </Link>
+                  <Link
+                    to="/register"
+                    className="rounded-full bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-400 py-2 px-5 text-sm font-medium text-indigo-900 transition-all hover:shadow-lg hover:-translate-y-0.5"
                   >
                     Sign Up
-                  </button>
-                </>
+                  </Link>
+                </div>
               ) : (
-                <div className="relative ml-4">
+                <div className="relative profile-container">
                   <button
                     onClick={() => setIsProfileOpen(!isProfileOpen)}
-                    className="text-white hover:text-purple-300"
+                    className="p-2 rounded-full hover:bg-white/10 transition-all hover:scale-110"
+                    aria-label="User Profile"
                   >
                     <PersonIcon />
                   </button>
                   {isProfileOpen && (
-                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10">
+                    <div className="absolute right-0 mt-2 w-56 bg-white/95 backdrop-blur-md rounded-xl shadow-2xl py-2 z-30 border border-indigo-100 overflow-hidden">
+                      <div className="px-4 py-3 border-b border-gray-100">
+                        <p className="text-sm font-medium text-gray-900">My Account</p>
+                        <p className="text-xs text-gray-500 mt-1">Manage your profile and orders</p>
+                      </div>
                       <Link
                         to="/student/profile"
-                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                        className="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-indigo-50 transition-colors"
                       >
-                        My account
+                        <i className="fas fa-user-circle text-indigo-500"></i>
+                        My Profile
                       </Link>
-
+                      <Link
+                        to="/student/orders"
+                        className="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-indigo-50 transition-colors"
+                      >
+                        <i className="fas fa-shopping-bag text-indigo-500"></i>
+                        My Orders
+                      </Link>
+                      <div className="border-t border-gray-100 my-1"></div>
                       <button
                         onClick={handleLogout}
-                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                        className="flex items-center gap-2 w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
                       >
+                        <i className="fas fa-sign-out-alt text-red-500"></i>
                         Logout
                       </button>
                     </div>
@@ -168,45 +232,6 @@ function HeaderHomePage() {
                 </div>
               )}
             </div>
-          </div>
-
-          <div className="md:hidden flex items-center lg:order-1">
-            <button
-              type="button"
-              className="inline-flex items-center p-2 ml-1 text-sm text-gray-400 rounded-lg hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500"
-              aria-controls="mobile-menu"
-              aria-expanded={nav}
-              onClick={() => setNav(!nav)}
-            >
-              <span className="sr-only">Open main menu</span>
-              {nav ? (
-                <svg
-                  className="w-6 h-6"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-              ) : (
-                <svg
-                  className="w-6 h-6"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 15a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-              )}
-            </button>
           </div>
         </div>
       </nav>
