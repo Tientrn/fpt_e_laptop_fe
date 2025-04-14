@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "react-toastify";
 import { format } from "date-fns";
 import borrowcontractApi from "../../api/borrowcontractApi";
@@ -27,6 +27,8 @@ const ContractsPage = () => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [contractToDelete, setContractToDelete] = useState(null);
   const [selectedUserInfo, setSelectedUserInfo] = useState(null);
+  const [activeTab, setActiveTab] = useState("all"); // "all", "requests", "active"
+  const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
     const fetchData = async () => {
@@ -366,231 +368,291 @@ const ContractsPage = () => {
     }
   };
 
-  const handleDepositCreated = async () => {
-    try {
-      await Promise.all([fetchContracts(), fetchDeposits()]);
-
-      // Cập nhật status của contract thành Borrowing
-      const updatedContracts = contracts.map((contract) => {
-        if (deposits[contract.contractId]) {
-          return {
-            ...contract,
-            status: "Borrowing",
-          };
-        }
-        return contract;
-      });
-      setContracts(updatedContracts);
-    } catch (error) {
-      console.error("Error updating after deposit creation:", error);
-      toast.error("Failed to update contract status");
-    }
+  // Modified isExpiringSoon function to add warning badge to item details instead
+  const isExpiringSoon = (date) => {
+    const returnDate = new Date(date);
+    const today = new Date();
+    const diffTime = returnDate - today;
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays >= 0 && diffDays <= 7;
   };
-
-  const handleCreateDeposit = async (contractId) => {
-    try {
-      // Tạo deposit transaction
-      const createResponse =
-        await deposittransactionApi.createDepositTransaction({
-        contractId: contractId,
-        amount: selectedContract.itemValue,
-        status: "Pending",
-          depositDate: new Date().toISOString(),
-      });
-
-      if (createResponse.isSuccess) {
-        // Cập nhật status của deposit thành Completed
-        const updateResponse =
-          await deposittransactionApi.updateDepositTransaction(
-          createResponse.data.depositId,
-          {
-            ...createResponse.data,
-              status: "Completed",
-          }
-        );
-
-        if (updateResponse.isSuccess) {
-          toast.success("Deposit created and completed successfully");
-          await fetchDeposits(); // Refresh deposits data
-        }
+  
+  // Filtered contracts and requests based on active tab and search term
+  const filteredData = () => {
+    let result = [];
+    
+    if (activeTab === "requests" || activeTab === "all") {
+      const filteredRequests = approvedRequests
+        .filter(request => 
+          searchTerm ? 
+            (userInfoMap[request.userId]?.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            userInfoMap[request.userId]?.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            request.itemName?.toLowerCase().includes(searchTerm.toLowerCase())) 
+          : true
+        )
+        .map(request => ({
+          ...request,
+          isRequest: true
+        }));
+      
+      if (activeTab === "requests") {
+        return filteredRequests;
       }
-    } catch (error) {
-      console.error("Error creating/updating deposit:", error);
-      toast.error("Failed to process deposit");
+      
+      result = [...filteredRequests];
     }
+    
+    if (activeTab === "active" || activeTab === "all") {
+      const filteredContracts = contracts
+        .filter(contract => 
+          searchTerm ? 
+            (userInfoMap[contract.contractId]?.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            userInfoMap[contract.contractId]?.email?.toLowerCase().includes(searchTerm.toLowerCase())) 
+          : true
+        )
+        .map(contract => ({
+          ...contract,
+          isContract: true
+        }));
+      
+      if (activeTab === "active") {
+        return filteredContracts;
+      }
+      
+      result = [...result, ...filteredContracts];
+    }
+    
+    return result;
   };
 
   return (
-    <div className="min-h-screen bg-white p-6">
+    <div className="min-h-screen bg-gray-50 p-6">
       {/* Header with Staff Role Indicator */}
-      <div className="mb-6">
-        <h1 className="text-2xl text-center font-semibold text-black">
+      <div className="mb-8">
+        <h1 className="text-3xl text-center font-bold text-gray-800">
           Contract Management
         </h1>
+        <p className="text-center text-gray-500 mt-2">Manage all contracts and requests in one place</p>
       </div>
-
-      {/* Approved Requests Section */}
-      <div className="mb-8 bg-white border border-slate-200 rounded-md shadow-sm p-6">
-        <h2 className="text-lg font-semibold text-black mb-4">
-          Approved Requests
-        </h2>
-        <div className="overflow-auto shadow-md rounded-lg">
-          <table className="min-w-full divide-y divide-slate-200">
-            <thead className="bg-slate-50">
-            <tr className="bg-gradient-to-r from-gray-500 to-green-500 text-white">
-                {[
-                  "ID",
-                  "Full Name",
-                  "Email",
-                  "Item Name",
-                  "Status",
-                  "Actions",
-                ].map((header) => (
-                  <th
-                    key={header}
-                    className="px-4 py-2 text-left text-xs font-medium text-white uppercase tracking-wider"
-                  >
-                    {header}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-200">
-              {approvedRequests.map((request) => (
-                <tr key={request.requestId} className="hover:bg-slate-50">
-                  <td className="px-4 py-3 text-sm text-black">
-                    {request.requestId}
-                  </td>
-                  <td className="px-4 py-3 text-sm text-black">
-                    {userInfoMap[request.userId]?.fullName || "Loading..."}
-                  </td>
-                  <td className="px-4 py-3 text-sm text-black">
-                    {userInfoMap[request.userId]?.email || "Loading..."}
-                  </td>
-                  <td className="px-4 py-3 text-sm text-black">
-                    {request.itemName}
-                  </td>
-                  <td className="px-4 py-3 text-sm">
-                    <span className="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
-                      {request.status}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-sm">
-                    <button
-                      onClick={() => {
-                        console.log("Create Contract button clicked");
-                        handleRequestSelect(request);
-                      }}
-                      className="px-3 py-1 bg-slate-600 text-white rounded-md hover:bg-amber-600 transition-colors"
-                    >
-                      Create Contract
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      
+      {/* Search and Filter Controls */}
+      <div className="mb-8 bg-white rounded-xl shadow-md p-4">
+        <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+          <div className="flex space-x-2">
+            <button 
+              onClick={() => setActiveTab("all")}
+              className={`px-4 py-2 rounded-lg transition-all ${activeTab === "all" 
+                ? "bg-amber-600 text-white shadow-md" 
+                : "bg-gray-100 text-gray-700 hover:bg-gray-200"}`}
+            >
+              All
+            </button>
+            <button 
+              onClick={() => setActiveTab("requests")}
+              className={`px-4 py-2 rounded-lg transition-all ${activeTab === "requests" 
+                ? "bg-amber-600 text-white shadow-md" 
+                : "bg-gray-100 text-gray-700 hover:bg-gray-200"}`}
+            >
+              Requests
+            </button>
+            <button 
+              onClick={() => setActiveTab("active")}
+              className={`px-4 py-2 rounded-lg transition-all ${activeTab === "active" 
+                ? "bg-amber-600 text-white shadow-md" 
+                : "bg-gray-100 text-gray-700 hover:bg-gray-200"}`}
+            >
+              Contracts
+            </button>
+          </div>
+          
+          <div className="relative w-full md:w-64">
+            <input
+              type="text"
+              placeholder="Search by name, email, item..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full px-4 py-2 border-0 bg-gray-100 rounded-lg focus:ring-2 focus:ring-amber-500 focus:bg-white transition-all"
+            />
+            <div className="absolute right-3 top-2.5 text-gray-400">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
+              </svg>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Existing Contracts Section */}
-      <div className="bg-white border border-slate-200 rounded-md shadow-sm p-6">
-        <h2 className="text-lg font-semibold text-black mb-4">
-          Existing Contracts
-        </h2>
+      {/* Combined Table */}
+      <div className="bg-white rounded-xl shadow-md overflow-hidden">
+        <div className="p-6 border-b border-gray-100">
+          <h2 className="text-xl font-bold text-gray-800">
+            {activeTab === "requests" ? "Approved Requests" : 
+            activeTab === "active" ? "Active Contracts" : 
+            "All Contracts & Requests"}
+            <span className="text-sm font-normal text-gray-500 ml-2">
+              ({filteredData().length} items)
+            </span>
+          </h2>
+        </div>
+        
         {loading ? (
           <div className="flex justify-center items-center h-64">
-            <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-amber-600"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-amber-600"></div>
           </div>
         ) : (
-          <div className="overflow-auto shadow-md rounded-lg">
-            <table className="min-w-full divide-y divide-slate-200">
-              <thead className="bg-slate-50">
-              <tr className="bg-gradient-to-r from-gray-500 to-green-500 text-white">
-                  {[
-                    "Contract ID",
-                    "Full Name",
-                    "Email",
-                    "Item Value",
-                    "Expected Return",
-                    "Status",
-                    "Actions",
-                  ].map((header) => (
-                    <th
-                      key={header}
-                      className="px-4 py-2 text-left text-xs font-medium text-white uppercase tracking-wider"
-                    >
-                      {header}
-                    </th>
-                  ))}
+          <div className="overflow-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead>
+                <tr className="bg-gradient-to-r from-gray-600 to-amber-600 text-white">
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                    ID
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                    User
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                    Item Details
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                    Status
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                    Actions
+                  </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-200">
-                {contracts.map((contract) => (
-                  <tr key={contract.contractId} className="hover:bg-slate-50">
-                    <td className="px-4 py-3 text-sm text-black">
-                      {contract.contractId}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-black">
-                      {userInfoMap[contract.contractId]?.fullName || "Loading..."}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-black">
-                      {userInfoMap[contract.contractId]?.email || "Loading..."}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-black">
-                      {contract.itemValue?.toLocaleString()}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-black">
-                      {format(
-                        new Date(contract.expectedReturnDate),
-                        "dd/MM/yyyy"
-                      )}
-                    </td>
-                    <td className="px-4 py-3 text-sm">
-                      <span
-                        className={`px-2 py-1 text-xs font-semibold rounded-full ${
-    deposits[contract.contractId] 
-      ? "bg-green-100 text-green-800"
-      : "bg-yellow-100 text-yellow-800"
-                        }`}
-                      >
-                        {deposits[contract.contractId]
-                          ? "Completed"
-                          : "Pending"}
-  </span>
-</td>
-                    <td className="px-4 py-3 text-sm">
-                      <div className="flex space-x-2">
-                        <button
-                          onClick={() => handleDetailClick(contract)}
-                          className="px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-700 transition-colors"
-                        >
-                          Detail
-                        </button>
-                        {!deposits[contract.contractId] ? (
-                          <button
-                            onClick={() =>
-                              (window.location.href = `/staff/deposits/create/${contract.contractId}`)
-                            }
-                            className="px-3 py-1 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
+              <tbody className="divide-y divide-gray-200 bg-white">
+                {filteredData().length > 0 ? (
+                  filteredData().map((item) => (
+                    <tr key={item.isRequest ? `request-${item.requestId}` : `contract-${item.contractId}`} 
+                        className={`hover:bg-gray-50 transition-colors ${item.isContract && isExpiringSoon(item.expectedReturnDate) ? 'bg-red-50' : ''}`}>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        {item.isRequest ? item.requestId : item.contractId}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex flex-col">
+                          <span className="text-sm font-medium text-gray-900">
+                            {item.isRequest 
+                              ? userInfoMap[item.userId]?.fullName || "Loading..." 
+                              : userInfoMap[item.contractId]?.fullName || "Loading..."}
+                          </span>
+                          <span className="text-sm text-gray-500">
+                            {item.isRequest 
+                              ? userInfoMap[item.userId]?.email || "Loading..." 
+                              : userInfoMap[item.contractId]?.email || "Loading..."}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {item.isRequest 
+                          ? (
+                            <div className="flex flex-col">
+                              <span className="text-sm font-medium text-gray-900">{item.itemName}</span>
+                              <span className="text-xs text-gray-500">
+                                {format(new Date(item.startDate), "dd/MM/yyyy")} to {format(new Date(item.endDate), "dd/MM/yyyy")}
+                              </span>
+                            </div>
+                          )
+                          : (
+                            <div className="flex flex-col">
+                              <div className="flex items-center">
+                                <span className="text-sm font-medium text-gray-900">Value: {item.itemValue?.toLocaleString()}</span>
+                                {isExpiringSoon(item.expectedReturnDate) && (
+                                  <span className="ml-2 px-2 py-0.5 text-xs font-medium bg-red-100 text-red-800 rounded-full">
+                                    Due Soon
+                                  </span>
+                                )}
+                              </div>
+                              {item.itemName && <span className="text-xs text-gray-500">{item.itemName}</span>}
+                              <span className="text-xs text-gray-500">
+                                Due: {format(new Date(item.expectedReturnDate), "dd/MM/yyyy")}
+                              </span>
+                            </div>
+                          )}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {item.isRequest ? (
+                          <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                            Pending Contract
+                          </span>
+                        ) : (
+                          <span
+                            className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                              deposits[item.contractId] 
+                                ? "bg-blue-100 text-blue-800"
+                                : "bg-yellow-100 text-yellow-800"
+                            }`}
                           >
-                            Create Deposit
+                            {deposits[item.contractId]
+                              ? "Active"
+                              : "Pending Deposit"}
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        {item.isRequest ? (
+                          <button
+                            onClick={() => handleRequestSelect(item)}
+                            className="inline-flex items-center px-3 py-1.5 bg-gradient-to-r from-amber-500 to-amber-600 text-white rounded-lg hover:from-amber-600 hover:to-amber-700 transition-all shadow-sm"
+                          >
+                            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                            Create Contract
                           </button>
                         ) : (
-                          <button
-                            onClick={() => {
-                              setContractToDelete(contract);
-                              setIsDeleteModalOpen(true);
-                            }}
-                            className="px-3 py-1 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
-                          >
-                            Delete Contract
-                          </button>
+                          <div className="flex space-x-2">
+                            <button
+                              onClick={() => handleDetailClick(item)}
+                              className="inline-flex items-center px-2.5 py-1.5 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-all shadow-sm"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                              </svg>
+                            </button>
+                            {!deposits[item.contractId] ? (
+                              <button
+                                onClick={() =>
+                                  (window.location.href = `/staff/deposits/create/${item.contractId}`)
+                                }
+                                className="inline-flex items-center px-2.5 py-1.5 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-all shadow-sm"
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                </svg>
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() => {
+                                  setContractToDelete(item);
+                                  setIsDeleteModalOpen(true);
+                                }}
+                                className="inline-flex items-center px-2.5 py-1.5 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-all shadow-sm"
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                              </button>
+                            )}
+                          </div>
                         )}
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="5" className="px-6 py-10 text-center text-gray-500">
+                      <div className="flex flex-col items-center">
+                        <svg className="w-12 h-12 text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        <p className="text-lg font-medium">No items found</p>
+                        <p className="text-sm">{searchTerm ? 'Try adjusting your search terms' : 'No requests or contracts available'}</p>
                       </div>
                     </td>
                   </tr>
-                ))}
+                )}
               </tbody>
             </table>
           </div>
