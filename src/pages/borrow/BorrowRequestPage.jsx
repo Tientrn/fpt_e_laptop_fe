@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -6,13 +6,14 @@ import donateitemsApi from "../../api/donateitemsApi";
 import userinfoApi from "../../api/userinfoApi";
 import borrowrequestApi from "../../api/borrowrequestApi";
 import borrowhistoryApi from "../../api/borrowhistoryApi";
-import { ArrowLeft, Calendar, User, Laptop, Check } from "lucide-react";
-
+import { ArrowLeft, Calendar, User, Laptop, Check, XCircle } from "lucide-react";
+import majorApi from "../../api/major"; 
 const BorrowRequestPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [laptop, setLaptop] = useState(null);
   const [userInfo, setUserInfo] = useState(null);
+  const [major, setMajor] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [errors, setErrors] = useState({});
@@ -20,9 +21,9 @@ const BorrowRequestPage = () => {
   const [formData, setFormData] = useState({
     borrowDate: new Date().toISOString().split("T")[0],
     endDate: "",
+    majorId: "",
   });
   const [termsAccepted, setTermsAccepted] = useState(false);
-  const [borrowData, setBorrowData] = useState(null);
 
   // Calculate min and max end dates based on start date
   const calculateEndDateConstraints = (startDate) => {
@@ -62,9 +63,11 @@ const BorrowRequestPage = () => {
         setLoading(true);
         const laptopResponse = await donateitemsApi.getDonateItemById(id);
         const userResponse = await userinfoApi.getUserInfo();
-        if (laptopResponse.isSuccess && userResponse.isSuccess) {
+        const majorResponse = await majorApi.getAllMajor();
+        if (laptopResponse.isSuccess && userResponse.isSuccess && majorResponse.isSuccess) {
           setLaptop(laptopResponse.data);
           setUserInfo(userResponse.data);
+          setMajor(majorResponse.data);
           if (laptopResponse.data.status !== "Available") {
             setError("This laptop is no longer available for borrowing.");
           }
@@ -88,6 +91,7 @@ const BorrowRequestPage = () => {
     if (name === "borrowDate") {
       const { min } = calculateEndDateConstraints(value);
       setFormData({
+        ...formData,
         borrowDate: value,
         endDate: min // Reset end date to minimum when start date changes
       });
@@ -99,6 +103,12 @@ const BorrowRequestPage = () => {
           endDate: value
         }));
       }
+    } else {
+      // Handle other inputs like majorId
+      setFormData(prev => ({
+        ...prev,
+        [name]: value
+      }));
     }
   };
 
@@ -121,6 +131,10 @@ const BorrowRequestPage = () => {
       validationErrors.endDate = "End date must be between 4 and 8 months from start date.";
     }
 
+    if (!formData.majorId) {
+      validationErrors.majorId = "Please select your major.";
+    }
+
     if (!termsAccepted) {
       validationErrors.terms = "You must accept the terms and conditions.";
     }
@@ -135,67 +149,70 @@ const BorrowRequestPage = () => {
     try {
       setSubmitting(true);
 
-      // 1. Gửi yêu cầu tạo Borrow Request
+      // Ensure all required fields are present and properly formatted
+      if (!laptop || !userInfo) {
+        toast.error("Missing laptop or user information. Please try again.");
+        return;
+      }
+
+      // {
+      //   "itemId": 8,
+      //   "startDate": "2025-04-14",
+      //   "endDate": "2025-08-14",
+      //   "majorId": 1,
+      
+      // }
+
       const requestData = {
-        itemId: laptop.itemId,
+        itemId: Number(laptop.itemId),
+        userId: Number(userInfo.userId),
         startDate: formData.borrowDate,
         endDate: formData.endDate,
-        itemName: laptop.itemName,
-        status: "Pending",
+        majorId: Number(formData.majorId),
       };
 
-      const requestResponse = await borrowrequestApi.createBorrowRequest(
-        requestData
-      );
+      
+      const requestResponse = await borrowrequestApi.createBorrowRequest(requestData);
       console.log("Request response:", requestResponse);
 
       if (requestResponse?.isSuccess && requestResponse.data) {
-        const requestId = requestResponse.data.requestId; // Lấy ID từ phản hồi
-        console.log(`data request: ${requestId}`);
+        const requestId = requestResponse.data.requestId;
+        console.log(`Request ID: ${requestId}`);
 
         if (!requestId) {
           toast.error("Request ID is missing.");
           return;
         }
 
-        // 2. Gửi yêu cầu tạo Borrow History với requestId vừa nhận
+        // Create borrow history with the received requestId
         const historyData = {
-          requestId: requestId,
-          itemId: laptop.itemId,
-          userId: userInfo.userId, // Giả sử userInfo có userId
+          requestId: Number(requestId),
+          itemId: Number(laptop.itemId),
+          userId: Number(userInfo.userId),
           borrowDate: formData.borrowDate,
           returnDate: formData.endDate,
         };
 
         console.log("Request data for borrow history:", historyData);
-        const historyResponse = await borrowhistoryApi.createBorrowHistory(
-          historyData
-        );
+        const historyResponse = await borrowhistoryApi.createBorrowHistory(historyData);
 
         if (historyResponse?.isSuccess) {
-          toast.success(
-            "Request and history created successfully! Redirecting...",
-            {
-              autoClose: 2000,
-            }
-          );
+          toast.success("Request and history created successfully! Redirecting...", {
+            autoClose: 2000,
+          });
           setTimeout(() => navigate("/student/requests"), 2000);
         } else {
-          toast.error(
-            historyResponse?.message || "Failed to create borrow history"
-          );
+          toast.error(historyResponse?.message || "Failed to create borrow history");
         }
       } else {
-        toast.error(
-          requestResponse?.message || "Failed to submit borrow request"
-        );
+        toast.error(requestResponse?.message || "Failed to submit borrow request");
       }
     } catch (err) {
       console.error("Error creating request:", err);
-      // Log more details for debugging
-      toast.error(err?.response?.data?.message || "An error occurred.");
-      // For debugging, you could also add:
-      console.log("Error response:", err?.response);
+      toast.error(
+        err?.response?.data?.message || 
+        "An error occurred while processing your request. Please try again later."
+      );
     } finally {
       setSubmitting(false);
     }
@@ -388,6 +405,34 @@ const BorrowRequestPage = () => {
                     </p>
                   </div>
                 </div>
+
+                {/* Major Selection */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Major
+                  </label>
+                  <select
+                    name="majorId"
+                    value={formData.majorId}
+                    onChange={handleInputChange}
+                    required
+                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-amber-600 focus:border-transparent transition-colors"
+                  >
+                    <option value="">Select your major</option>
+                    {major && major.map((item) => (
+                      <option key={item.id} value={item.id}>
+                        {item.name}
+                      </option>
+                    ))}
+                  </select>
+                  {errors.majorId && (
+                    <p className="mt-1 text-sm text-red-600">{errors.majorId}</p>
+                  )}
+                  <p className="mt-1 text-sm text-gray-500">
+                    Please select your major
+                  </p>
+                </div>
+                
                 <div className="mt-6">
                   <h3 className="text-lg font-medium text-gray-900">Terms and Conditions</h3>
                   <ul className="list-disc list-inside text-sm text-gray-700 mt-2 space-y-1">
@@ -422,9 +467,9 @@ const BorrowRequestPage = () => {
                   </button>
                   <button
                     type="submit"
-                    disabled={!termsAccepted || submitting}
+                    disabled={!termsAccepted || !formData.majorId || submitting}
                     className={`px-6 py-2.5 rounded-lg font-medium flex items-center ${
-                      termsAccepted && !submitting
+                      termsAccepted && formData.majorId && !submitting
                         ? "bg-amber-600 text-white hover:bg-amber-700"
                         : "bg-gray-300 text-gray-500 cursor-not-allowed"
                     }`}

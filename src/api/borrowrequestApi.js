@@ -13,6 +13,7 @@ const borrowrequestApi = {
 
   // Create new borrow request
   createBorrowRequest: (data) => {
+    console.log("data", data);
     return axiosClient.post("/BorrowRequest/create", data);
   },
 
