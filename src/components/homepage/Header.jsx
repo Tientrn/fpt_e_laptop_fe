@@ -68,27 +68,241 @@ function HeaderHomePage() {
       if (decoded.exp < currentTime) {
         handleLogout();
       }
-    } catch (_) {
+    } catch {
       // Just clear token without handling the error
       localStorage.removeItem("token");
       localStorage.removeItem("user");
     }
   }, []);
 
+  // Parse the user JSON data from localStorage
+  const userData = JSON.parse(localStorage.getItem("user") || "{}");
+  const userRole = userData.role || "";
+
+  // Function to get role-specific dashboard link
+  const getDashboardLink = () => {
+    switch(userRole) {
+      case "Admin":
+        return "/admin";
+      case "Student":
+        return "/student";
+      case "Sponsor":
+        return "/sponsor/laptop-info";
+      case "Staff":
+        return "/staff";
+      case "Manage":
+        return "/manager";
+      case "Shop":
+        return "/shop/products";
+      default:
+        return "/";
+    }
+  };
+
+  // Define role-specific menu items
+  const getRoleSpecificMenuItems = () => {
+    // Common profile dropdown items that will appear for all roles
+    const commonItems = [
+      <button
+        key="logout"
+        onClick={handleLogout}
+        className="flex items-center gap-2 w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
+      >
+        <i className="fas fa-sign-out-alt text-red-500"></i>
+        Logout
+      </button>
+    ];
+
+    // Items specific to each role
+    switch(userRole) {
+      case "Admin":
+        return [
+          <Link
+            key="admin-dashboard"
+            to="/admin"
+            className="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-indigo-50 transition-colors"
+          >
+            <i className="fas fa-tachometer-alt text-indigo-500"></i>
+            Dashboard
+          </Link>,
+          <Link
+            key="admin-accounts"
+            to="/admin/accounts"
+            className="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-indigo-50 transition-colors"
+          >
+            <i className="fas fa-users text-indigo-500"></i>
+            Manage Accounts
+          </Link>,
+          <div key="admin-divider" className="border-t border-gray-100 my-1"></div>,
+          ...commonItems
+        ];
+        
+      case "Student":
+        return [
+          <Link
+            key="student-profile"
+            to="/student/profile"
+            className="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-indigo-50 transition-colors"
+          >
+            <i className="fas fa-user-circle text-indigo-500"></i>
+            My Profile
+          </Link>,
+          <Link
+            key="student-orders"
+            to="/student/orders"
+            className="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-indigo-50 transition-colors"
+          >
+            <i className="fas fa-shopping-bag text-indigo-500"></i>
+            My Orders
+          </Link>,
+          <Link
+            key="student-requests"
+            to="/student/requests"
+            className="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-indigo-50 transition-colors"
+          >
+            <i className="fas fa-clipboard-list text-indigo-500"></i>
+            My Requests
+          </Link>,
+          <Link
+            key="student-borrowhistory"
+            to="/student/borrowhistorystudent"
+            className="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-indigo-50 transition-colors"
+          >
+            <i className="fas fa-history text-indigo-500"></i>
+            Borrow History
+          </Link>,
+          <div key="student-divider" className="border-t border-gray-100 my-1"></div>,
+          ...commonItems
+        ];
+        
+      case "Sponsor":
+        return [
+          <Link
+            key="sponsor-laptops"
+            to="/sponsor/laptop-info"
+            className="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-indigo-50 transition-colors"
+          >
+            <i className="fas fa-laptop text-indigo-500"></i>
+            My Laptops
+          </Link>,
+          <Link
+            key="sponsor-status"
+            to="/sponsor/laptop-status"
+            className="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-indigo-50 transition-colors"
+          >
+            <i className="fas fa-chart-line text-indigo-500"></i>
+            Laptop Status
+          </Link>,
+          <div key="sponsor-divider" className="border-t border-gray-100 my-1"></div>,
+          ...commonItems
+        ];
+        
+      case "Staff":
+        return [
+          <Link
+            key="staff-items"
+            to="/staff/items"
+            className="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-indigo-50 transition-colors"
+          >
+            <i className="fas fa-boxes text-indigo-500"></i>
+            Item Management
+          </Link>,
+          <Link
+            key="staff-orders"
+            to="/staff/orders"
+            className="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-indigo-50 transition-colors"
+          >
+            <i className="fas fa-shopping-cart text-indigo-500"></i>
+            Order Management
+          </Link>,
+          <Link
+            key="staff-borrow"
+            to="/staff/borrow-history"
+            className="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-indigo-50 transition-colors"
+          >
+            <i className="fas fa-history text-indigo-500"></i>
+            Borrow History
+          </Link>,
+          <div key="staff-divider" className="border-t border-gray-100 my-1"></div>,
+          ...commonItems
+        ];
+        
+      case "Manage":
+        return [
+          <Link
+            key="manager-requests"
+            to="/manager/borrow-requests"
+            className="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-indigo-50 transition-colors"
+          >
+            <i className="fas fa-tasks text-indigo-500"></i>
+            Borrow Requests
+          </Link>,
+          <div key="manager-divider" className="border-t border-gray-100 my-1"></div>,
+          ...commonItems
+        ];
+        
+      case "Shop":
+        return [
+          <Link
+            key="shop-products"
+            to="/shop/products"
+            className="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-indigo-50 transition-colors"
+          >
+            <i className="fas fa-laptop text-indigo-500"></i>
+            My Products
+          </Link>,
+          <Link
+            key="shop-orders"
+            to="/shop/orders"
+            className="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-indigo-50 transition-colors"
+          >
+            <i className="fas fa-shopping-bag text-indigo-500"></i>
+            Shop Orders
+          </Link>,
+          <Link
+            key="shop-add"
+            to="/shop/add-product"
+            className="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-indigo-50 transition-colors"
+          >
+            <i className="fas fa-plus-circle text-indigo-500"></i>
+            Add Product
+          </Link>,
+          <div key="shop-divider" className="border-t border-gray-100 my-1"></div>,
+          ...commonItems
+        ];
+        
+      default:
+        return [
+          <Link
+            key="profile"
+            to="/student/profile"
+            className="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-indigo-50 transition-colors"
+          >
+            <i className="fas fa-user-circle text-indigo-500"></i>
+            My Profile
+          </Link>,
+          <div key="default-divider" className="border-t border-gray-100 my-1"></div>,
+          ...commonItems
+        ];
+    }
+  };
+
   return (
     <header className={`sticky top-0 z-50 transition-all duration-300 ${scrolled ? 'shadow-xl' : 'shadow-md'}`}>
-      {/* Sponsor Bar */}
-      <div className="bg-gradient-to-r from-purple-950 via-indigo-950 to-indigo-900 text-white px-4 lg:px-8 py-1.5">
-        <div className="mx-auto max-w-screen-xl flex justify-end">
-          <button
-            onClick={() => navigate("/sponsor/register")}
-            className="font-medium text-sm hover:text-amber-300 transition-all flex items-center h-8 gap-1.5 hover:scale-105"
-          >
-            <HandshakeIcon className="text-amber-300" fontSize="small" />
-            <span className="drop-shadow-sm">Become a Sponsor</span>
-          </button>
+      {/* Sponsor Bar - Only show for non-sponsors */}
+      {userRole !== "Sponsor" && (
+        <div className="bg-gradient-to-r from-purple-950 via-indigo-950 to-indigo-900 text-white px-4 lg:px-8 py-1.5">
+          <div className="mx-auto max-w-screen-xl flex justify-end">
+            <button
+              onClick={() => navigate("/sponsor/register")}
+              className="font-medium text-sm hover:text-amber-300 transition-all flex items-center h-8 gap-1.5 hover:scale-105"
+            >
+              <HandshakeIcon className="text-amber-300" fontSize="small" />
+              <span className="drop-shadow-sm">Become a Sponsor</span>
+            </button>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Main Navigation */}
       <nav className={`bg-gradient-to-r from-indigo-900 via-indigo-800 to-purple-900 text-white px-4 lg:px-8 py-4 transition-all duration-300 ${scrolled ? 'py-3' : ''}`}>
@@ -157,22 +371,37 @@ function HeaderHomePage() {
                   <span>Laptop Borrow</span>
                 </Link>
               </li>
+              
+              {/* Role-specific navigation */}
+              {isLoggedIn && (
+                <li>
+                  <Link
+                    to={getDashboardLink()}
+                    className="flex items-center gap-1.5 px-4 py-2.5 md:py-2 text-base font-medium rounded-lg hover:bg-white/10 transition-all hover:text-amber-300"
+                  >
+                    <i className="fas fa-tachometer-alt text-sm hidden md:block"></i>
+                    <span>{userRole || "Dashboard"}</span>
+                  </Link>
+                </li>
+              )}
             </ul>
 
             <div className="flex items-center md:ml-6 lg:ml-8 gap-3 md:gap-4">
-              {/* Cart Button */}
-              <Link
-                to="/cart"
-                className="text-white p-2 rounded-full hover:bg-white/10 transition-all hover:scale-110 relative"
-                aria-label="Shopping Cart"
-              >
-                <ShoppingCartCheckoutIcon />
-                {cartCount > 0 && (
-                  <span className="absolute -top-1 -right-1 inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-gradient-to-br from-amber-400 to-amber-600 rounded-full shadow-lg animate-pulse">
-                    {cartCount}
-                  </span>
-                )}
-              </Link>
+              {/* Cart Button - Show for all users except Admin, Staff, and Managers */}
+              {(!isLoggedIn || (userRole !== "Admin" && userRole !== "Staff" && userRole !== "Manage")) && (
+                <Link
+                  to="/cart"
+                  className="text-white p-2 rounded-full hover:bg-white/10 transition-all hover:scale-110 relative"
+                  aria-label="Shopping Cart"
+                >
+                  <ShoppingCartCheckoutIcon />
+                  {cartCount > 0 && (
+                    <span className="absolute -top-1 -right-1 inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-gradient-to-br from-amber-400 to-amber-600 rounded-full shadow-lg animate-pulse">
+                      {cartCount}
+                    </span>
+                  )}
+                </Link>
+              )}
               
               {/* Login/Register or Profile */}
               {!isLoggedIn ? (
@@ -200,33 +429,17 @@ function HeaderHomePage() {
                     <PersonIcon />
                   </button>
                   {isProfileOpen && (
-                    <div className="absolute right-0 mt-2 w-56 bg-white/95 backdrop-blur-md rounded-xl shadow-2xl py-2 z-30 border border-indigo-100 overflow-hidden">
+                    <div className="absolute right-0 mt-2 w-60 bg-white/95 backdrop-blur-md rounded-xl shadow-2xl py-2 z-30 border border-indigo-100 overflow-hidden">
                       <div className="px-4 py-3 border-b border-gray-100">
                         <p className="text-sm font-medium text-gray-900">My Account</p>
-                        <p className="text-xs text-gray-500 mt-1">Manage your profile and orders</p>
+                        <p className="text-xs text-gray-500 mt-1 flex items-center">
+                          <span className="font-medium">{userData.fullName || "User"}</span>
+                          <span className="ml-1.5 px-1.5 py-0.5 text-xs rounded-full bg-indigo-100 text-indigo-800">{userRole || "User"}</span>
+                        </p>
                       </div>
-                      <Link
-                        to="/student/profile"
-                        className="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-indigo-50 transition-colors"
-                      >
-                        <i className="fas fa-user-circle text-indigo-500"></i>
-                        My Profile
-                      </Link>
-                      <Link
-                        to="/student/orders"
-                        className="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-indigo-50 transition-colors"
-                      >
-                        <i className="fas fa-shopping-bag text-indigo-500"></i>
-                        My Orders
-                      </Link>
-                      <div className="border-t border-gray-100 my-1"></div>
-                      <button
-                        onClick={handleLogout}
-                        className="flex items-center gap-2 w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
-                      >
-                        <i className="fas fa-sign-out-alt text-red-500"></i>
-                        Logout
-                      </button>
+                      
+                      {/* Dynamic role-based menu items */}
+                      {getRoleSpecificMenuItems()}
                     </div>
                   )}
                 </div>
