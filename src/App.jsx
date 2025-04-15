@@ -57,6 +57,7 @@ import CreateDonateItem from "./pages/staff/CreateDonateItem";
 import ItemManagement from "./pages/staff/ItemManagement";
 import ProductManagement from "./pages/staff/ProductManagement";
 import OrderManagement from "./pages/staff/OrderManagement";
+import ReportDamage from "./pages/staff/ReportDamage";
 {
   /* Manager */
 }
@@ -200,6 +201,7 @@ const App = () => {
           <Route path="donate-items" element={<DonateItem />} />
           <Route path="edit-item/:itemId" element={<EditDonateItem />} />
           <Route path="borrow-history" element={<BorrowHistory />} />
+          <Route path="report-damages" element={<ReportDamage />} />
           <Route path="statistics" element={<Statistics />} />
           <Route path="contracts" element={<ContractsPage />} />
           <Route path="items" element={<ItemManagement />} />

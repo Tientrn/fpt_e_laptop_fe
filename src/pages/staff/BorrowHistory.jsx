@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { toast } from "react-toastify";
 import { format } from "date-fns";
 import { FaSearch } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
 import borrowhistoryApi from "../../api/borrowhistoryApi";
 import userinfoApi from "../../api/userinfoApi";
 import donateitemsApi from "../../api/donateitemsApi";
@@ -10,6 +11,7 @@ import userApi from "../../api/userApi";
 import reportdamagesApi from "../../api/reportdamagesApi";
 
 const BorrowHistory = () => {
+  const navigate = useNavigate();
   const [borrowHistory, setBorrowHistory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -245,22 +247,8 @@ const BorrowHistory = () => {
   };
 
   const handleReportDamage = (borrowHistoryItem) => {
-    setSelectedBorrowHistory(borrowHistoryItem);
-    
-    // Pre-fill the form with existing data if available
-    const contractData = contractsMap[borrowHistoryItem.requestId] || {};
-    
-    setDamageReport({
-      ItemId: borrowHistoryItem.itemId,
-      BorrowHistoryId: borrowHistoryItem.borrowHistoryId,
-      Note: "",
-      ConditionBeforeBorrow: contractData.conditionBorrow || "",
-      ConditionAfterReturn: "",
-      DamageFee: 0,
-      file: null
-    });
-    
-    setShowDamageModal(true);
+    // Instead of opening modal, navigate to the report-damage page
+    navigate('/staff/report-damage');
   };
 
   const handleCloseModal = () => {
@@ -414,6 +402,19 @@ const BorrowHistory = () => {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Add Report Damage link/button at the top */}
+      <div className="mb-4 flex justify-end">
+        <button 
+          onClick={() => navigate('/staff/report-damage')}
+          className="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors flex items-center"
+        >
+          <svg className="w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+            <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+          </svg>
+          Manage Damage Reports
+        </button>
       </div>
 
       {/* Table */}
@@ -1075,165 +1076,6 @@ const BorrowHistory = () => {
           </div>
         )}
       </div>
-
-      {/* Report Damage Modal */}
-      {showDamageModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-lg max-w-lg w-full max-h-[90vh] overflow-y-auto">
-            <div className="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-gray-700 to-amber-600">
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-bold text-white flex items-center">
-                  <svg className="w-5 h-5 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                  </svg>
-                  Report Device Damage
-                </h3>
-                <button 
-                  onClick={handleCloseModal}
-                  className="text-white hover:text-gray-200 transition-colors"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
-                  </svg>
-                </button>
-              </div>
-            </div>
-            
-            <form onSubmit={handleSubmitDamageReport}>
-              <div className="p-6 space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Device & User Info */}
-                  <div className="bg-gray-50 p-3 rounded-lg col-span-full">
-                    <h4 className="font-medium text-sm text-gray-700 mb-2">Device Information</h4>
-                    <p className="text-sm">{itemsMap[selectedBorrowHistory?.itemId]?.itemName || "N/A"}</p>
-                    <p className="text-xs text-gray-500 mt-1">Borrowed by: {userInfoMap[selectedBorrowHistory?.userId]?.fullName || "N/A"}</p>
-                  </div>
-                  
-                  {/* Condition Before Borrow */}
-                  <div className="col-span-full">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Condition Before Borrowing
-                    </label>
-                    <textarea
-                      name="ConditionBeforeBorrow"
-                      value={damageReport.ConditionBeforeBorrow}
-                      onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500"
-                      rows="2"
-                      placeholder="Describe the device condition before it was borrowed"
-                      required
-                    ></textarea>
-                  </div>
-                  
-                  {/* Condition After Return */}
-                  <div className="col-span-full">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Condition After Return
-                    </label>
-                    <textarea
-                      name="ConditionAfterReturn"
-                      value={damageReport.ConditionAfterReturn}
-                      onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500"
-                      rows="2"
-                      placeholder="Describe the current condition of the returned device"
-                      required
-                    ></textarea>
-                  </div>
-                  
-                  {/* Damage Fee */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Damage Fee (if applicable)
-                    </label>
-                    <div className="relative">
-                      <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500">₫</span>
-                      <input
-                        type="number"
-                        name="DamageFee"
-                        value={damageReport.DamageFee}
-                        onChange={handleInputChange}
-                        className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500"
-                        placeholder="0"
-                        min="0"
-                      />
-                    </div>
-                  </div>
-                  
-                  {/* Notes */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Additional Notes
-                    </label>
-                    <textarea
-                      name="Note"
-                      value={damageReport.Note}
-                      onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500"
-                      rows="2"
-                      placeholder="Any additional notes about the damage"
-                    ></textarea>
-                  </div>
-                  
-                  {/* Image Upload */}
-                  <div className="col-span-full">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Damage Photos (if applicable)
-                    </label>
-                    <input
-                      type="file"
-                      name="file"
-                      onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500"
-                      accept="image/*"
-                    />
-                    {damageReport.file && (
-                      <p className="text-xs text-gray-500 mt-1">
-                        Selected file: {damageReport.file.name}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </div>
-              
-              <div className="px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-end space-x-3">
-                <button
-                  type="button"
-                  onClick={handleCloseModal}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors flex items-center"
-                >
-                  <svg className="w-4 h-4 mr-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                  </svg>
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="px-4 py-2 text-sm font-medium text-white bg-amber-600 hover:bg-amber-700 rounded-md transition-colors disabled:bg-gray-400 flex items-center"
-                >
-                  {isSubmitting ? (
-                    <div className="flex items-center">
-                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      Submitting...
-                    </div>
-                  ) : (
-                    <>
-                      <svg className="w-4 h-4 mr-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                      </svg>
-                      Submit Report
-                    </>
-                  )}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
