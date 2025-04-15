@@ -1,58 +1,70 @@
 import { useState } from "react";
+import SearchIcon from "@mui/icons-material/Search";
+import ClearIcon from "@mui/icons-material/Clear";
 import PropTypes from "prop-types";
 
-const SearchBar = ({ onSearch, className }) => {
-  const [searchQuery, setSearchQuery] = useState("");
+const SearchBar = ({ onSearch, className = "" }) => {
+  const [searchValue, setSearchValue] = useState("");
 
-  const handleSearchChange = (e) => {
-    setSearchQuery(e.target.value);
-    onSearch(e.target.value);
+  const handleChange = (e) => {
+    setSearchValue(e.target.value);
   };
 
-  const handleSearchSubmit = (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
-    onSearch(searchQuery);
+    onSearch(searchValue);
+  };
+
+  const handleClear = () => {
+    setSearchValue("");
+    onSearch("");
   };
 
   return (
-    <div className={`${className}`}>
-      <form onSubmit={handleSearchSubmit} className="relative">
+    <form
+      onSubmit={handleSubmit}
+      className={`relative w-full ${className}`}
+    >
+      <div className="relative group">
         <input
           type="text"
-          className="w-full py-3 px-10 bg-white/90 backdrop-blur-sm border border-indigo-100 rounded-lg
-            focus:ring-1 focus:ring-amber-400 focus:border-amber-400 shadow-sm
-            transition-all duration-200 text-sm
-            placeholder-indigo-300 text-indigo-800"
-          placeholder="Search by laptop name..."
-          value={searchQuery}
-          onChange={handleSearchChange}
+          value={searchValue}
+          onChange={handleChange}
+          placeholder="Search for laptops by name, specs, or condition..."
+          className="w-full py-3 pl-12 pr-10 bg-white text-indigo-900 placeholder-indigo-400 rounded-xl 
+                    border border-indigo-100 focus:border-indigo-300 focus:ring focus:ring-indigo-200 
+                    focus:ring-opacity-30 shadow-sm transition-all duration-300 text-sm outline-none"
         />
-        <svg
-          className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-indigo-400"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth="2"
-            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-          />
-        </svg>
-      </form>
-    </div>
+        <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+          <SearchIcon fontSize="small" className="text-indigo-500" />
+        </div>
+        
+        {searchValue && (
+          <button
+            type="button"
+            onClick={handleClear}
+            className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
+          >
+            <ClearIcon fontSize="small" />
+          </button>
+        )}
+      </div>
+      
+      <button
+        type="submit"
+        className="absolute right-1.5 top-1/2 transform -translate-y-1/2 px-4 py-1.5 bg-gradient-to-r 
+                   from-indigo-600 to-purple-700 text-white text-xs font-medium rounded-lg hover:from-indigo-700 
+                   hover:to-purple-800 transition-all duration-300 shadow-sm"
+      >
+        Search
+      </button>
+    </form>
   );
 };
 
 SearchBar.propTypes = {
   onSearch: PropTypes.func.isRequired,
-  className: PropTypes.string,
-};
-
-SearchBar.defaultProps = {
-  className: "",
+  className: PropTypes.string
 };
 
 export default SearchBar;

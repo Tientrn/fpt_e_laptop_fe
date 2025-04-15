@@ -1,60 +1,94 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import SortIcon from "@mui/icons-material/Sort";
+import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
+import ExpandLessIcon from "@mui/icons-material/ExpandLess";
+import CheckIcon from "@mui/icons-material/Check";
 import PropTypes from "prop-types";
 
-const SortOptions = ({ onSort, className }) => {
-  const [sortValue, setSortValue] = useState("default");
+const SortOptions = ({ onSort, currentSort = "default", className = "" }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef(null);
+  
+  const sortOptions = [
+    { id: "default", label: "Default" },
+    { id: "ram-high-to-low", label: "RAM: High to Low" },
+    { id: "ram-low-to-high", label: "RAM: Low to High" },
+    { id: "newest", label: "Newest First" },
+    { id: "oldest", label: "Oldest First" }
+  ];
 
-  const handleSortChange = (e) => {
-    setSortValue(e.target.value);
-    onSort(e.target.value);
+  const getCurrentSortLabel = () => {
+    const option = sortOptions.find(option => option.id === currentSort);
+    return option ? option.label : "Default";
+  };
+  
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+    
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleSortChange = (sortId) => {
+    onSort(sortId);
+    setIsOpen(false);
   };
 
   return (
-    <div className={`${className}`}>
-      <div className="relative flex items-center">
-        <div className="absolute left-3 pointer-events-none">
-          <SortIcon className="text-indigo-500" fontSize="small" />
-        </div>
-        
-        <select
-          value={sortValue}
-          onChange={handleSortChange}
-          className="pl-9 pr-6 py-1.5 bg-white/90 backdrop-blur-sm border border-indigo-100 rounded-lg
-            shadow-sm transition-all duration-200
-            text-indigo-800 text-xs font-medium cursor-pointer
-            focus:ring-1 focus:ring-amber-400 focus:border-amber-400
-            appearance-none"
-        >
-          <option value="default">Sort By</option>
-          <option value="ram-high-to-low">RAM: High to Low</option>
-          <option value="ram-low-to-high">RAM: Low to High</option>
-          <option value="newest">Newest First</option>
-          <option value="oldest">Oldest First</option>
-        </select>
+    <div className={`relative ${className}`} ref={dropdownRef}>
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex items-center gap-1.5 py-1.5 px-3.5 rounded-lg border border-indigo-200 
+                 bg-white hover:bg-indigo-50/80 text-indigo-800 text-xs font-medium 
+                 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+      >
+        <SortIcon fontSize="small" className="text-indigo-600" />
+        <span className="hidden md:inline">Sort: {getCurrentSortLabel()}</span>
+        <span className="md:hidden">Sort</span>
+        {isOpen ? (
+          <ExpandLessIcon fontSize="small" className="text-indigo-600" />
+        ) : (
+          <KeyboardArrowDownIcon fontSize="small" className="text-indigo-600" />
+        )}
+      </button>
 
-        <div className="absolute right-3 pointer-events-none">
-          <svg 
-            className="w-3 h-3 text-indigo-500" 
-            fill="none" 
-            stroke="currentColor" 
-            viewBox="0 0 24 24"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-          </svg>
+      {isOpen && (
+        <div className="absolute right-0 mt-1 w-56 bg-white rounded-xl shadow-lg border border-indigo-100 
+                      py-2 z-40 transform origin-top-right transition-all duration-150 animate-fadeIn">
+          <div className="text-xs text-indigo-400 px-3 py-1.5 uppercase font-medium border-b border-indigo-50 mb-1">
+            Sort Options
+          </div>
+          <div className="py-1">
+            {sortOptions.map((option) => (
+              <button
+                key={option.id}
+                onClick={() => handleSortChange(option.id)}
+                className={`flex items-center justify-between w-full px-4 py-2 text-sm hover:bg-indigo-50 transition-colors
+                          ${currentSort === option.id ? 'text-indigo-800 font-medium' : 'text-gray-700'}`}
+              >
+                {option.label}
+                {currentSort === option.id && (
+                  <CheckIcon fontSize="small" className="text-indigo-600" />
+                )}
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };
 
 SortOptions.propTypes = {
   onSort: PropTypes.func.isRequired,
+  currentSort: PropTypes.string,
   className: PropTypes.string
-};
-
-SortOptions.defaultProps = {
-  className: ""
 };
 
 export default SortOptions;

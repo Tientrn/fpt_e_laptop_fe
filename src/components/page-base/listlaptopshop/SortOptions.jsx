@@ -1,50 +1,96 @@
-import React from "react";
+import { useState, useRef, useEffect } from "react";
+import SortIcon from "@mui/icons-material/Sort";
+import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
+import ExpandLessIcon from "@mui/icons-material/ExpandLess";
+import CheckIcon from "@mui/icons-material/Check";
+import PropTypes from "prop-types";
 
-const SortOptions = ({ onSort }) => {
+const SortOptions = ({ onSort, currentSort = "default", className = "" }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef(null);
+  
+  const sortOptions = [
+    { id: "default", label: "Default" },
+    { id: "price-high-to-low", label: "Price: High to Low" },
+    { id: "price-low-to-high", label: "Price: Low to High" },
+    { id: "ram-high-to-low", label: "RAM: High to Low" },
+    { id: "ram-low-to-high", label: "RAM: Low to High" },
+    { id: "newest", label: "Newest First" },
+    { id: "oldest", label: "Oldest First" }
+  ];
+
+  const getCurrentSortLabel = () => {
+    const option = sortOptions.find(option => option.id === currentSort);
+    return option ? option.label : "Default";
+  };
+  
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+    
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleSortChange = (sortId) => {
+    onSort(sortId);
+    setIsOpen(false);
+  };
+
   return (
-    <div className="flex justify-between items-center mb-6">
-      <div className="p-4 bg-gradient-to-br from-emerald-50 to-teal-50 rounded-lg shadow-md border border-teal-100">
-        <div className="flex items-center space-x-2">
-          <svg
-            className="w-5 h-5 text-teal-600"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12"
-            />
-          </svg>
+    <div className={`relative ${className}`} ref={dropdownRef}>
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex items-center gap-1.5 py-1.5 px-3.5 rounded-lg border border-blue-200 
+                 bg-white hover:bg-blue-50/80 text-blue-800 text-xs font-medium 
+                 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-200"
+      >
+        <SortIcon fontSize="small" className="text-blue-600" />
+        <span className="hidden md:inline">Sort: {getCurrentSortLabel()}</span>
+        <span className="md:hidden">Sort</span>
+        {isOpen ? (
+          <ExpandLessIcon fontSize="small" className="text-blue-600" />
+        ) : (
+          <KeyboardArrowDownIcon fontSize="small" className="text-blue-600" />
+        )}
+      </button>
 
-          <select
-            onChange={(e) => onSort(e.target.value)}
-            className="p-2.5 bg-white border border-teal-200 rounded-lg
-              focus:ring-2 focus:ring-teal-500 focus:border-teal-500 
-              transition-all duration-300 hover:border-teal-400
-              text-teal-800 font-medium cursor-pointer
-              shadow-sm"
-          >
-            <option value="default" className="text-teal-800">
-              Sort by
-            </option>
-            <option value="price-low-to-high" className="text-teal-800">
-              Price: Low to High
-            </option>
-            <option value="price-high-to-low" className="text-teal-800">
-              Price: High to Low
-            </option>
-            <option value="newest" className="text-teal-800">
-              Newest
-            </option>
-          </select>
+      {isOpen && (
+        <div className="absolute right-0 mt-1 w-56 bg-white rounded-xl shadow-lg border border-blue-100 
+                      py-2 z-40 transform origin-top-right transition-all duration-150 animate-fadeIn">
+          <div className="text-xs text-blue-400 px-3 py-1.5 uppercase font-medium border-b border-blue-50 mb-1">
+            Sort Options
+          </div>
+          <div className="py-1">
+            {sortOptions.map((option) => (
+              <button
+                key={option.id}
+                onClick={() => handleSortChange(option.id)}
+                className={`flex items-center justify-between w-full px-4 py-2 text-sm hover:bg-blue-50 transition-colors
+                          ${currentSort === option.id ? 'text-blue-800 font-medium' : 'text-gray-700'}`}
+              >
+                {option.label}
+                {currentSort === option.id && (
+                  <CheckIcon fontSize="small" className="text-blue-600" />
+                )}
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
+};
+
+SortOptions.propTypes = {
+  onSort: PropTypes.func.isRequired,
+  currentSort: PropTypes.string,
+  className: PropTypes.string
 };
 
 export default SortOptions;

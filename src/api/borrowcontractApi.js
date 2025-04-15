@@ -9,7 +9,7 @@ const borrowcontractApi = {
 
     // Get borrow contract by id
     getBorrowContractById: (id) => {
-        const url = `/BorrowContract/get-by-id/${id}`;
+        const url = `/BorrowContract/get/${id}`;
         return axiosClient.get(url);
     },
     

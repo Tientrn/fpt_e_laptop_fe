@@ -6,6 +6,7 @@ import borrowrequestApi from "../../api/borrowrequestApi";
 import userApi from "../../api/userApi";
 import deposittransactionApi from "../../api/deposittransactionApi";
 import axios from "axios";
+import borrowhistoryApi from "../../api/borrowhistoryApi";
 
 const ContractsPage = () => {
   const [contracts, setContracts] = useState([]);
@@ -34,9 +35,10 @@ const ContractsPage = () => {
   const [selectedContractForDeposit, setSelectedContractForDeposit] = useState(null);
   const [depositForm, setDepositForm] = useState({
     contractId: 0,
+    userId: 0,
+    status: "Pending",
     amount: 0,
-    description: "",
-    paymentMethod: "Cash",
+    depositDate: new Date().toISOString()
   });
   const [selectedImages, setSelectedImages] = useState([]);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -210,22 +212,22 @@ const ContractsPage = () => {
         defaultReturnDate = endDate;
       }
   
-    // Reset form và set giá trị mới
-    setContractForm({
-      requestId: request.requestId,
-      itemId: request.itemId,
-      itemValue: 0,
-      terms: `Contract for ${request.itemName}`,
-      conditionBorrow: "good",
+      // Reset form và set giá trị mới
+      setContractForm({
+        requestId: request.requestId,
+        itemId: request.itemId,
+        itemValue: 0,
+        terms: `Contract for ${request.itemName}`,
+        conditionBorrow: "good",
         expectedReturnDate: defaultReturnDate.toISOString().split('T')[0],
         userId: request.userId,
-    });
+      });
   
-    // Set selected request
-    setSelectedRequest(request);
+      // Set selected request
+      setSelectedRequest(request);
     
       // Mở modal
-    setIsModalOpen(true);
+      setIsModalOpen(true);
     } catch (error) {
       console.error("Error fetching user details:", error);
       toast.error("Failed to load user details");
@@ -521,24 +523,63 @@ const ContractsPage = () => {
         return;
       }
 
-      if (!depositForm.description.trim()) {
-        toast.error("Please enter a description");
+      // Get contract and request details
+      const contractResponse = await borrowcontractApi.getBorrowContractById(depositForm.contractId);
+      if (!contractResponse.isSuccess) {
+        toast.error("Failed to get contract details");
         return;
       }
+      
+      const contract = contractResponse.data;
+      
+      // Get request details
+      const requestResponse = await borrowrequestApi.getBorrowRequestById(contract.requestId);
+      if (!requestResponse.isSuccess) {
+        toast.error("Failed to get request details");
+        return;
+      }
+      
+      const request = requestResponse.data;
 
       const depositData = {
         contractId: parseInt(depositForm.contractId),
+        userId: parseInt(contract.userId),
+        status: depositForm.status,
         amount: parseInt(depositForm.amount),
-        description: depositForm.description,
-        paymentMethod: depositForm.paymentMethod,
+        depositDate: depositForm.depositDate
       };
 
       console.log("Submitting deposit data:", depositData);
 
       const response = await deposittransactionApi.createDepositTransaction(depositData);
-      
+      console.log(response)
       if (response.isSuccess) {
         toast.success("Deposit created successfully");
+        
+        // After successful deposit, create borrow history
+        try {
+          const historyData = {
+            requestId: parseInt(contract.requestId),
+            itemId: parseInt(contract.itemId),
+            userId: parseInt(contract.userId),
+            borrowDate: request.startDate,
+            returnDate: contract.expectedReturnDate,
+            status: "Pending",
+          };
+          
+          console.log("Creating borrow history:", historyData);
+          const historyResponse = await borrowhistoryApi.createBorrowHistory(historyData);
+          
+          if (historyResponse?.isSuccess) {
+            toast.success("Borrow history created successfully");
+          } else {
+            toast.error(historyResponse?.message || "Failed to create borrow history");
+          }
+        } catch (historyError) {
+          console.error("Error creating borrow history:", historyError);
+          toast.error("Error creating borrow history");
+        }
+        
         setIsDepositModalOpen(false);
 
         // Refresh deposits data
@@ -547,9 +588,10 @@ const ContractsPage = () => {
         // Reset form
         setDepositForm({
           contractId: 0,
+          userId: 0,
+          status: "Pending",
           amount: 0,
-          description: "",
-          paymentMethod: "Cash",
+          depositDate: new Date().toISOString()
         });
       } else {
         toast.error(response.message || "Failed to create deposit");
@@ -751,10 +793,11 @@ const ContractsPage = () => {
                                 onClick={() => {
                                   setSelectedContractForDeposit(item);
                                   setDepositForm({
-                                    ...depositForm,
                                     contractId: item.contractId,
+                                    userId: item.userId,
+                                    status: "Pending",
                                     amount: Math.round(item.itemValue * 0.1), // Default to 10% of item value
-                                    description: `Deposit for contract #${item.contractId}`,
+                                    depositDate: new Date().toISOString()
                                   });
                                   setIsDepositModalOpen(true);
                                 }}
@@ -1443,45 +1486,44 @@ const ContractsPage = () => {
                     </p>
                   </div>
 
-                  {/* Description */}
+                  {/* Status */}
                   <div>
                     <label className="block text-xs font-medium text-gray-700 mb-1">
-                      Description <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      value={depositForm.description}
-                      onChange={(e) =>
-                        setDepositForm({
-                          ...depositForm,
-                          description: e.target.value,
-                        })
-                      }
-                      className="w-full px-3 py-2 text-sm rounded border border-gray-300 focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-                      required
-                    />
-                  </div>
-
-                  {/* Payment Method */}
-                  <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-1">
-                      Payment Method <span className="text-red-500">*</span>
+                      Status <span className="text-red-500">*</span>
                     </label>
                     <select
-                      value={depositForm.paymentMethod}
+                      value={depositForm.status}
                       onChange={(e) =>
                         setDepositForm({
                           ...depositForm,
-                          paymentMethod: e.target.value,
+                          status: e.target.value,
                         })
                       }
                       className="w-full px-3 py-2 text-sm rounded border border-gray-300 focus:ring-2 focus:ring-amber-500 focus:border-transparent"
                       required
                     >
-                      <option value="Cash">Cash</option>
-                      <option value="Bank Transfer">Bank Transfer</option>
-                      <option value="Credit Card">Credit Card</option>
+                      <option value="Pending">Pending</option>
+                      <option value="Completed">Completed</option>
                     </select>
+                  </div>
+
+                  {/* Deposit Date */}
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">
+                      Deposit Date <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="date"
+                      value={new Date(depositForm.depositDate).toISOString().split('T')[0]}
+                      onChange={(e) =>
+                        setDepositForm({
+                          ...depositForm,
+                          depositDate: new Date(e.target.value).toISOString(),
+                        })
+                      }
+                      className="w-full px-3 py-2 text-sm rounded border border-gray-300 focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                      required
+                    />
                   </div>
                 </div>
               </form>

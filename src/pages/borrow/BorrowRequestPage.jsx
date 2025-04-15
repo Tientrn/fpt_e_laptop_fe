@@ -5,9 +5,9 @@ import "react-toastify/dist/ReactToastify.css";
 import donateitemsApi from "../../api/donateitemsApi";
 import userinfoApi from "../../api/userinfoApi";
 import borrowrequestApi from "../../api/borrowrequestApi";
-import borrowhistoryApi from "../../api/borrowhistoryApi";
-import { ArrowLeft, Calendar, User, Laptop, Check, XCircle } from "lucide-react";
+import { ArrowLeft, Calendar, User, Check, XCircle, Clock, Shield, ChevronRight, Info } from "lucide-react";
 import majorApi from "../../api/major"; 
+
 const BorrowRequestPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -46,7 +46,7 @@ const BorrowRequestPage = () => {
       const { min } = calculateEndDateConstraints(formData.borrowDate);
       setFormData(prev => ({
         ...prev,
-        endDate: min // Set end date to minimum allowed date when start date changes
+        endDate: min
       }));
     }
   }, [formData.borrowDate]);
@@ -93,7 +93,7 @@ const BorrowRequestPage = () => {
       setFormData({
         ...formData,
         borrowDate: value,
-        endDate: min // Reset end date to minimum when start date changes
+        endDate: min
       });
     } else if (name === "endDate") {
       const { min, max } = calculateEndDateConstraints(formData.borrowDate);
@@ -104,7 +104,6 @@ const BorrowRequestPage = () => {
         }));
       }
     } else {
-      // Handle other inputs like majorId
       setFormData(prev => ({
         ...prev,
         [name]: value
@@ -176,53 +175,15 @@ const BorrowRequestPage = () => {
         majorId: Number(formData.majorId),
       };
 
-      
       const requestResponse = await borrowrequestApi.createBorrowRequest(requestData);
-      console.log("Request response:", requestResponse);
-
-      // First check if the request creation was successful
-      if (!requestResponse?.isSuccess) {
-        toast.error(requestResponse?.message || "Failed to submit borrow request");
-        return;
-      }
-
-      // Check if response data contains the requestId
-      const requestId = requestResponse.data?.requestId;
-      if (!requestId) {
-        toast.error("Request ID is missing from response.");
-        return;
-      }
       
-      console.log(`Request ID: ${requestId}`);
-
-      // Create borrow history with the received requestId
-      const historyData = {
-        requestId: Number(requestId),
-        itemId: Number(laptop.itemId),
-        userId: Number(userInfo.userId),
-        borrowDate: formData.borrowDate,
-        returnDate: formData.endDate,
-        status: "Pending",
-      };
-
-      console.log("Request data for borrow history:", historyData);
-      const historyResponse = await borrowhistoryApi.createBorrowHistory(historyData);
-
-      if (historyResponse?.isSuccess) {
-        toast.success("Request and history created successfully! Redirecting...", {
+      if (requestResponse?.isSuccess) {
+        toast.success("Request created successfully! Redirecting...", {
           autoClose: 2000,
         });
         setTimeout(() => navigate("/student/requests"), 2000);
       } else {
-        toast.error(historyResponse?.message || "Failed to create borrow history");
-        
-        // If history creation fails, we should delete the borrow request to maintain data consistency
-        try {
-          await borrowrequestApi.deleteBorrowRequest(requestId);
-          console.log(`Deleted borrow request ${requestId} due to history creation failure`);
-        } catch (deleteError) {
-          console.error("Failed to delete borrow request after history creation failure:", deleteError);
-        }
+        toast.error(requestResponse?.message || "Failed to submit borrow request");
       }
     } catch (err) {
       console.error("Error creating request:", err);
@@ -237,10 +198,10 @@ const BorrowRequestPage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-amber-50 via-white to-amber-50 flex items-center justify-center">
-        <div className="text-center space-y-3">
-          <div className="w-16 h-16 border-4 border-amber-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
-          <p className="text-gray-600 font-medium">Loading request details...</p>
+      <div className="min-h-screen bg-gradient-to-b from-amber-50 to-white flex items-center justify-center">
+        <div className="text-center p-6 bg-white rounded-2xl shadow-md">
+          <div className="w-14 h-14 border-4 border-amber-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
+          <p className="text-gray-600 font-medium mt-4">Loading request details...</p>
         </div>
       </div>
     );
@@ -248,15 +209,16 @@ const BorrowRequestPage = () => {
 
   if (error || !laptop || !userInfo) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-amber-50 via-white to-amber-50 flex items-center justify-center">
-        <div className="max-w-md w-full bg-white rounded-2xl shadow-lg p-8 text-center space-y-4">
-          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto">
-            <XCircle className="w-8 h-8 text-red-600" />
+      <div className="min-h-screen bg-gradient-to-b from-amber-50 to-white flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-white rounded-xl shadow-lg p-8 text-center space-y-4 border border-red-100">
+          <div className="w-14 h-14 bg-red-50 rounded-full flex items-center justify-center mx-auto">
+            <XCircle className="w-7 h-7 text-red-500" />
           </div>
-          <p className="text-gray-800 font-medium">{error || "Failed to load data"}</p>
+          <h2 className="text-xl font-bold text-red-500">Request Error</h2>
+          <p className="text-gray-700">{error || "Failed to load data"}</p>
           <button
             onClick={() => navigate(-1)}
-            className="inline-flex items-center px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-all transform hover:scale-105"
+            className="inline-flex items-center px-5 py-2.5 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-all font-medium text-sm shadow-md hover:shadow-lg"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Go Back
@@ -267,123 +229,93 @@ const BorrowRequestPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-50 via-white to-amber-50 py-8 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-b from-amber-50 to-white py-8 px-4 sm:px-6 lg:px-8">
       <ToastContainer position="top-right" autoClose={2000} theme="light" />
       
       <div className="max-w-4xl mx-auto">
         {/* Header Section */}
-        <div className="mb-8 flex items-center justify-between">
+        <div className="mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <button
             onClick={() => navigate(-1)}
-            className="flex items-center text-gray-600 hover:text-amber-600 transition-colors"
+            className="flex items-center text-gray-600 hover:text-amber-500 transition-colors group"
           >
-            <ArrowLeft className="w-5 h-5 mr-2" />
+            <div className="p-2 rounded-full bg-white shadow-sm group-hover:bg-amber-50 transition-colors mr-2">
+              <ArrowLeft className="w-4 h-4" />
+            </div>
             <span className="font-medium">Back to Laptops</span>
           </button>
-          <h1 className="text-3xl font-bold text-gray-900">Borrow Request</h1>
+          <h1 className="text-2xl font-bold text-gray-900 bg-gradient-to-r from-amber-600 to-amber-400 bg-clip-text text-transparent">
+            Borrow Request
+          </h1>
         </div>
 
         <div className="space-y-6">
-          {/* Laptop Details Card */}
-          <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
-            <div className="px-6 py-4 border-b border-gray-100 bg-gray-50">
-              <h2 className="text-xl font-semibold text-gray-900 flex items-center">
-                <Laptop className="w-5 h-5 mr-2 text-amber-600" />
-                Laptop Infomation
-              </h2>
-            </div>
-            <div className="p-6">
-              <div className="flex flex-col md:flex-row gap-8">
-                <div className="flex-1 space-y-4">
-                  <div className="space-y-2">
-                    <h3 className="text-lg font-medium text-gray-900">{laptop.itemName}</h3>
-                    <p className="text-sm">
-                      {" "}
-                    </p>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <p className="text-gray-500">CPU</p>
-                      <p className="font-medium">{laptop.cpu}</p>
-                    </div>
-                    <div>
-                      <p className="text-gray-500">RAM</p>
-                      <p className="font-medium">{laptop.ram}</p>
-                    </div>
-                    <div>
-                      <p className="text-gray-500">Storage</p>
-                      <p className="font-medium">{laptop.storage}</p>
-                    </div>
-                    <div>
-                      <p className="text-gray-500">Screen</p>
-                      <p className="font-medium">{laptop.screenSize}</p>
-                    </div>
-                    <div>
-                      <p className="text-gray-500">Condition</p>
-                      <p className="font-medium">{laptop.conditionItem}</p>
-                    </div>
-                    <div>
-                      <p className="text-gray-500">Status</p>
-                      <p className={laptop.status === "Available" ? "text-green-600 font-medium" : "text-red-600 font-medium"}>{laptop.status}</p>
-                    </div>
-                  </div>
-                </div>
-                <div className="w-full md:w-64 h-64">
-                  <img
-                    src={laptop.itemImage}
-                    alt={laptop.itemName}
-                    className="w-full h-full object-cover rounded-lg shadow-md"
-                  />
-                </div>
+          {/* Combined Info Card */}
+          <div className="bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden transform transition-all">
+            <div className="flex flex-col md:flex-row">
+              {/* Laptop Image */}
+              <div className="md:w-1/4 p-4 md:p-6 flex items-center justify-center bg-gradient-to-br from-amber-50 to-white">
+                <img
+                  src={laptop.itemImage}
+                  alt={laptop.itemName}
+                  className="w-32 h-32 md:w-full md:h-auto object-cover rounded-lg shadow-md"
+                />
               </div>
-            </div>
-          </div>
-
-          {/* Borrower Information Card */}
-          <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
-            <div className="px-6 py-4 border-b border-gray-100 bg-gray-50">
-              <h2 className="text-xl font-semibold text-gray-900 flex items-center">
-                <User className="w-5 h-5 mr-2 text-amber-600" />
-                Student Information
-              </h2>
-            </div>
-            <div className="p-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <p className="text-gray-500 text-sm">Full Name</p>
-                  <p className="font-medium">{userInfo.fullName}</p>
-                </div>
-                <div>
-                  <p className="text-gray-500 text-sm">Email</p>
-                  <p className="font-medium">{userInfo.email}</p>
-                </div>
-                <div>
-                  <p className="text-gray-500 text-sm">Phone Number</p>
-                  <p className="font-medium">{userInfo.phoneNumber || "N/A"}</p>
-                </div>
-                <div>
-                  <p className="text-gray-500 text-sm">Student Code</p>
-                  <p className="font-medium">{userInfo.studentCode || "N/A"}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Borrow Details Card */}
-          <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
-            <div className="px-6 py-4 border-b border-gray-100 bg-gray-50">
-              <h2 className="text-xl font-semibold text-gray-900 flex items-center">
-                <Calendar className="w-5 h-5 mr-2 text-amber-600" />
-                Borrow Detail
-              </h2>
-            </div>
-            <div className="p-6">
-              <form onSubmit={handleSubmit} className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              
+              {/* Laptop Details */}
+              <div className="flex-1 p-5">
+                <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Start Date
-                    </label>
+                    <h2 className="text-xl font-bold text-gray-900">{laptop.itemName}</h2>
+                    <span className="inline-block mt-1 px-2.5 py-1 rounded-full bg-green-100 text-green-800 text-xs font-medium">
+                      {laptop.status}
+                    </span>
+                  </div>
+                  
+                  <div className="mt-2 md:mt-0">
+                    <h3 className="text-sm font-medium text-gray-500">Student: {userInfo.fullName}</h3>
+                    <p className="text-xs text-gray-500">{userInfo.email}</p>
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  <div className="p-2 bg-gray-50 rounded-lg">
+                    <p className="text-xs text-gray-500">CPU</p>
+                    <p className="text-sm font-medium">{laptop.cpu}</p>
+                  </div>
+                  <div className="p-2 bg-gray-50 rounded-lg">
+                    <p className="text-xs text-gray-500">RAM</p>
+                    <p className="text-sm font-medium">{laptop.ram}</p>
+                  </div>
+                  <div className="p-2 bg-gray-50 rounded-lg">
+                    <p className="text-xs text-gray-500">Storage</p>
+                    <p className="text-sm font-medium">{laptop.storage}</p>
+                  </div>
+                  <div className="p-2 bg-gray-50 rounded-lg">
+                    <p className="text-xs text-gray-500">Screen</p>
+                    <p className="text-sm font-medium">{laptop.screenSize}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Borrow Request Form Card */}
+          <div className="bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden">
+            <div className="px-5 py-3 border-b border-gray-100 bg-gradient-to-r from-amber-50 to-white">
+              <h2 className="text-lg font-semibold text-gray-900 flex items-center">
+                <Calendar className="w-4 h-4 mr-2 text-amber-500" />
+                Request Details
+              </h2>
+            </div>
+            
+            <form onSubmit={handleSubmit} className="p-5">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
+                <div className="relative">
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                    Start Date
+                  </label>
+                  <div className="relative">
                     <input
                       type="date"
                       name="borrowDate"
@@ -391,19 +323,20 @@ const BorrowRequestPage = () => {
                       min={new Date().toISOString().split("T")[0]}
                       value={formData.borrowDate}
                       onChange={handleInputChange}
-                      className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-amber-600 focus:border-transparent transition-colors"
+                      className="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-colors"
                     />
-                    {errors.borrowDate && (
-                      <p className="mt-1 text-sm text-red-600">{errors.borrowDate}</p>
-                    )}
-                    <p className="mt-1 text-sm text-gray-500">
-                      Choose your start date
-                    </p>
+                    <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-amber-500" />
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      End Date
-                    </label>
+                  {errors.borrowDate && (
+                    <p className="mt-1 text-xs text-red-500">{errors.borrowDate}</p>
+                  )}
+                </div>
+                
+                <div className="relative">
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                    End Date
+                  </label>
+                  <div className="relative">
                     <input
                       type="date"
                       name="endDate"
@@ -412,28 +345,31 @@ const BorrowRequestPage = () => {
                       max={calculateEndDateConstraints(formData.borrowDate).max}
                       value={formData.endDate}
                       onChange={handleInputChange}
-                      className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-amber-600 focus:border-transparent transition-colors"
+                      className="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-colors"
                     />
-                    {errors.endDate && (
-                      <p className="mt-1 text-sm text-red-600">{errors.endDate}</p>
-                    )}
-                    <p className="mt-1 text-sm text-gray-500">
-                      Must be between 4-8 months from start date
-                    </p>
+                    <Clock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-amber-500" />
                   </div>
+                  {errors.endDate && (
+                    <p className="mt-1 text-xs text-red-500">{errors.endDate}</p>
+                  )}
+                  <p className="mt-1 text-xs text-gray-500">
+                    Must be between 4-8 months from start date
+                  </p>
                 </div>
+              </div>
 
-                {/* Major Selection */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Major
-                  </label>
+              {/* Major Selection */}
+              <div className="mb-5">
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  Major
+                </label>
+                <div className="relative">
                   <select
                     name="majorId"
                     value={formData.majorId}
                     onChange={handleInputChange}
                     required
-                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-amber-600 focus:border-transparent transition-colors"
+                    className="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-colors appearance-none"
                   >
                     <option value="">Select your major</option>
                     {major && major.map((item) => (
@@ -442,69 +378,85 @@ const BorrowRequestPage = () => {
                       </option>
                     ))}
                   </select>
-                  {errors.majorId && (
-                    <p className="mt-1 text-sm text-red-600">{errors.majorId}</p>
-                  )}
-                  <p className="mt-1 text-sm text-gray-500">
-                    Please select your major
-                  </p>
+                  <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-amber-500" />
+                  <ChevronRight className="absolute right-3 top-1/2 transform -translate-y-1/2 rotate-90 w-4 h-4 text-gray-500" />
                 </div>
-                
-                <div className="mt-6">
-                  <h3 className="text-lg font-medium text-gray-900">Terms and Conditions</h3>
-                  <ul className="list-disc list-inside text-sm text-gray-700 mt-2 space-y-1">
-                    <li>You must return the laptop in the same condition as received.</li>
-                    <li>Any damage or loss will be your responsibility.</li>
-                    <li>The borrowing period is strictly between the selected start and end dates.</li>
-                    <li>Extensions must be requested and approved before the end date.</li>
-                    <li>Failure to return the laptop on time may result in penalties.</li>
-                  </ul>
+                {errors.majorId && (
+                  <p className="mt-1 text-xs text-red-500">{errors.majorId}</p>
+                )}
+              </div>
+              
+              {/* Terms and Conditions */}
+              <div className="p-4 mb-5 bg-amber-50 rounded-lg border border-amber-100">
+                <div className="flex items-center mb-3">
+                  <Shield className="w-4 h-4 text-amber-600 mr-2" />
+                  <h3 className="text-sm font-semibold text-amber-800">Terms and Conditions</h3>
                 </div>
-                <div className="flex items-start space-x-3">
-                  <div className="flex items-center h-5">
+                <ul className="list-disc list-inside text-xs text-amber-900 space-y-1 ml-1 mb-3">
+                  <li>You must return the laptop in the same condition as received.</li>
+                  <li>Any damage or loss will be your responsibility.</li>
+                  <li>The borrowing period is strictly between the selected dates.</li>
+                  <li>Extensions must be requested before the end date.</li>
+                  <li>Failure to return on time may result in penalties.</li>
+                </ul>
+                <div className="flex items-start">
+                  <div className="flex items-center h-5 mt-0.5">
                     <input
                       id="terms"
                       type="checkbox"
                       checked={termsAccepted}
                       onChange={handleTermsChange}
-                      className="w-4 h-4 text-amber-600 border-gray-300 rounded focus:ring-amber-600"
+                      className="w-4 h-4 text-amber-600 border-amber-300 rounded focus:ring-amber-500"
                     />
                   </div>
-                  <label htmlFor="terms" className="text-sm text-gray-700">
+                  <label htmlFor="terms" className="ml-2 text-xs text-amber-900 font-medium">
                     I agree to care for and return the laptop in good condition.
                   </label>
                 </div>
-                <div className="flex items-center justify-end space-x-4">
-                  <button
-                    type="button"
-                    onClick={() => navigate(-1)}
-                    className="px-6 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={!termsAccepted || !formData.majorId || submitting}
-                    className={`px-6 py-2.5 rounded-lg font-medium flex items-center ${
-                      termsAccepted && formData.majorId && !submitting
-                        ? "bg-amber-600 text-white hover:bg-amber-700"
-                        : "bg-gray-300 text-gray-500 cursor-not-allowed"
-                    }`}
-                  >
-                    {submitting ? (
-                      <>
-                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                        Processing...
-                      </>
-                    ) : (
-                      <>
-                        <Check className="w-5 h-5 mr-2" />
-                        Submit Request
-                      </>
-                    )}
-                  </button>
-                </div>
-              </form>
+                {errors.terms && (
+                  <p className="mt-1 text-xs text-red-500 ml-6">{errors.terms}</p>
+                )}
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex items-center justify-end space-x-3">
+                <button
+                  type="button"
+                  onClick={() => navigate(-1)}
+                  className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={!termsAccepted || !formData.majorId || submitting}
+                  className={`px-4 py-2 rounded-lg font-medium flex items-center text-sm ${
+                    termsAccepted && formData.majorId && !submitting
+                      ? "bg-gradient-to-r from-amber-600 to-amber-500 text-white hover:from-amber-700 hover:to-amber-600 shadow-md hover:shadow-lg"
+                      : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                  }`}
+                >
+                  {submitting ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                      Processing...
+                    </>
+                  ) : (
+                    <>
+                      <Check className="w-4 h-4 mr-2" />
+                      Submit Request
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+          
+          {/* Help Text */}
+          <div className="text-center">
+            <div className="inline-flex items-center text-xs text-gray-500">
+              <Info className="w-3 h-3 mr-1 text-amber-500" />
+              Need help? Contact the IT Support team at support@fpt.edu.vn
             </div>
           </div>
         </div>

@@ -1,93 +1,327 @@
-import React from "react";
+import { useState, useEffect } from "react";
+import FilterListIcon from "@mui/icons-material/FilterList";
+import MemoryIcon from "@mui/icons-material/Memory";
+import DeveloperBoardIcon from "@mui/icons-material/DeveloperBoard";
+import StorageIcon from "@mui/icons-material/Storage";
+import MonitorIcon from "@mui/icons-material/Monitor";
+import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
+import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
+import TuneIcon from "@mui/icons-material/Tune";
+import PropTypes from "prop-types";
 
-const FiltersSidebar = () => {
+const FiltersSidebar = ({ onFilterChange, currentFilters = {} }) => {
+  const [filters, setFilters] = useState({
+    screenSize: "",
+    status: "",
+    cpu: "",
+    ram: "",
+    storage: "",
+    price: "",
+    ...currentFilters
+  });
+
+  // Sync with currentFilters from parent
+  useEffect(() => {
+    setFilters(prev => ({
+      ...prev,
+      ...currentFilters
+    }));
+  }, [currentFilters]);
+
+  // Handle filter changes
+  const handleFilterChange = (filterName, value) => {
+    const newFilters = {
+      ...filters,
+      [filterName]: value,
+    };
+    setFilters(newFilters);
+    onFilterChange(newFilters);
+  };
+
+  // Count active filters
+  const activeFilterCount = Object.values(filters).filter(value => value !== "").length;
+
+  // Filter button component with proper PropTypes
+  const FilterButton = ({ active, onClick, children }) => (
+    <button
+      onClick={onClick}
+      className={`py-1.5 px-3 text-xs rounded-lg border transition-all duration-200 ${
+        active 
+          ? "bg-blue-100 border-blue-200 text-blue-800 font-medium shadow-sm"
+          : "border-gray-200 text-gray-700 hover:border-blue-200 hover:bg-blue-50/80"
+      }`}
+    >
+      {children}
+    </button>
+  );
+
+  // PropTypes for the FilterButton component
+  FilterButton.propTypes = {
+    active: PropTypes.bool.isRequired,
+    onClick: PropTypes.func.isRequired,
+    children: PropTypes.node.isRequired
+  };
+
   return (
-    <div className="w-1/4 p-6 bg-gradient-to-br from-emerald-50 to-teal-50 rounded-lg shadow-lg border border-teal-100">
-      <h3 className="text-xl font-bold mb-6 text-teal-800 border-b border-teal-200 pb-3 flex items-center">
-        <svg
-          className="w-5 h-5 mr-2 text-teal-600"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth="2"
-            d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
-          />
-        </svg>
-        Filters
-      </h3>
-
-      <div className="space-y-6">
-        <div className="filter-group">
-          <h4 className="font-semibold mb-3 text-teal-700 flex items-center">
-            <span className="w-2 h-2 bg-teal-500 rounded-full mr-2"></span>
-            Brand
-          </h4>
-          <select
-            className="w-full p-2.5 bg-white border border-teal-200 rounded-lg 
-            focus:ring-2 focus:ring-teal-500 focus:border-teal-500 
-            transition-all duration-300 hover:border-teal-400
-            shadow-sm"
-          >
-            <option value="all">All</option>
-            <option value="hp">HP</option>
-            <option value="lenovo">Lenovo</option>
-            <option value="asus">Asus</option>
-          </select>
+    <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-blue-100">
+      {/* Header */}
+      <div className="bg-gradient-to-r from-blue-600 to-indigo-700 px-5 py-3.5 text-white">
+        <div className="flex items-center justify-between">
+          <h3 className="text-base font-semibold flex items-center">
+            <TuneIcon fontSize="small" className="mr-2" />
+            <span>Filter Options</span>
+          </h3>
+          {activeFilterCount > 0 && (
+            <span className="text-xs bg-white/20 px-2.5 py-1 rounded-full backdrop-blur-sm border border-white/30">
+              {activeFilterCount} active
+            </span>
+          )}
         </div>
+      </div>
 
+      {/* Filter Options */}
+      <div className="p-4 space-y-5 text-sm">
+        {/* Price Filter */}
         <div className="filter-group">
-          <h4 className="font-semibold mb-3 text-teal-700 flex items-center">
-            <span className="w-2 h-2 bg-teal-500 rounded-full mr-2"></span>
-            Price
-          </h4>
-          <div className="px-2">
-            <input
-              type="range"
-              min="0"
-              max="10000000"
-              step="100000"
-              className="w-full h-2 bg-teal-100 rounded-lg appearance-none cursor-pointer 
-                accent-teal-500 hover:accent-teal-600"
-            />
-            <div className="flex justify-between mt-2 text-sm text-teal-600">
-              <span>$0</span>
-              <span>$10,000</span>
-            </div>
+          <div className="flex items-center mb-3 text-blue-900 font-medium">
+            <AttachMoneyIcon className="mr-2 text-blue-600" fontSize="small" />
+            <h4 className="text-sm">Price Range</h4>
+          </div>
+          
+          <div className="grid grid-cols-2 gap-2">
+            <FilterButton 
+              active={filters.price === ""} 
+              onClick={() => handleFilterChange("price", "")}
+            >
+              All Prices
+            </FilterButton>
+            <FilterButton
+              active={filters.price === "under-500"}
+              onClick={() => handleFilterChange("price", "under-500")}
+            >
+              Under $500
+            </FilterButton>
+            <FilterButton
+              active={filters.price === "500-1000"}
+              onClick={() => handleFilterChange("price", "500-1000")}
+            >
+              $500 - $1000
+            </FilterButton>
+            <FilterButton
+              active={filters.price === "1000-1500"}
+              onClick={() => handleFilterChange("price", "1000-1500")}
+            >
+              $1000 - $1500
+            </FilterButton>
+            <FilterButton
+              active={filters.price === "over-1500"}
+              onClick={() => handleFilterChange("price", "over-1500")}
+            >
+              Over $1500
+            </FilterButton>
           </div>
         </div>
 
+        {/* CPU Filter */}
         <div className="filter-group">
-          <h4 className="font-semibold mb-3 text-teal-700 flex items-center">
-            <span className="w-2 h-2 bg-teal-500 rounded-full mr-2"></span>
-            Screen Size
-          </h4>
-          <select
-            className="w-full p-2.5 bg-white border border-teal-200 rounded-lg 
-            focus:ring-2 focus:ring-teal-500 focus:border-teal-500 
-            transition-all duration-300 hover:border-teal-400
-            shadow-sm"
-          >
-            <option value="all">All</option>
-            <option value="15">15 inch</option>
-            <option value="13">13 inch</option>
-          </select>
+          <div className="flex items-center mb-3 text-blue-900 font-medium">
+            <MemoryIcon className="mr-2 text-blue-600" fontSize="small" />
+            <h4 className="text-sm">Processor</h4>
+          </div>
+          
+          <div className="grid grid-cols-2 gap-2">
+            <FilterButton 
+              active={filters.cpu === ""} 
+              onClick={() => handleFilterChange("cpu", "")}
+            >
+              All CPUs
+            </FilterButton>
+            <FilterButton
+              active={filters.cpu === "i5"}
+              onClick={() => handleFilterChange("cpu", "i5")}
+            >
+              Intel i5
+            </FilterButton>
+            <FilterButton
+              active={filters.cpu === "i7"}
+              onClick={() => handleFilterChange("cpu", "i7")}
+            >
+              Intel i7
+            </FilterButton>
+            <FilterButton
+              active={filters.cpu === "i9"}
+              onClick={() => handleFilterChange("cpu", "i9")}
+            >
+              Intel i9
+            </FilterButton>
+          </div>
         </div>
 
+        {/* RAM Filter */}
+        <div className="filter-group">
+          <div className="flex items-center mb-3 text-blue-900 font-medium">
+            <DeveloperBoardIcon className="mr-2 text-blue-600" fontSize="small" />
+            <h4 className="text-sm">RAM Memory</h4>
+          </div>
+          
+          <div className="grid grid-cols-2 gap-2">
+            <FilterButton
+              active={filters.ram === ""}
+              onClick={() => handleFilterChange("ram", "")}
+            >
+              All RAM
+            </FilterButton>
+            <FilterButton
+              active={filters.ram === "8"}
+              onClick={() => handleFilterChange("ram", "8")}
+            >
+              8GB
+            </FilterButton>
+            <FilterButton
+              active={filters.ram === "16"}
+              onClick={() => handleFilterChange("ram", "16")}
+            >
+              16GB
+            </FilterButton>
+            <FilterButton
+              active={filters.ram === "32"}
+              onClick={() => handleFilterChange("ram", "32")}
+            >
+              32GB
+            </FilterButton>
+          </div>
+        </div>
+
+        {/* Storage Filter */}
+        <div className="filter-group">
+          <div className="flex items-center mb-3 text-blue-900 font-medium">
+            <StorageIcon className="mr-2 text-blue-600" fontSize="small" />
+            <h4 className="text-sm">Storage</h4>
+          </div>
+          
+          <div className="grid grid-cols-2 gap-2">
+            <FilterButton
+              active={filters.storage === ""}
+              onClick={() => handleFilterChange("storage", "")}
+            >
+              All Storage
+            </FilterButton>
+            <FilterButton
+              active={filters.storage === "256"}
+              onClick={() => handleFilterChange("storage", "256")}
+            >
+              256GB
+            </FilterButton>
+            <FilterButton
+              active={filters.storage === "512"}
+              onClick={() => handleFilterChange("storage", "512")}
+            >
+              512GB
+            </FilterButton>
+            <FilterButton
+              active={filters.storage === "1024"}
+              onClick={() => handleFilterChange("storage", "1024")}
+            >
+              1TB
+            </FilterButton>
+          </div>
+        </div>
+
+        {/* Screen Size Filter */}
+        <div className="filter-group">
+          <div className="flex items-center mb-3 text-blue-900 font-medium">
+            <MonitorIcon className="mr-2 text-blue-600" fontSize="small" />
+            <h4 className="text-sm">Screen Size</h4>
+            </div>
+          
+          <div className="grid grid-cols-2 gap-2">
+            <FilterButton
+              active={filters.screenSize === ""}
+              onClick={() => handleFilterChange("screenSize", "")}
+            >
+              All Screens
+            </FilterButton>
+            <FilterButton
+              active={filters.screenSize === "13"}
+              onClick={() => handleFilterChange("screenSize", "13")}
+            >
+              13&quot; 
+            </FilterButton>
+            <FilterButton
+              active={filters.screenSize === "14"}
+              onClick={() => handleFilterChange("screenSize", "14")}
+            >
+              14&quot;
+            </FilterButton>
+            <FilterButton
+              active={filters.screenSize === "15"}
+              onClick={() => handleFilterChange("screenSize", "15")}
+            >
+              15&quot;
+            </FilterButton>
+          </div>
+        </div>
+
+        {/* Status Filter */}
+        <div className="filter-group">
+          <div className="flex items-center mb-3 text-blue-900 font-medium">
+            <CheckCircleOutlineIcon className="mr-2 text-blue-600" fontSize="small" />
+            <h4 className="text-sm">Status</h4>
+          </div>
+          
+          <div className="grid grid-cols-2 gap-2">
+            <FilterButton
+              active={filters.status === ""}
+              onClick={() => handleFilterChange("status", "")}
+            >
+              All Status
+            </FilterButton>
+            <FilterButton
+              active={filters.status === "InStock"}
+              onClick={() => handleFilterChange("status", "InStock")}
+            >
+              In Stock
+            </FilterButton>
+            <FilterButton
+              active={filters.status === "LimitedStock"}
+              onClick={() => handleFilterChange("status", "LimitedStock")}
+            >
+              Limited
+            </FilterButton>
+            <FilterButton
+              active={filters.status === "PreOrder"}
+              onClick={() => handleFilterChange("status", "PreOrder")}
+            >
+              Pre-Order
+            </FilterButton>
+          </div>
+        </div>
+
+        {/* Reset All */}
+        {activeFilterCount > 0 && (
         <button
-          className="w-full mt-6 bg-teal-600 hover:bg-teal-700 text-white font-medium 
-          py-2.5 rounded-lg transition-colors duration-300 
-          shadow-sm hover:shadow-md"
-        >
-          Apply Filters
+            onClick={() => onFilterChange({
+              screenSize: "",
+              status: "",
+              cpu: "",
+              ram: "",
+              storage: "",
+              price: "",
+            })}
+            className="w-full py-2 mt-2 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg hover:from-red-600 hover:to-red-700 transition-all duration-300 text-xs font-medium flex items-center justify-center"
+          >
+            <FilterListIcon fontSize="small" className="mr-1.5" />
+            Reset All Filters
         </button>
+        )}
       </div>
     </div>
   );
+};
+
+FiltersSidebar.propTypes = {
+  onFilterChange: PropTypes.func.isRequired,
+  currentFilters: PropTypes.object
 };
 
 export default FiltersSidebar;
