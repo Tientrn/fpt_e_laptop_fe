@@ -154,14 +154,19 @@ const BorrowRequestPage = () => {
         toast.error("Missing laptop or user information. Please try again.");
         return;
       }
-
-      // {
-      //   "itemId": 8,
-      //   "startDate": "2025-04-14",
-      //   "endDate": "2025-08-14",
-      //   "majorId": 1,
       
-      // }
+      // Double-check laptop availability right before submitting
+      try {
+        const freshLaptopResponse = await donateitemsApi.getDonateItemById(laptop.itemId);
+        if (!freshLaptopResponse.isSuccess || freshLaptopResponse.data.status !== "Available") {
+          toast.error("This laptop is no longer available for borrowing.");
+          return;
+        }
+      } catch (error) {
+        console.error("Error checking laptop availability:", error);
+        toast.error("Could not verify laptop availability. Please try again.");
+        return;
+      }
 
       const requestData = {
         itemId: Number(laptop.itemId),
@@ -175,37 +180,49 @@ const BorrowRequestPage = () => {
       const requestResponse = await borrowrequestApi.createBorrowRequest(requestData);
       console.log("Request response:", requestResponse);
 
-      if (requestResponse?.isSuccess && requestResponse.data) {
-        const requestId = requestResponse.data.requestId;
-        console.log(`Request ID: ${requestId}`);
-
-        if (!requestId) {
-          toast.error("Request ID is missing.");
-          return;
-        }
-
-        // Create borrow history with the received requestId
-        const historyData = {
-          requestId: Number(requestId),
-          itemId: Number(laptop.itemId),
-          userId: Number(userInfo.userId),
-          borrowDate: formData.borrowDate,
-          returnDate: formData.endDate,
-        };
-
-        console.log("Request data for borrow history:", historyData);
-        const historyResponse = await borrowhistoryApi.createBorrowHistory(historyData);
-
-        if (historyResponse?.isSuccess) {
-          toast.success("Request and history created successfully! Redirecting...", {
-            autoClose: 2000,
-          });
-          setTimeout(() => navigate("/student/requests"), 2000);
-        } else {
-          toast.error(historyResponse?.message || "Failed to create borrow history");
-        }
-      } else {
+      // First check if the request creation was successful
+      if (!requestResponse?.isSuccess) {
         toast.error(requestResponse?.message || "Failed to submit borrow request");
+        return;
+      }
+
+      // Check if response data contains the requestId
+      const requestId = requestResponse.data?.requestId;
+      if (!requestId) {
+        toast.error("Request ID is missing from response.");
+        return;
+      }
+      
+      console.log(`Request ID: ${requestId}`);
+
+      // Create borrow history with the received requestId
+      const historyData = {
+        requestId: Number(requestId),
+        itemId: Number(laptop.itemId),
+        userId: Number(userInfo.userId),
+        borrowDate: formData.borrowDate,
+        returnDate: formData.endDate,
+        status: "Pending",
+      };
+
+      console.log("Request data for borrow history:", historyData);
+      const historyResponse = await borrowhistoryApi.createBorrowHistory(historyData);
+
+      if (historyResponse?.isSuccess) {
+        toast.success("Request and history created successfully! Redirecting...", {
+          autoClose: 2000,
+        });
+        setTimeout(() => navigate("/student/requests"), 2000);
+      } else {
+        toast.error(historyResponse?.message || "Failed to create borrow history");
+        
+        // If history creation fails, we should delete the borrow request to maintain data consistency
+        try {
+          await borrowrequestApi.deleteBorrowRequest(requestId);
+          console.log(`Deleted borrow request ${requestId} due to history creation failure`);
+        } catch (deleteError) {
+          console.error("Failed to delete borrow request after history creation failure:", deleteError);
+        }
       }
     } catch (err) {
       console.error("Error creating request:", err);

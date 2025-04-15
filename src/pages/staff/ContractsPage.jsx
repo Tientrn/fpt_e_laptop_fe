@@ -5,6 +5,7 @@ import borrowcontractApi from "../../api/borrowcontractApi";
 import borrowrequestApi from "../../api/borrowrequestApi";
 import userApi from "../../api/userApi";
 import deposittransactionApi from "../../api/deposittransactionApi";
+import axios from "axios";
 
 const ContractsPage = () => {
   const [contracts, setContracts] = useState([]);
@@ -29,6 +30,17 @@ const ContractsPage = () => {
   const [selectedUserInfo, setSelectedUserInfo] = useState(null);
   const [activeTab, setActiveTab] = useState("all"); // "all", "requests", "active"
   const [searchTerm, setSearchTerm] = useState("");
+  const [isDepositModalOpen, setIsDepositModalOpen] = useState(false);
+  const [selectedContractForDeposit, setSelectedContractForDeposit] = useState(null);
+  const [depositForm, setDepositForm] = useState({
+    contractId: 0,
+    amount: 0,
+    description: "",
+    paymentMethod: "Cash",
+  });
+  const [selectedImages, setSelectedImages] = useState([]);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [isUploading, setIsUploading] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -113,6 +125,7 @@ const ContractsPage = () => {
           (contract) => contract.requestId
         );
 
+        console.log(requestResponse.data)
         // Lọc ra các request có status "Approved" và chưa có contract
         const approved = requestResponse.data.filter(
           (request) =>
@@ -246,6 +259,74 @@ const ContractsPage = () => {
     }
   };
 
+  const handleImageSelect = (e) => {
+    const files = Array.from(e.target.files);
+    
+    // Validate file size and type
+    const validFiles = files.filter(file => {
+      const isValidType = ['image/jpeg', 'image/png', 'image/jpg'].includes(file.type);
+      const isValidSize = file.size <= 5 * 1024 * 1024; // 5MB
+      
+      if (!isValidType) {
+        toast.error(`${file.name} is not a valid image format. Only JPG and PNG are allowed.`);
+      }
+      if (!isValidSize) {
+        toast.error(`${file.name} exceeds the 5MB size limit.`);
+      }
+      
+      return isValidType && isValidSize;
+    });
+    
+    setSelectedImages(validFiles);
+  };
+
+  const uploadContractImages = async (contractId) => {
+    if (selectedImages.length === 0) return [];
+    
+    setIsUploading(true);
+    setUploadProgress(0);
+    
+    try {
+      const uploadedImageUrls = [];
+      
+      for (let i = 0; i < selectedImages.length; i++) {
+        const file = selectedImages[i];
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('BorrowContractId', contractId);
+        
+        const response = await axios.post(
+          'https://fptsharelaptop.io.vn/api/contract-images',
+          formData,
+          {
+            headers: {
+              'Content-Type': 'multipart/form-data',
+            },
+            onUploadProgress: (progressEvent) => {
+              const progress = Math.round(
+                ((i + (progressEvent.loaded / progressEvent.total)) / selectedImages.length) * 100
+              );
+              setUploadProgress(progress);
+            }
+          }
+        );
+        
+        if (response.data) {
+          uploadedImageUrls.push(response.data);
+        }
+      }
+      
+      return uploadedImageUrls;
+    } catch (error) {
+      console.error("Error uploading contract images:", error);
+      toast.error("Failed to upload contract images");
+      return [];
+    } finally {
+      setIsUploading(false);
+      setUploadProgress(0);
+    }
+  };
+
   const handleCreateContract = async (e) => {
     e.preventDefault();
     try {
@@ -290,6 +371,11 @@ const ContractsPage = () => {
       const response = await borrowcontractApi.createBorrowContract(contractData);
       
       if (response.isSuccess) {
+        // Upload images only if contract creation was successful
+        if (selectedImages.length > 0) {
+          await uploadContractImages(response.data.contractId);
+        }
+        
         toast.success("Contract created successfully");
         setIsModalOpen(false);
 
@@ -309,6 +395,7 @@ const ContractsPage = () => {
           itemValue: 0,
           expectedReturnDate: format(new Date(), "yyyy-MM-dd"),
         });
+        setSelectedImages([]);
       } else {
         toast.error(response.message || "Failed to create contract");
       }
@@ -423,6 +510,54 @@ const ContractsPage = () => {
     }
     
     return result;
+  };
+
+  const handleCreateDeposit = async (e) => {
+    e.preventDefault();
+    try {
+      // Validate form
+      if (!depositForm.amount || depositForm.amount <= 0) {
+        toast.error("Please enter a valid deposit amount");
+        return;
+      }
+
+      if (!depositForm.description.trim()) {
+        toast.error("Please enter a description");
+        return;
+      }
+
+      const depositData = {
+        contractId: parseInt(depositForm.contractId),
+        amount: parseInt(depositForm.amount),
+        description: depositForm.description,
+        paymentMethod: depositForm.paymentMethod,
+      };
+
+      console.log("Submitting deposit data:", depositData);
+
+      const response = await deposittransactionApi.createDepositTransaction(depositData);
+      
+      if (response.isSuccess) {
+        toast.success("Deposit created successfully");
+        setIsDepositModalOpen(false);
+
+        // Refresh deposits data
+        await fetchDeposits();
+
+        // Reset form
+        setDepositForm({
+          contractId: 0,
+          amount: 0,
+          description: "",
+          paymentMethod: "Cash",
+        });
+      } else {
+        toast.error(response.message || "Failed to create deposit");
+      }
+    } catch (error) {
+      console.error("Error creating deposit:", error);
+      toast.error(error.response?.data?.message || "Error creating deposit");
+    }
   };
 
   return (
@@ -613,9 +748,16 @@ const ContractsPage = () => {
                             </button>
                             {!deposits[item.contractId] ? (
                               <button
-                                onClick={() =>
-                                  (window.location.href = `/staff/deposits/create/${item.contractId}`)
-                                }
+                                onClick={() => {
+                                  setSelectedContractForDeposit(item);
+                                  setDepositForm({
+                                    ...depositForm,
+                                    contractId: item.contractId,
+                                    amount: Math.round(item.itemValue * 0.1), // Default to 10% of item value
+                                    description: `Deposit for contract #${item.contractId}`,
+                                  });
+                                  setIsDepositModalOpen(true);
+                                }}
                                 className="inline-flex items-center px-2.5 py-1.5 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-all shadow-sm"
                               >
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -849,6 +991,98 @@ const ContractsPage = () => {
                       Choose a date between {format(new Date(selectedRequest?.startDate), "dd/MM/yyyy")} and {format(new Date(selectedRequest?.endDate), "dd/MM/yyyy")}
                     </p>
                 </div>
+
+                {/* Contract Images Upload */}
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">
+                    Contract Images
+                  </label>
+                  <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
+                    <div className="space-y-1 text-center">
+                      <svg
+                        className="mx-auto h-12 w-12 text-gray-400"
+                        stroke="currentColor"
+                        fill="none"
+                        viewBox="0 0 48 48"
+                        aria-hidden="true"
+                      >
+                        <path
+                          d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                      <div className="flex text-sm text-gray-600">
+                        <label
+                          htmlFor="contract-images"
+                          className="relative cursor-pointer bg-white rounded-md font-medium text-amber-600 hover:text-amber-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-amber-500"
+                        >
+                          <span>Upload images</span>
+                          <input
+                            id="contract-images"
+                            name="contract-images"
+                            type="file"
+                            className="sr-only"
+                            multiple
+                            accept="image/jpeg,image/png"
+                            onChange={handleImageSelect}
+                          />
+                        </label>
+                        <p className="pl-1">or drag and drop</p>
+                      </div>
+                      <p className="text-xs text-gray-500">
+                        PNG, JPG up to 5MB
+                      </p>
+                    </div>
+                  </div>
+                  
+                  {/* Preview Selected Images */}
+                  {selectedImages.length > 0 && (
+                    <div className="mt-3">
+                      <p className="text-xs font-medium text-gray-700 mb-2">
+                        Selected Images ({selectedImages.length})
+                      </p>
+                      <div className="grid grid-cols-3 gap-2">
+                        {selectedImages.map((file, index) => (
+                          <div key={index} className="relative">
+                            <img
+                              src={URL.createObjectURL(file)}
+                              alt={`Preview ${index}`}
+                              className="h-20 w-full object-cover rounded-md"
+                            />
+                            <button
+                              type="button"
+                              className="absolute top-0 right-0 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center"
+                              onClick={() => {
+                                const newFiles = [...selectedImages];
+                                newFiles.splice(index, 1);
+                                setSelectedImages(newFiles);
+                              }}
+                            >
+                              ×
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Upload Progress */}
+                  {isUploading && (
+                    <div className="mt-2">
+                      <div className="w-full bg-gray-200 rounded-full h-2.5">
+                        <div
+                          className="bg-amber-600 h-2.5 rounded-full"
+                          style={{ width: `${uploadProgress}%` }}
+                        ></div>
+                      </div>
+                      <p className="text-xs text-gray-500 text-center mt-1">
+                        Uploading: {uploadProgress}%
+                      </p>
+                    </div>
+                  )}
+                </div>
                 </div>
               </form>
               </div>
@@ -879,10 +1113,10 @@ const ContractsPage = () => {
       {/* Create Contract Modal */}
       {isDetailModalOpen && selectedContract && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-8 max-w-3xl w-full mx-4">
+          <div className="bg-white rounded-lg p-8 max-w-3xl w-full mx-4 max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-bold text-gray-800">
-                Contract Details {selectedContract.contractId}
+                Contract Details #{selectedContract.contractId}
               </h2>
               <button
                 onClick={() => setIsDetailModalOpen(false)}
@@ -955,7 +1189,6 @@ const ContractsPage = () => {
                 </div>
               </div>
 
-              {/* Request Information */}
               {/* Request Information */}
               <div className="bg-gray-50 p-6 rounded-lg">
                 <h3 className="text-xl font-bold text-gray-800 mb-4 pb-2 border-b-2 border-amber-500">
@@ -1038,6 +1271,34 @@ const ContractsPage = () => {
                 </div>
               </div>
             </div>
+
+            {/* Contract Images */}
+            {selectedContract.contractImages && selectedContract.contractImages.length > 0 && (
+              <div className="mt-8 bg-gray-50 p-6 rounded-lg">
+                <h3 className="text-xl font-bold text-gray-800 mb-4 pb-2 border-b-2 border-amber-500">
+                  Contract Images
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {selectedContract.contractImages.map((image, index) => (
+                    <div key={index} className="overflow-hidden rounded-lg shadow-md">
+                      <a 
+                        href={image} 
+                        target="_blank" 
+                        rel="noopener noreferrer" 
+                        className="block hover:opacity-90 transition-opacity"
+                      >
+                        <img 
+                          src={image} 
+                          alt={`Contract ${selectedContract.contractId} image ${index+1}`}
+                          className="w-full h-auto object-contain"
+                        />
+                      </a>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <div className="mt-8 flex justify-end">
               <button
                 onClick={() => setIsDetailModalOpen(false)}
@@ -1077,6 +1338,172 @@ const ContractsPage = () => {
                 className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
               >
                 Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Deposit Creation Modal */}
+      {isDepositModalOpen && selectedContractForDeposit && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-3xl max-h-[100vh] overflow-y-auto">
+            {/* Header */}
+            <div className="p-4 border-b">
+              <h2 className="text-xl font-semibold text-gray-800">
+                Create Deposit for Contract #{selectedContractForDeposit.contractId}
+              </h2>
+            </div>
+
+            {/* Content */}
+            <div className="p-4 space-y-4">
+              {/* Contract Summary */}
+              <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
+                <h3 className="text-sm font-semibold mb-3 text-blue-800 flex items-center gap-2">
+                  <svg
+                    className="w-4 h-4"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
+                    <path
+                      fillRule="evenodd"
+                      d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                  Contract Information
+                </h3>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <p className="text-xs text-gray-500">Item Value</p>
+                    <p className="text-sm font-medium">
+                      {selectedContractForDeposit.itemValue?.toLocaleString()}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500">Expected Return Date</p>
+                    <p className="text-sm font-medium">
+                      {format(new Date(selectedContractForDeposit.expectedReturnDate), "dd/MM/yyyy")}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500">Terms</p>
+                    <p className="text-sm font-medium">
+                      {selectedContractForDeposit.terms}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500">Student</p>
+                    <p className="text-sm font-medium">
+                      {userInfoMap[selectedContractForDeposit.contractId]?.fullName || "Loading..."}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Deposit Form */}
+              <form 
+                onSubmit={handleCreateDeposit}
+                className="bg-gray-50 p-4 rounded-lg border border-gray-200"
+              >
+                <h3 className="text-sm font-semibold mb-4 text-gray-800 flex items-center gap-2">
+                  <svg
+                    className="w-4 h-4"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path d="M8.433 7.418c.155-.103.346-.196.567-.267v1.698a2.305 2.305 0 01-.567-.267C8.07 8.34 8 8.114 8 8c0-.114.07-.34.433-.582zM11 12.849v-1.698c.22.071.412.164.567.267.364.243.433.468.433.582 0 .114-.07.34-.433.582a2.305 2.305 0 01-.567.267z" />
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v.092a4.535 4.535 0 00-1.676.662C6.602 6.234 6 7.009 6 8c0 .99.602 1.765 1.324 2.246.48.32 1.054.545 1.676.662v1.941c-.391-.127-.68-.317-.843-.504a1 1 0 10-1.51 1.31c.562.649 1.413 1.076 2.353 1.253V15a1 1 0 102 0v-.092a4.535 4.535 0 001.676-.662C13.398 13.766 14 12.991 14 12c0-.99-.602-1.765-1.324-2.246A4.535 4.535 0 0011 9.092V7.151c.391.127.68.317.843.504a1 1 0 101.511-1.31c-.563-.649-1.413-1.076-2.354-1.253V5z" clipRule="evenodd" />
+                  </svg>
+                  Deposit Details
+                </h3>
+
+                <div className="space-y-3">
+                  {/* Amount */}
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">
+                      Deposit Amount <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="number"
+                      step="10000"
+                      value={depositForm.amount}
+                      onChange={(e) =>
+                        setDepositForm({
+                          ...depositForm,
+                          amount: e.target.value,
+                        })
+                      }
+                      className="w-full px-3 py-2 text-sm rounded border border-gray-300 focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                      required
+                    />
+                    <p className="mt-1 text-xs text-gray-500">
+                      Recommended: 10% of item value ({Math.round(selectedContractForDeposit.itemValue * 0.1).toLocaleString()})
+                    </p>
+                  </div>
+
+                  {/* Description */}
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">
+                      Description <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={depositForm.description}
+                      onChange={(e) =>
+                        setDepositForm({
+                          ...depositForm,
+                          description: e.target.value,
+                        })
+                      }
+                      className="w-full px-3 py-2 text-sm rounded border border-gray-300 focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                      required
+                    />
+                  </div>
+
+                  {/* Payment Method */}
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">
+                      Payment Method <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      value={depositForm.paymentMethod}
+                      onChange={(e) =>
+                        setDepositForm({
+                          ...depositForm,
+                          paymentMethod: e.target.value,
+                        })
+                      }
+                      className="w-full px-3 py-2 text-sm rounded border border-gray-300 focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                      required
+                    >
+                      <option value="Cash">Cash</option>
+                      <option value="Bank Transfer">Bank Transfer</option>
+                      <option value="Credit Card">Credit Card</option>
+                    </select>
+                  </div>
+                </div>
+              </form>
+            </div>
+
+            {/* Footer */}
+            <div className="p-4 border-t bg-gray-50 flex justify-end space-x-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsDepositModalOpen(false);
+                  setSelectedContractForDeposit(null);
+                }}
+                className="px-4 py-2 text-sm border border-gray-300 rounded text-gray-700 hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleCreateDeposit}
+                className="px-4 py-2 text-sm bg-green-600 text-white rounded hover:bg-green-700 transition-colors"
+              >
+                Create Deposit
               </button>
             </div>
           </div>

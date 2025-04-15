@@ -22,18 +22,6 @@ const BorrowHistory = () => {
   const [itemsMap, setItemsMap] = useState({});
   const [expandedRow, setExpandedRow] = useState(null);
   const [contractsMap, setContractsMap] = useState({});
-  const [showDamageModal, setShowDamageModal] = useState(false);
-  const [selectedBorrowHistory, setSelectedBorrowHistory] = useState(null);
-  const [damageReport, setDamageReport] = useState({
-    ItemId: "",
-    BorrowHistoryId: "",
-    Note: "",
-    ConditionBeforeBorrow: "",
-    ConditionAfterReturn: "",
-    DamageFee: 0,
-    file: null
-  });
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [reportedDamageItems, setReportedDamageItems] = useState({});
 
   useEffect(() => {
@@ -246,99 +234,9 @@ const BorrowHistory = () => {
     }
   };
 
-  const handleReportDamage = (borrowHistoryItem) => {
+  const handleReportDamage = () => {
     // Instead of opening modal, navigate to the report-damage page
     navigate('/staff/report-damage');
-  };
-
-  const handleCloseModal = () => {
-    setShowDamageModal(false);
-    setSelectedBorrowHistory(null);
-    setDamageReport({
-      ItemId: "",
-      BorrowHistoryId: "",
-      Note: "",
-      ConditionBeforeBorrow: "",
-      ConditionAfterReturn: "",
-      DamageFee: 0,
-      file: null
-    });
-  };
-
-  const handleInputChange = (e) => {
-    const { name, value, type } = e.target;
-    
-    if (type === 'file') {
-      setDamageReport(prev => ({
-        ...prev,
-        file: e.target.files[0]
-      }));
-    } else if (name === 'DamageFee') {
-      // Handle numeric input for damage fee
-      setDamageReport(prev => ({
-        ...prev,
-        [name]: parseFloat(value) || 0
-      }));
-    } else {
-      setDamageReport(prev => ({
-        ...prev,
-        [name]: value
-      }));
-    }
-  };
-
-  const handleSubmitDamageReport = async (e) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    
-    try {
-      // Create FormData object for the multipart/form-data request
-      const formData = new FormData();
-
-      // Append all fields to the form data with exact fieldnames matching the API expectations
-      // Use toString() to ensure proper data type conversion for API
-      formData.append('ItemId', damageReport.ItemId.toString());
-      formData.append('BorrowHistoryId', damageReport.BorrowHistoryId.toString());
-      formData.append('Note', damageReport.Note);
-      formData.append('ConditionBeforeBorrow', damageReport.ConditionBeforeBorrow);
-      formData.append('ConditionAfterReturn', damageReport.ConditionAfterReturn);
-      formData.append('DamageFee', damageReport.DamageFee.toString());
-      
-      // Only append file if it exists - explicitly provide filename as third parameter
-      if (damageReport.file instanceof File) {
-        formData.append('file', damageReport.file, damageReport.file.name);
-      }
-      
-      // Debug FormData properly
-      console.log("FormData content:");
-      for (let [key, value] of formData.entries()) {
-        console.log(`${key}: ${value instanceof File ? `File: ${value.name}, size: ${value.size}` : value}`);
-      }
-      
-      // Use the reportdamagesApi to create a new damage report
-      const response = await reportdamagesApi.createReportDamage(formData);
-      
-      if (response.isSuccess) {
-        toast.success("Damage report submitted successfully");
-        handleCloseModal();
-        
-        // Mark this item as having a damage report
-        setReportedDamageItems(prev => ({
-          ...prev,
-          [damageReport.BorrowHistoryId]: true
-        }));
-        
-        // Refresh the borrow history data
-        fetchBorrowHistory();
-      } else {
-        toast.error(`Failed to submit damage report: ${response.message || 'Unknown error'}`);
-      }
-    } catch (error) {
-      console.error("Error submitting damage report:", error);
-      toast.error("Failed to submit damage report");
-    } finally {
-      setIsSubmitting(false);
-    }
   };
 
   return (
@@ -407,7 +305,7 @@ const BorrowHistory = () => {
       {/* Add Report Damage link/button at the top */}
       <div className="mb-4 flex justify-end">
         <button 
-          onClick={() => navigate('/staff/report-damage')}
+          onClick={() => navigate('/staff/report-damages')}
           className="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors flex items-center"
         >
           <svg className="w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
@@ -617,7 +515,7 @@ const BorrowHistory = () => {
                                 className="flex items-center justify-center gap-1 px-2.5 py-1 text-xs rounded-md bg-red-100 text-red-700 hover:bg-red-200 transition-colors"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  handleReportDamage(item);
+                                  handleReportDamage();
                                 }}
                               >
                                 <svg className="w-3 h-3" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
@@ -906,6 +804,32 @@ const BorrowHistory = () => {
                                       </p>
                                     </div>
                                   </div>
+                                  
+                                  {/* Contract Images */}
+                                  {contractsMap[item.requestId] && 
+                                   contractsMap[item.requestId].contractImages && 
+                                   contractsMap[item.requestId].contractImages.length > 0 && (
+                                    <div className="mt-4 pt-3 border-t border-gray-100">
+                                      <p className="text-gray-500 text-xs mb-2">Contract Images</p>
+                                      <div className="grid grid-cols-2 gap-2">
+                                        {contractsMap[item.requestId].contractImages.map((image, index) => (
+                                          <a 
+                                            href={image} 
+                                            target="_blank" 
+                                            rel="noopener noreferrer" 
+                                            key={index} 
+                                            className="hover:opacity-90 transition-opacity"
+                                          >
+                                            <img 
+                                              src={image} 
+                                              alt={`Contract ${contractsMap[item.requestId].contractId} image ${index+1}`} 
+                                              className="w-full h-auto max-h-40 object-contain border border-gray-200 rounded-md"
+                                            />
+                                          </a>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  )}
                                 </div>
                               )}
 
