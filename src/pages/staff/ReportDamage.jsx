@@ -19,6 +19,7 @@ const ReportDamage = () => {
   const [userInfoMap, setUserInfoMap] = useState({});
   const [itemsMap, setItemsMap] = useState({});
   const [borrowHistoryMap, setBorrowHistoryMap] = useState({});
+  const [compensationMap, setCompensationMap] = useState({});
   const [expandedRow, setExpandedRow] = useState(null);
   const [showCompensationModal, setShowCompensationModal] = useState(false);
   const [selectedReport, setSelectedReport] = useState(null);
@@ -33,6 +34,7 @@ const ReportDamage = () => {
 
   useEffect(() => {
     fetchReports();
+    fetchCompensationTransactions();
   }, []);
 
   useEffect(() => {
@@ -64,6 +66,32 @@ const ReportDamage = () => {
       toast.error("Failed to load damage reports");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchCompensationTransactions = async () => {
+    try {
+      const response = await compensationTransactionApi.getAllCompensationTransactions();
+      
+      if (response.isSuccess) {
+        // Create a map of compensation records by reportDamageId
+        const compensationMapByReport = {};
+        
+        if (response.data && Array.isArray(response.data)) {
+          response.data.forEach(transaction => {
+            if (transaction.reportDamageId) {
+              compensationMapByReport[transaction.reportDamageId] = transaction;
+            }
+          });
+        }
+        
+        setCompensationMap(compensationMapByReport);
+        console.log("Compensation transactions loaded:", compensationMapByReport);
+      } else {
+        console.error("Failed to load compensation transactions:", response.message);
+      }
+    } catch (error) {
+      console.error("Error fetching compensation transactions:", error);
     }
   };
 
@@ -260,24 +288,20 @@ const ReportDamage = () => {
       const transactionResponse = await compensationTransactionApi.createCompensationTransaction(compensationTransactionData);
       
       if (transactionResponse.isSuccess) {
-        // Update the report's status to Compensated
-        const updateData = {
-          ...selectedReport,
-          status: "Compensated",
-          compensationAmount: compensationData.amount,
-          compensationDate: new Date().toISOString(),
-          compensationNotes: compensationData.notes
-        };
+        // If compensation transaction is successful, just show success and refresh data
+        toast.success("Compensation transaction recorded successfully");
+        closeCompensationModal();
         
-        const reportUpdateResponse = await reportdamagesApi.updateReportDamage(selectedReport.reportId, updateData);
+        // Update local compensation map
+        const newTransaction = transactionResponse.data || compensationTransactionData;
+        setCompensationMap(prev => ({
+          ...prev,
+          [selectedReport.reportId]: newTransaction
+        }));
         
-        if (reportUpdateResponse.isSuccess) {
-          toast.success("Compensation transaction recorded successfully");
-          closeCompensationModal();
-          fetchReports(); // Refresh data
-        } else {
-          toast.error(`Failed to update report status: ${reportUpdateResponse.message || 'Unknown error'}`);
-        }
+        // Refresh both reports and compensation transactions data
+        fetchReports();
+        fetchCompensationTransactions();
       } else {
         console.error("Transaction response error:", transactionResponse);
         toast.error(`Failed to create compensation transaction: ${transactionResponse.message || 'Unknown error'}`);
@@ -288,11 +312,28 @@ const ReportDamage = () => {
     }
   };
 
+  // Helper function to check if a report has compensation transaction
+  const hasCompensation = (reportId) => {
+    return compensationMap[reportId] !== undefined;
+  };
+
+  // Helper function to get report status - uses compensation status if available
+  const getReportStatus = (report) => {
+    const compensation = compensationMap[report.reportId];
+    
+    if (compensation) {
+      return compensation.status === "done" ? "done" : "pending"; 
+    }
+    
+    return report.status || "pending";
+  };
+
   // Filter reports based on search term and status filter
   const filteredReports = reports.filter(report => {
     const borrowHistory = borrowHistoryMap[report.borrowHistoryId] || {};
     const userInfo = userInfoMap[borrowHistory.userId] || {};
     const itemInfo = itemsMap[report.itemId] || {};
+    const reportStatus = getReportStatus(report);
     
     // Check if any of these fields match the search term
     const matchesSearch = searchTerm
@@ -307,8 +348,8 @@ const ReportDamage = () => {
     // Filter by status
     const matchesFilter = 
       filterStatus === "all" ||
-      (filterStatus === "pending" && (!report.status || report.status === "Pending")) ||
-      (filterStatus === "compensated" && report.status === "Compensated");
+      (filterStatus === "pending" && reportStatus !== "done") ||
+      (filterStatus === "done" && reportStatus === "done");
     
     return matchesSearch && matchesFilter;
   });
@@ -366,14 +407,14 @@ const ReportDamage = () => {
               Pending
             </button>
             <button
-              onClick={() => handleFilterChange("compensated")}
+              onClick={() => handleFilterChange("done")}
               className={`px-4 py-2 rounded-lg transition-all ${
-                filterStatus === "compensated"
+                filterStatus === "done"
                   ? "bg-amber-600 text-white shadow-md"
                   : "bg-gray-100 text-gray-700 hover:bg-gray-200"
               }`}
             >
-              Compensated
+              Done
             </button>
           </div>
 
@@ -441,6 +482,8 @@ const ReportDamage = () => {
                     const borrowHistory = borrowHistoryMap[report.borrowHistoryId] || {};
                     const userInfo = userInfoMap[borrowHistory.userId] || {};
                     const itemInfo = itemsMap[report.itemId] || {};
+                    const reportStatus = getReportStatus(report);
+                    const compensation = compensationMap[report.reportId];
                     
                     return (
                       <>
@@ -491,12 +534,12 @@ const ReportDamage = () => {
                           <td className="px-6 py-4 whitespace-nowrap">
                             <span
                               className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                                report.status === "Compensated" 
+                                reportStatus === "done" 
                                   ? "bg-green-100 text-green-800" 
                                   : "bg-yellow-100 text-yellow-800"
                               }`}
                             >
-                              {report.status === "Compensated" ? "Compensated" : "Pending"}
+                              {reportStatus === "done" ? "Compensated" : "Pending"}
                             </span>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -512,7 +555,7 @@ const ReportDamage = () => {
                                 <FaEye size={14} />
                               </button>
                               
-                              {!report.status || report.status !== "Compensated" ? (
+                              {!hasCompensation(report.reportId) ? (
                                 <button 
                                   className="p-1.5 bg-green-100 text-green-700 rounded-full hover:bg-green-200 transition-colors"
                                   onClick={(e) => {
@@ -564,12 +607,12 @@ const ReportDamage = () => {
                                       <p className="font-medium mt-1">
                                         <span
                                           className={`px-2 py-0.5 rounded-full text-xs ${
-                                            report.status === "Compensated" 
+                                            reportStatus === "done" 
                                               ? "bg-green-100 text-green-800" 
                                               : "bg-yellow-100 text-yellow-800"
                                           }`}
                                         >
-                                          {report.status === "Compensated" ? "Compensated" : "Pending"}
+                                          {reportStatus === "done" ? "Compensated" : "Pending"}
                                         </span>
                                       </p>
                                     </div>
@@ -600,15 +643,23 @@ const ReportDamage = () => {
                                       <p className="font-medium mt-1 text-amber-600">₫{(report.damageFee || 0).toLocaleString()}</p>
                                     </div>
                                     
-                                    {report.status === "Compensated" && (
+                                    {compensation && (
                                       <>
                                         <div>
                                           <p className="text-gray-500 text-xs">Compensation Amount</p>
-                                          <p className="font-medium mt-1 text-green-600">₫{(report.compensationAmount || 0).toLocaleString()}</p>
+                                          <p className="font-medium mt-1 text-green-600">₫{(compensation.compensationAmount || 0).toLocaleString()}</p>
+                                        </div>
+                                        <div>
+                                          <p className="text-gray-500 text-xs">Used Deposit</p>
+                                          <p className="font-medium mt-1 text-blue-600">₫{(compensation.usedDepositAmount || 0).toLocaleString()}</p>
+                                        </div>
+                                        <div>
+                                          <p className="text-gray-500 text-xs">Extra Payment</p>
+                                          <p className="font-medium mt-1 text-red-600">₫{(compensation.extraPaymentRequired || 0).toLocaleString()}</p>
                                         </div>
                                         <div>
                                           <p className="text-gray-500 text-xs">Compensation Date</p>
-                                          <p className="font-medium mt-1">{formatDate(report.compensationDate)}</p>
+                                          <p className="font-medium mt-1">{formatDate(report.compensationDate) || "N/A"}</p>
                                         </div>
                                         <div>
                                           <p className="text-gray-500 text-xs">Compensation Notes</p>
@@ -617,7 +668,7 @@ const ReportDamage = () => {
                                       </>
                                     )}
                                     
-                                    {!report.status || report.status !== "Compensated" ? (
+                                    {!hasCompensation(report.reportId) ? (
                                       <div className="col-span-2 mt-4">
                                         <button
                                           className="w-full px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
