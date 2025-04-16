@@ -11,6 +11,7 @@ const EditDonateItem = () => {
   const [loading, setLoading] = useState(true);
   const [imagePreview, setImagePreview] = useState(null);
   const [additionalImages, setAdditionalImages] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [item, setItem] = useState({
     itemId: "",
     itemName: "",
@@ -21,7 +22,19 @@ const EditDonateItem = () => {
     conditionItem: "",
     totalBorrowedCount: 0,
     status: "",
-    itemImage: ""
+    itemImage: "",
+    color: "",
+    model: "",
+    ports: "",
+    battery: "",
+    categoryId: "",
+    description: "",
+    graphicsCard: "",
+    serialNumber: "",
+    productionYear: "",
+    operatingSystem: "",
+    userId: "",
+    donateFormId: ""
   });
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const imagesPerPage = 4; // Số ảnh hiển thị mỗi lần
@@ -45,6 +58,27 @@ const EditDonateItem = () => {
           const itemImages = imagesResponse.data.filter(img => img.itemId === parseInt(itemId));
           setAdditionalImages(itemImages);
         }
+        
+        // Fetch categories
+        // This is a placeholder - you'll need to implement this API call
+        const fetchCategories = async () => {
+          try {
+            // Replace with your actual API call to get categories
+            const response = { isSuccess: true, data: [
+              { id: 1, name: "MACOS" },
+              { id: 2, name: "HP" },
+              { id: 3, name: "DELL" }
+            ]};
+            
+            if (response.isSuccess) {
+              setCategories(response.data);
+            }
+          } catch (error) {
+            console.error("Error fetching categories:", error);
+          }
+        };
+        
+        fetchCategories();
       } catch (error) {
         console.error("Error fetching data:", error);
         toast.error("Error loading item details");
@@ -251,6 +285,18 @@ const EditDonateItem = () => {
       formData.append('conditionItem', item.conditionItem);
       formData.append('totalBorrowedCount', item.totalBorrowedCount.toString());
       formData.append('status', item.status);
+      formData.append('color', item.color);
+      formData.append('model', item.model);
+      formData.append('ports', item.ports);
+      formData.append('battery', item.battery);
+      formData.append('categoryId', item.categoryId);
+      formData.append('description', item.description);
+      formData.append('graphicsCard', item.graphicsCard);
+      formData.append('serialNumber', item.serialNumber);
+      formData.append('productionYear', item.productionYear);
+      formData.append('operatingSystem', item.operatingSystem);
+      formData.append('userId', item.userId);
+      formData.append('donateFormId', item.donateFormId);
 
       const response = await donateitemsApi.updateDonateItem(itemId, formData);
       if (response.isSuccess) {
@@ -416,7 +462,7 @@ const EditDonateItem = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="block text-gray-700 font-medium mb-2">
-                Laptop Name
+                Laptop Name <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
@@ -430,7 +476,27 @@ const EditDonateItem = () => {
 
             <div>
               <label className="block text-gray-700 font-medium mb-2">
-                CPU
+                Category <span className="text-red-500">*</span>
+              </label>
+              <select
+                name="categoryId"
+                value={item.categoryId}
+                onChange={handleChange}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              >
+                <option value="">Select Category</option>
+                {categories.map(category => (
+                  <option key={category.id} value={category.id}>
+                    {category.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-gray-700 font-medium mb-2">
+                CPU <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
@@ -444,7 +510,7 @@ const EditDonateItem = () => {
 
             <div>
               <label className="block text-gray-700 font-medium mb-2">
-                RAM
+                RAM <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
@@ -458,7 +524,7 @@ const EditDonateItem = () => {
 
             <div>
               <label className="block text-gray-700 font-medium mb-2">
-                Storage
+                Storage <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
@@ -472,7 +538,7 @@ const EditDonateItem = () => {
 
             <div>
               <label className="block text-gray-700 font-medium mb-2">
-                Screen Size
+                Screen Size <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
@@ -486,7 +552,7 @@ const EditDonateItem = () => {
 
             <div>
               <label className="block text-gray-700 font-medium mb-2">
-                Condition
+                Condition <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
@@ -515,6 +581,135 @@ const EditDonateItem = () => {
                 <option value="Maintenance">Maintenance</option>
               </select>
             </div>
+
+            <div>
+              <label className="block text-gray-700 font-medium mb-2">
+                Color <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                name="color"
+                value={item.color}
+                onChange={handleChange}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-gray-700 font-medium mb-2">
+                Model <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                name="model"
+                value={item.model}
+                onChange={handleChange}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-gray-700 font-medium mb-2">
+                Ports <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                name="ports"
+                value={item.ports}
+                onChange={handleChange}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-gray-700 font-medium mb-2">
+                Battery <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                name="battery"
+                value={item.battery}
+                onChange={handleChange}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-gray-700 font-medium mb-2">
+                Graphics Card <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                name="graphicsCard"
+                value={item.graphicsCard}
+                onChange={handleChange}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-gray-700 font-medium mb-2">
+                Serial Number <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                name="serialNumber"
+                value={item.serialNumber}
+                onChange={handleChange}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-gray-700 font-medium mb-2">
+                Production Year <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="number"
+                name="productionYear"
+                value={item.productionYear}
+                onChange={handleChange}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                min="1990"
+                max={new Date().getFullYear()}
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-gray-700 font-medium mb-2">
+                Operating System <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                name="operatingSystem"
+                value={item.operatingSystem}
+                onChange={handleChange}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              />
+            </div>
+          </div>
+
+          {/* Description Field (Full Width) */}
+          <div className="mt-6">
+            <label className="block text-gray-700 font-medium mb-2">
+              Description <span className="text-red-500">*</span>
+            </label>
+            <textarea
+              name="description"
+              value={item.description}
+              onChange={handleChange}
+              rows={4}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
+            />
           </div>
 
           <div className="flex justify-end space-x-4 mt-8">

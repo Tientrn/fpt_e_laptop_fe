@@ -17,7 +17,11 @@ const DonateItem = () => {
     const fetchDonations = async () => {
       try {
         const response = await donateformApi.getAllDonateForms();
-        const sorted = response.data.sort(
+        // Filter out donations with status "Done"
+        const filteredDonations = response.data.filter(
+          (donation) => donation.status !== "Done"
+        );
+        const sorted = filteredDonations.sort(
           (a, b) => b.donationFormId - a.donationFormId
         );
         setDonations(sorted);
@@ -47,12 +51,22 @@ const DonateItem = () => {
       };
 
       await donateformApi.updateDonateForm(donationId, updatedData);
-      setDonations((prev) =>
-        prev.map((d) =>
-          d.donationFormId === donationId ? { ...d, status: newStatus } : d
-        )
-      );
-      toast.success("Status updated successfully");
+      
+      if (newStatus === "Done") {
+        // Remove the donation from the list if status is changed to Done
+        setDonations((prev) =>
+          prev.filter((d) => d.donationFormId !== donationId)
+        );
+        toast.success("Donation marked as Done and removed from list");
+      } else {
+        // Update the status in the list
+        setDonations((prev) =>
+          prev.map((d) =>
+            d.donationFormId === donationId ? { ...d, status: newStatus } : d
+          )
+        );
+        toast.success("Status updated successfully");
+      }
     } catch (error) {
       console.error("Error updating status:", error);
       toast.error("Failed to update status");
@@ -63,7 +77,7 @@ const DonateItem = () => {
     if (!window.confirm("Are you sure you want to delete this donation?"))
       return;
     try {
-      const response = await donateformApi.deleteDonateForm(donationId);
+      await donateformApi.deleteDonateForm(donationId);
       setDonations((prev) =>
         prev.filter((d) => d.donationFormId !== donationId)
       );
@@ -115,7 +129,6 @@ const DonateItem = () => {
               <option value="All">All</option>
               <option value="Pending">Pending</option>
               <option value="Approved">Approved</option>
-              <option value="Rejected">Rejected</option>
             </select>
             <button
               onClick={() => window.location.reload()}
@@ -232,21 +245,36 @@ const DonateItem = () => {
                               </button>
                             )}
                             {donation.status === "Approved" && (
-                              <button
-                                onClick={() =>
-                                  navigate("/staff/create-itemdonate", {
-                                    state: {
-                                      donateFormId: donation.donationFormId,
-                                      sponsorId: donation.userId,
-                                    },
-                                  })
-                                }
-                                className="inline-flex items-center px-3 py-1.5 bg-indigo-50 text-indigo-700 rounded-lg hover:bg-indigo-100 transition-colors duration-200"
-                                title="Create Item"
-                              >
-                                <PlusCircle size={16} className="mr-1.5" />{" "}
-                                Create Item
-                              </button>
+                              <>
+                                <button
+                                  onClick={() =>
+                                    navigate("/staff/create-itemdonate", {
+                                      state: {
+                                        donateFormId: donation.donationFormId,
+                                        sponsorId: donation.userId,
+                                      },
+                                    })
+                                  }
+                                  className="inline-flex items-center px-3 py-1.5 bg-indigo-50 text-indigo-700 rounded-lg hover:bg-indigo-100 transition-colors duration-200"
+                                  title="Create Item"
+                                >
+                                  <PlusCircle size={16} className="mr-1.5" />{" "}
+                                  Create Item
+                                </button>
+                                <button
+                                  onClick={() =>
+                                    updateStatus(
+                                      donation.donationFormId,
+                                      "Done"
+                                    )
+                                  }
+                                  className="inline-flex items-center px-3 py-1.5 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors duration-200"
+                                  title="Mark as Done"
+                                >
+                                  <CheckCircle size={16} className="mr-1.5" />{" "}
+                                  Mark Done
+                                </button>
+                              </>
                             )}
                           </div>
                         </td>
