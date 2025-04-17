@@ -282,8 +282,11 @@ const ContractsPage = () => {
     setSelectedImages(validFiles);
   };
 
-  const uploadContractImages = async (contractId) => {
-    if (selectedImages.length === 0) return [];
+  const handleUploadContractImages = async (contractId) => {
+    if (selectedImages.length === 0) {
+      toast.error("Please select at least one image to upload");
+      return;
+    }
     
     setIsUploading(true);
     setUploadProgress(0);
@@ -318,11 +321,17 @@ const ContractsPage = () => {
         }
       }
       
-      return uploadedImageUrls;
+      // Refresh contract details after upload
+      const updatedContract = {...selectedContract};
+      updatedContract.contractImages = [...(updatedContract.contractImages || []), ...uploadedImageUrls];
+      setSelectedContract(updatedContract);
+      
+      setSelectedImages([]);
+      toast.success("Images uploaded successfully");
+      
     } catch (error) {
       console.error("Error uploading contract images:", error);
       toast.error("Failed to upload contract images");
-      return [];
     } finally {
       setIsUploading(false);
       setUploadProgress(0);
@@ -373,11 +382,6 @@ const ContractsPage = () => {
       const response = await borrowcontractApi.createBorrowContract(contractData);
       
       if (response.isSuccess) {
-        // Upload images only if contract creation was successful
-        if (selectedImages.length > 0) {
-          await uploadContractImages(response.data.contractId);
-        }
-        
         toast.success("Contract created successfully");
         setIsModalOpen(false);
 
@@ -397,7 +401,6 @@ const ContractsPage = () => {
           itemValue: 0,
           expectedReturnDate: format(new Date(), "yyyy-MM-dd"),
         });
-        setSelectedImages([]);
       } else {
         toast.error(response.message || "Failed to create contract");
       }
@@ -449,6 +452,7 @@ const ContractsPage = () => {
           ...contract,
           requestDetails: response.data,
         });
+        setSelectedImages([]);
         setIsDetailModalOpen(true);
       }
     } catch (error) {
@@ -1034,98 +1038,6 @@ const ContractsPage = () => {
                       Choose a date between {format(new Date(selectedRequest?.startDate), "dd/MM/yyyy")} and {format(new Date(selectedRequest?.endDate), "dd/MM/yyyy")}
                     </p>
                 </div>
-
-                {/* Contract Images Upload */}
-                <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-1">
-                    Contract Images
-                  </label>
-                  <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
-                    <div className="space-y-1 text-center">
-                      <svg
-                        className="mx-auto h-12 w-12 text-gray-400"
-                        stroke="currentColor"
-                        fill="none"
-                        viewBox="0 0 48 48"
-                        aria-hidden="true"
-                      >
-                        <path
-                          d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </svg>
-                      <div className="flex text-sm text-gray-600">
-                        <label
-                          htmlFor="contract-images"
-                          className="relative cursor-pointer bg-white rounded-md font-medium text-amber-600 hover:text-amber-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-amber-500"
-                        >
-                          <span>Upload images</span>
-                          <input
-                            id="contract-images"
-                            name="contract-images"
-                            type="file"
-                            className="sr-only"
-                            multiple
-                            accept="image/jpeg,image/png"
-                            onChange={handleImageSelect}
-                          />
-                        </label>
-                        <p className="pl-1">or drag and drop</p>
-                      </div>
-                      <p className="text-xs text-gray-500">
-                        PNG, JPG up to 5MB
-                      </p>
-                    </div>
-                  </div>
-                  
-                  {/* Preview Selected Images */}
-                  {selectedImages.length > 0 && (
-                    <div className="mt-3">
-                      <p className="text-xs font-medium text-gray-700 mb-2">
-                        Selected Images ({selectedImages.length})
-                      </p>
-                      <div className="grid grid-cols-3 gap-2">
-                        {selectedImages.map((file, index) => (
-                          <div key={index} className="relative">
-                            <img
-                              src={URL.createObjectURL(file)}
-                              alt={`Preview ${index}`}
-                              className="h-20 w-full object-cover rounded-md"
-                            />
-                            <button
-                              type="button"
-                              className="absolute top-0 right-0 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center"
-                              onClick={() => {
-                                const newFiles = [...selectedImages];
-                                newFiles.splice(index, 1);
-                                setSelectedImages(newFiles);
-                              }}
-                            >
-                              ×
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  
-                  {/* Upload Progress */}
-                  {isUploading && (
-                    <div className="mt-2">
-                      <div className="w-full bg-gray-200 rounded-full h-2.5">
-                        <div
-                          className="bg-amber-600 h-2.5 rounded-full"
-                          style={{ width: `${uploadProgress}%` }}
-                        ></div>
-                      </div>
-                      <p className="text-xs text-gray-500 text-center mt-1">
-                        Uploading: {uploadProgress}%
-                      </p>
-                    </div>
-                  )}
-                </div>
                 </div>
               </form>
               </div>
@@ -1316,31 +1228,155 @@ const ContractsPage = () => {
             </div>
 
             {/* Contract Images */}
-            {selectedContract.contractImages && selectedContract.contractImages.length > 0 && (
-              <div className="mt-8 bg-gray-50 p-6 rounded-lg">
-                <h3 className="text-xl font-bold text-gray-800 mb-4 pb-2 border-b-2 border-amber-500">
-                  Contract Images
-                </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {selectedContract.contractImages.map((image, index) => (
-                    <div key={index} className="overflow-hidden rounded-lg shadow-md">
-                      <a 
-                        href={image} 
-                        target="_blank" 
-                        rel="noopener noreferrer" 
-                        className="block hover:opacity-90 transition-opacity"
-                      >
-                        <img 
-                          src={image} 
-                          alt={`Contract ${selectedContract.contractId} image ${index+1}`}
-                          className="w-full h-auto object-contain"
-                        />
-                      </a>
-                    </div>
-                  ))}
+            <div className="mt-8 bg-gray-50 p-6 rounded-lg">
+              <h3 className="text-xl font-bold text-gray-800 mb-4 pb-2 border-b-2 border-amber-500">
+                Contract Images
+              </h3>
+              
+              {/* Image Upload Section */}
+              <div className="mb-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h4 className="text-lg font-medium text-gray-700">Upload New Images</h4>
                 </div>
+                
+                <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
+                  <div className="space-y-1 text-center">
+                    <svg
+                      className="mx-auto h-12 w-12 text-gray-400"
+                      stroke="currentColor"
+                      fill="none"
+                      viewBox="0 0 48 48"
+                      aria-hidden="true"
+                    >
+                      <path
+                        d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                    <div className="flex text-sm text-gray-600">
+                      <label
+                        htmlFor="contract-images-detail"
+                        className="relative cursor-pointer bg-white rounded-md font-medium text-amber-600 hover:text-amber-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-amber-500"
+                      >
+                        <span>Upload images</span>
+                        <input
+                          id="contract-images-detail"
+                          name="contract-images-detail"
+                          type="file"
+                          className="sr-only"
+                          multiple
+                          accept="image/jpeg,image/png"
+                          onChange={handleImageSelect}
+                        />
+                      </label>
+                      <p className="pl-1">or drag and drop</p>
+                    </div>
+                    <p className="text-xs text-gray-500">
+                      PNG, JPG up to 5MB
+                    </p>
+                  </div>
+                </div>
+                
+                {/* Preview Selected Images */}
+                {selectedImages.length > 0 && (
+                  <div className="mt-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <h5 className="text-sm font-medium text-gray-700">
+                        Selected Images ({selectedImages.length})
+                      </h5>
+                      <button
+                        onClick={() => handleUploadContractImages(selectedContract.contractId)}
+                        className="px-3 py-1 text-sm bg-amber-600 text-white rounded hover:bg-amber-700 transition-colors flex items-center"
+                        disabled={isUploading}
+                      >
+                        {isUploading ? (
+                          <>
+                            <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-2"></div>
+                            Uploading...
+                          </>
+                        ) : (
+                          <>
+                            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0l-4 4m4-4v12" />
+                            </svg>
+                            Upload Images
+                          </>
+                        )}
+                      </button>
+                    </div>
+                    
+                    <div className="grid grid-cols-3 gap-2">
+                      {selectedImages.map((file, index) => (
+                        <div key={index} className="relative">
+                          <img
+                            src={URL.createObjectURL(file)}
+                            alt={`Preview ${index}`}
+                            className="h-20 w-full object-cover rounded-md"
+                          />
+                          <button
+                            type="button"
+                            className="absolute top-0 right-0 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center"
+                            onClick={() => {
+                              const newFiles = [...selectedImages];
+                              newFiles.splice(index, 1);
+                              setSelectedImages(newFiles);
+                            }}
+                          >
+                            ×
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                    
+                    {/* Upload Progress */}
+                    {isUploading && (
+                      <div className="mt-2">
+                        <div className="w-full bg-gray-200 rounded-full h-2.5">
+                          <div
+                            className="bg-amber-600 h-2.5 rounded-full"
+                            style={{ width: `${uploadProgress}%` }}
+                          ></div>
+                        </div>
+                        <p className="text-xs text-gray-500 text-center mt-1">
+                          Uploading: {uploadProgress}%
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
-            )}
+              
+              {/* Existing Images Section */}
+              <div>
+                <h4 className="text-lg font-medium text-gray-700 mb-4">Existing Images</h4>
+                {selectedContract.contractImages && selectedContract.contractImages.length > 0 ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {selectedContract.contractImages.map((image, index) => (
+                      <div key={index} className="overflow-hidden rounded-lg shadow-md">
+                        <a 
+                          href={image} 
+                          target="_blank" 
+                          rel="noopener noreferrer" 
+                          className="block hover:opacity-90 transition-opacity"
+                        >
+                          <img 
+                            src={image} 
+                            alt={`Contract ${selectedContract.contractId} image ${index+1}`}
+                            className="w-full h-auto object-contain"
+                          />
+                        </a>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-6 bg-gray-100 rounded-lg">
+                    <p className="text-gray-500">No images uploaded yet</p>
+                  </div>
+                )}
+              </div>
+            </div>
 
             <div className="mt-8 flex justify-end">
               <button

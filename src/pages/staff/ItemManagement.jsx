@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import donateitemsApi from "../../api/donateitemsApi";
 import itemimagesApi from "../../api/itemimagesApi";
 import { toast } from "react-toastify";
@@ -121,20 +121,39 @@ const ItemManagement = () => {
                   alt={item.itemName} 
                   className="w-full h-full object-cover"
                 />
-                <div className="absolute top-0 right-0 bg-blue-500 text-white px-2 py-1 text-sm">
+                <div className={`absolute top-0 right-0 px-2 py-1 text-xs font-medium ${
+                  item.status === "Available" ? "bg-green-500 text-white" :
+                  item.status === "Borrowed" ? "bg-blue-500 text-white" :
+                  item.status === "Maintenance" ? "bg-yellow-500 text-white" :
+                  item.status === "Reserved" ? "bg-purple-500 text-white" :
+                  item.status === "Damaged" ? "bg-red-500 text-white" :
+                  item.status === "Retired" ? "bg-gray-500 text-white" :
+                  "bg-blue-500 text-white"
+                }`}>
                   {item.status || "Available"}
                 </div>
               </div>
               <div className="p-5">
                 <h2 className="text-xl font-semibold mb-2 text-gray-800 line-clamp-2">{item.itemName}</h2>
-                <p className="text-gray-600 mb-2"><span className="font-medium">CPU:</span> {item.cpu}</p>
-                <p className="text-gray-600 mb-2"><span className="font-medium">RAM:</span> {item.ram}</p>
+                <div className="space-y-1 mb-3">
+                  <p className="text-gray-600 text-sm"><span className="font-medium">Model:</span> {item.model || "Not specified"}</p>
+                  <p className="text-gray-600 text-sm"><span className="font-medium">CPU:</span> {item.cpu || "Not specified"}</p>
+                  <p className="text-gray-600 text-sm"><span className="font-medium">RAM:</span> {item.ram || "Not specified"}</p>
+                  <p className="text-gray-600 text-sm"><span className="font-medium">Storage:</span> {item.storage || "Not specified"}</p>
+                  <p className="text-gray-600 text-sm"><span className="font-medium">Borrowed:</span> {item.totalBorrowedCount || 0} times</p>
+                </div>
                 <div className="flex justify-between mt-4">
                   <button 
                     onClick={() => handleViewDetail(item)} 
                     className="flex items-center bg-blue-500 hover:bg-blue-600 text-white px-3 py-2 rounded transition duration-300"
                   >
                     <FaEye className="mr-2" /> Details
+                  </button>
+                  <button 
+                    onClick={() => navigate(`/staff/edit-item/${item.itemId}`)}
+                    className="flex items-center bg-green-500 hover:bg-green-600 text-white px-3 py-2 rounded transition duration-300 mx-1"
+                  >
+                    <FaEdit className="mr-2" /> Edit
                   </button>
                   <button 
                     onClick={() => handleDeleteClick(item)} 
@@ -231,12 +250,28 @@ const ItemManagement = () => {
                 <div>
                   <h3 className="text-xl font-semibold mb-4">{selectedItem.itemName}</h3>
                   <div className="space-y-3">
+                    <p><span className="font-medium">Model:</span> {selectedItem.model || "Not specified"}</p>
                     <p><span className="font-medium">Condition:</span> {selectedItem.conditionItem || "Not specified"}</p>
-                    <p><span className="font-medium">Status:</span> {selectedItem.status || "Available"}</p>
+                    <p><span className="font-medium">Status:</span> <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                      selectedItem.status === "Available" ? "bg-green-100 text-green-800" :
+                      selectedItem.status === "Borrowed" ? "bg-blue-100 text-blue-800" :
+                      selectedItem.status === "Maintenance" ? "bg-yellow-100 text-yellow-800" :
+                      selectedItem.status === "Reserved" ? "bg-purple-100 text-purple-800" :
+                      selectedItem.status === "Damaged" ? "bg-red-100 text-red-800" :
+                      selectedItem.status === "Retired" ? "bg-gray-100 text-gray-800" :
+                      "bg-gray-100 text-gray-800"
+                    }`}>{selectedItem.status || "Available"}</span></p>
+                    <p><span className="font-medium">Serial Number:</span> {selectedItem.serialNumber || "Not specified"}</p>
+                    <p><span className="font-medium">Production Year:</span> {selectedItem.productionYear || "Not specified"}</p>
                     <p><span className="font-medium">CPU:</span> {selectedItem.cpu || "Not specified"}</p>
                     <p><span className="font-medium">RAM:</span> {selectedItem.ram || "Not specified"}</p>
                     <p><span className="font-medium">Storage:</span> {selectedItem.storage || "Not specified"}</p>
+                    <p><span className="font-medium">Graphics Card:</span> {selectedItem.graphicsCard || "Not specified"}</p>
                     <p><span className="font-medium">Screen Size:</span> {selectedItem.screenSize || "Not specified"}</p>
+                    <p><span className="font-medium">Operating System:</span> {selectedItem.operatingSystem || "Not specified"}</p>
+                    <p><span className="font-medium">Battery:</span> {selectedItem.battery || "Not specified"}</p>
+                    <p><span className="font-medium">Ports:</span> {selectedItem.ports || "Not specified"}</p>
+                    <p><span className="font-medium">Color:</span> {selectedItem.color || "Not specified"}</p>
                     <p><span className="font-medium">Total Borrowed:</span> {selectedItem.totalBorrowedCount || 0}</p>
                     <p><span className="font-medium">Date Created:</span> {selectedItem.createdDate ? new Date(selectedItem.createdDate).toLocaleDateString() : "Not specified"}</p>
                     <p><span className="font-medium">Last Updated:</span> {selectedItem.updatedDate ? new Date(selectedItem.updatedDate).toLocaleDateString() : "Not specified"}</p>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import donateitemsApi from "../../api/donateitemsApi";
@@ -60,14 +60,22 @@ const EditDonateItem = () => {
         }
         
         // Fetch categories
-        // This is a placeholder - you'll need to implement this API call
         const fetchCategories = async () => {
           try {
             // Replace with your actual API call to get categories
             const response = { isSuccess: true, data: [
-              { id: 1, name: "MACOS" },
-              { id: 2, name: "HP" },
-              { id: 3, name: "DELL" }
+              { id: 1, name: "Apple MacBook" },
+              { id: 2, name: "HP Laptop" },
+              { id: 3, name: "Dell Laptop" },
+              { id: 4, name: "Lenovo ThinkPad" },
+              { id: 5, name: "ASUS Laptop" },
+              { id: 6, name: "Acer Laptop" },
+              { id: 7, name: "Microsoft Surface" },
+              { id: 8, name: "Samsung Laptop" },
+              { id: 9, name: "MSI Gaming Laptop" },
+              { id: 10, name: "Razer Blade" },
+              { id: 11, name: "Toshiba Laptop" },
+              { id: 12, name: "Other" }
             ]};
             
             if (response.isSuccess) {
@@ -579,6 +587,9 @@ const EditDonateItem = () => {
                 <option value="Available">Available</option>
                 <option value="Borrowed">Borrowed</option>
                 <option value="Maintenance">Maintenance</option>
+                <option value="Reserved">Reserved</option>
+                <option value="Damaged">Damaged</option>
+                <option value="Retired">Retired</option>
               </select>
             </div>
 

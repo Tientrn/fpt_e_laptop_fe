@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { CheckCircle, XCircle, RefreshCw, PlusCircle } from "lucide-react";
@@ -17,11 +17,8 @@ const DonateItem = () => {
     const fetchDonations = async () => {
       try {
         const response = await donateformApi.getAllDonateForms();
-        // Filter out donations with status "Done"
-        const filteredDonations = response.data.filter(
-          (donation) => donation.status !== "Done"
-        );
-        const sorted = filteredDonations.sort(
+        // No filtering of Done status - we'll show all statuses and let user filter
+        const sorted = response.data.sort(
           (a, b) => b.donationFormId - a.donationFormId
         );
         setDonations(sorted);
@@ -52,21 +49,13 @@ const DonateItem = () => {
 
       await donateformApi.updateDonateForm(donationId, updatedData);
       
-      if (newStatus === "Done") {
-        // Remove the donation from the list if status is changed to Done
-        setDonations((prev) =>
-          prev.filter((d) => d.donationFormId !== donationId)
-        );
-        toast.success("Donation marked as Done and removed from list");
-      } else {
-        // Update the status in the list
-        setDonations((prev) =>
-          prev.map((d) =>
-            d.donationFormId === donationId ? { ...d, status: newStatus } : d
-          )
-        );
-        toast.success("Status updated successfully");
-      }
+      // Update the status in the list
+      setDonations((prev) =>
+        prev.map((d) =>
+          d.donationFormId === donationId ? { ...d, status: newStatus } : d
+        )
+      );
+      toast.success("Status updated successfully");
     } catch (error) {
       console.error("Error updating status:", error);
       toast.error("Failed to update status");
@@ -129,6 +118,7 @@ const DonateItem = () => {
               <option value="All">All</option>
               <option value="Pending">Pending</option>
               <option value="Approved">Approved</option>
+              <option value="Done">Done</option>
             </select>
             <button
               onClick={() => window.location.reload()}
@@ -171,7 +161,7 @@ const DonateItem = () => {
                 <tbody className="divide-y divide-gray-200">
                   {currentItems.length === 0 ? (
                     <tr>
-                      <td colSpan="6" className="px-6 py-8 text-center">
+                      <td colSpan="7" className="px-6 py-8 text-center">
                         <p className="text-gray-500 text-base">
                           No donations found
                         </p>
@@ -198,7 +188,7 @@ const DonateItem = () => {
                             alt="Donation"
                             className="w-20 h-20 object-cover rounded-md border"
                             onError={(e) => {
-                              e.target.src = "/no-image.png"; // fallback image nếu lỗi
+                              e.target.src = "/no-image.png"; // fallback image if there's an error
                             }}
                           />
                         </td>
@@ -212,6 +202,8 @@ const DonateItem = () => {
                                 ? "bg-yellow-100 text-yellow-800"
                                 : donation.status === "Approved"
                                 ? "bg-green-100 text-green-800"
+                                : donation.status === "Done"
+                                ? "bg-blue-100 text-blue-800"
                                 : "bg-red-100 text-red-800"
                             }`}
                           >
@@ -220,15 +212,18 @@ const DonateItem = () => {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center gap-3">
-                            <button
-                              onClick={() =>
-                                deleteDonation(donation.donationFormId)
-                              }
-                              className="inline-flex items-center px-3 py-1.5 bg-red-50 text-red-700 rounded-lg hover:bg-red-100 transition-colors duration-200"
-                              title="Delete Donation"
-                            >
-                              <XCircle size={16} className="mr-1.5" /> Delete
-                            </button>
+                            {donation.status !== "Done" && (
+                              <button
+                                onClick={() =>
+                                  deleteDonation(donation.donationFormId)
+                                }
+                                className="inline-flex items-center px-3 py-1.5 bg-red-50 text-red-700 rounded-lg hover:bg-red-100 transition-colors duration-200"
+                                title="Delete Donation"
+                              >
+                                <XCircle size={16} className="mr-1.5" /> Delete
+                              </button>
+                            )}
+                            
                             {donation.status === "Pending" && (
                               <button
                                 onClick={() =>
@@ -244,37 +239,29 @@ const DonateItem = () => {
                                 Approve
                               </button>
                             )}
+                            
                             {donation.status === "Approved" && (
-                              <>
-                                <button
-                                  onClick={() =>
-                                    navigate("/staff/create-itemdonate", {
-                                      state: {
-                                        donateFormId: donation.donationFormId,
-                                        sponsorId: donation.userId,
-                                      },
-                                    })
-                                  }
-                                  className="inline-flex items-center px-3 py-1.5 bg-indigo-50 text-indigo-700 rounded-lg hover:bg-indigo-100 transition-colors duration-200"
-                                  title="Create Item"
-                                >
-                                  <PlusCircle size={16} className="mr-1.5" />{" "}
-                                  Create Item
-                                </button>
-                                <button
-                                  onClick={() =>
-                                    updateStatus(
-                                      donation.donationFormId,
-                                      "Done"
-                                    )
-                                  }
-                                  className="inline-flex items-center px-3 py-1.5 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors duration-200"
-                                  title="Mark as Done"
-                                >
-                                  <CheckCircle size={16} className="mr-1.5" />{" "}
-                                  Mark Done
-                                </button>
-                              </>
+                              <button
+                                onClick={() =>
+                                  navigate("/staff/create-itemdonate", {
+                                    state: {
+                                      donateFormId: donation.donationFormId,
+                                      sponsorId: donation.userId,
+                                    },
+                                  })
+                                }
+                                className="inline-flex items-center px-3 py-1.5 bg-indigo-50 text-indigo-700 rounded-lg hover:bg-indigo-100 transition-colors duration-200"
+                                title="Create Item"
+                              >
+                                <PlusCircle size={16} className="mr-1.5" />{" "}
+                                Create Item
+                              </button>
+                            )}
+                            
+                            {donation.status === "Done" && (
+                              <span className="text-sm text-gray-500">
+                                Processing completed
+                              </span>
                             )}
                           </div>
                         </td>
