@@ -1,7 +1,15 @@
 import { useState, useEffect } from "react";
 import { toast } from "react-toastify";
 import { format } from "date-fns";
-import { FaSearch, FaEye, FaHistory, FaMoneyBillWave } from "react-icons/fa";
+import { 
+  FaSearch, 
+  FaEye, 
+  FaHistory, 
+  FaMoneyBillWave, 
+  FaSort, 
+  FaSortUp, 
+  FaSortDown
+} from "react-icons/fa";
 import reportdamagesApi from "../../api/reportdamagesApi";
 import donateitemsApi from "../../api/donateitemsApi";
 import userinfoApi from "../../api/userinfoApi";
@@ -26,6 +34,7 @@ const ReportDamage = () => {
   const [expandedRow, setExpandedRow] = useState(null);
   const [showCompensationModal, setShowCompensationModal] = useState(false);
   const [selectedReport, setSelectedReport] = useState(null);
+  const [sortConfig, setSortConfig] = useState({ key: 'reportId', direction: 'asc' });
   const [compensationData, setCompensationData] = useState({
     reportId: "",
     amount: 0,
@@ -697,6 +706,25 @@ const ReportDamage = () => {
     return report.status || "pending";
   };
 
+  // Sorting function
+  const requestSort = (key) => {
+    let direction = 'asc';
+    if (sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc';
+    }
+    setSortConfig({ key, direction });
+  };
+
+  // Function to get the appropriate sort icon
+  const getSortIcon = (key) => {
+    if (sortConfig.key === key) {
+      return sortConfig.direction === 'asc' ? 
+        <FaSortUp className="ml-1 text-amber-500" /> : 
+        <FaSortDown className="ml-1 text-amber-500" />;
+    }
+    return <FaSort className="ml-1 text-gray-400" />;
+  };
+
   // Filter reports based on search term and status filter
   const filteredReports = reports.filter(report => {
     const borrowHistory = borrowHistoryMap[report.borrowHistoryId] || {};
@@ -721,6 +749,49 @@ const ReportDamage = () => {
       (filterStatus === "done" && reportStatus === "done");
     
     return matchesSearch && matchesFilter;
+  }).sort((a, b) => {
+    if (!sortConfig.key) return 0;
+    
+    // Helper function to get the sortable value from a report
+    const getValue = (report, key) => {
+      const borrowHistory = borrowHistoryMap[report.borrowHistoryId] || {};
+      const userInfo = userInfoMap[borrowHistory.userId] || {};
+      const itemInfo = itemsMap[report.itemId] || {};
+      
+      switch(key) {
+        case 'reportId':
+          return report.reportId;
+        case 'user':
+          return userInfo.fullName || '';
+        case 'device':
+          return itemInfo.itemName || '';
+        case 'damageFee':
+          return report.damageFee || 0;
+        case 'reportDate':
+          return new Date(report.createdDate || 0).getTime();
+        case 'status':
+          return getReportStatus(report);
+        default:
+          return '';
+      }
+    };
+    
+    const aValue = getValue(a, sortConfig.key);
+    const bValue = getValue(b, sortConfig.key);
+    
+    // Handle string sorting
+    if (typeof aValue === 'string' && typeof bValue === 'string') {
+      if (sortConfig.direction === 'asc') {
+        return aValue.localeCompare(bValue);
+      }
+      return bValue.localeCompare(aValue);
+    }
+    
+    // Handle number and date sorting
+    if (sortConfig.direction === 'asc') {
+      return aValue - bValue;
+    }
+    return bValue - aValue;
   });
 
   // Pagination
@@ -822,23 +893,59 @@ const ReportDamage = () => {
             <table className="min-w-full divide-y divide-gray-200">
               <thead>
                 <tr className="bg-gradient-to-r from-gray-600 to-amber-600 text-white">
-                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
-                    Report ID
+                  <th 
+                    className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider cursor-pointer hover:bg-gray-700/10 transition-colors"
+                    onClick={() => requestSort('reportId')}
+                  >
+                    <div className="flex items-center">
+                      Report ID
+                      {getSortIcon('reportId')}
+                    </div>
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
-                    User
+                  <th 
+                    className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider cursor-pointer hover:bg-gray-700/10 transition-colors"
+                    onClick={() => requestSort('user')}
+                  >
+                    <div className="flex items-center">
+                      User
+                      {getSortIcon('user')}
+                    </div>
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
-                    Device
+                  <th 
+                    className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider cursor-pointer hover:bg-gray-700/10 transition-colors"
+                    onClick={() => requestSort('device')}
+                  >
+                    <div className="flex items-center">
+                      Device
+                      {getSortIcon('device')}
+                    </div>
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
-                    Damage Fee
+                  <th 
+                    className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider cursor-pointer hover:bg-gray-700/10 transition-colors"
+                    onClick={() => requestSort('damageFee')}
+                  >
+                    <div className="flex items-center">
+                      Damage Fee
+                      {getSortIcon('damageFee')}
+                    </div>
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
-                    Report Date
+                  <th 
+                    className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider cursor-pointer hover:bg-gray-700/10 transition-colors"
+                    onClick={() => requestSort('reportDate')}
+                  >
+                    <div className="flex items-center">
+                      Report Date
+                      {getSortIcon('reportDate')}
+                    </div>
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
-                    Status
+                  <th 
+                    className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider cursor-pointer hover:bg-gray-700/10 transition-colors"
+                    onClick={() => requestSort('status')}
+                  >
+                    <div className="flex items-center">
+                      Status
+                      {getSortIcon('status')}
+                    </div>
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
                     Actions
@@ -1621,7 +1728,7 @@ const ReportDamage = () => {
                             <label className="block text-sm font-medium text-gray-700">
                               Additional Payment Required
                             </label>
-                            <span className="text-xs flex items-center font-medium px-2 py-0.5 rounded-full"
+                            <span
                               className={`text-xs flex items-center font-medium px-2 py-0.5 rounded-full ${
                                 compensationData.extraPaymentRequired > 0 
                                   ? "bg-red-100 text-red-700" 

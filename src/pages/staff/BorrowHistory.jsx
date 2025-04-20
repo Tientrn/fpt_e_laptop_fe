@@ -8,6 +8,7 @@ import donateitemsApi from "../../api/donateitemsApi";
 import borrowcontractApi from "../../api/borrowcontractApi";
 import userApi from "../../api/userApi";
 import reportdamagesApi from "../../api/reportdamagesApi";
+import compensationTransactionApi from "../../api/compensationTransactionApi";
 import { formatCurrency } from "../../utils/moneyValidationUtils";
 
 const BorrowHistory = () => {
@@ -23,6 +24,7 @@ const BorrowHistory = () => {
   const [expandedRow, setExpandedRow] = useState(null);
   const [contractsMap, setContractsMap] = useState({});
   const [reportedDamageItems, setReportedDamageItems] = useState({});
+  const [compensationMap, setCompensationMap] = useState({});
   const [showReportModal, setShowReportModal] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
   const [reportData, setReportData] = useState({
@@ -39,6 +41,7 @@ const BorrowHistory = () => {
   useEffect(() => {
     fetchBorrowHistory();
     fetchReportDamages();
+    fetchCompensationTransactions();
   }, []);
 
   useEffect(() => {
@@ -158,6 +161,60 @@ const BorrowHistory = () => {
     }
   };
 
+  // Fetch compensation transactions
+  const fetchCompensationTransactions = async () => {
+    try {
+      const response = await compensationTransactionApi.getAllCompensationTransactions();
+      
+      if (response.isSuccess) {
+        // Create a map of compensation records by reportDamageId
+        const compensationMapByReport = {};
+        
+        if (response.data && Array.isArray(response.data)) {
+          response.data.forEach(transaction => {
+            if (transaction.reportDamageId) {
+              compensationMapByReport[transaction.reportDamageId] = transaction;
+            }
+          });
+        }
+        
+        setCompensationMap(compensationMapByReport);
+        console.log("Compensation transactions loaded:", compensationMapByReport);
+      } else {
+        console.error("Failed to load compensation transactions:", response.message);
+      }
+    } catch (error) {
+      console.error("Error fetching compensation transactions:", error);
+    }
+  };
+  
+  // Check if an item should be marked as returned based on compensation
+  const isItemReturned = (item) => {
+    // First check if the item is already marked as returned
+    if (item.status === "Returned") {
+      return true;
+    }
+    
+    // Check if there's a reported damage for this item
+    if (!reportedDamageItems[item.borrowHistoryId]) {
+      return false;
+    }
+    
+    // Find the report ID for this borrow history
+    const reportId = Object.keys(compensationMap).find(reportId => {
+      // Assuming compensationMap has a reference to borrowHistoryId or we need to get it from reports
+      const transaction = compensationMap[reportId];
+      const reportDamageId = transaction?.reportDamageId;
+      
+      // Now check if there's a damage report for this borrow history that has a compensation
+      return reportDamageId && 
+             reportedDamageItems[item.borrowHistoryId] && 
+             transaction.status === "done";
+    });
+    
+    return reportId !== undefined;
+  };
+
   const filteredHistory = borrowHistory.filter((item) => {
     const userInfo = userInfoMap[item.userId] || {};
     const itemInfo = itemsMap[item.itemId] || {};
@@ -180,11 +237,11 @@ const BorrowHistory = () => {
         String(item.requestId).includes(searchTerm)
       : true;
 
-    // Sử dụng status mới: 'Borrwing' thay cho 'Borrowed'
+    // Use correct status naming: 'Borrowing' instead of 'Borrwing'
     const matchesFilter =
       filterStatus === "all" ||
-      (filterStatus === "returned" && item.status === "Returned") ||
-      (filterStatus === "borrowed" && item.status === "Borrwing");
+      (filterStatus === "returned" && (item.status === "Returned" || isItemReturned(item))) ||
+      (filterStatus === "borrowed" && item.status === "Borrowing" && !isItemReturned(item));
     
     return matchesSearch && matchesFilter;
   });
@@ -330,33 +387,8 @@ const BorrowHistory = () => {
           <h1 className="text-3xl font-bold text-gray-800 mb-2">
             Borrow History
           </h1>
-          <p className="text-gray-500 max-w-lg text-center">
-            View and manage all device borrowing records, track return dates, and report damages.
-          </p>
         </div>
-        
-        <div className="flex items-center justify-center mt-6">
-          <div className="flex items-center gap-4 text-sm">
-            <div className="flex items-center gap-1.5 text-green-700">
-              <div className="w-3 h-3 rounded-full bg-green-500"></div>
-              <span>Returned: {borrowHistory.filter(item => item.status === "Returned").length}</span>
-            </div>
-            <div className="flex items-center gap-1.5 text-blue-700">
-              <div className="w-3 h-3 rounded-full bg-blue-500"></div>
-              <span>Borrowing: {borrowHistory.filter(item => item.status === "Borrwing").length}</span>
-            </div>
-            <div className="flex items-center gap-1.5 text-red-700">
-              <div className="w-3 h-3 rounded-full bg-red-500"></div>
-              <span>Due Soon: {
-                borrowHistory.filter(item => 
-                  item.status === "Borrwing" && 
-                  contractsMap[item.requestId] && 
-                  isExpiringSoon(contractsMap[item.requestId].expectedReturnDate)
-                ).length
-              }</span>
-            </div>
-          </div>
-        </div>
+
       </div>
 
       {/* Enhanced Search and Filter Controls */}
@@ -388,7 +420,7 @@ const BorrowHistory = () => {
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
                 </svg>
-                Returned
+                Returned / Compensated
               </button>
               <button
                 onClick={() => handleFilterChange("borrowed")}
@@ -401,7 +433,7 @@ const BorrowHistory = () => {
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
                 </svg>
-                Borrowing
+                Currently Borrowing
               </button>
             </div>
 
@@ -448,7 +480,7 @@ const BorrowHistory = () => {
       <div className="bg-white rounded-xl shadow-md overflow-hidden">
         <div className="p-6 border-b border-gray-100">
           <h2 className="text-xl font-bold text-gray-800">
-            Borrwing Records
+            Borrowing Records
             <span className="text-sm font-normal text-gray-500 ml-2">
               ({filteredHistory.length} items)
             </span>
@@ -491,7 +523,7 @@ const BorrowHistory = () => {
                       <tr
                         key={item.borrowHistoryId}
                         className={`hover:bg-gray-50 transition-all duration-200 ${
-                          item.status === "Borrwing" && 
+                          item.status === "Borrowing" && 
                           contractsMap[item.requestId] && 
                           isExpiringSoon(contractsMap[item.requestId].expectedReturnDate)
                             ? "bg-yellow-50 hover:bg-yellow-100"
@@ -637,17 +669,17 @@ const BorrowHistory = () => {
                             </div>
                             
                             <div className={`flex items-center px-2 py-1 rounded-md ${
-                              item.status === "Returned"
+                              item.status === "Returned" || isItemReturned(item)
                                 ? "bg-green-50" 
-                                : item.status === "Borrwing" && contractsMap[item.requestId] && 
+                                : item.status === "Borrowing" && contractsMap[item.requestId] && 
                                   isExpiringSoon(contractsMap[item.requestId].expectedReturnDate)
                                   ? "bg-red-50"
                                   : "bg-amber-50"
                             }`}>
                               <svg className={`w-4 h-4 mr-1.5 ${
-                                item.status === "Returned"
+                                item.status === "Returned" || isItemReturned(item)
                                   ? "text-green-500" 
-                                  : item.status === "Borrwing" && contractsMap[item.requestId] && 
+                                  : item.status === "Borrowing" && contractsMap[item.requestId] && 
                                     isExpiringSoon(contractsMap[item.requestId].expectedReturnDate)
                                     ? "text-red-500"
                                     : "text-amber-500"
@@ -656,7 +688,7 @@ const BorrowHistory = () => {
                               </svg>
                               <span className="text-sm text-gray-700">
                                 To: <span className="font-medium">
-                                {item.status === "Returned"
+                                {item.status === "Returned" || isItemReturned(item)
                                   ? item.returnDate 
                                     ? format(new Date(item.returnDate), "dd MMM yyyy")
                                     : "Returned"
@@ -672,22 +704,22 @@ const BorrowHistory = () => {
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span
                             className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
-                              item.status === "Returned"
+                              item.status === "Returned" || isItemReturned(item)
                                 ? "bg-green-100 text-green-800"
-                                : item.status === "Borrwing" && contractsMap[item.requestId] && 
+                                : item.status === "Borrowing" && contractsMap[item.requestId] && 
                                   isExpiringSoon(contractsMap[item.requestId].expectedReturnDate)
                                   ? "bg-red-100 text-red-800"
                                 : "bg-blue-100 text-blue-800"
                             }`}
                           >
-                            {item.status === "Returned" ? (
+                            {item.status === "Returned" || isItemReturned(item) ? (
                               <>
                                 <svg className="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
                                 </svg>
                                 Returned
                               </>
-                            ) : item.status === "Borrwing" && contractsMap[item.requestId] && 
+                            ) : item.status === "Borrowing" && contractsMap[item.requestId] && 
                                isExpiringSoon(contractsMap[item.requestId].expectedReturnDate) ? (
                               <>
                                 <svg className="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -744,7 +776,7 @@ const BorrowHistory = () => {
                               </button>
                             )}
                             
-                            {item.status === "Borrwing" && reportedDamageItems[item.borrowHistoryId] && (
+                            {item.status === "Borrowing" && reportedDamageItems[item.borrowHistoryId] && (
                               <span className="flex items-center justify-center gap-1 px-2.5 py-1.5 text-xs rounded-md bg-gray-100 text-gray-500">
                                 <svg className="w-3.5 h-3.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                                   <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
@@ -959,21 +991,21 @@ const BorrowHistory = () => {
                                       </h3>
                                       <div className="flex items-center gap-2">
                                         <span className={`text-xs font-medium px-2 py-1 rounded-full flex items-center ${
-                                          item.status === "Returned"
+                                          item.status === "Returned" || isItemReturned(item)
                                             ? "bg-green-100 text-green-700"
-                                            : item.status === "Borrwing" && contractsMap[item.requestId] && 
+                                            : item.status === "Borrowing" && contractsMap[item.requestId] && 
                                               isExpiringSoon(contractsMap[item.requestId].expectedReturnDate)
                                               ? "bg-red-100 text-red-700"
                                             : "bg-blue-100 text-blue-700"
                                         }`}>
-                                          {item.status === "Returned" ? (
+                                          {item.status === "Returned" || isItemReturned(item) ? (
                                             <>
                                               <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
                                               </svg>
                                               Returned
                                             </>
-                                          ) : item.status === "Borrwing" && contractsMap[item.requestId] && 
+                                          ) : item.status === "Borrowing" && contractsMap[item.requestId] && 
                                              isExpiringSoon(contractsMap[item.requestId].expectedReturnDate) ? (
                                             <>
                                               <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -986,7 +1018,7 @@ const BorrowHistory = () => {
                                               <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
                                               </svg>
-                                              Borrwing
+                                              Borrowing
                                             </>
                                           )}
                                         </span>
@@ -1024,7 +1056,7 @@ const BorrowHistory = () => {
                                           <div className="flex flex-col p-3 bg-gray-50 rounded-md">
                                             <p className="text-xs text-gray-500">Expected Return</p>
                                             <p className={`text-sm font-medium ${
-                                              item.status === "Borrwing" && 
+                                              item.status === "Borrowing" && 
                                               contractsMap[item.requestId] && 
                                               isExpiringSoon(contractsMap[item.requestId].expectedReturnDate)
                                                 ? "text-red-600"
@@ -1137,7 +1169,7 @@ const BorrowHistory = () => {
                                       </div>
                                     )}
                                     
-                                    {item.status === "Borrwing" && contractsMap[item.requestId] && 
+                                    {item.status === "Borrowing" && contractsMap[item.requestId] && 
                                      isExpiringSoon(contractsMap[item.requestId].expectedReturnDate) && (
                                       <div className="flex items-center p-3 bg-red-50 rounded-md">
                                         <svg className="w-5 h-5 text-red-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -1184,7 +1216,7 @@ const BorrowHistory = () => {
                         <p className="text-sm">
                           {searchTerm
                             ? "Try adjusting your search terms"
-                            : "No Borrwing history available"}
+                            : "No Borrowing history available"}
                         </p>
                       </div>
                     </td>

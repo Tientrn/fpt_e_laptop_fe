@@ -350,14 +350,12 @@ const ContractsPage = () => {
       }
       
       if (uploadedImageUrls.length > 0) {
-        // Refresh contract details after upload
-        toast.info("Updating contract with new images...");
-        const updatedContract = {...selectedContract};
-        updatedContract.contractImages = [...(updatedContract.contractImages || []), ...uploadedImageUrls];
-        setSelectedContract(updatedContract);
-        
-        setSelectedImages([]);
         toast.success(`Successfully uploaded ${uploadedImageUrls.length} of ${totalImages} images`);
+        
+        // Close modal and refresh data after successful upload
+        setIsDetailModalOpen(false);
+        await fetchContracts();
+        toast.success("Contract data refreshed successfully");
       } else {
         toast.error("Failed to upload any images. Please try again.");
       }
@@ -368,6 +366,7 @@ const ContractsPage = () => {
     } finally {
       setIsUploading(false);
       setUploadProgress(0);
+      setSelectedImages([]);
     }
   };
 
@@ -1432,163 +1431,136 @@ const ContractsPage = () => {
                     ))}
                   </div>
                 ) : (
-                  <div className="text-center py-10 bg-gray-100 rounded-lg border-2 border-dashed border-gray-300">
-                    <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                    <p className="mt-2 text-gray-500">No images have been uploaded for this contract</p>
+                  // Updated UI for the empty state with image upload
+                  <div className="bg-white border border-dashed border-amber-300 rounded-lg p-6">
+                    <div className="max-w-lg mx-auto">
+                      <div className="text-center mb-6">
+                        <div className="mb-4 inline-flex items-center justify-center w-16 h-16 rounded-full bg-amber-50 text-amber-500">
+                          <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
+                        </div>
+                        <h3 className="text-lg font-semibold text-gray-800 mb-2">No Contract Images</h3>
+                        <p className="text-gray-500 mb-6">Upload clear images of the contract to keep track of agreements and documentation.</p>
+                        
+                        <div className="flex flex-col items-center">
+                          <label htmlFor="contract-images" className="cursor-pointer w-full max-w-xs">
+                            <div className="flex items-center justify-center p-4 border-2 border-amber-300 border-dashed rounded-lg bg-amber-50 hover:bg-amber-100 transition-all duration-300">
+                              <div className="space-y-2 text-center">
+                                <svg className="mx-auto h-10 w-10 text-amber-500" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                                  <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                                </svg>
+                                <div className="text-sm font-medium text-amber-600">Click to browse</div>
+                                <p className="text-xs text-gray-500">JPG, PNG up to 5MB</p>
+                              </div>
+                            </div>
+                            <input 
+                              id="contract-images" 
+                              name="contract-images" 
+                              type="file" 
+                              className="sr-only" 
+                              onChange={handleImageSelect}
+                              multiple
+                              accept="image/jpeg,image/png,image/jpg"
+                            />
+                          </label>
+                        </div>
+                        
+                        {/* Preview Selected Images */}
+                        {selectedImages.length > 0 && (
+                          <div className="mt-6 w-full animate-fadeIn">
+                            <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+                              <div className="flex items-center justify-between mb-3">
+                                <h5 className="text-sm font-medium text-gray-700">
+                                  Selected Images ({selectedImages.length})
+                                </h5>
+                                <div className="flex gap-2">
+                                  <button
+                                    onClick={() => {
+                                      setSelectedImages([]);
+                                      toast.info("Image selection cleared");
+                                    }}
+                                    className="px-3 py-1 text-xs bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition-colors flex items-center gap-1"
+                                    disabled={isUploading}
+                                  >
+                                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                    Clear
+                                  </button>
+                                </div>
+                              </div>
+                              
+                              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-4">
+                                {selectedImages.map((file, index) => (
+                                  <div key={index} className="group relative rounded-md overflow-hidden border border-gray-200 bg-white shadow-sm">
+                                    <div className="aspect-[3/4] relative">
+                                      <img
+                                        src={URL.createObjectURL(file)}
+                                        alt={`Preview ${index+1}`}
+                                        className="h-full w-full object-cover"
+                                      />
+                                      <button
+                                        type="button"
+                                        className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                                        onClick={() => {
+                                          const newFiles = [...selectedImages];
+                                          newFiles.splice(index, 1);
+                                          setSelectedImages(newFiles);
+                                          toast.info(`Removed image ${index+1}`);
+                                        }}
+                                      >
+                                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                        </svg>
+                                      </button>
+                                    </div>
+                                    <div className="p-2 bg-white text-xs text-center text-gray-500 truncate">
+                                      {file.name.length > 20 ? file.name.substring(0, 17) + '...' : file.name}
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                              
+                              <button
+                                onClick={() => handleUploadContractImages(selectedContract.contractId)}
+                                className="w-full py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors flex items-center justify-center gap-2 shadow-sm disabled:bg-amber-300"
+                                disabled={isUploading || selectedImages.length === 0}
+                              >
+                                {isUploading ? (
+                                  <>
+                                    <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
+                                    <span>Uploading... {uploadProgress}%</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0l-4 4m4-4v12" />
+                                    </svg>
+                                    <span>Upload Now</span>
+                                  </>
+                                )}
+                              </button>
+                              
+                              {/* Upload Progress */}
+                              {isUploading && (
+                                <div className="mt-3">
+                                  <div className="w-full bg-gray-200 rounded-full h-1.5 overflow-hidden">
+                                    <div
+                                      className="bg-amber-600 h-1.5 rounded-full transition-all duration-300 ease-out"
+                                      style={{ width: `${uploadProgress}%` }}
+                                    ></div>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>
-              
-              {/* Image Upload Section - Only show if no images exist */}
-              {(!selectedContract.contractImages || selectedContract.contractImages.length === 0) && (
-                <div className="mt-8 transition-all duration-300">
-                  <div className="flex items-center justify-between mb-4">
-                    <h4 className="text-lg font-medium text-gray-700">Upload Contract Images</h4>
-                  </div>
-                  
-                  <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-amber-300 border-dashed rounded-md bg-amber-50 transition-all duration-300 hover:border-amber-400 hover:bg-amber-100">
-                    <div className="space-y-1 text-center">
-                      <svg
-                        className="mx-auto h-12 w-12 text-amber-500"
-                        stroke="currentColor"
-                        fill="none"
-                        viewBox="0 0 48 48"
-                        aria-hidden="true"
-                      >
-                        <path
-                          d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </svg>
-                      <div className="flex text-sm text-gray-600 justify-center">
-                        <label
-                          htmlFor="contract-images-detail"
-                          className="relative cursor-pointer bg-white rounded-md font-medium text-amber-600 hover:text-amber-700 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-amber-500 px-4 py-2 shadow-sm"
-                        >
-                          <span>Select files</span>
-                          <input
-                            id="contract-images-detail"
-                            name="contract-images-detail"
-                            type="file"
-                            className="sr-only"
-                            multiple
-                            accept="image/jpeg,image/png"
-                            onChange={(e) => {
-                              handleImageSelect(e);
-                              if (e.target.files.length > 0) {
-                                toast.info(`${e.target.files.length} image(s) selected`);
-                              }
-                            }}
-                          />
-                        </label>
-                      </div>
-                      <p className="text-xs text-gray-500">
-                        PNG, JPG up to 5MB. Upload clear images of all contract pages.
-                      </p>
-                    </div>
-                  </div>
-                  
-                  {/* Preview Selected Images */}
-                  {selectedImages.length > 0 && (
-                    <div className="mt-6 animate-fadeIn">
-                      <div className="flex items-center justify-between mb-3">
-                        <h5 className="text-sm font-medium text-gray-700">
-                          Ready to Upload ({selectedImages.length} file{selectedImages.length !== 1 ? 's' : ''})
-                        </h5>
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => {
-                              setSelectedImages([]);
-                              toast.info("Image selection cleared");
-                            }}
-                            className="px-3 py-1.5 text-sm bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition-colors flex items-center"
-                            disabled={isUploading}
-                          >
-                            Clear All
-                          </button>
-                          <button
-                            onClick={() => {
-                              toast.info("Starting image upload...");
-                              handleUploadContractImages(selectedContract.contractId);
-                            }}
-                            className="px-3 py-1.5 text-sm bg-amber-600 text-white rounded hover:bg-amber-700 transition-colors flex items-center gap-1 shadow-sm"
-                            disabled={isUploading}
-                          >
-                            {isUploading ? (
-                              <>
-                                <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
-                                <span>Uploading...</span>
-                              </>
-                            ) : (
-                              <>
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0l-4 4m4-4v12" />
-                                </svg>
-                                <span>Upload Now</span>
-                              </>
-                            )}
-                          </button>
-                        </div>
-                      </div>
-                      
-                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                        {selectedImages.map((file, index) => (
-                          <div key={index} className="group relative rounded-md overflow-hidden border border-gray-200 bg-white shadow-sm transition-all duration-200 hover:shadow-md">
-                            <div className="aspect-[3/4] relative">
-                              <img
-                                src={URL.createObjectURL(file)}
-                                alt={`Preview ${index+1}`}
-                                className="h-full w-full object-cover"
-                              />
-                              <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                            </div>
-                            <div className="p-2 bg-white flex justify-between items-center">
-                              <span className="text-xs text-gray-500 truncate max-w-[80%]">{file.name}</span>
-                              <button
-                                type="button"
-                                className="text-red-500 hover:text-red-700 transition-colors p-1"
-                                onClick={() => {
-                                  const newFiles = [...selectedImages];
-                                  newFiles.splice(index, 1);
-                                  setSelectedImages(newFiles);
-                                  toast.info(`Removed image ${index+1}`);
-                                }}
-                              >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                </svg>
-                              </button>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                      
-                      {/* Upload Progress */}
-                      {isUploading && (
-                        <div className="mt-4 animate-fadeIn">
-                          <div className="flex justify-between text-xs text-gray-700 mb-1">
-                            <span>Upload Progress</span>
-                            <span className="font-medium">{uploadProgress}%</span>
-                          </div>
-                          <div className="w-full bg-gray-200 rounded-full h-2.5 overflow-hidden">
-                            <div
-                              className="bg-amber-600 h-2.5 rounded-full transition-all duration-300 ease-out"
-                              style={{ width: `${uploadProgress}%` }}
-                            ></div>
-                          </div>
-                          <p className="text-xs text-gray-500 text-center mt-2">
-                            Please wait while your images are being uploaded...
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              )}
             </div>
 
             <div className="mt-8 flex justify-end">
