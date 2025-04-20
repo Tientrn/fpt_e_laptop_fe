@@ -8,6 +8,8 @@ import userinfoApi from "../../api/userinfoApi";
 import borrowhistoryApi from "../../api/borrowhistoryApi";
 import userApi from "../../api/userApi";
 import compensationTransactionApi from "../../api/compensationTransactionApi";
+import deposittransactionApi from "../../api/deposittransactionApi";
+import { formatCurrency } from "../../utils/moneyValidationUtils";
 
 const ReportDamage = () => {
   const [reports, setReports] = useState([]);
@@ -31,6 +33,7 @@ const ReportDamage = () => {
     usedDepositAmount: 0,
     extraPaymentRequired: 0
   });
+  const [depositsMap, setDepositsMap] = useState({});
 
   useEffect(() => {
     fetchReports();
@@ -48,6 +51,7 @@ const ReportDamage = () => {
       fetchUserInfo();
       fetchItemsInfo();
       fetchMissingUserInfo();
+      fetchDeposits();
     }
   }, [borrowHistoryMap]);
 
@@ -209,6 +213,35 @@ const ReportDamage = () => {
     }
   };
 
+  const fetchDeposits = async () => {
+    try {
+      // Get unique contract IDs from borrow histories
+      const contractIds = [...new Set(
+        Object.values(borrowHistoryMap)
+          .map(history => history.requestId)
+          .filter(id => id)
+      )];
+      
+      if (contractIds.length > 0) {
+        const response = await deposittransactionApi.getAllDepositTransactions();
+        
+        if (response.isSuccess && Array.isArray(response.data)) {
+          // Create a map of deposits by contract ID
+          const deposits = {};
+          response.data.forEach(deposit => {
+            if (deposit.contractId) {
+              deposits[deposit.contractId] = deposit;
+            }
+          });
+          
+          setDepositsMap(deposits);
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching deposits:", error);
+    }
+  };
+
   const handleFilterChange = (status) => {
     setFilterStatus(status);
     setCurrentPage(1); // Reset to first page when filter changes
@@ -224,14 +257,30 @@ const ReportDamage = () => {
 
   const openCompensationModal = (report) => {
     setSelectedReport(report);
+    
+    // Get the borrowHistory and deposit information
+    const borrowHistory = borrowHistoryMap[report.borrowHistoryId] || {};
+    const contractId = borrowHistory.requestId;
+    const deposit = depositsMap[contractId] || { amount: 0 };
+    
+    // Get the damage fee
+    const damageFee = report.damageFee || 0;
+    
+    // Default used deposit is the available deposit amount
+    const depositAmount = deposit.amount || 0;
+    
+    // Calculate extra payment required if damage fee exceeds deposit
+    const extraPayment = Math.max(0, damageFee - depositAmount);
+    
     setCompensationData({
       reportId: report.reportId,
-      amount: report.damageFee || 0,
+      amount: damageFee,
       paymentMethod: "Cash",
       notes: "",
-      usedDepositAmount: 0,
-      extraPaymentRequired: 0
+      usedDepositAmount: depositAmount,
+      extraPaymentRequired: extraPayment
     });
+    
     setShowCompensationModal(true);
   };
 
@@ -251,11 +300,78 @@ const ReportDamage = () => {
   const handleInputChange = (e) => {
     const { name, value, type } = e.target;
     
-    if (type === 'number' && name === 'amount') {
-      setCompensationData(prev => ({
-        ...prev,
-        [name]: parseFloat(value) || 0
-      }));
+    // Get the damage fee and deposit amount for reference
+    const damageFee = selectedReport?.damageFee || 0;
+    const borrowHistory = borrowHistoryMap[selectedReport?.borrowHistoryId] || {};
+    const contractId = borrowHistory.requestId;
+    const depositAmount = depositsMap[contractId]?.amount || 0;
+    
+    if (type === 'number') {
+      if (name === 'amount') {
+        // Validate the total compensation amount
+        const numValue = parseFloat(value);
+        if (!isNaN(numValue)) {
+          // Cap the amount at the damage fee
+          const validAmount = Math.min(numValue, damageFee);
+          
+          // Used deposit is always the deposit amount (or lower if total amount is lower)
+          const usedDeposit = Math.min(depositAmount, validAmount);
+          
+          // Extra payment is what remains after using deposit
+          const extraPayment = Math.max(0, validAmount - usedDeposit);
+          
+          setCompensationData(prev => ({
+            ...prev,
+            amount: validAmount,
+            usedDepositAmount: usedDeposit,
+            extraPaymentRequired: extraPayment
+          }));
+        }
+      } 
+      else if (name === 'usedDepositAmount') {
+        // When adjusting deposit amount
+        const numValue = parseFloat(value);
+        if (!isNaN(numValue)) {
+          // Limit to available deposit and total compensation amount
+          const validDepositAmount = Math.min(
+            numValue, 
+            depositAmount, 
+            compensationData.amount
+          );
+          
+          setCompensationData(prev => ({
+            ...prev,
+            usedDepositAmount: validDepositAmount,
+            extraPaymentRequired: Math.max(0, prev.amount - validDepositAmount)
+          }));
+        }
+      }
+      else if (name === 'extraPaymentRequired') {
+        // When adjusting extra payment
+        const numValue = parseFloat(value);
+        if (!isNaN(numValue)) {
+          const totalAmount = compensationData.amount;
+          
+          // Calculate used deposit based on extra payment
+          // Cannot exceed available deposit
+          const calculatedDepositUsage = Math.min(
+            depositAmount,
+            Math.max(0, totalAmount - numValue)
+          );
+          
+          setCompensationData(prev => ({
+            ...prev,
+            extraPaymentRequired: numValue,
+            usedDepositAmount: calculatedDepositUsage
+          }));
+        }
+      }
+      else {
+        setCompensationData(prev => ({
+          ...prev,
+          [name]: value
+        }));
+      }
     } else {
       setCompensationData(prev => ({
         ...prev,
@@ -269,17 +385,29 @@ const ReportDamage = () => {
     
     try {
       const borrowHistory = borrowHistoryMap[selectedReport.borrowHistoryId] || {};
+      const contractId = parseInt(borrowHistory.requestId) || 0;
       
-      // Create compensation transaction data in the format expected by API
+      // Validate the compensation values
+      const totalAmount = parseFloat(compensationData.amount) || 0;
+      const usedDeposit = parseFloat(compensationData.usedDepositAmount) || 0;
+      const extraPayment = parseFloat(compensationData.extraPaymentRequired) || 0;
+      
+      // Ensure the sum matches
+      if (Math.abs((usedDeposit + extraPayment) - totalAmount) > 0.01) {
+        toast.error("The deposit amount and extra payment must add up to the total compensation amount");
+        return;
+      }
+      
+      // Create compensation transaction data
       const compensationTransactionData = {
-        contractId: parseInt(borrowHistory.requestId) || 0, // Using requestId as contractId if available, ensure it's a number
-        userId: parseInt(borrowHistory.userId) || 0, // Ensure it's a number
-        reportDamageId: parseInt(selectedReport.reportId) || 0, // Ensure it's a number
-        depositTransactionId: 0, // This would need to be fetched from another source if required
-        compensationAmount: parseFloat(compensationData.amount) || 0, // Ensure it's a number
-        usedDepositAmount: parseFloat(compensationData.usedDepositAmount) || 0, // Ensure it's a number
-        extraPaymentRequired: parseFloat(compensationData.extraPaymentRequired) || 0, // Ensure it's a number
-        status: "done" // Set the status to "done" when creating the compensation transaction
+        contractId: contractId,
+        userId: parseInt(borrowHistory.userId) || 0, 
+        reportDamageId: parseInt(selectedReport.reportId) || 0,
+        depositTransactionId: 0,
+        compensationAmount: totalAmount,
+        usedDepositAmount: usedDeposit,
+        extraPaymentRequired: extraPayment,
+        status: "done"
       };
       
       console.log("Sending transaction data:", compensationTransactionData);
@@ -288,8 +416,60 @@ const ReportDamage = () => {
       const transactionResponse = await compensationTransactionApi.createCompensationTransaction(compensationTransactionData);
       
       if (transactionResponse.isSuccess) {
-        // If compensation transaction is successful, just show success and refresh data
         toast.success("Compensation transaction recorded successfully");
+        
+        // Get the item ID from the selected report
+        const itemId = selectedReport.itemId;
+        
+        // Update the item status to "Available"
+        try {
+          // First, get the current item data
+          const itemResponse = await donateitemsApi.getDonateItemById(itemId);
+          
+          if (itemResponse.isSuccess && itemResponse.data) {
+            const itemData = itemResponse.data;
+            
+            // Prepare the updated item data with status set to "Available"
+            const updatedItemData = new FormData();
+            
+            // Add all the existing item properties
+            updatedItemData.append("itemId", itemData.itemId);
+
+            // Update the status to "Available"
+            updatedItemData.append("status", "Available");
+            
+            // If there's an image, we need to handle it properly
+            if (itemData.itemImage && !itemData.itemImage.startsWith('http')) {
+              // This is a file path, not a File object, so we'll keep the existing image
+              updatedItemData.append("itemImage", itemData.itemImage);
+            }
+            
+            // Update the item
+            const updateResponse = await donateitemsApi.updateDonateItem(itemId, updatedItemData);
+            
+            if (updateResponse.isSuccess) {
+              toast.success("Item status updated to Available");
+              
+              // Also update the local item data in state
+              setItemsMap(prev => ({
+                ...prev,
+                [itemId]: {
+                  ...prev[itemId],
+                  status: "Available"
+                }
+              }));
+            } else {
+              toast.warning("Compensation recorded but failed to update item status");
+              console.error("Failed to update item status:", updateResponse.message);
+            }
+          } else {
+            toast.warning("Compensation recorded but couldn't retrieve item data for status update");
+          }
+        } catch (itemError) {
+          console.error("Error updating item status:", itemError);
+          toast.warning("Compensation recorded but failed to update item status");
+        }
+        
         closeCompensationModal();
         
         // Update local compensation map
@@ -525,7 +705,7 @@ const ReportDamage = () => {
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <span className="text-sm font-medium text-amber-600">
-                              ₫{(report.damageFee || 0).toLocaleString()}
+                              {formatCurrency(report.damageFee || 0)}
                             </span>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -640,22 +820,22 @@ const ReportDamage = () => {
                                   <div className="grid grid-cols-2 gap-4 text-sm">
                                     <div>
                                       <p className="text-gray-500 text-xs">Damage Fee</p>
-                                      <p className="font-medium mt-1 text-amber-600">₫{(report.damageFee || 0).toLocaleString()}</p>
+                                      <p className="font-medium mt-1 text-amber-600">{formatCurrency(report.damageFee || 0)}</p>
                                     </div>
                                     
                                     {compensation && (
                                       <>
                                         <div>
                                           <p className="text-gray-500 text-xs">Compensation Amount</p>
-                                          <p className="font-medium mt-1 text-green-600">₫{(compensation.compensationAmount || 0).toLocaleString()}</p>
+                                          <p className="font-medium mt-1 text-green-600">{formatCurrency(compensation.compensationAmount || 0)}</p>
                                         </div>
                                         <div>
                                           <p className="text-gray-500 text-xs">Used Deposit</p>
-                                          <p className="font-medium mt-1 text-blue-600">₫{(compensation.usedDepositAmount || 0).toLocaleString()}</p>
+                                          <p className="font-medium mt-1 text-blue-600">{formatCurrency(compensation.usedDepositAmount || 0)}</p>
                                         </div>
                                         <div>
                                           <p className="text-gray-500 text-xs">Extra Payment</p>
-                                          <p className="font-medium mt-1 text-red-600">₫{(compensation.extraPaymentRequired || 0).toLocaleString()}</p>
+                                          <p className="font-medium mt-1 text-red-600">{formatCurrency(compensation.extraPaymentRequired || 0)}</p>
                                         </div>
                                         <div>
                                           <p className="text-gray-500 text-xs">Compensation Date</p>
@@ -856,17 +1036,38 @@ const ReportDamage = () => {
             
             <form onSubmit={handleSubmitCompensation}>
               <div className="p-6 space-y-4">
+                {/* Summary information card */}
                 <div className="bg-gray-50 p-3 rounded-lg">
                   <h4 className="font-medium text-sm text-gray-700 mb-2">Damage Report Information</h4>
                   <p className="text-sm">Report #{selectedReport.reportId} for {itemsMap[selectedReport.itemId]?.itemName || "N/A"}</p>
-                  <p className="text-xs text-gray-500 mt-1">
-                    Original Damage Fee: ₫{(selectedReport.damageFee || 0).toLocaleString()}
-                  </p>
+                  
+                  {/* Add more detailed information */}
+                  <div className="mt-2 grid grid-cols-2 gap-2 text-xs">
+                    <div>
+                      <span className="text-gray-500">Damage Fee:</span>
+                      <span className="font-medium text-amber-600 ml-1">
+                        {formatCurrency(selectedReport.damageFee || 0)}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">Customer Deposit:</span>
+                      <span className="font-medium text-green-600 ml-1">
+                        {formatCurrency(
+                          (() => {
+                            const borrowHistory = borrowHistoryMap[selectedReport.borrowHistoryId] || {};
+                            const contractId = borrowHistory.requestId;
+                            return depositsMap[contractId]?.amount || 0;
+                          })()
+                        )}
+                      </span>
+                    </div>
+                  </div>
                 </div>
                 
+                {/* Amount field */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Compensation Amount
+                    Total Compensation Amount
                   </label>
                   <div className="relative">
                     <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500">₫</span>
@@ -878,50 +1079,103 @@ const ReportDamage = () => {
                       className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500"
                       placeholder="0"
                       min="0"
+                      max={selectedReport.damageFee || 0}
                       required
                     />
+                    <p className="mt-1 text-xs text-gray-500">
+                      Maximum: {formatCurrency(selectedReport.damageFee || 0)} (Damage Fee)
+                    </p>
                   </div>
                 </div>
                 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Used Deposit Amount
-                  </label>
-                  <div className="relative">
-                    <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500">₫</span>
-                    <input
-                      type="number"
-                      name="usedDepositAmount"
-                      value={compensationData.usedDepositAmount}
-                      onChange={handleInputChange}
-                      className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500"
-                      placeholder="0"
-                      min="0"
-                    />
+                {/* Compensation breakdown */}
+                <div className="bg-amber-50 p-4 rounded-lg border border-amber-100">
+                  <h4 className="font-medium text-sm text-amber-800 mb-3">Compensation Breakdown</h4>
+                  
+                  <div className="space-y-3">
+                    {/* Deposit Usage */}
+                    <div>
+                      <div className="flex justify-between items-center mb-1">
+                        <label className="block text-sm font-medium text-gray-700">
+                          From Customer Deposit
+                        </label>
+                        <span className="text-xs text-green-600">
+                          Available: {formatCurrency((() => {
+                            const borrowHistory = borrowHistoryMap[selectedReport.borrowHistoryId] || {};
+                            const contractId = borrowHistory.requestId;
+                            return depositsMap[contractId]?.amount || 0;
+                          })())}
+                        </span>
+                      </div>
+                      <div className="relative">
+                        <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500">₫</span>
+                        <input
+                          type="number"
+                          name="usedDepositAmount"
+                          value={compensationData.usedDepositAmount}
+                          onChange={handleInputChange}
+                          className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500"
+                          placeholder="0"
+                          min="0"
+                          max={(() => {
+                            const borrowHistory = borrowHistoryMap[selectedReport.borrowHistoryId] || {};
+                            const contractId = borrowHistory.requestId;
+                            return Math.min(
+                              depositsMap[contractId]?.amount || 0,
+                              compensationData.amount
+                            );
+                          })()}
+                        />
+                      </div>
+                    </div>
+                    
+                    {/* Extra Payment */}
+                    <div>
+                      <div className="flex justify-between items-center mb-1">
+                        <label className="block text-sm font-medium text-gray-700">
+                          Additional Payment Required
+                        </label>
+                        <span className="text-xs text-amber-600">
+                          {compensationData.extraPaymentRequired > 0 
+                            ? "Payment needed" 
+                            : "No additional payment needed"}
+                        </span>
+                      </div>
+                      <div className="relative">
+                        <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500">₫</span>
+                        <input
+                          type="number"
+                          name="extraPaymentRequired"
+                          value={compensationData.extraPaymentRequired}
+                          onChange={handleInputChange}
+                          className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500"
+                          placeholder="0"
+                          min="0"
+                        />
+                      </div>
+                    </div>
+                    
+                    {/* Total Verification */}
+                    <div className="pt-2 border-t border-amber-200 flex justify-between text-sm">
+                      <span className="font-medium text-gray-700">Total:</span>
+                      <span className="font-bold text-amber-700">
+                        {formatCurrency(
+                          parseFloat(compensationData.usedDepositAmount || 0) + 
+                          parseFloat(compensationData.extraPaymentRequired || 0)
+                        )}
+                        {parseFloat(compensationData.amount || 0) !== 
+                         (parseFloat(compensationData.usedDepositAmount || 0) + 
+                          parseFloat(compensationData.extraPaymentRequired || 0)) && 
+                         " (Mismatch with total compensation!)"}
+                      </span>
+                    </div>
                   </div>
                 </div>
                 
+                {/* Existing fields */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Extra Payment Required
-                  </label>
-                  <div className="relative">
-                    <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500">₫</span>
-                    <input
-                      type="number"
-                      name="extraPaymentRequired"
-                      value={compensationData.extraPaymentRequired}
-                      onChange={handleInputChange}
-                      className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500"
-                      placeholder="0"
-                      min="0"
-                    />
-                  </div>
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Payment Method
+                    Payment Method (for additional payment)
                   </label>
                   <select
                     name="paymentMethod"

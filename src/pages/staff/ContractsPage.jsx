@@ -5,8 +5,16 @@ import borrowcontractApi from "../../api/borrowcontractApi";
 import borrowrequestApi from "../../api/borrowrequestApi";
 import userApi from "../../api/userApi";
 import deposittransactionApi from "../../api/deposittransactionApi";
-import axios from "axios";
 import borrowhistoryApi from "../../api/borrowhistoryApi";
+import { 
+  validateMoneyBeforeSubmit, 
+  handleMoneyInputChange, 
+  formatCurrency,
+  calculateMinimumDeposit,
+  calculateMaximumDeposit,
+  validateDeposit
+} from "../../utils/moneyValidationUtils";
+import axiosClient from "../../api/axiosClient";
 
 const ContractsPage = () => {
   const [contracts, setContracts] = useState([]);
@@ -186,33 +194,41 @@ const ContractsPage = () => {
 
   const handleRequestSelect = async (request) => {
     console.log("Selected Request:", request);
+    toast.info(`Processing request #${request.requestId} for ${request.itemName}`);
 
     try {
-      // Fetch thông tin user khi select request
+      // Fetch user information when selecting a request
+      toast.info("Loading user details...");
       const userResponse = await userApi.getUserById(request.userId);
       if (userResponse.isSuccess) {
         setSelectedUserInfo(userResponse.data);
+        toast.success(`User details for ${userResponse.data.fullName} loaded successfully`);
+      } else {
+        toast.warning("Could not load user details, but you can continue");
       }
 
-      // Validate và set ngày mặc định là start date của request
+      // Validate and set default date to the request's start date
       const startDate = new Date(request.startDate);
       const endDate = new Date(request.endDate);
       const today = new Date();
 
-      // Chọn ngày mặc định là startDate
+      // Choose default return date as startDate
       let defaultReturnDate = new Date(startDate);
       
-      // Nếu startDate đã qua, set mặc định là ngày hiện tại
+      // If startDate has passed, set default to today
       if (startDate < today) {
         defaultReturnDate = today;
+        toast.info("Start date has passed, setting return date to today");
       }
 
-      // Đảm bảo ngày mặc định không vượt quá endDate
+      // Ensure default date doesn't exceed endDate
       if (defaultReturnDate > endDate) {
         defaultReturnDate = endDate;
+        toast.info("Adjusting return date to match maximum allowed date");
       }
   
-      // Reset form và set giá trị mới
+      toast.info("Preparing contract form...");
+      // Reset form and set new values
       setContractForm({
         requestId: request.requestId,
         itemId: request.itemId,
@@ -220,17 +236,18 @@ const ContractsPage = () => {
         terms: `Contract for ${request.itemName}`,
         conditionBorrow: "good",
         expectedReturnDate: defaultReturnDate.toISOString().split('T')[0],
-        userId: request.userId,
+        userId: parseInt(request.userId), 
       });
   
       // Set selected request
       setSelectedRequest(request);
     
-      // Mở modal
+      // Open modal
       setIsModalOpen(true);
+      toast.success("Ready to create contract. Please fill in the remaining details.");
     } catch (error) {
       console.error("Error fetching user details:", error);
-      toast.error("Failed to load user details");
+      toast.error("Failed to load user details: " + (error.response?.data?.message || error.message || "Unknown error"));
     }
   };
 
@@ -288,50 +305,66 @@ const ContractsPage = () => {
       return;
     }
     
+    toast.info(`Preparing to upload ${selectedImages.length} image${selectedImages.length !== 1 ? 's' : ''}...`);
     setIsUploading(true);
     setUploadProgress(0);
     
     try {
       const uploadedImageUrls = [];
+      const totalImages = selectedImages.length;
       
-      for (let i = 0; i < selectedImages.length; i++) {
+      for (let i = 0; i < totalImages; i++) {
         const file = selectedImages[i];
         const formData = new FormData();
-        formData.append('file', file);
+        formData.append('ImageBorrowConract', file);
         formData.append('BorrowContractId', contractId);
         
-        const response = await axios.post(
-          'https://fptsharelaptop.io.vn/api/contract-images',
-          formData,
-          {
-            headers: {
-              'Content-Type': 'multipart/form-data',
-            },
-            onUploadProgress: (progressEvent) => {
-              const progress = Math.round(
-                ((i + (progressEvent.loaded / progressEvent.total)) / selectedImages.length) * 100
-              );
-              setUploadProgress(progress);
-            }
-          }
-        );
+        toast.info(`Uploading image ${i+1} of ${totalImages}: ${file.name}`);
         
-        if (response.data) {
-          uploadedImageUrls.push(response.data);
+        try {
+          const response = await axiosClient.post(
+            `BorrowContract/upload-image/${contractId}`,
+            formData,
+            {
+              headers: {
+                'Content-Type': 'multipart/form-data',
+              },
+              onUploadProgress: (progressEvent) => {
+                const fileProgress = progressEvent.loaded / progressEvent.total;
+                const overallProgress = Math.round(((i + fileProgress) / totalImages) * 100);
+                setUploadProgress(overallProgress);
+              }
+            }
+          );
+          
+          if (response.data) {
+            uploadedImageUrls.push(response.data);
+            toast.success(`Image ${i+1} uploaded successfully`);
+          } else {
+            toast.warning(`Image ${i+1} upload response was empty`);
+          }
+        } catch (fileError) {
+          toast.error(`Failed to upload image ${i+1}: ${file.name}`);
+          console.error(`Error uploading image ${i+1}:`, fileError);
         }
       }
       
-      // Refresh contract details after upload
-      const updatedContract = {...selectedContract};
-      updatedContract.contractImages = [...(updatedContract.contractImages || []), ...uploadedImageUrls];
-      setSelectedContract(updatedContract);
-      
-      setSelectedImages([]);
-      toast.success("Images uploaded successfully");
+      if (uploadedImageUrls.length > 0) {
+        // Refresh contract details after upload
+        toast.info("Updating contract with new images...");
+        const updatedContract = {...selectedContract};
+        updatedContract.contractImages = [...(updatedContract.contractImages || []), ...uploadedImageUrls];
+        setSelectedContract(updatedContract);
+        
+        setSelectedImages([]);
+        toast.success(`Successfully uploaded ${uploadedImageUrls.length} of ${totalImages} images`);
+      } else {
+        toast.error("Failed to upload any images. Please try again.");
+      }
       
     } catch (error) {
       console.error("Error uploading contract images:", error);
-      toast.error("Failed to upload contract images");
+      toast.error(`Upload process error: ${error.message || "Unknown error"}`);
     } finally {
       setIsUploading(false);
       setUploadProgress(0);
@@ -341,14 +374,32 @@ const ContractsPage = () => {
   const handleCreateContract = async (e) => {
     e.preventDefault();
     try {
-      // Validate form
+      // Validate monetary values
+      toast.info("Validating form data...");
+      
       if (!contractForm.itemValue || contractForm.itemValue <= 0) {
-        toast.error("Please enter a valid item value");
+        toast.error("Please enter a valid item value (greater than 0)");
+        return;
+      }
+      
+      const isValid = validateMoneyBeforeSubmit(
+        {
+          itemValue: { value: contractForm.itemValue, label: "item value" }
+        },
+        toast.error
+      );
+      
+      if (!isValid) {
         return;
       }
 
       if (!contractForm.terms.trim()) {
         toast.error("Please enter contract terms");
+        return;
+      }
+
+      if (!contractForm.conditionBorrow.trim()) {
+        toast.error("Please enter item condition at borrow time");
         return;
       }
 
@@ -363,10 +414,11 @@ const ContractsPage = () => {
       const endDate = new Date(selectedRequest.endDate);
 
       if (returnDate < startDate || returnDate > endDate) {
-        toast.error("Return date must be between start date and end date");
+        toast.error(`Return date must be between ${format(startDate, "dd/MM/yyyy")} and ${format(endDate, "dd/MM/yyyy")}`);
         return;
       }
 
+      toast.info("Preparing contract data...");
       const contractData = {
         requestId: parseInt(contractForm.requestId),
         itemId: parseInt(contractForm.itemId),
@@ -374,23 +426,38 @@ const ContractsPage = () => {
         conditionBorrow: contractForm.conditionBorrow || "good",
         terms: contractForm.terms,
         expectedReturnDate: format(new Date(contractForm.expectedReturnDate), "yyyy-MM-dd'T'HH:mm:ss.SSSxxx"),
-        userId: selectedRequest.userId,
+        userId: parseInt(selectedRequest.userId), // Ensure we're using the correct userId from the selected request
       };
 
       console.log("Submitting contract data:", contractData);
+      toast.info("Creating contract...");
 
       const response = await borrowcontractApi.createBorrowContract(contractData);
       
       if (response.isSuccess) {
-        toast.success("Contract created successfully");
+        toast.success("Contract created successfully!");
+        
+        if (selectedImages.length > 0) {
+          toast.info(`Uploading ${selectedImages.length} contract images...`);
+          try {
+            await handleUploadContractImages(response.data.contractId);
+            toast.success("Contract images uploaded successfully");
+          } catch (uploadError) {
+            console.error("Upload error:", uploadError);
+            toast.error("Failed to upload images, but contract was created");
+          }
+        }
+        
         setIsModalOpen(false);
 
-        // Cập nhật lại state contracts và approvedRequests
+        // Refresh data
+        toast.info("Refreshing contract data...");
         await Promise.all([
           fetchContracts(),
           fetchApprovedRequests(),
           fetchDeposits(),
         ]);
+        toast.success("Data refreshed successfully");
 
         // Reset form
         setContractForm({
@@ -401,63 +468,80 @@ const ContractsPage = () => {
           itemValue: 0,
           expectedReturnDate: format(new Date(), "yyyy-MM-dd"),
         });
+        
+        toast.info("Ready to create new contracts or deposits");
       } else {
         toast.error(response.message || "Failed to create contract");
       }
     } catch (error) {
       console.error("Error creating contract:", error);
-      toast.error(error.response?.data?.message || "Error creating contract");
+      toast.error("Error creating contract: " + (error.response?.data?.message || error.message || "Unknown error"));
     }
   };
 
   const handleDeleteContract = async (contract) => {
     try {
-      // Xóa deposit trước nếu có
+      toast.info("Preparing to delete contract #" + contract.contractId);
+      
+      // Check for associated deposit
       if (deposits[contract.contractId]) {
+        toast.info("Deleting associated deposit transaction first...");
         const deleteDepositResponse =
           await deposittransactionApi.deleteDepositTransaction(
           deposits[contract.contractId].depositId
         );
         if (!deleteDepositResponse.isSuccess) {
-          toast.error("Failed to delete associated deposit");
+          toast.error("Failed to delete associated deposit: " + (deleteDepositResponse.message || "Unknown error"));
           return;
         }
+        toast.success("Associated deposit deleted successfully");
       }
 
-      // Sau đó xóa contract
+      // Delete the contract
+      toast.info("Deleting contract...");
       const response = await borrowcontractApi.deleteBorrowContract(
         contract.contractId
       );
       if (response.isSuccess) {
-        toast.success("Contract and associated deposit deleted successfully");
+        toast.success("Contract deleted successfully");
+        
+        toast.info("Refreshing data...");
         await Promise.all([fetchContracts(), fetchDeposits()]);
+        toast.success("Data refreshed successfully");
+        
         setIsDeleteModalOpen(false);
       } else {
         toast.error(response.message || "Failed to delete contract");
       }
     } catch (error) {
       console.error("Error deleting contract:", error);
-      toast.error("Error deleting contract");
+      toast.error("Error deleting contract: " + (error.response?.data?.message || error.message || "Unknown error"));
     }
   };
 
   const handleDetailClick = async (contract) => {
     try {
-      // Lấy thông tin request tương ứng với contract
+      toast.info("Loading contract details...");
+      
+      // Get the request information associated with the contract
       const response = await borrowrequestApi.getBorrowRequestById(
         contract.requestId
       );
       if (response.isSuccess) {
+        toast.success("Contract details loaded successfully");
+        
         setSelectedContract({
           ...contract,
           requestDetails: response.data,
         });
         setSelectedImages([]);
         setIsDetailModalOpen(true);
+      } else {
+        toast.error("Failed to load request details: " + (response.message || "Unknown error"));
       }
     } catch (error) {
       console.error("Error fetching request details:", error);
-      toast.error("Failed to load request details");
+      toast.error("Failed to load request details: " + (error.response?.data?.message || error.message || "Unknown error"));
     }
   };
 
@@ -521,12 +605,58 @@ const ContractsPage = () => {
   const handleCreateDeposit = async (e) => {
     e.preventDefault();
     try {
-      // Validate form
-      if (!depositForm.amount || depositForm.amount <= 0) {
-        toast.error("Please enter a valid deposit amount");
+      const contractValue = selectedContractForDeposit?.itemValue || 0;
+      
+      // Input validation - show toast for empty values
+      if (!depositForm.amount) {
+        toast.error("Please enter a deposit amount");
+        return;
+      }
+      
+      // Validate deposit amount range
+      const minValue = calculateMinimumDeposit(contractValue);
+      const maxValue = contractValue;
+      
+      if (depositForm.amount < minValue) {
+        toast.error(`Deposit amount is too low. Minimum required: ${formatCurrency(minValue)}`);
+        return;
+      }
+      
+      if (depositForm.amount > maxValue) {
+        toast.error(`Deposit amount exceeds item value. Maximum allowed: ${formatCurrency(maxValue)}`);
+        return;
+      }
+      
+      // Validate deposit using the enhanced deposit validation
+      const depositValidation = validateDeposit(
+        depositForm.amount,
+        contractValue
+      );
+      
+      if (!depositValidation.isValid) {
+        toast.error(depositValidation.error);
+        return;
+      }
+      
+      // Additional validation of money fields
+      const isValid = validateMoneyBeforeSubmit(
+        {
+          amount: { 
+            value: depositForm.amount, 
+            label: "deposit amount",
+            min: calculateMinimumDeposit(contractValue),
+            max: contractValue
+          }
+        },
+        toast.error
+      );
+      
+      if (!isValid) {
         return;
       }
 
+      toast.info("Retrieving contract details...");
+      
       // Get contract and request details
       const contractResponse = await borrowcontractApi.getBorrowContractById(depositForm.contractId);
       if (!contractResponse.isSuccess) {
@@ -535,6 +665,7 @@ const ContractsPage = () => {
       }
       
       const contract = contractResponse.data;
+      toast.info("Contract details retrieved successfully");
       
       // Get request details
       const requestResponse = await borrowrequestApi.getBorrowRequestById(contract.requestId);
@@ -544,6 +675,7 @@ const ContractsPage = () => {
       }
       
       const request = requestResponse.data;
+      toast.info("Request details retrieved successfully");
 
       const depositData = {
         contractId: parseInt(depositForm.contractId),
@@ -554,14 +686,17 @@ const ContractsPage = () => {
       };
 
       console.log("Submitting deposit data:", depositData);
+      toast.info("Creating deposit transaction...");
 
       const response = await deposittransactionApi.createDepositTransaction(depositData);
       console.log(response)
       if (response.isSuccess) {
-        toast.success("Deposit created successfully");
+        toast.success("Deposit transaction created successfully");
         
         // After successful deposit, create borrow history
         try {
+          toast.info("Creating borrow history record...");
+          
           const historyData = {
             requestId: parseInt(contract.requestId),
             itemId: parseInt(contract.itemId),
@@ -581,13 +716,15 @@ const ContractsPage = () => {
           }
         } catch (historyError) {
           console.error("Error creating borrow history:", historyError);
-          toast.error("Error creating borrow history");
+          toast.error("Error creating borrow history: " + (historyError.message || "Unknown error"));
         }
         
         setIsDepositModalOpen(false);
 
         // Refresh deposits data
+        toast.info("Refreshing deposit data...");
         await fetchDeposits();
+        toast.success("Data refreshed successfully");
 
         // Reset form
         setDepositForm({
@@ -598,11 +735,11 @@ const ContractsPage = () => {
           depositDate: new Date().toISOString()
         });
       } else {
-        toast.error(response.message || "Failed to create deposit");
+        toast.error(response.message || "Failed to create deposit transaction");
       }
     } catch (error) {
       console.error("Error creating deposit:", error);
-      toast.error(error.response?.data?.message || "Error creating deposit");
+      toast.error("Error creating deposit: " + (error.response?.data?.message || error.message || "Unknown error"));
     }
   };
 
@@ -737,7 +874,7 @@ const ContractsPage = () => {
                           : (
                             <div className="flex flex-col">
                               <div className="flex items-center">
-                                <span className="text-sm font-medium text-gray-900">Value: {item.itemValue?.toLocaleString()}</span>
+                                <span className="text-sm font-medium text-gray-900">Value: {formatCurrency(item.itemValue || 0)}</span>
                                 {isExpiringSoon(item.expectedReturnDate) && (
                                   <span className="ml-2 px-2 py-0.5 text-xs font-medium bg-red-100 text-red-800 rounded-full">
                                     Due Soon
@@ -989,11 +1126,8 @@ const ContractsPage = () => {
                     type="number"
                       step="100000"
                     value={contractForm.itemValue}
-                      onChange={(e) =>
-                        setContractForm({
-                      ...contractForm,
-                          itemValue: e.target.value,
-                        })
+                      onChange={(e) => 
+                        handleMoneyInputChange(e, setContractForm, "itemValue")
                       }
                       className="w-full px-3 py-2 text-sm rounded border border-gray-300 focus:ring-2 focus:ring-amber-500 focus:border-transparent"
                     required
@@ -1068,14 +1202,18 @@ const ContractsPage = () => {
       {/* Create Contract Modal */}
       {isDetailModalOpen && selectedContract && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-8 max-w-3xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+          <div className="bg-white rounded-lg p-8 max-w-3xl w-full mx-4 max-h-[90vh] overflow-y-auto animate-fadeIn">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-bold text-gray-800">
                 Contract Details #{selectedContract.contractId}
               </h2>
               <button
-                onClick={() => setIsDetailModalOpen(false)}
-                className="text-gray-500 hover:text-gray-700"
+                onClick={() => {
+                  setIsDetailModalOpen(false);
+                  setSelectedImages([]);
+                  toast.info("Contract detail view closed");
+                }}
+                className="text-gray-500 hover:text-gray-700 transition-colors"
               >
                 <svg
                   className="w-6 h-6"
@@ -1233,154 +1371,233 @@ const ContractsPage = () => {
                 Contract Images
               </h3>
               
-              {/* Image Upload Section */}
-              <div className="mb-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h4 className="text-lg font-medium text-gray-700">Upload New Images</h4>
-                </div>
-                
-                <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
-                  <div className="space-y-1 text-center">
-                    <svg
-                      className="mx-auto h-12 w-12 text-gray-400"
-                      stroke="currentColor"
-                      fill="none"
-                      viewBox="0 0 48 48"
-                      aria-hidden="true"
-                    >
-                      <path
-                        d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                    <div className="flex text-sm text-gray-600">
-                      <label
-                        htmlFor="contract-images-detail"
-                        className="relative cursor-pointer bg-white rounded-md font-medium text-amber-600 hover:text-amber-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-amber-500"
-                      >
-                        <span>Upload images</span>
-                        <input
-                          id="contract-images-detail"
-                          name="contract-images-detail"
-                          type="file"
-                          className="sr-only"
-                          multiple
-                          accept="image/jpeg,image/png"
-                          onChange={handleImageSelect}
-                        />
-                      </label>
-                      <p className="pl-1">or drag and drop</p>
-                    </div>
-                    <p className="text-xs text-gray-500">
-                      PNG, JPG up to 5MB
-                    </p>
-                  </div>
-                </div>
-                
-                {/* Preview Selected Images */}
-                {selectedImages.length > 0 && (
-                  <div className="mt-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <h5 className="text-sm font-medium text-gray-700">
-                        Selected Images ({selectedImages.length})
-                      </h5>
-                      <button
-                        onClick={() => handleUploadContractImages(selectedContract.contractId)}
-                        className="px-3 py-1 text-sm bg-amber-600 text-white rounded hover:bg-amber-700 transition-colors flex items-center"
-                        disabled={isUploading}
-                      >
-                        {isUploading ? (
-                          <>
-                            <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-2"></div>
-                            Uploading...
-                          </>
-                        ) : (
-                          <>
-                            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0l-4 4m4-4v12" />
-                            </svg>
-                            Upload Images
-                          </>
-                        )}
-                      </button>
-                    </div>
-                    
-                    <div className="grid grid-cols-3 gap-2">
-                      {selectedImages.map((file, index) => (
-                        <div key={index} className="relative">
-                          <img
-                            src={URL.createObjectURL(file)}
-                            alt={`Preview ${index}`}
-                            className="h-20 w-full object-cover rounded-md"
-                          />
-                          <button
-                            type="button"
-                            className="absolute top-0 right-0 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center"
-                            onClick={() => {
-                              const newFiles = [...selectedImages];
-                              newFiles.splice(index, 1);
-                              setSelectedImages(newFiles);
-                            }}
-                          >
-                            ×
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                    
-                    {/* Upload Progress */}
-                    {isUploading && (
-                      <div className="mt-2">
-                        <div className="w-full bg-gray-200 rounded-full h-2.5">
-                          <div
-                            className="bg-amber-600 h-2.5 rounded-full"
-                            style={{ width: `${uploadProgress}%` }}
-                          ></div>
-                        </div>
-                        <p className="text-xs text-gray-500 text-center mt-1">
-                          Uploading: {uploadProgress}%
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-              
               {/* Existing Images Section */}
-              <div>
-                <h4 className="text-lg font-medium text-gray-700 mb-4">Existing Images</h4>
+              <div className="mb-6">
+                <h4 className="text-lg font-medium text-gray-700 mb-4">Contract Documentation</h4>
                 {selectedContract.contractImages && selectedContract.contractImages.length > 0 ? (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 transition-all duration-300">
                     {selectedContract.contractImages.map((image, index) => (
-                      <div key={index} className="overflow-hidden rounded-lg shadow-md">
-                        <a 
-                          href={image} 
-                          target="_blank" 
-                          rel="noopener noreferrer" 
-                          className="block hover:opacity-90 transition-opacity"
-                        >
-                          <img 
-                            src={image} 
-                            alt={`Contract ${selectedContract.contractId} image ${index+1}`}
-                            className="w-full h-auto object-contain"
-                          />
-                        </a>
+                      <div 
+                        key={index} 
+                        className="group overflow-hidden rounded-lg shadow-md transform hover:scale-[1.02] transition-all duration-300"
+                      >
+                        <div className="relative h-52 overflow-hidden bg-gray-100">
+                          <a 
+                            href={image} 
+                            target="_blank" 
+                            rel="noopener noreferrer" 
+                            className="block h-full"
+                          >
+                            <img 
+                              src={image} 
+                              alt={`Contract ${selectedContract.contractId} - Page ${index+1}`}
+                              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                              onLoad={() => toast.info(`Image ${index+1} loaded successfully`)}
+                              onError={() => toast.error(`Failed to load image ${index+1}`)}
+                            />
+                          </a>
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                          <div className="absolute bottom-0 left-0 right-0 p-3 text-white transform translate-y-full group-hover:translate-y-0 transition-transform duration-300">
+                            <p className="text-sm font-medium">Page {index+1}</p>
+                            <div className="flex gap-2 mt-2">
+                              <a 
+                                href={image} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="p-1.5 bg-amber-600 rounded-full hover:bg-amber-700 transition-colors"
+                                onClick={() => toast.info(`Opening image ${index+1} in new tab`)}
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                </svg>
+                              </a>
+                              <a 
+                                href={image} 
+                                download={`contract-${selectedContract.contractId}-page-${index+1}`}
+                                className="p-1.5 bg-green-600 rounded-full hover:bg-green-700 transition-colors"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  toast.success(`Downloading image ${index+1}`);
+                                }}
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0l-4 4m4-4v12" />
+                                </svg>
+                              </a>
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <div className="text-center py-6 bg-gray-100 rounded-lg">
-                    <p className="text-gray-500">No images uploaded yet</p>
+                  <div className="text-center py-10 bg-gray-100 rounded-lg border-2 border-dashed border-gray-300">
+                    <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    <p className="mt-2 text-gray-500">No images have been uploaded for this contract</p>
                   </div>
                 )}
               </div>
+              
+              {/* Image Upload Section - Only show if no images exist */}
+              {(!selectedContract.contractImages || selectedContract.contractImages.length === 0) && (
+                <div className="mt-8 transition-all duration-300">
+                  <div className="flex items-center justify-between mb-4">
+                    <h4 className="text-lg font-medium text-gray-700">Upload Contract Images</h4>
+                  </div>
+                  
+                  <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-amber-300 border-dashed rounded-md bg-amber-50 transition-all duration-300 hover:border-amber-400 hover:bg-amber-100">
+                    <div className="space-y-1 text-center">
+                      <svg
+                        className="mx-auto h-12 w-12 text-amber-500"
+                        stroke="currentColor"
+                        fill="none"
+                        viewBox="0 0 48 48"
+                        aria-hidden="true"
+                      >
+                        <path
+                          d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                      <div className="flex text-sm text-gray-600 justify-center">
+                        <label
+                          htmlFor="contract-images-detail"
+                          className="relative cursor-pointer bg-white rounded-md font-medium text-amber-600 hover:text-amber-700 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-amber-500 px-4 py-2 shadow-sm"
+                        >
+                          <span>Select files</span>
+                          <input
+                            id="contract-images-detail"
+                            name="contract-images-detail"
+                            type="file"
+                            className="sr-only"
+                            multiple
+                            accept="image/jpeg,image/png"
+                            onChange={(e) => {
+                              handleImageSelect(e);
+                              if (e.target.files.length > 0) {
+                                toast.info(`${e.target.files.length} image(s) selected`);
+                              }
+                            }}
+                          />
+                        </label>
+                      </div>
+                      <p className="text-xs text-gray-500">
+                        PNG, JPG up to 5MB. Upload clear images of all contract pages.
+                      </p>
+                    </div>
+                  </div>
+                  
+                  {/* Preview Selected Images */}
+                  {selectedImages.length > 0 && (
+                    <div className="mt-6 animate-fadeIn">
+                      <div className="flex items-center justify-between mb-3">
+                        <h5 className="text-sm font-medium text-gray-700">
+                          Ready to Upload ({selectedImages.length} file{selectedImages.length !== 1 ? 's' : ''})
+                        </h5>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => {
+                              setSelectedImages([]);
+                              toast.info("Image selection cleared");
+                            }}
+                            className="px-3 py-1.5 text-sm bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition-colors flex items-center"
+                            disabled={isUploading}
+                          >
+                            Clear All
+                          </button>
+                          <button
+                            onClick={() => {
+                              toast.info("Starting image upload...");
+                              handleUploadContractImages(selectedContract.contractId);
+                            }}
+                            className="px-3 py-1.5 text-sm bg-amber-600 text-white rounded hover:bg-amber-700 transition-colors flex items-center gap-1 shadow-sm"
+                            disabled={isUploading}
+                          >
+                            {isUploading ? (
+                              <>
+                                <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
+                                <span>Uploading...</span>
+                              </>
+                            ) : (
+                              <>
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0l-4 4m4-4v12" />
+                                </svg>
+                                <span>Upload Now</span>
+                              </>
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                      
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                        {selectedImages.map((file, index) => (
+                          <div key={index} className="group relative rounded-md overflow-hidden border border-gray-200 bg-white shadow-sm transition-all duration-200 hover:shadow-md">
+                            <div className="aspect-[3/4] relative">
+                              <img
+                                src={URL.createObjectURL(file)}
+                                alt={`Preview ${index+1}`}
+                                className="h-full w-full object-cover"
+                              />
+                              <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                            </div>
+                            <div className="p-2 bg-white flex justify-between items-center">
+                              <span className="text-xs text-gray-500 truncate max-w-[80%]">{file.name}</span>
+                              <button
+                                type="button"
+                                className="text-red-500 hover:text-red-700 transition-colors p-1"
+                                onClick={() => {
+                                  const newFiles = [...selectedImages];
+                                  newFiles.splice(index, 1);
+                                  setSelectedImages(newFiles);
+                                  toast.info(`Removed image ${index+1}`);
+                                }}
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      
+                      {/* Upload Progress */}
+                      {isUploading && (
+                        <div className="mt-4 animate-fadeIn">
+                          <div className="flex justify-between text-xs text-gray-700 mb-1">
+                            <span>Upload Progress</span>
+                            <span className="font-medium">{uploadProgress}%</span>
+                          </div>
+                          <div className="w-full bg-gray-200 rounded-full h-2.5 overflow-hidden">
+                            <div
+                              className="bg-amber-600 h-2.5 rounded-full transition-all duration-300 ease-out"
+                              style={{ width: `${uploadProgress}%` }}
+                            ></div>
+                          </div>
+                          <p className="text-xs text-gray-500 text-center mt-2">
+                            Please wait while your images are being uploaded...
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             <div className="mt-8 flex justify-end">
               <button
-                onClick={() => setIsDetailModalOpen(false)}
+                onClick={() => {
+                  setIsDetailModalOpen(false);
+                  setSelectedImages([]);
+                  toast.info("Contract detail view closed");
+                }}
                 className="px-6 py-2.5 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors font-medium"
               >
                 Close
@@ -1504,22 +1721,64 @@ const ContractsPage = () => {
                     <label className="block text-xs font-medium text-gray-700 mb-1">
                       Deposit Amount <span className="text-red-500">*</span>
                     </label>
-                    <input
-                      type="number"
-                      step="10000"
-                      value={depositForm.amount}
-                      onChange={(e) =>
-                        setDepositForm({
-                          ...depositForm,
-                          amount: e.target.value,
-                        })
-                      }
-                      className="w-full px-3 py-2 text-sm rounded border border-gray-300 focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-                      required
-                    />
-                    <p className="mt-1 text-xs text-gray-500">
-                      Recommended: 10% of item value ({Math.round(selectedContractForDeposit.itemValue * 0.1).toLocaleString()})
-                    </p>
+                    <div className="relative">
+                      <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500">₫</span>
+                      <input
+                        type="number"
+                        name="amount"
+                        step="10000"
+                        value={depositForm.amount}
+                        onChange={(e) => {
+                          const value = parseFloat(e.target.value) || 0;
+                          const contractValue = selectedContractForDeposit?.itemValue || 0;
+                          const minValue = calculateMinimumDeposit(contractValue);
+                          const maxValue = contractValue;
+                          
+                          // First update with the entered value directly
+                          setDepositForm(prev => ({
+                            ...prev,
+                            amount: value
+                          }));
+                          
+                          // Then validate for out of range values (for warnings only)
+                          if (value < minValue) {
+                            toast.warning(`Amount should be at least ${formatCurrency(minValue)}`);
+                          } else if (value > maxValue) {
+                            toast.warning(`Amount should not exceed ${formatCurrency(maxValue)}`);
+                          } else if (value >= minValue && value <= maxValue) {
+                            toast.success(`Valid deposit amount: ${formatCurrency(value)}`);
+                          }
+                        }}
+                        min={calculateMinimumDeposit(selectedContractForDeposit?.itemValue || 0)}
+                        max={selectedContractForDeposit?.itemValue || 0}
+                        className="w-full pl-8 pr-3 py-2 text-sm rounded border border-gray-300 focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                        required
+                      />
+                    </div>
+                    <div className="mt-1 text-xs space-y-1">
+                      <div className="flex justify-between">
+                        <p className="text-amber-600">
+                          Min: {formatCurrency(calculateMinimumDeposit(selectedContractForDeposit?.itemValue || 0))}
+                        </p>
+                        <p className="text-amber-600">
+                          Max: {formatCurrency(selectedContractForDeposit?.itemValue || 0)}
+                        </p>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-1.5 mt-1">
+                        <div 
+                          className="bg-amber-600 h-1.5 rounded-full" 
+                          style={{ 
+                            width: `${Math.min(100, Math.max(0, (depositForm.amount - calculateMinimumDeposit(selectedContractForDeposit?.itemValue || 0)) / ((selectedContractForDeposit?.itemValue || 0) - calculateMinimumDeposit(selectedContractForDeposit?.itemValue || 0)) * 100))}%` 
+                          }}
+                        ></div>
+                      </div>
+                      <p className="text-gray-500">
+                        Item Value: {formatCurrency(selectedContractForDeposit?.itemValue || 0)}
+                      </p>
+                      <p className="text-gray-500">
+                        Recommended (30%): {formatCurrency(calculateMaximumDeposit(selectedContractForDeposit?.itemValue || 0))}
+                      </p>
+                    </div>
                   </div>
 
                   {/* Status */}

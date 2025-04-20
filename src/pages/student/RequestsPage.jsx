@@ -15,6 +15,7 @@ import {
 import userinfoApi from "../../api/userinfoApi";
 import borrowhistoryApi from "../../api/borrowhistoryApi";
 import borrowrequestApi from "../../api/borrowrequestApi";
+import donateitemsApi from "../../api/donateitemsApi";
 
 const getStatusColor = (status) => {
   switch (status) {
@@ -28,6 +29,8 @@ const getStatusColor = (status) => {
       return "bg-indigo-100 text-indigo-800 border-indigo-200";
     case "Returned":
       return "bg-gray-100 text-gray-800 border-gray-200";
+    case "Available":
+      return "bg-blue-100 text-blue-800 border-blue-200";
     default:
       return "bg-gray-100 text-gray-800 border-gray-200";
   }
@@ -45,6 +48,8 @@ const getStatusIcon = (status) => {
       return <FaLaptop className="text-indigo-500" />;
     case "Returned":
       return <FaCheck className="text-gray-500" />;
+    case "Available":
+      return <FaCheck className="text-blue-500" />;
     default:
       return <FaInfoCircle className="text-gray-500" />;
   }
@@ -55,20 +60,46 @@ const RequestsPage = () => {
   const [request, setRequest] = useState(null);
   const [userInfo, setUserInfo] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
 
   const getAllBorrowHistories = () => {
     borrowhistoryApi
       .getAllBorrowHistories()
       .then((response) => {
         setBorrowHistories(response.data);
-        console.log(`borrrowhistory:${JSON.stringify(response.data, null, 2)}`); // Lưu dữ liệu vào state
-        setLoading(false); // Set loading là false khi lấy xong dữ liệu
+        console.log(`borrrowhistory:${JSON.stringify(response.data, null, 2)}`);
+        setLoading(false);
       })
-      .catch((err) => {
-        setError("Failed to load borrow histories"); // Xử lý lỗi nếu có
-        setLoading(false); // Set loading là false khi có lỗi
+      .catch(() => {
+        toast.error("Failed to load borrow histories");
+        setLoading(false);
       });
+  };
+
+  // Function to check item status using donateitemsApi
+  const checkItemStatus = async (itemId) => {
+    try {
+      // Use the donated items API to get item details
+      const response = await donateitemsApi.getDonateItemById(itemId);
+      
+      // Check if response is successful and contains data
+      if (response?.isSuccess && response.data) {
+        console.log("Item data:", response.data);
+        
+        // Check if the item has a status property
+        if (response.data.status) {
+          return response.data.status;
+        }
+        
+        // If no status property exists, check if there is a state or condition property that might indicate availability
+        if (response.data.state === "Available" || response.data.condition === "Available") {
+          return "Available";
+        }
+      }
+      return null;
+    } catch (error) {
+      console.error("Error checking item status:", error);
+      return null;
+    }
   };
 
   useEffect(() => {
@@ -93,10 +124,31 @@ const RequestsPage = () => {
 
             if (userRequests.length > 0) {
               const latestRequest = userRequests[userRequests.length - 1];
+              
+              // Check if item status is "Available" when request status is "Approved"
+              let displayStatus = latestRequest.status;
+              
+              // If there's an itemId field, check its status
+              if (latestRequest.itemId && latestRequest.status === "Approved") {
+                try {
+                  const status = await checkItemStatus(latestRequest.itemId);
+                  
+                  // If the item is "Available", update the display status
+                  if (status === "Available") {
+                    displayStatus = "Available";
+                    console.log("Item is available, hiding request details");
+                  }
+                } catch (err) {
+                  console.error("Failed to check item status:", err);
+                }
+              }
+              
               setRequest({
-                id: latestRequest.requestId, // Thêm ID để hủy yêu cầu
+                id: latestRequest.requestId,
+                itemId: latestRequest.itemId,
                 itemName: latestRequest.itemName,
-                status: latestRequest.status,
+                status: displayStatus, // Use the determined status
+                originalStatus: latestRequest.status, // Keep the original status for reference
                 startDate: latestRequest.startDate,
                 endDate: latestRequest.endDate,
               });
@@ -187,7 +239,7 @@ const RequestsPage = () => {
     );
   }
 
-  if (!request || !userInfo) {
+  if (!request || !userInfo || (request && request.status === "Available")) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-indigo-50 to-white flex justify-center items-center">
         <div className="text-center p-8 bg-white rounded-lg shadow-md">
@@ -206,6 +258,21 @@ const RequestsPage = () => {
       </div>
     );
   }
+
+  // Display appropriate message based on status
+  const getStatusMessage = (status, originalStatus) => {
+    if (status === "Available" && originalStatus === "Approved") {
+      return "Your request was approved, but the item is now available. You can pick it up according to the scheduled date.";
+    } else if (status === "Pending") {
+      return "Your request is currently being reviewed. You will be notified once a decision has been made.";
+    } else if (status === "Approved") {
+      return "Your request has been approved! You can pick up the laptop according to the scheduled date.";
+    } else if (status === "Rejected") {
+      return "Unfortunately, your request has been rejected. Please contact the administrator for more details.";
+    } else {
+      return "Your request status has been updated.";
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-indigo-50 to-white py-8 px-4 sm:px-6 lg:px-8">
@@ -236,6 +303,8 @@ const RequestsPage = () => {
                         ? "Approved"
                         : request.status === "Rejected"
                         ? "Rejected"
+                        : request.status === "Available" && request.originalStatus === "Approved"
+                        ? "Available for Pickup"
                         : request.status}
                     </span>
                   </div>
@@ -251,15 +320,7 @@ const RequestsPage = () => {
                 )}
               </div>
               <div className="mt-4 text-sm">
-                <p>
-                  {request.status === "Pending"
-                    ? "Your request is currently being reviewed. You will be notified once a decision has been made."
-                    : request.status === "Approved"
-                    ? "Your request has been approved! You can pick up the laptop according to the scheduled date."
-                    : request.status === "Rejected"
-                    ? "Unfortunately, your request has been rejected. Please contact the administrator for more details."
-                    : "Your request status has been updated."}
-                </p>
+                <p>{getStatusMessage(request.status, request.originalStatus)}</p>
               </div>
             </div>
 

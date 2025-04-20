@@ -4,11 +4,11 @@ import { format } from "date-fns";
 import { FaSearch } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import borrowhistoryApi from "../../api/borrowhistoryApi";
-import userinfoApi from "../../api/userinfoApi";
 import donateitemsApi from "../../api/donateitemsApi";
 import borrowcontractApi from "../../api/borrowcontractApi";
 import userApi from "../../api/userApi";
 import reportdamagesApi from "../../api/reportdamagesApi";
+import { formatCurrency } from "../../utils/moneyValidationUtils";
 
 const BorrowHistory = () => {
   const navigate = useNavigate();
@@ -46,7 +46,6 @@ const BorrowHistory = () => {
       fetchUserInfo();
       fetchItemsInfo();
       fetchContracts();
-      fetchMissingUserInfo();
     }
   }, [borrowHistory]);
 
@@ -77,33 +76,22 @@ const BorrowHistory = () => {
 
   const fetchUserInfo = async () => {
     try {
-      const response = await userinfoApi.getUserInfo();
-
-      // Handle response that might be a single user object or an array
-      if (response.isSuccess) {
-        let userMap = {};
-
-        if (Array.isArray(response.data)) {
-          // Handle array response
-          userMap = response.data.reduce(
-            (map, user) => ({
-              ...map,
-              [user.userId]: user,
-            }),
-            {}
-          );
-        } else if (response.data && response.data.userId) {
-          // Handle single user object response
-          userMap = {
-            [response.data.userId]: response.data,
-          };
-        } else {
-          console.warn("User data format is unexpected:", response.data);
+      // Get unique user IDs from borrow history
+      const userIds = [...new Set(borrowHistory.map(item => item.userId))];
+      
+      // Fetch user info for each unique userId
+      for (const userId of userIds) {
+        try {
+          const userResponse = await userApi.getUserById(userId);
+          if (userResponse.isSuccess && userResponse.data) {
+            setUserInfoMap(prev => ({
+              ...prev,
+              [userId]: userResponse.data
+            }));
+          }
+        } catch (error) {
+          console.error(`Error fetching user info for user ${userId}:`, error);
         }
-
-        setUserInfoMap(userMap);
-      } else {
-        toast.error("Failed to load user information");
       }
     } catch (error) {
       console.error("Error fetching user info:", error);
@@ -150,33 +138,6 @@ const BorrowHistory = () => {
       setItemsMap(items);
     } catch (error) {
       console.error("Error fetching item details:", error);
-    }
-  };
-
-  // Fetch missing user information for each history item
-  const fetchMissingUserInfo = async () => {
-    try {
-      const userIds = [...new Set(borrowHistory.map((item) => item.userId))];
-
-      for (const userId of userIds) {
-        if (!userInfoMap[userId]) {
-          try {
-            const response = await userApi.getUserById(userId);
-            if (response.isSuccess && response.data) {
-              setUserInfoMap((prev) => ({
-                ...prev,
-                [userId]: response.data,
-              }));
-            }
-
-      
-          } catch (error) {
-            console.error(`Failed to fetch info for user ${userId}:`, error);
-          }
-        }
-      }
-    } catch (error) {
-      console.error("Error fetching missing user info:", error);
     }
   };
 
@@ -283,11 +244,21 @@ const BorrowHistory = () => {
         file: files[0]
       });
     } else if (name === "DamageFee") {
-      const fee = parseFloat(value);
-      if (!isNaN(fee) && fee >= 0) {
+      // Handle empty input
+      if (value === '') {
         setReportData({
           ...reportData,
-          [name]: fee
+          [name]: ''
+        });
+        return;
+      }
+      
+      // Simple numeric validation - just ensure it's a number
+      const numericValue = parseFloat(value);
+      if (!isNaN(numericValue)) {
+        setReportData({
+          ...reportData,
+          [name]: numericValue
         });
       }
     } else {
@@ -318,7 +289,9 @@ const BorrowHistory = () => {
       formData.append("Note", reportData.Note);
       formData.append("ConditionBeforeBorrow", reportData.ConditionBeforeBorrow);
       formData.append("ConditionAfterReturn", reportData.ConditionAfterReturn);
-      formData.append("DamageFee", reportData.DamageFee.toString());
+      
+      // Set damage fee to 0 if empty string
+      formData.append("DamageFee", (reportData.DamageFee === '' ? '0' : reportData.DamageFee).toString());
       
       const response = await reportdamagesApi.createReportDamage(formData);
       
@@ -346,74 +319,125 @@ const BorrowHistory = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
-      {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl text-center font-bold text-gray-800">
-          Borrow History
-        </h1>
-        <p className="text-center text-gray-500 mt-2">
-          View and manage device Borrwing history
-        </p>
-      </div>
-
-      {/* Search and Filter Controls */}
-      <div className="mb-8 bg-white rounded-xl shadow-md p-4">
-        <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-          <div className="flex space-x-2">
-            <button
-              onClick={() => handleFilterChange("all")}
-              className={`px-4 py-2 rounded-lg transition-all ${
-                filterStatus === "all"
-                  ? "bg-amber-600 text-white shadow-md"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-              }`}
-            >
-              All History
-            </button>
-            <button
-              onClick={() => handleFilterChange("returned")}
-              className={`px-4 py-2 rounded-lg transition-all ${
-                filterStatus === "returned"
-                  ? "bg-amber-600 text-white shadow-md"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-              }`}
-            >
-              Returned
-            </button>
-            <button
-              onClick={() => handleFilterChange("borrowed")}
-              className={`px-4 py-2 rounded-lg transition-all ${
-                filterStatus === "borrowed"
-                  ? "bg-amber-600 text-white shadow-md"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-              }`}
-            >
-              Borrowed
-            </button>
+      {/* Enhanced Header */}
+      <div className="mb-8 animate-fadeIn">
+        <div className="flex flex-col items-center mb-4">
+          <div className="bg-amber-100 rounded-full p-3 mb-4">
+            <svg className="w-10 h-10 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
           </div>
-
-          <div className="relative w-full md:w-64">
-            <input
-              type="text"
-              placeholder="Search by name, email, item..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full px-10 py-2 border-0 bg-gray-100 rounded-lg focus:ring-2 focus:ring-amber-500 focus:bg-white transition-all"
-            />
-            <div className="absolute left-3 top-2.5 text-gray-400">
-              <FaSearch />
+          <h1 className="text-3xl font-bold text-gray-800 mb-2">
+            Borrow History
+          </h1>
+          <p className="text-gray-500 max-w-lg text-center">
+            View and manage all device borrowing records, track return dates, and report damages.
+          </p>
+        </div>
+        
+        <div className="flex items-center justify-center mt-6">
+          <div className="flex items-center gap-4 text-sm">
+            <div className="flex items-center gap-1.5 text-green-700">
+              <div className="w-3 h-3 rounded-full bg-green-500"></div>
+              <span>Returned: {borrowHistory.filter(item => item.status === "Returned").length}</span>
+            </div>
+            <div className="flex items-center gap-1.5 text-blue-700">
+              <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+              <span>Borrowing: {borrowHistory.filter(item => item.status === "Borrwing").length}</span>
+            </div>
+            <div className="flex items-center gap-1.5 text-red-700">
+              <div className="w-3 h-3 rounded-full bg-red-500"></div>
+              <span>Due Soon: {
+                borrowHistory.filter(item => 
+                  item.status === "Borrwing" && 
+                  contractsMap[item.requestId] && 
+                  isExpiringSoon(contractsMap[item.requestId].expectedReturnDate)
+                ).length
+              }</span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Add Report Damage link/button at the top */}
-      <div className="mb-4 flex justify-end">
+      {/* Enhanced Search and Filter Controls */}
+      <div className="mb-8 animate-fadeIn">
+        <div className="bg-white rounded-xl shadow-md p-4">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => handleFilterChange("all")}
+                className={`px-4 py-2 rounded-lg transition-all duration-200 flex items-center gap-1.5 ${
+                  filterStatus === "all"
+                    ? "bg-amber-600 text-white shadow-md"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                }`}
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path>
+                </svg>
+                All History
+              </button>
+              <button
+                onClick={() => handleFilterChange("returned")}
+                className={`px-4 py-2 rounded-lg transition-all duration-200 flex items-center gap-1.5 ${
+                  filterStatus === "returned"
+                    ? "bg-green-600 text-white shadow-md"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                }`}
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+                Returned
+              </button>
+              <button
+                onClick={() => handleFilterChange("borrowed")}
+                className={`px-4 py-2 rounded-lg transition-all duration-200 flex items-center gap-1.5 ${
+                  filterStatus === "borrowed"
+                    ? "bg-blue-600 text-white shadow-md"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                }`}
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                </svg>
+                Borrowing
+              </button>
+            </div>
+
+            <div className="relative w-full md:w-64">
+              <input
+                type="text"
+                placeholder="Search by name, email, item..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full px-10 py-2 border-0 bg-gray-100 rounded-lg focus:ring-2 focus:ring-amber-500 focus:bg-white transition-all"
+              />
+              <div className="absolute left-3 top-2.5 text-gray-400">
+                <FaSearch />
+              </div>
+              {searchTerm && (
+                <button 
+                  onClick={() => setSearchTerm('')}
+                  className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
+                  </svg>
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Add Report Damage button - Enhanced */}
+      <div className="mb-4 flex justify-end animate-fadeIn">
         <button 
           onClick={() => navigate('/staff/report-damages')}
-          className="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors flex items-center"
+          className="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors flex items-center gap-2 shadow-md hover:shadow-lg"
         >
-          <svg className="w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+          <svg className="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
             <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
           </svg>
           Manage Damage Reports
@@ -466,131 +490,226 @@ const BorrowHistory = () => {
                     <>
                       <tr
                         key={item.borrowHistoryId}
-                        className={`hover:bg-opacity-75 ${
+                        className={`hover:bg-gray-50 transition-all duration-200 ${
                           item.status === "Borrwing" && 
                           contractsMap[item.requestId] && 
                           isExpiringSoon(contractsMap[item.requestId].expectedReturnDate)
                             ? "bg-yellow-50 hover:bg-yellow-100"
                             : ""
-                        }`}
+                        } cursor-pointer`}
                         onClick={() => toggleRowExpansion(item.borrowHistoryId)}
                       >
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                          #{item.borrowHistoryId}
-                          <div className="text-xs text-gray-500">
-                            Request #{item.requestId}
-                            {contractsMap[item.requestId] && (
-                              <span className="ml-1 text-blue-600">
-                                (Contract #
-                                {contractsMap[item.requestId].contractId})
-                              </span>
-                            )}
-                          </div>
-                        </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex flex-col">
-                            <span className="text-sm font-medium text-gray-900">
-                              {userInfoMap[item.userId]?.fullName || "N/A"}
+                            <span className="text-sm font-medium text-gray-900 flex items-center">
+                              #{item.borrowHistoryId}
+                              {expandedRow === item.borrowHistoryId && (
+                                <svg className="ml-1.5 w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
+                                </svg>
+                              )}
                             </span>
-                            <span className="text-xs text-gray-500">
-                              {userInfoMap[item.userId]?.email || "N/A"}
-                            </span>
-                            {userInfoMap[item.userId]?.studentCode && (
-                              <span className="text-xs text-gray-500">
-                                Student ID:{" "}
-                                {userInfoMap[item.userId].studentCode}
+                            <div className="text-xs text-gray-500 mt-1">
+                              <span className="inline-flex items-center">
+                                <svg className="w-3 h-3 mr-1 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                </svg>
+                                Req #{item.requestId}
                               </span>
-                            )}
+                              {contractsMap[item.requestId] && (
+                                <span className="inline-flex items-center text-blue-600 ml-1.5">
+                                  <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                                  </svg>
+                                  #{contractsMap[item.requestId].contractId}
+                                </span>
+                              )}
+                            </div>
                           </div>
                         </td>
+                        
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex flex-col">
-                            <span className="text-sm font-medium text-gray-900">
-                              {itemsMap[item.itemId]?.itemName || "N/A"}
-                            </span>
-                            {itemsMap[item.itemId] && (
-                              <span className="text-xs text-gray-500">
-                                {itemsMap[item.itemId].cpu},{" "}
-                                {itemsMap[item.itemId].ram}
+                          <div className="flex items-center">
+                            <div className="flex-shrink-0 h-10 w-10 bg-amber-100 rounded-full flex items-center justify-center mr-3">
+                              <span className="text-amber-600 font-medium text-sm">
+                                {userInfoMap[item.userId]?.fullName 
+                                  ? userInfoMap[item.userId].fullName.substring(0, 2).toUpperCase() 
+                                  : "U"}
                               </span>
-                            )}
-                            {contractsMap[item.requestId] && (
-                              <span className="text-xs text-blue-600 font-medium">
-                                Value:{" "}
-                                {contractsMap[
-                                  item.requestId
-                                ].itemValue?.toLocaleString()}
-                                {isExpiringSoon(
-                                  contractsMap[item.requestId]
-                                    .expectedReturnDate
-                                ) && (
-                                  <span className="ml-2 px-2 py-0.5 text-xs font-medium bg-red-100 text-red-800 rounded-full">
-                                    Due Soon
+                            </div>
+                            <div className="flex flex-col">
+                              <div className="flex items-center">
+                                <span className="text-sm font-medium text-gray-900">
+                                  {userInfoMap[item.userId]?.fullName || "Unknown User"}
+                                </span>
+                                {userInfoMap[item.userId]?.roleName && (
+                                  <span className="ml-2 text-xs px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded-sm">
+                                    {userInfoMap[item.userId].roleName}
                                   </span>
                                 )}
+                              </div>
+                              <span className="text-xs text-gray-500 mt-0.5">
+                                {userInfoMap[item.userId]?.email || "No email available"}
                               </span>
-                            )}
+                              {userInfoMap[item.userId]?.studentCode && (
+                                <span className="text-xs text-amber-600 mt-0.5 flex items-center">
+                                  <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2"></path>
+                                  </svg>
+                                  {userInfoMap[item.userId].studentCode}
+                                </span>
+                              )}
+                            </div>
                           </div>
                         </td>
+                        
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex flex-col">
-                            <div className="flex items-center">
-                              <span className="text-xs font-medium bg-blue-100 text-blue-800 rounded px-2 py-0.5 mr-2">
-                                From
+                          <div className="flex items-center">
+                            {itemsMap[item.itemId]?.itemImage ? (
+                              <div className="flex-shrink-0 h-10 w-10 mr-3">
+                                <img
+                                  src={itemsMap[item.itemId].itemImage}
+                                  alt={itemsMap[item.itemId].itemName}
+                                  className="h-10 w-10 rounded-md object-cover"
+                                />
+                              </div>
+                            ) : (
+                              <div className="flex-shrink-0 h-10 w-10 bg-blue-50 rounded-md flex items-center justify-center mr-3">
+                                <svg className="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                                </svg>
+                              </div>
+                            )}
+                            <div className="flex flex-col">
+                              <span className="text-sm font-medium text-gray-900">
+                                {itemsMap[item.itemId]?.itemName || "Unknown Device"}
                               </span>
-                              <span className="text-sm text-gray-900">
-                                {format(
-                                  new Date(item.borrowDate),
-                                  "dd/MM/yyyy"
-                                )}
+                              {itemsMap[item.itemId] && (
+                                <div className="flex items-center mt-0.5">
+                                  <span className="text-xs text-gray-500 flex items-center">
+                                    <svg className="w-3 h-3 mr-1 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"></path>
+                                    </svg>
+                                    {itemsMap[item.itemId].cpu || "N/A"}
+                                  </span>
+                                  <span className="mx-1.5 text-gray-300">|</span>
+                                  <span className="text-xs text-gray-500 flex items-center">
+                                    <svg className="w-3 h-3 mr-1 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                                    </svg>
+                                    {itemsMap[item.itemId].ram || "N/A"}
+                                  </span>
+                                </div>
+                              )}
+                              {contractsMap[item.requestId] && (
+                                <div className="flex items-center mt-0.5">
+                                  <span className="text-xs text-blue-600 font-medium flex items-center">
+                                    <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                    {contractsMap[item.requestId]?.itemValue
+                                      ? formatCurrency(contractsMap[item.requestId].itemValue)
+                                      : "N/A"}
+                                  </span>
+                                  {isExpiringSoon(contractsMap[item.requestId].expectedReturnDate) && (
+                                    <span className="ml-2 px-1.5 py-0.5 text-xs font-medium bg-red-100 text-red-700 rounded-sm flex items-center">
+                                      <svg className="w-3 h-3 mr-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                      </svg>
+                                      Due Soon
+                                    </span>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </td>
+                        
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex flex-col space-y-2">
+                            <div className="flex items-center px-2 py-1 bg-blue-50 rounded-md">
+                              <svg className="w-4 h-4 text-blue-500 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                              </svg>
+                              <span className="text-sm text-gray-700">
+                                From: <span className="font-medium">{format(new Date(item.borrowDate), "dd MMM yyyy")}</span>
                               </span>
                             </div>
-                            <div className="flex items-center mt-1">
-                              <span className="text-xs font-medium bg-green-100 text-green-800 rounded px-2 py-0.5 mr-2">
-                                To
-                              </span>
-                              <span className="text-sm text-gray-900">
+                            
+                            <div className={`flex items-center px-2 py-1 rounded-md ${
+                              item.status === "Returned"
+                                ? "bg-green-50" 
+                                : item.status === "Borrwing" && contractsMap[item.requestId] && 
+                                  isExpiringSoon(contractsMap[item.requestId].expectedReturnDate)
+                                  ? "bg-red-50"
+                                  : "bg-amber-50"
+                            }`}>
+                              <svg className={`w-4 h-4 mr-1.5 ${
+                                item.status === "Returned"
+                                  ? "text-green-500" 
+                                  : item.status === "Borrwing" && contractsMap[item.requestId] && 
+                                    isExpiringSoon(contractsMap[item.requestId].expectedReturnDate)
+                                    ? "text-red-500"
+                                    : "text-amber-500"
+                              }`} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                              </svg>
+                              <span className="text-sm text-gray-700">
+                                To: <span className="font-medium">
                                 {item.status === "Returned"
                                   ? item.returnDate 
-                                    ? format(new Date(item.returnDate), "dd/MM/yyyy")
+                                    ? format(new Date(item.returnDate), "dd MMM yyyy")
                                     : "Returned"
                                   : contractsMap[item.requestId]?.expectedReturnDate
-                                    ? format(
-                                        new Date(contractsMap[item.requestId].expectedReturnDate),
-                                        "dd/MM/yyyy"
-                                      ) + (item.status === "Borrwing" && 
-                                          contractsMap[item.requestId] && 
-                                          isExpiringSoon(contractsMap[item.requestId].expectedReturnDate)
-                                          ? " (Due Soon)" 
-                                          : "")
+                                    ? format(new Date(contractsMap[item.requestId].expectedReturnDate), "dd MMM yyyy")
                                     : "Not returned"}
+                                </span>
                               </span>
                             </div>
                           </div>
                         </td>
+                        
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span
-                            className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                            className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
                               item.status === "Returned"
                                 ? "bg-green-100 text-green-800"
                                 : item.status === "Borrwing" && contractsMap[item.requestId] && 
                                   isExpiringSoon(contractsMap[item.requestId].expectedReturnDate)
                                   ? "bg-red-100 text-red-800"
-                                  : "bg-blue-100 text-blue-800"
+                                : "bg-blue-100 text-blue-800"
                             }`}
                           >
-                            {item.status === "Returned" 
-                              ? "Returned" 
-                              : item.status === "Borrwing" && contractsMap[item.requestId] && 
-                                isExpiringSoon(contractsMap[item.requestId].expectedReturnDate)
-                                ? "Due Soon"
-                                : "Borrwing"}
+                            {item.status === "Returned" ? (
+                              <>
+                                <svg className="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                                </svg>
+                                Returned
+                              </>
+                            ) : item.status === "Borrwing" && contractsMap[item.requestId] && 
+                               isExpiringSoon(contractsMap[item.requestId].expectedReturnDate) ? (
+                              <>
+                                <svg className="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                Due Soon
+                              </>
+                            ) : (
+                              <>
+                                <svg className="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                                </svg>
+                                Borrowing
+                              </>
+                            )}
                           </span>
                         </td>
+                        
                         <td className="px-6 py-4 whitespace-nowrap text-center">
                           <div className="flex flex-col sm:flex-row gap-2 justify-center">
                             <button
-                              className={`flex items-center justify-center gap-1 px-2.5 py-1 text-xs rounded-md transition-colors ${
+                              className={`flex items-center justify-center gap-1 px-2.5 py-1.5 text-xs rounded-md transition-colors ${
                                 expandedRow === item.borrowHistoryId
                                   ? "bg-amber-600 text-white"
                                   : "bg-gray-100 text-gray-700 hover:bg-gray-200"
@@ -600,25 +719,25 @@ const BorrowHistory = () => {
                                 toggleRowExpansion(item.borrowHistoryId);
                               }}
                             >
-                              <svg className="w-3 h-3" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                              <svg className="w-3.5 h-3.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                                 {expandedRow === item.borrowHistoryId ? (
                                   <path fillRule="evenodd" d="M5 10a1 1 0 011-1h8a1 1 0 110 2H6a1 1 0 01-1-1z" clipRule="evenodd" />
                                 ) : (
                                   <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
                                 )}
                               </svg>
-                              <span>{expandedRow === item.borrowHistoryId ? "Hide" : "View"}</span>
+                              <span>{expandedRow === item.borrowHistoryId ? "Hide" : "Details"}</span>
                             </button>
                             
                             { !reportedDamageItems[item.borrowHistoryId] && (
                               <button
-                                className="flex items-center justify-center gap-1 px-2.5 py-1 text-xs rounded-md bg-red-100 text-red-700 hover:bg-red-200 transition-colors"
+                                className="flex items-center justify-center gap-1 px-2.5 py-1.5 text-xs rounded-md bg-red-100 text-red-700 hover:bg-red-200 transition-colors"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   handleReportDamage(item);
                                 }}
                               >
-                                <svg className="w-3 h-3" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                <svg className="w-3.5 h-3.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                                   <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                                 </svg>
                                 <span>Report</span>
@@ -626,8 +745,8 @@ const BorrowHistory = () => {
                             )}
                             
                             {item.status === "Borrwing" && reportedDamageItems[item.borrowHistoryId] && (
-                              <span className="flex items-center justify-center gap-1 px-2.5 py-1 text-xs rounded-md bg-gray-100 text-gray-500">
-                                <svg className="w-3 h-3" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                              <span className="flex items-center justify-center gap-1 px-2.5 py-1.5 text-xs rounded-md bg-gray-100 text-gray-500">
+                                <svg className="w-3.5 h-3.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                                   <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                                 </svg>
                                 <span>Reported</span>
@@ -640,323 +759,398 @@ const BorrowHistory = () => {
                       {expandedRow === item.borrowHistoryId && (
                         <tr className="bg-amber-50">
                           <td colSpan="6" className="px-6 py-4">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                              {/* User Information */}
-                              <div className="bg-white p-5 rounded-lg shadow border border-gray-200">
-                                <h3 className="text-sm font-semibold text-gray-800 mb-4 pb-2 border-b flex items-center">
-                                  <svg
-                                    className="w-4 h-4 mr-2 text-amber-600"
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    strokeWidth="2"
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                  >
-                                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                                    <circle cx="12" cy="7" r="4"></circle>
+                            <div className="animate-fadeIn">
+                              <div className="flex items-center justify-between mb-4">
+                                <h3 className="text-lg font-semibold text-gray-800 flex items-center">
+                                  <svg className="w-5 h-5 mr-2 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                   </svg>
-                                  USER INFORMATION
+                                  Borrow Detail #{item.borrowHistoryId}
                                 </h3>
-                                {userInfoMap[item.userId] ? (
-                                  <div className="grid grid-cols-2 gap-4 text-sm">
-                                    <div>
-                                      <p className="text-gray-500 text-xs">Full Name</p>
-                                      <p className="font-medium mt-1">
-                                        {userInfoMap[item.userId].fullName ||
-                                          "N/A"}
-                                      </p>
-                                    </div>
-                                    <div>
-                                      <p className="text-gray-500 text-xs">Email</p>
-                                      <p className="font-medium mt-1 break-words">
-                                        {userInfoMap[item.userId].email ||
-                                          "N/A"}
-                                      </p>
-                                    </div>
-                                    <div>
-                                      <p className="text-gray-500 text-xs">
-                                        Student ID
-                                      </p>
-                                      <p className="font-medium mt-1">
-                                        {userInfoMap[item.userId].studentCode ||
-                                          "N/A"}
-                                      </p>
-                                    </div>
-                                    <div>
-                                      <p className="text-gray-500 text-xs">Phone</p>
-                                      <p className="font-medium mt-1">
-                                        {userInfoMap[item.userId].phoneNumber ||
-                                          "N/A"}
-                                      </p>
-                                    </div>
-                                    <div>
-                                      <p className="text-gray-500 text-xs">Role</p>
-                                      <p className="font-medium mt-1">
-                                        {userInfoMap[item.userId].roleName ||
-                                          "Student"}
-                                      </p>
-                                    </div>
-                                  </div>
-                                ) : (
-                                  <p className="text-sm text-gray-500">
-                                    User details not available
-                                  </p>
-                                )}
+                                <span className="text-xs px-2 py-1 bg-amber-100 text-amber-800 rounded-md">
+                                  Borrowed on {format(new Date(item.borrowDate), "dd MMM yyyy")}
+                                </span>
                               </div>
-
-                              {/* Device Details */}
-                              <div className="bg-white p-5 rounded-lg shadow border border-gray-200">
-                                <h3 className="text-sm font-semibold text-gray-800 mb-4 pb-2 border-b flex items-center">
-                                  <svg
-                                    className="w-4 h-4 mr-2 text-amber-600"
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    strokeWidth="2"
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                  >
-                                    <rect
-                                      x="2"
-                                      y="3"
-                                      width="20"
-                                      height="14"
-                                      rx="2"
-                                      ry="2"
-                                    ></rect>
-                                    <line x1="2" y1="20" x2="22" y2="20"></line>
-                                  </svg>
-                                  DEVICE DETAILS
-                                </h3>
-                                {itemsMap[item.itemId] ? (
-                                  <div className="grid grid-cols-2 gap-4 text-sm">
-                                    <div>
-                                      <p className="text-gray-500 text-xs">
-                                        Device Name
-                                      </p>
-                                      <p className="font-medium mt-1">
-                                        {itemsMap[item.itemId].itemName ||
-                                          "N/A"}
-                                      </p>
-                                    </div>
-                                    <div>
-                                      <p className="text-gray-500 text-xs">CPU</p>
-                                      <p className="font-medium mt-1">
-                                        {itemsMap[item.itemId].cpu || "N/A"}
-                                      </p>
-                                    </div>
-                                    <div>
-                                      <p className="text-gray-500 text-xs">RAM</p>
-                                      <p className="font-medium mt-1">
-                                        {itemsMap[item.itemId].ram || "N/A"}
-                                      </p>
-                                    </div>
-                                    <div>
-                                      <p className="text-gray-500 text-xs">Storage</p>
-                                      <p className="font-medium mt-1">
-                                        {itemsMap[item.itemId].storage || "N/A"}
-                                      </p>
-                                    </div>
-                                    <div>
-                                      <p className="text-gray-500 text-xs">
-                                        Screen Size
-                                      </p>
-                                      <p className="font-medium mt-1">
-                                        {itemsMap[item.itemId].screenSize ||
-                                          "N/A"}
-                                      </p>
-                                    </div>
-                                    <div>
-                                      <p className="text-gray-500 text-xs">Status</p>
-                                      <p className="font-medium mt-1">
-                                        <span
-                                          className={`px-2 py-0.5 rounded-full text-xs ${
-                                            itemsMap[item.itemId].status ===
-                                            "Available"
-                                              ? "bg-green-100 text-green-800"
-                                              : "bg-yellow-100 text-yellow-800"
-                                          }`}
-                                        >
-                                          {itemsMap[item.itemId].status ||
-                                            "N/A"}
-                                        </span>
-                                      </p>
-                                    </div>
-                                  </div>
-                                ) : (
-                                  <p className="text-sm text-gray-500">
-                                    Device details not available
-                                  </p>
-                                )}
-                              </div>
-
-                              {/* Contract Details */}
-                              {contractsMap[item.requestId] && (
-                                <div className="bg-white p-5 rounded-lg shadow border border-gray-200">
-                                  <h3 className="text-sm font-semibold text-gray-800 mb-4 pb-2 border-b flex items-center">
-                                    <svg
-                                      className="w-4 h-4 mr-2 text-amber-600"
-                                      xmlns="http://www.w3.org/2000/svg"
-                                      viewBox="0 0 24 24"
-                                      fill="none"
-                                      stroke="currentColor"
-                                      strokeWidth="2"
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                    >
-                                      <path d="M20 11.08V8l-6-6H6a2 2 0 0 0-2 2v16c0 1.1.9 2 2 2h6"></path>
-                                      <path d="M14 3v5h5M18 21v-6M15 18h6"></path>
-                                    </svg>
-                                    CONTRACT INFORMATION
-                                  </h3>
-                                  <div className="grid grid-cols-2 gap-4 text-sm">
-                                    <div>
-                                      <p className="text-gray-500 text-xs">
-                                        Contract ID
-                                      </p>
-                                      <p className="font-medium mt-1">
-                                        #
-                                        {
-                                          contractsMap[item.requestId]
-                                            .contractId
-                                        }
-                                      </p>
-                                    </div>
-                                    <div>
-                                      <p className="text-gray-500 text-xs">
-                                        Item Value
-                                      </p>
-                                      <p className="font-medium mt-1">
-                                        {contractsMap[
-                                          item.requestId
-                                        ].itemValue?.toLocaleString() || "N/A"}
-                                      </p>
-                                    </div>
-                                    <div>
-                                      <p className="text-gray-500 text-xs">
-                                        Expected Return
-                                      </p>
-                                      <p className="font-medium mt-1">
-                                        {contractsMap[item.requestId]
-                                          .expectedReturnDate
-                                          ? format(
-                                              new Date(
-                                                contractsMap[
-                                                  item.requestId
-                                                ].expectedReturnDate
-                                              ),
-                                              "dd/MM/yyyy"
-                                            )
-                                          : "N/A"}
-                                      </p>
-                                    </div>
-                                    <div>
-                                      <p className="text-gray-500 text-xs">Condition</p>
-                                      <p className="font-medium mt-1">
-                                        {contractsMap[item.requestId]
-                                          .conditionBorrow || "N/A"}
-                                      </p>
-                                    </div>
-                                    <div>
-                                      <p className="text-gray-500 text-xs">Terms</p>
-                                      <p className="font-medium mt-1 break-words">
-                                        {contractsMap[item.requestId].terms ||
-                                          "N/A"}
-                                      </p>
-                                    </div>
-                                    <div>
-                                      <p className="text-gray-500 text-xs">
-                                        Due Status
-                                      </p>
-                                      <p className="font-medium mt-1 flex items-center">
-                                        <span
-                                          className={`px-2 py-0.5 rounded-full text-xs ${
-                                            item.status === "Returned"
-                                              ? "bg-green-100 text-green-800"
-                                              : item.status === "Borrwing" && contractsMap[item.requestId] && 
-                                                isExpiringSoon(contractsMap[item.requestId].expectedReturnDate)
-                                                ? "bg-red-100 text-red-800"
-                                                : "bg-blue-100 text-blue-800"
-                                          }`}
-                                        >
-                                          {item.status === "Returned"
-                                            ? "Returned"
-                                            : item.status === "Borrwing" && contractsMap[item.requestId] && 
-                                              isExpiringSoon(contractsMap[item.requestId].expectedReturnDate)
-                                              ? "Due Soon"
-                                              : "Borrwing"}
-                                        </span>
-                                        
-                                        {reportedDamageItems[item.borrowHistoryId] && (
-                                          <span className="ml-2 px-2 py-0.5 rounded-full text-xs bg-gray-100 text-gray-800 flex items-center">
-                                            <svg className="w-3 h-3 mr-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                                            </svg>
-                                            Damage Reported
-                                          </span>
-                                        )}
-                                      </p>
-                                    </div>
+                              
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                {/* User Information Card - Enhanced */}
+                                <div className="bg-white p-5 rounded-lg shadow-md border-l-4 border-amber-500 transform transition-all duration-300 hover:shadow-lg">
+                                  <div className="flex items-center justify-between mb-4 pb-2 border-b">
+                                    <h3 className="text-sm font-semibold text-gray-800 flex items-center">
+                                      <svg
+                                        className="w-4 h-4 mr-2 text-amber-600"
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        strokeWidth="2"
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                      >
+                                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                        <circle cx="12" cy="7" r="4"></circle>
+                                      </svg>
+                                      USER INFORMATION
+                                    </h3>
+                                    <span className="text-xs font-medium px-2 py-1 bg-blue-100 text-blue-700 rounded-full">
+                                      {userInfoMap[item.userId]?.roleName || "Student"}
+                                    </span>
                                   </div>
                                   
-                                  {/* Contract Images */}
-                                  {contractsMap[item.requestId] && 
-                                   contractsMap[item.requestId].contractImages && 
-                                   contractsMap[item.requestId].contractImages.length > 0 && (
-                                    <div className="mt-4 pt-3 border-t border-gray-100">
-                                      <p className="text-gray-500 text-xs mb-2">Contract Images</p>
-                                      <div className="grid grid-cols-2 gap-2">
-                                        {contractsMap[item.requestId].contractImages.map((image, index) => (
-                                          <a 
-                                            href={image} 
-                                            target="_blank" 
-                                            rel="noopener noreferrer" 
-                                            key={index} 
-                                            className="hover:opacity-90 transition-opacity"
-                                          >
-                                            <img 
-                                              src={image} 
-                                              alt={`Contract ${contractsMap[item.requestId].contractId} image ${index+1}`} 
-                                              className="w-full h-auto max-h-40 object-contain border border-gray-200 rounded-md"
-                                            />
-                                          </a>
-                                        ))}
+                                  {userInfoMap[item.userId] ? (
+                                    <div className="space-y-4">
+                                      <div className="flex justify-center mb-2">
+                                        <div className="relative w-16 h-16 rounded-full bg-amber-100 flex items-center justify-center text-amber-600 text-xl font-bold border-2 border-amber-200">
+                                          {userInfoMap[item.userId].fullName ? userInfoMap[item.userId].fullName.charAt(0).toUpperCase() : "U"}
+                                        </div>
+                                      </div>
+                                      
+                                      <div className="text-center mb-3">
+                                        <h4 className="text-md font-semibold text-gray-800">{userInfoMap[item.userId].fullName || "N/A"}</h4>
+                                        <p className="text-sm text-amber-600">{userInfoMap[item.userId].studentCode || "No ID Available"}</p>
+                                      </div>
+                                      
+                                      <div className="grid grid-cols-1 gap-3">
+                                        <div className="flex items-center p-2 bg-gray-50 rounded-md">
+                                          <svg className="w-4 h-4 text-gray-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                                          </svg>
+                                          <div className="ml-1">
+                                            <p className="text-xs text-gray-500">Email</p>
+                                            <p className="text-sm font-medium break-all">{userInfoMap[item.userId].email || "N/A"}</p>
+                                          </div>
+                                        </div>
+                                        
+                                        <div className="flex items-center p-2 bg-gray-50 rounded-md">
+                                          <svg className="w-4 h-4 text-gray-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path>
+                                          </svg>
+                                          <div className="ml-1">
+                                            <p className="text-xs text-gray-500">Phone</p>
+                                            <p className="text-sm font-medium">{userInfoMap[item.userId].phoneNumber || "N/A"}</p>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    <div className="flex items-center justify-center h-32 bg-gray-50 rounded-md">
+                                      <div className="text-center">
+                                        <svg className="w-8 h-8 text-gray-300 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                                        </svg>
+                                        <p className="text-sm text-gray-500">User details not available</p>
                                       </div>
                                     </div>
                                   )}
                                 </div>
-                              )}
 
-                              {/* Display device image if available */}
-                              {itemsMap[item.itemId]?.itemImage && (
-                                <div className="bg-white p-5 rounded-lg shadow border border-gray-200">
-                                  <h3 className="text-sm font-semibold text-gray-800 mb-4 pb-2 border-b flex items-center">
-                                    <svg 
-                                      className="w-4 h-4 mr-2 text-amber-600" 
-                                      xmlns="http://www.w3.org/2000/svg" 
-                                      viewBox="0 0 24 24"
-                                      fill="none"
-                                      stroke="currentColor"
-                                      strokeWidth="2"
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                    >
-                                      <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-                                      <circle cx="8.5" cy="8.5" r="1.5"/>
-                                      <polyline points="21 15 16 10 5 21"/>
-                                    </svg>
-                                    DEVICE IMAGE
-                                  </h3>
-                                  <img
-                                    src={itemsMap[item.itemId].itemImage}
-                                    alt={itemsMap[item.itemId].itemName}
-                                    className="w-full h-auto rounded-lg shadow-sm object-contain max-h-60"
-                                  />
+                                {/* Device Details Card - Enhanced */}
+                                <div className="bg-white p-5 rounded-lg shadow-md border-l-4 border-blue-500 transform transition-all duration-300 hover:shadow-lg">
+                                  <div className="flex items-center justify-between mb-4 pb-2 border-b">
+                                    <h3 className="text-sm font-semibold text-gray-800 flex items-center">
+                                      <svg
+                                        className="w-4 h-4 mr-2 text-blue-600"
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        strokeWidth="2"
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                      >
+                                        <rect
+                                          x="2"
+                                          y="3"
+                                          width="20"
+                                          height="14"
+                                          rx="2"
+                                          ry="2"
+                                        ></rect>
+                                        <line x1="2" y1="20" x2="22" y2="20"></line>
+                                      </svg>
+                                      DEVICE DETAILS
+                                    </h3>
+                                    {itemsMap[item.itemId] && (
+                                      <span className={`text-xs font-medium px-2 py-1 rounded-full ${
+                                        itemsMap[item.itemId].status === "Available"
+                                          ? "bg-green-100 text-green-700"
+                                          : "bg-yellow-100 text-yellow-700"
+                                      }`}>
+                                        {itemsMap[item.itemId].status || "Unknown"}
+                                      </span>
+                                    )}
+                                  </div>
+                                  
+                                  {itemsMap[item.itemId] ? (
+                                    <div className="space-y-4">
+                                      <div className="flex justify-center mb-3">
+                                        {itemsMap[item.itemId]?.itemImage ? (
+                                          <img 
+                                            src={itemsMap[item.itemId].itemImage}
+                                            alt={itemsMap[item.itemId].itemName}
+                                            className="h-24 w-auto object-contain rounded-md shadow-sm"
+                                          />
+                                        ) : (
+                                          <div className="w-24 h-24 rounded-md bg-blue-50 flex items-center justify-center text-blue-500">
+                                            <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                                            </svg>
+                                          </div>
+                                        )}
+                                      </div>
+                                      
+                                      <h4 className="text-center text-md font-semibold text-gray-800 mb-3">
+                                        {itemsMap[item.itemId].itemName || "Unknown Device"}
+                                      </h4>
+                                      
+                                      <div className="grid grid-cols-2 gap-3">
+                                        <div className="flex flex-col p-2 bg-gray-50 rounded-md">
+                                          <p className="text-xs text-gray-500">CPU</p>
+                                          <p className="text-sm font-medium">{itemsMap[item.itemId].cpu || "N/A"}</p>
+                                        </div>
+                                        
+                                        <div className="flex flex-col p-2 bg-gray-50 rounded-md">
+                                          <p className="text-xs text-gray-500">RAM</p>
+                                          <p className="text-sm font-medium">{itemsMap[item.itemId].ram || "N/A"}</p>
+                                        </div>
+                                        
+                                        <div className="flex flex-col p-2 bg-gray-50 rounded-md">
+                                          <p className="text-xs text-gray-500">Storage</p>
+                                          <p className="text-sm font-medium">{itemsMap[item.itemId].storage || "N/A"}</p>
+                                        </div>
+                                        
+                                        <div className="flex flex-col p-2 bg-gray-50 rounded-md">
+                                          <p className="text-xs text-gray-500">Screen Size</p>
+                                          <p className="text-sm font-medium">{itemsMap[item.itemId].screenSize || "N/A"}</p>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    <div className="flex items-center justify-center h-32 bg-gray-50 rounded-md">
+                                      <div className="text-center">
+                                        <svg className="w-8 h-8 text-gray-300 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                                        </svg>
+                                        <p className="text-sm text-gray-500">Device details not available</p>
+                                      </div>
+                                    </div>
+                                  )}
                                 </div>
-                              )}
+
+                                {/* Contract Details Card - Enhanced */}
+                                {contractsMap[item.requestId] && (
+                                  <div className="bg-white p-5 rounded-lg shadow-md border-l-4 border-green-500 transform transition-all duration-300 hover:shadow-lg md:col-span-2">
+                                    <div className="flex items-center justify-between mb-4 pb-2 border-b">
+                                      <h3 className="text-sm font-semibold text-gray-800 flex items-center">
+                                        <svg
+                                          className="w-4 h-4 mr-2 text-green-600"
+                                          xmlns="http://www.w3.org/2000/svg"
+                                          viewBox="0 0 24 24"
+                                          fill="none"
+                                          stroke="currentColor"
+                                          strokeWidth="2"
+                                          strokeLinecap="round"
+                                          strokeLinejoin="round"
+                                        >
+                                          <path d="M20 11.08V8l-6-6H6a2 2 0 0 0-2 2v16c0 1.1.9 2 2 2h6"></path>
+                                          <path d="M14 3v5h5M18 21v-6M15 18h6"></path>
+                                        </svg>
+                                        CONTRACT INFORMATION
+                                      </h3>
+                                      <div className="flex items-center gap-2">
+                                        <span className={`text-xs font-medium px-2 py-1 rounded-full flex items-center ${
+                                          item.status === "Returned"
+                                            ? "bg-green-100 text-green-700"
+                                            : item.status === "Borrwing" && contractsMap[item.requestId] && 
+                                              isExpiringSoon(contractsMap[item.requestId].expectedReturnDate)
+                                              ? "bg-red-100 text-red-700"
+                                            : "bg-blue-100 text-blue-700"
+                                        }`}>
+                                          {item.status === "Returned" ? (
+                                            <>
+                                              <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                                              </svg>
+                                              Returned
+                                            </>
+                                          ) : item.status === "Borrwing" && contractsMap[item.requestId] && 
+                                             isExpiringSoon(contractsMap[item.requestId].expectedReturnDate) ? (
+                                            <>
+                                              <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                              </svg>
+                                              Due Soon
+                                            </>
+                                          ) : (
+                                            <>
+                                              <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                                              </svg>
+                                              Borrwing
+                                            </>
+                                          )}
+                                        </span>
+                                        
+                                        {reportedDamageItems[item.borrowHistoryId] && (
+                                          <span className="text-xs font-medium px-2 py-1 bg-gray-100 text-gray-700 rounded-full flex items-center">
+                                            <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                                            </svg>
+                                            Damage Reported
+                                          </span>
+                                        )}
+                                      </div>
+                                    </div>
+                                    
+                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                      <div className="space-y-4">
+                                        <div className="grid grid-cols-2 gap-3">
+                                          <div className="flex flex-col p-3 bg-gray-50 rounded-md">
+                                            <p className="text-xs text-gray-500">Contract ID</p>
+                                            <p className="text-sm font-medium text-amber-600">
+                                              #{contractsMap[item.requestId].contractId}
+                                            </p>
+                                          </div>
+                                          
+                                          <div className="flex flex-col p-3 bg-gray-50 rounded-md">
+                                            <p className="text-xs text-gray-500">Item Value</p>
+                                            <p className="text-sm font-medium text-green-600">
+                                              {contractsMap[item.requestId]?.itemValue 
+                                                ? formatCurrency(contractsMap[item.requestId].itemValue) 
+                                                : "N/A"}
+                                            </p>
+                                          </div>
+                                          
+                                          <div className="flex flex-col p-3 bg-gray-50 rounded-md">
+                                            <p className="text-xs text-gray-500">Expected Return</p>
+                                            <p className={`text-sm font-medium ${
+                                              item.status === "Borrwing" && 
+                                              contractsMap[item.requestId] && 
+                                              isExpiringSoon(contractsMap[item.requestId].expectedReturnDate)
+                                                ? "text-red-600"
+                                                : "text-gray-800"
+                                            }`}>
+                                              {contractsMap[item.requestId].expectedReturnDate
+                                                ? format(
+                                                    new Date(contractsMap[item.requestId].expectedReturnDate),
+                                                    "dd MMM yyyy"
+                                                  )
+                                                : "N/A"}
+                                            </p>
+                                          </div>
+                                          
+                                          <div className="flex flex-col p-3 bg-gray-50 rounded-md">
+                                            <p className="text-xs text-gray-500">Condition</p>
+                                            <p className="text-sm font-medium">
+                                              {contractsMap[item.requestId].conditionBorrow || "N/A"}
+                                            </p>
+                                          </div>
+                                        </div>
+                                        
+                                        <div className="flex flex-col p-3 bg-gray-50 rounded-md">
+                                          <p className="text-xs text-gray-500 mb-1">Terms</p>
+                                          <p className="text-sm font-medium break-words">
+                                            {contractsMap[item.requestId].terms || "N/A"}
+                                          </p>
+                                        </div>
+                                      </div>
+                                      
+                                      {/* Contract Images Section - Enhanced */}
+                                      {contractsMap[item.requestId] && 
+                                       contractsMap[item.requestId].contractImages && 
+                                       contractsMap[item.requestId].contractImages.length > 0 && (
+                                        <div className="space-y-2">
+                                          <h4 className="text-xs font-medium text-gray-700 mb-2">Contract Images</h4>
+                                          <div className="grid grid-cols-2 gap-2">
+                                            {contractsMap[item.requestId].contractImages.map((image, index) => (
+                                              <a 
+                                                href={image} 
+                                                target="_blank" 
+                                                rel="noopener noreferrer" 
+                                                key={index} 
+                                                className="group relative block rounded-md overflow-hidden h-32 bg-gray-100"
+                                              >
+                                                <img 
+                                                  src={image} 
+                                                  alt={`Contract ${contractsMap[item.requestId].contractId} image ${index+1}`} 
+                                                  className="w-full h-full object-cover transition-transform group-hover:scale-110 duration-300"
+                                                />
+                                                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center">
+                                                  <div className="p-2 text-white text-xs font-medium">
+                                                    View Page {index + 1}
+                                                  </div>
+                                                </div>
+                                              </a>
+                                            ))}
+                                          </div>
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                )}
+
+                                {/* Actions Card - New */}
+                                <div className="bg-white p-5 rounded-lg shadow-md border-l-4 border-purple-500 transform transition-all duration-300 hover:shadow-lg">
+                                  <div className="flex items-center justify-between mb-4 pb-2 border-b">
+                                    <h3 className="text-sm font-semibold text-gray-800 flex items-center">
+                                      <svg className="w-4 h-4 mr-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                                      </svg>
+                                      ACTIONS
+                                    </h3>
+                                  </div>
+                                  
+                                  <div className="space-y-4">
+                                    <div className="flex justify-center gap-3">
+                                      {!reportedDamageItems[item.borrowHistoryId] && (
+                                        <button
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleReportDamage(item);
+                                          }}
+                                          className="flex items-center justify-center gap-2 px-3 py-2 bg-red-100 text-red-700 hover:bg-red-200 rounded-md transition-colors"
+                                        >
+                                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                                          </svg>
+                                          Report Damage
+                                        </button>
+                                      )}
+                                      
+                                      <button
+                                        onClick={() => navigate('/staff/report-damages')}
+                                        className="flex items-center justify-center gap-2 px-3 py-2 bg-amber-100 text-amber-700 hover:bg-amber-200 rounded-md transition-colors"
+                                      >
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                                        </svg>
+                                        Manage Reports
+                                      </button>
+                                    </div>
+                                    
+                                    {reportedDamageItems[item.borrowHistoryId] && (
+                                      <div className="flex items-center p-3 bg-gray-50 rounded-md">
+                                        <svg className="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                        </svg>
+                                        <p className="text-sm text-gray-700">Damage report has been submitted for this item.</p>
+                                      </div>
+                                    )}
+                                    
+                                    {item.status === "Borrwing" && contractsMap[item.requestId] && 
+                                     isExpiringSoon(contractsMap[item.requestId].expectedReturnDate) && (
+                                      <div className="flex items-center p-3 bg-red-50 rounded-md">
+                                        <svg className="w-5 h-5 text-red-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                        </svg>
+                                        <p className="text-sm text-red-700">
+                                          This item&apos;s return is due soon. Please notify the user.
+                                        </p>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
                             </div>
                           </td>
                         </tr>
@@ -1183,14 +1377,16 @@ const BorrowHistory = () => {
                     Damage Fee (₫)
                   </label>
                   <input
-                    type="number"
+                    type="text"
                     name="DamageFee"
                     value={reportData.DamageFee}
                     onChange={handleInputChange}
                     className="w-full p-2 border border-gray-300 rounded-md focus:ring-amber-500 focus:border-amber-500"
                     placeholder="Enter amount in VND"
-                    min="0"
                   />
+                  <div className="mt-1">
+                    <p className="text-xs text-gray-500">Enter the amount in Vietnamese Dong (VND)</p>
+                  </div>
                 </div>
                 
                 <div className="mb-4">
