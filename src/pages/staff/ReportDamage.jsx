@@ -9,6 +9,7 @@ import borrowhistoryApi from "../../api/borrowhistoryApi";
 import userApi from "../../api/userApi";
 import compensationTransactionApi from "../../api/compensationTransactionApi";
 import deposittransactionApi from "../../api/deposittransactionApi";
+import borrowcontractApi from "../../api/borrowcontractApi";
 import { formatCurrency } from "../../utils/moneyValidationUtils";
 
 const ReportDamage = () => {
@@ -34,6 +35,7 @@ const ReportDamage = () => {
     extraPaymentRequired: 0
   });
   const [depositsMap, setDepositsMap] = useState({});
+  const [contractsMap, setContractsMap] = useState({});
 
   useEffect(() => {
     fetchReports();
@@ -51,9 +53,15 @@ const ReportDamage = () => {
       fetchUserInfo();
       fetchItemsInfo();
       fetchMissingUserInfo();
-      fetchDeposits();
+      fetchContracts();
     }
   }, [borrowHistoryMap]);
+  
+  useEffect(() => {
+    if (Object.keys(contractsMap).length > 0) {
+      fetchDeposits();
+    }
+  }, [contractsMap]);
 
   const fetchReports = async () => {
     try {
@@ -213,29 +221,104 @@ const ReportDamage = () => {
     }
   };
 
-  const fetchDeposits = async () => {
+  const fetchContracts = async () => {
     try {
-      // Get unique contract IDs from borrow histories
-      const contractIds = [...new Set(
+      // Get unique request IDs from borrow histories
+      const requestIds = [...new Set(
         Object.values(borrowHistoryMap)
           .map(history => history.requestId)
           .filter(id => id)
       )];
       
+      if (requestIds.length > 0) {
+        // Get all contracts at once
+        const response = await borrowcontractApi.getAllBorrowContracts();
+        
+        if (response.isSuccess && Array.isArray(response.data)) {
+          // Filter contracts by requestIds and create a map
+          const contracts = {};
+          
+          // Log all contracts for debugging
+          console.log("All contracts:", response.data);
+          
+          // First, create a map of contracts by requestId
+          response.data.forEach(contract => {
+            if (requestIds.includes(contract.requestId)) {
+              contracts[contract.requestId] = contract;
+            }
+          });
+          
+          console.log("Filtered contracts by requestId:", contracts);
+          console.log("Number of contracts mapped:", Object.keys(contracts).length);
+          console.log("Request IDs that we needed:", requestIds);
+          
+          setContractsMap(contracts);
+        } else {
+          console.error("Failed to fetch contracts:", response.message);
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching contracts:", error);
+    }
+  };
+
+  const fetchDeposits = async () => {
+    try {
+      // Get the actual contract IDs from the contracts map
+      const contractIds = [...new Set(
+        Object.values(contractsMap)
+          .map(contract => contract.contractId)
+          .filter(id => id)
+      )];
+      
+      console.log("Contracts map:", contractsMap);
+      console.log("Fetching deposits for contract IDs:", contractIds);
+      
       if (contractIds.length > 0) {
         const response = await deposittransactionApi.getAllDepositTransactions();
         
         if (response.isSuccess && Array.isArray(response.data)) {
+          console.log("All deposit transactions:", response.data);
+          
           // Create a map of deposits by contract ID
           const deposits = {};
+          
+          // Group deposit transactions by contractId to find the valid deposit for each contract
+          const depositsByContract = {};
+          
           response.data.forEach(deposit => {
             if (deposit.contractId) {
-              deposits[deposit.contractId] = deposit;
+              // Initialize array if it doesn't exist
+              if (!depositsByContract[deposit.contractId]) {
+                depositsByContract[deposit.contractId] = [];
+              }
+              
+              // Add this deposit to the contract's array
+              depositsByContract[deposit.contractId].push(deposit);
+            }
+          });
+          
+          console.log("Grouped deposits by contract:", depositsByContract);
+          
+          // For each contract, find the valid deposit amount
+          Object.keys(depositsByContract).forEach(contractId => {
+            // Sort deposits by date (newest first) to get the most recent valid deposit
+            const contractDeposits = depositsByContract[contractId].sort((a, b) => 
+              new Date(b.depositDate || 0) - new Date(a.depositDate || 0)
+            );
+            
+            // Use the most recent deposit
+            if (contractDeposits.length > 0) {
+              deposits[contractId] = contractDeposits[0];
+              console.log(`Deposit for contract ${contractId}:`, deposits[contractId]);
             }
           });
           
           setDepositsMap(deposits);
+          console.log("Final deposits map:", deposits);
         }
+      } else {
+        console.warn("No valid contract IDs found for fetching deposits");
       }
     } catch (error) {
       console.error("Error fetching deposits:", error);
@@ -258,9 +341,15 @@ const ReportDamage = () => {
   const openCompensationModal = (report) => {
     setSelectedReport(report);
     
-    // Get the borrowHistory and deposit information
+    // Get the borrowHistory information
     const borrowHistory = borrowHistoryMap[report.borrowHistoryId] || {};
-    const contractId = borrowHistory.requestId;
+    const requestId = borrowHistory.requestId;
+    
+    // Get the contract information using requestId
+    const contract = contractsMap[requestId] || {};
+    const contractId = contract.contractId || 0; // Use actual contractId from contract
+    
+    // Get deposit information using the contractId
     const deposit = depositsMap[contractId] || { amount: 0 };
     
     // Get the damage fee
@@ -269,17 +358,62 @@ const ReportDamage = () => {
     // Default used deposit is the available deposit amount
     const depositAmount = deposit.amount || 0;
     
-    // Calculate extra payment required if damage fee exceeds deposit
-    const extraPayment = Math.max(0, damageFee - depositAmount);
+    // Check if this is a zero damage fee case
+    if (damageFee === 0) {
+      // If damage fee is 0, we'll just record the transaction with deposit amount
+      // No extra payment needed and we'll return the full deposit to customer
+      setCompensationData({
+        reportId: report.reportId,
+        amount: 0,
+        paymentMethod: "Cash",
+        notes: "No damage fee. Full deposit will be returned to customer.",
+        usedDepositAmount: 0,
+        extraPaymentRequired: 0
+      });
+      
+      console.log("Zero damage fee case - recording compensation with no charges");
+    } 
+    // Check if damage fee is less than deposit
+    else if (damageFee < depositAmount) {
+      // Damage fee is less than deposit, so we'll use part of the deposit
+      // No extra payment needed and we'll return the remaining deposit to customer
+      setCompensationData({
+        reportId: report.reportId,
+        amount: damageFee,
+        paymentMethod: "Cash",
+        notes: `Damage fee (${formatCurrency(damageFee)}) is less than deposit (${formatCurrency(depositAmount)}). Partial deposit will be returned.`,
+        usedDepositAmount: damageFee,
+        extraPaymentRequired: 0
+      });
+      
+      console.log("Partial deposit usage case - damage fee less than deposit");
+    }
+    else {
+      // Normal case with damage fee
+      // Calculate extra payment required if damage fee exceeds deposit
+      const extraPayment = Math.max(0, damageFee - depositAmount);
+      
+      setCompensationData({
+        reportId: report.reportId,
+        amount: damageFee,
+        paymentMethod: "Cash",
+        notes: extraPayment > 0 ? `Damage fee (${formatCurrency(damageFee)}) exceeds deposit (${formatCurrency(depositAmount)}). Additional payment required.` : "",
+        usedDepositAmount: depositAmount,
+        extraPaymentRequired: extraPayment
+      });
+    }
     
-    setCompensationData({
-      reportId: report.reportId,
-      amount: damageFee,
-      paymentMethod: "Cash",
-      notes: "",
-      usedDepositAmount: depositAmount,
-      extraPaymentRequired: extraPayment
-    });
+    // Log detailed information for debugging
+    console.log("Opening compensation modal with:");
+    console.log("- Report:", report);
+    console.log("- Borrow History:", borrowHistory);
+    console.log("- Request ID:", requestId);
+    console.log("- Contract:", contract);
+    console.log("- Contract ID:", contractId);
+    console.log("- Deposit object:", deposit);
+    console.log("- Deposit amount:", depositAmount);
+    console.log("- Damage fee:", damageFee);
+    console.log("- Compensation data:", compensationData);
     
     setShowCompensationModal(true);
   };
@@ -303,8 +437,15 @@ const ReportDamage = () => {
     // Get the damage fee and deposit amount for reference
     const damageFee = selectedReport?.damageFee || 0;
     const borrowHistory = borrowHistoryMap[selectedReport?.borrowHistoryId] || {};
-    const contractId = borrowHistory.requestId;
-    const depositAmount = depositsMap[contractId]?.amount || 0;
+    const requestId = borrowHistory.requestId;
+    
+    // Get the contract information using requestId
+    const contract = contractsMap[requestId] || {};
+    const contractId = contract.contractId || 0;
+    
+    // Get deposit information using the contractId
+    const deposit = depositsMap[contractId] || { amount: 0 };
+    const depositAmount = deposit.amount || 0;
     
     if (type === 'number') {
       if (name === 'amount') {
@@ -385,38 +526,71 @@ const ReportDamage = () => {
     
     try {
       const borrowHistory = borrowHistoryMap[selectedReport.borrowHistoryId] || {};
-      const contractId = parseInt(borrowHistory.requestId) || 0;
+      const requestId = borrowHistory.requestId || 0;
       
-      // Validate the compensation values
-      const totalAmount = parseFloat(compensationData.amount) || 0;
-      const usedDeposit = parseFloat(compensationData.usedDepositAmount) || 0;
-      const extraPayment = parseFloat(compensationData.extraPaymentRequired) || 0;
+      // Get the contract information using requestId
+      const contract = contractsMap[requestId] || {};
+      const contractId = contract.contractId || 0;
       
-      // Ensure the sum matches
-      if (Math.abs((usedDeposit + extraPayment) - totalAmount) > 0.01) {
-        toast.error("The deposit amount and extra payment must add up to the total compensation amount");
-        return;
+      // Check if this is a zero damage fee case
+      const isZeroDamageFee = selectedReport.damageFee === 0;
+      
+      // Get deposit information
+      const deposit = depositsMap[contractId] || { amount: 0 };
+      
+      let compensationTransactionData;
+      
+      if (isZeroDamageFee) {
+        // Zero damage fee case - record a transaction showing full deposit return
+        compensationTransactionData = {
+          contractId: contractId,
+          userId: parseInt(borrowHistory.userId) || 0, 
+          reportDamageId: parseInt(selectedReport.reportId) || 0,
+          depositTransactionId: deposit.depositTransactionId || 0,
+          compensationAmount: 0, // No compensation amount
+          usedDepositAmount: 0, // No deposit used
+          extraPaymentRequired: 0, // No extra payment
+          status: "done"
+        };
+        
+        console.log("Zero damage fee compensation data:", compensationTransactionData);
+      } else {
+        // Regular damage fee case - validate the compensation values
+        const totalAmount = parseFloat(compensationData.amount) || 0;
+        const usedDeposit = parseFloat(compensationData.usedDepositAmount) || 0;
+        const extraPayment = parseFloat(compensationData.extraPaymentRequired) || 0;
+        
+        // Ensure the sum matches
+        if (Math.abs((usedDeposit + extraPayment) - totalAmount) > 0.01) {
+          toast.error("The deposit amount and extra payment must add up to the total compensation amount");
+          return;
+        }
+        
+        compensationTransactionData = {
+          contractId: contractId,
+          userId: parseInt(borrowHistory.userId) || 0, 
+          reportDamageId: parseInt(selectedReport.reportId) || 0,
+          depositTransactionId: deposit.depositTransactionId || 0,
+          compensationAmount: totalAmount,
+          usedDepositAmount: usedDeposit,
+          extraPaymentRequired: extraPayment,
+          status: "done"
+        };
       }
       
-      // Create compensation transaction data
-      const compensationTransactionData = {
-        contractId: contractId,
-        userId: parseInt(borrowHistory.userId) || 0, 
-        reportDamageId: parseInt(selectedReport.reportId) || 0,
-        depositTransactionId: 0,
-        compensationAmount: totalAmount,
-        usedDepositAmount: usedDeposit,
-        extraPaymentRequired: extraPayment,
-        status: "done"
-      };
-      
+      // Log the contract and transaction data for debugging
+      console.log("Submitting compensation with contract:", contract);
+      console.log("Contract ID:", contractId);
       console.log("Sending transaction data:", compensationTransactionData);
       
       // Call the API to create a compensation transaction
       const transactionResponse = await compensationTransactionApi.createCompensationTransaction(compensationTransactionData);
       
       if (transactionResponse.isSuccess) {
-        toast.success("Compensation transaction recorded successfully");
+        toast.success(isZeroDamageFee 
+          ? "Deposit return recorded successfully" 
+          : "Compensation transaction recorded successfully"
+        );
         
         // Get the item ID from the selected report
         const itemId = selectedReport.itemId;
@@ -459,15 +633,24 @@ const ReportDamage = () => {
                 }
               }));
             } else {
-              toast.warning("Compensation recorded but failed to update item status");
+              toast.warning(isZeroDamageFee
+                ? "Deposit return recorded but failed to update item status"
+                : "Compensation recorded but failed to update item status"
+              );
               console.error("Failed to update item status:", updateResponse.message);
             }
           } else {
-            toast.warning("Compensation recorded but couldn't retrieve item data for status update");
+            toast.warning(isZeroDamageFee
+              ? "Deposit return recorded but couldn't retrieve item data for status update"
+              : "Compensation recorded but couldn't retrieve item data for status update"
+            );
           }
         } catch (itemError) {
           console.error("Error updating item status:", itemError);
-          toast.warning("Compensation recorded but failed to update item status");
+          toast.warning(isZeroDamageFee
+            ? "Deposit return recorded but failed to update item status"
+            : "Compensation recorded but failed to update item status"
+          );
         }
         
         closeCompensationModal();
@@ -484,11 +667,17 @@ const ReportDamage = () => {
         fetchCompensationTransactions();
       } else {
         console.error("Transaction response error:", transactionResponse);
-        toast.error(`Failed to create compensation transaction: ${transactionResponse.message || 'Unknown error'}`);
+        toast.error(isZeroDamageFee
+          ? `Failed to record deposit return: ${transactionResponse.message || 'Unknown error'}`
+          : `Failed to create compensation transaction: ${transactionResponse.message || 'Unknown error'}`
+        );
       }
     } catch (error) {
       console.error("Error recording compensation:", error);
-      toast.error("Failed to record compensation transaction");
+      toast.error(selectedReport.damageFee === 0
+        ? "Failed to record deposit return"
+        : "Failed to record compensation transaction"
+      );
     }
   };
 
@@ -669,13 +858,18 @@ const ReportDamage = () => {
                       <>
                         <tr
                           key={report.reportId}
-                          className="hover:bg-gray-50 cursor-pointer"
+                          className="hover:bg-gray-50 cursor-pointer transition-colors border-b border-gray-100 last:border-b-0"
                           onClick={() => toggleRowExpansion(report.reportId)}
                         >
                           <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                            #{report.reportId}
-                            <div className="text-xs text-gray-500">
-                              BorrowHistory #{report.borrowHistoryId}
+                            <div className="flex items-center">
+                              <span className="w-8 h-8 flex items-center justify-center rounded-full bg-amber-100 text-amber-700 mr-3 text-xs font-bold">
+                                {report.reportId}
+                              </span>
+                              <div>
+                                <span className="block text-sm"># {report.reportId}</span>
+                                <span className="text-xs text-gray-500">BH-{report.borrowHistoryId}</span>
+                              </div>
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
@@ -688,7 +882,7 @@ const ReportDamage = () => {
                               </span>
                               {userInfo.studentCode && (
                                 <span className="text-xs text-gray-500">
-                                  Student ID: {userInfo.studentCode}
+                                  ID: {userInfo.studentCode}
                                 </span>
                               )}
                             </div>
@@ -713,19 +907,31 @@ const ReportDamage = () => {
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <span
-                              className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                              className={`px-3 py-1.5 inline-flex items-center text-xs leading-4 font-medium rounded-full ${
                                 reportStatus === "done" 
-                                  ? "bg-green-100 text-green-800" 
-                                  : "bg-yellow-100 text-yellow-800"
+                                  ? report.damageFee === 0 && hasCompensation(report.reportId)
+                                    ? "bg-green-100 text-green-800" 
+                                    : "bg-green-100 text-green-800"
+                                  : "bg-amber-100 text-amber-800"
                               }`}
                             >
-                              {reportStatus === "done" ? "Compensated" : "Pending"}
+                              <span className={`w-1.5 h-1.5 rounded-full mr-1.5 ${
+                                reportStatus === "done"
+                                  ? "bg-green-500"
+                                  : "bg-amber-500"
+                              }`}></span>
+                              {reportStatus === "done" 
+                                ? report.damageFee === 0 && hasCompensation(report.reportId)
+                                  ? "Deposit Returned" 
+                                  : "Compensated"
+                                : "Pending"
+                              }
                             </span>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                             <div className="flex space-x-2">
                               <button 
-                                className="p-1.5 bg-blue-100 text-blue-700 rounded-full hover:bg-blue-200 transition-colors"
+                                className="p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-full transition-colors"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   toggleRowExpansion(report.reportId);
@@ -737,20 +943,20 @@ const ReportDamage = () => {
                               
                               {!hasCompensation(report.reportId) ? (
                                 <button 
-                                  className="p-1.5 bg-green-100 text-green-700 rounded-full hover:bg-green-200 transition-colors"
+                                  className="p-2 text-green-600 hover:text-green-800 hover:bg-green-50 rounded-full transition-colors"
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     openCompensationModal(report);
                                   }}
-                                  title="Record Compensation"
+                                  title={report.damageFee === 0 ? "Record Deposit Return" : "Record Compensation"}
                                 >
                                   <FaMoneyBillWave size={14} />
                                 </button>
                               ) : (
                                 <button 
-                                  className="p-1.5 bg-gray-100 text-gray-400 rounded-full cursor-not-allowed"
+                                  className="p-2 bg-gray-100 text-gray-400 rounded-full cursor-not-allowed"
                                   disabled
-                                  title="Already Compensated"
+                                  title={report.damageFee === 0 ? "Deposit Already Returned" : "Already Compensated"}
                                 >
                                   <FaMoneyBillWave size={14} />
                                 </button>
@@ -760,114 +966,282 @@ const ReportDamage = () => {
                         </tr>
                         
                         {expandedRow === report.reportId && (
-                          <tr className="bg-amber-50">
-                            <td colSpan="7" className="px-6 py-4">
+                          <tr className="bg-gray-50">
+                            <td colSpan="7" className="px-6 py-6">
                               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 {/* Report Details */}
-                                <div className="bg-white p-5 rounded-lg shadow border border-gray-200">
+                                <div className="bg-white p-5 rounded-lg shadow-sm border border-gray-200">
                                   <h3 className="text-sm font-semibold text-gray-800 mb-4 pb-2 border-b flex items-center">
-                                    <FaHistory className="w-4 h-4 mr-2 text-amber-600" />
+                                    <span className="w-5 h-5 flex items-center justify-center rounded-full bg-indigo-100 text-indigo-700 mr-2">
+                                      <FaHistory className="w-3 h-3" />
+                                    </span>
                                     DAMAGE REPORT DETAILS
                                   </h3>
                                   <div className="grid grid-cols-2 gap-4 text-sm">
-                                    <div>
+                                    <div className="p-3 bg-gray-50 rounded-md">
                                       <p className="text-gray-500 text-xs">Report ID</p>
-                                      <p className="font-medium mt-1">#{report.reportId}</p>
+                                      <p className="font-medium mt-1 text-gray-900">#{report.reportId}</p>
                                     </div>
-                                    <div>
+                                    <div className="p-3 bg-gray-50 rounded-md">
                                       <p className="text-gray-500 text-xs">Borrow History ID</p>
-                                      <p className="font-medium mt-1">#{report.borrowHistoryId}</p>
+                                      <p className="font-medium mt-1 text-gray-900">#{report.borrowHistoryId}</p>
                                     </div>
-                                    <div>
+                                    <div className="p-3 bg-gray-50 rounded-md">
                                       <p className="text-gray-500 text-xs">Reported On</p>
-                                      <p className="font-medium mt-1">{formatDate(report.createdDate)}</p>
+                                      <p className="font-medium mt-1 text-gray-900">{formatDate(report.createdDate)}</p>
                                     </div>
-                                    <div>
+                                    <div className="p-3 bg-gray-50 rounded-md">
                                       <p className="text-gray-500 text-xs">Status</p>
                                       <p className="font-medium mt-1">
                                         <span
                                           className={`px-2 py-0.5 rounded-full text-xs ${
                                             reportStatus === "done" 
                                               ? "bg-green-100 text-green-800" 
-                                              : "bg-yellow-100 text-yellow-800"
+                                              : "bg-amber-100 text-amber-800"
                                           }`}
                                         >
                                           {reportStatus === "done" ? "Compensated" : "Pending"}
                                         </span>
                                       </p>
                                     </div>
-                                    <div className="col-span-2">
+                                    <div className="col-span-2 p-3 bg-gray-50 rounded-md">
                                       <p className="text-gray-500 text-xs">Condition Before Borrow</p>
-                                      <p className="font-medium mt-1">{report.conditionBeforeBorrow || "N/A"}</p>
+                                      <p className="font-medium mt-1 text-gray-900">{report.conditionBeforeBorrow || "N/A"}</p>
                                     </div>
-                                    <div className="col-span-2">
+                                    <div className="col-span-2 p-3 bg-gray-50 rounded-md">
                                       <p className="text-gray-500 text-xs">Condition After Return</p>
-                                      <p className="font-medium mt-1">{report.conditionAfterReturn || "N/A"}</p>
+                                      <p className="font-medium mt-1 text-gray-900">{report.conditionAfterReturn || "N/A"}</p>
                                     </div>
-                                    <div className="col-span-2">
+                                    <div className="col-span-2 p-3 bg-gray-50 rounded-md">
                                       <p className="text-gray-500 text-xs">Notes</p>
-                                      <p className="font-medium mt-1">{report.note || "No additional notes"}</p>
+                                      <p className="font-medium mt-1 text-gray-900">{report.note || "No additional notes"}</p>
                                     </div>
                                   </div>
                                 </div>
                                 
                                 {/* Financial Information */}
-                                <div className="bg-white p-5 rounded-lg shadow border border-gray-200">
+                                <div className="bg-white p-5 rounded-lg shadow-sm border border-gray-200">
                                   <h3 className="text-sm font-semibold text-gray-800 mb-4 pb-2 border-b flex items-center">
-                                    <FaMoneyBillWave className="w-4 h-4 mr-2 text-amber-600" />
+                                    <span className="w-5 h-5 flex items-center justify-center rounded-full bg-green-100 text-green-700 mr-2">
+                                      <FaMoneyBillWave className="w-3 h-3" />
+                                    </span>
                                     FINANCIAL INFORMATION
                                   </h3>
                                   <div className="grid grid-cols-2 gap-4 text-sm">
-                                    <div>
+                                    <div className="p-3 bg-gray-50 rounded-md">
                                       <p className="text-gray-500 text-xs">Damage Fee</p>
                                       <p className="font-medium mt-1 text-amber-600">{formatCurrency(report.damageFee || 0)}</p>
                                     </div>
                                     
                                     {compensation && (
                                       <>
-                                        <div>
-                                          <p className="text-gray-500 text-xs">Compensation Amount</p>
-                                          <p className="font-medium mt-1 text-green-600">{formatCurrency(compensation.compensationAmount || 0)}</p>
-                                        </div>
-                                        <div>
-                                          <p className="text-gray-500 text-xs">Used Deposit</p>
-                                          <p className="font-medium mt-1 text-blue-600">{formatCurrency(compensation.usedDepositAmount || 0)}</p>
-                                        </div>
-                                        <div>
-                                          <p className="text-gray-500 text-xs">Extra Payment</p>
-                                          <p className="font-medium mt-1 text-red-600">{formatCurrency(compensation.extraPaymentRequired || 0)}</p>
-                                        </div>
-                                        <div>
-                                          <p className="text-gray-500 text-xs">Compensation Date</p>
-                                          <p className="font-medium mt-1">{formatDate(report.compensationDate) || "N/A"}</p>
-                                        </div>
-                                        <div>
-                                          <p className="text-gray-500 text-xs">Compensation Notes</p>
-                                          <p className="font-medium mt-1">{report.compensationNotes || "No additional notes"}</p>
-                                        </div>
+                                        {report.damageFee === 0 ? (
+                                          // Zero damage fee case
+                                          <div className="col-span-2">
+                                            <div className="p-4 bg-green-50 rounded-md border border-green-100 mt-2">
+                                              <div className="flex items-center text-green-700 mb-3">
+                                                <span className="w-6 h-6 flex items-center justify-center rounded-full bg-green-200 text-green-700 mr-2">
+                                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                                  </svg>
+                                                </span>
+                                                <span className="font-medium">Full Deposit Returned</span>
+                                              </div>
+                                              
+                                              <div className="space-y-2 pl-8">
+                                                <div className="flex justify-between items-center">
+                                                  <span className="text-gray-700">Original Deposit:</span>
+                                                  <span className="font-medium text-green-600">
+                                                    {formatCurrency((() => {
+                                                      const borrowHistory = borrowHistoryMap[report.borrowHistoryId] || {};
+                                                      const requestId = borrowHistory.requestId;
+                                                      const contract = contractsMap[requestId] || {};
+                                                      const contractId = contract.contractId || 0;
+                                                      const deposit = depositsMap[contractId];
+                                                      return deposit?.amount || 0;
+                                                    })())}
+                                                  </span>
+                                                </div>
+                                                
+                                                <div className="flex justify-between items-center border-t border-green-100 pt-2 mt-2">
+                                                  <span className="text-gray-700 font-medium">Returned to Customer:</span>
+                                                  <span className="font-semibold text-green-600">
+                                                    {formatCurrency((() => {
+                                                      const borrowHistory = borrowHistoryMap[report.borrowHistoryId] || {};
+                                                      const requestId = borrowHistory.requestId;
+                                                      const contract = contractsMap[requestId] || {};
+                                                      const contractId = contract.contractId || 0;
+                                                      const deposit = depositsMap[contractId];
+                                                      return deposit?.amount || 0;
+                                                    })())}
+                                                  </span>
+                                                </div>
+                                              </div>
+                                              
+                                              <div className="mt-3 pt-2 border-t border-green-100 flex items-center text-xs text-gray-500">
+                                                <svg className="w-4 h-4 mr-1 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                                </svg>
+                                                {formatDate(report.compensationDate) || "No date recorded"}
+                                              </div>
+                                            </div>
+                                          </div>
+                                        ) : compensation.compensationAmount < (() => {
+                                          const borrowHistory = borrowHistoryMap[report.borrowHistoryId] || {};
+                                          const requestId = borrowHistory.requestId;
+                                          const contract = contractsMap[requestId] || {};
+                                          const contractId = contract.contractId || 0;
+                                          const deposit = depositsMap[contractId];
+                                          return deposit?.amount || 0;
+                                        })() ? (
+                                          // Partial deposit return case - damage fee less than deposit
+                                          <div className="col-span-2">
+                                            <div className="p-4 bg-green-50 rounded-md border border-green-100 mt-2">
+                                              <div className="flex items-center text-green-700 mb-3">
+                                                <span className="w-6 h-6 flex items-center justify-center rounded-full bg-green-200 text-green-700 mr-2">
+                                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                                  </svg>
+                                                </span>
+                                                <span className="font-medium">Partial Deposit Returned</span>
+                                              </div>
+                                              
+                                              <div className="space-y-2 pl-8">
+                                                <div className="flex justify-between items-center">
+                                                  <span className="text-gray-700">Original Deposit:</span>
+                                                  <span className="font-medium text-green-600">
+                                                    {formatCurrency((() => {
+                                                      const borrowHistory = borrowHistoryMap[report.borrowHistoryId] || {};
+                                                      const requestId = borrowHistory.requestId;
+                                                      const contract = contractsMap[requestId] || {};
+                                                      const contractId = contract.contractId || 0;
+                                                      const deposit = depositsMap[contractId];
+                                                      return deposit?.amount || 0;
+                                                    })())}
+                                                  </span>
+                                                </div>
+                                                
+                                                <div className="flex justify-between items-center">
+                                                  <span className="text-gray-700">Damage Fee:</span>
+                                                  <span className="font-medium text-amber-600">
+                                                    {formatCurrency(compensation.compensationAmount || 0)}
+                                                  </span>
+                                                </div>
+                                                
+                                                <div className="flex justify-between items-center">
+                                                  <span className="text-gray-700">Used from Deposit:</span>
+                                                  <span className="font-medium text-amber-600">
+                                                    {formatCurrency(compensation.usedDepositAmount || 0)}
+                                                  </span>
+                                                </div>
+                                                
+                                                <div className="flex justify-between items-center border-t border-green-100 pt-2 mt-2">
+                                                  <span className="text-gray-700 font-medium">Returned to Customer:</span>
+                                                  <span className="font-semibold text-green-600">
+                                                    {formatCurrency((() => {
+                                                      const borrowHistory = borrowHistoryMap[report.borrowHistoryId] || {};
+                                                      const requestId = borrowHistory.requestId;
+                                                      const contract = contractsMap[requestId] || {};
+                                                      const contractId = contract.contractId || 0;
+                                                      const deposit = depositsMap[contractId];
+                                                      return Math.max(0, (deposit?.amount || 0) - (compensation.usedDepositAmount || 0));
+                                                    })())}
+                                                  </span>
+                                                </div>
+                                              </div>
+                                              
+                                              <div className="mt-3 pt-2 border-t border-green-100 flex items-center text-xs text-gray-500">
+                                                <svg className="w-4 h-4 mr-1 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                                </svg>
+                                                {formatDate(report.compensationDate) || "No date recorded"}
+                                              </div>
+                                            </div>
+                                          </div>
+                                        ) : (
+                                          // Regular damage fee case - exceeds deposit
+                                          <div className="col-span-2">
+                                            <div className="p-4 bg-amber-50 rounded-md border border-amber-100 mt-2">
+                                              <div className="flex items-center text-amber-700 mb-3">
+                                                <span className="w-6 h-6 flex items-center justify-center rounded-full bg-amber-200 text-amber-700 mr-2">
+                                                  <FaMoneyBillWave className="w-3 h-3" />
+                                                </span>
+                                                <span className="font-medium">Damage Compensation</span>
+                                              </div>
+                                              
+                                              <div className="space-y-2 pl-8">
+                                                <div className="flex justify-between items-center">
+                                                  <span className="text-gray-700">Total Damage Fee:</span>
+                                                  <span className="font-medium text-amber-600">
+                                                    {formatCurrency(compensation.compensationAmount || 0)}
+                                                  </span>
+                                                </div>
+                                                
+                                                <div className="flex justify-between items-center">
+                                                  <span className="text-gray-700">Used Deposit:</span>
+                                                  <span className="font-medium text-blue-600">
+                                                    {formatCurrency(compensation.usedDepositAmount || 0)}
+                                                  </span>
+                                                </div>
+                                                
+                                                <div className="flex justify-between items-center">
+                                                  <span className="text-gray-700">Extra Payment:</span>
+                                                  <span className="font-medium text-red-600">
+                                                    {formatCurrency(compensation.extraPaymentRequired || 0)}
+                                                  </span>
+                                                </div>
+                                                
+                                                {compensation.extraPaymentRequired > 0 && (
+                                                  <div className="mt-2 bg-red-50 p-2 rounded border border-red-100">
+                                                    <p className="text-xs text-red-700">Customer paid additional charges beyond deposit amount</p>
+                                                  </div>
+                                                )}
+                                                
+                                                {report.compensationNotes && (
+                                                  <div className="mt-2 pt-2 border-t border-amber-100">
+                                                    <p className="text-xs text-gray-500">Notes: {report.compensationNotes}</p>
+                                                  </div>
+                                                )}
+                                              </div>
+                                              
+                                              <div className="mt-3 pt-2 border-t border-amber-100 flex items-center text-xs text-gray-500">
+                                                <svg className="w-4 h-4 mr-1 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                                </svg>
+                                                {formatDate(report.compensationDate) || "No date recorded"}
+                                              </div>
+                                            </div>
+                                          </div>
+                                        )}
                                       </>
                                     )}
                                     
                                     {!hasCompensation(report.reportId) ? (
                                       <div className="col-span-2 mt-4">
                                         <button
-                                          className="w-full px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
+                                          className="w-full px-4 py-3 bg-gradient-to-r from-green-600 to-green-500 text-white rounded-md hover:from-green-700 hover:to-green-600 transition-colors shadow-sm flex items-center justify-center gap-2"
                                           onClick={(e) => {
                                             e.stopPropagation();
                                             openCompensationModal(report);
                                           }}
                                         >
                                           <FaMoneyBillWave />
-                                          Record Compensation
+                                          {report.damageFee === 0 
+                                            ? "Record Deposit Return" 
+                                            : "Record Compensation"
+                                          }
                                         </button>
                                       </div>
                                     ) : (
                                       <div className="col-span-2 mt-4">
-                                        <div className="w-full px-4 py-2 bg-gray-100 text-gray-500 rounded-md flex items-center justify-center gap-2">
+                                        <div className="w-full px-4 py-3 bg-gray-100 text-gray-500 rounded-md flex items-center justify-center gap-2">
                                           <svg className="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                                             <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                                           </svg>
-                                          Compensation Recorded
+                                          {report.damageFee === 0 
+                                            ? "Deposit Already Returned" 
+                                            : "Compensation Recorded"
+                                          }
                                         </div>
                                       </div>
                                     )}
@@ -876,29 +1250,34 @@ const ReportDamage = () => {
                                 
                                 {/* Damage Image */}
                                 {report.imageUrlReport && (
-                                  <div className="bg-white p-5 rounded-lg shadow border border-gray-200">
+                                  <div className="bg-white p-5 rounded-lg shadow-sm border border-gray-200">
                                     <h3 className="text-sm font-semibold text-gray-800 mb-4 pb-2 border-b flex items-center">
-                                      <svg 
-                                        className="w-4 h-4 mr-2 text-amber-600" 
-                                        xmlns="http://www.w3.org/2000/svg" 
-                                        viewBox="0 0 24 24"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        strokeWidth="2"
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                      >
-                                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-                                        <circle cx="8.5" cy="8.5" r="1.5"/>
-                                        <polyline points="21 15 16 10 5 21"/>
-                                      </svg>
-                                      DAMAGE IMAGES
+                                      <span className="w-5 h-5 flex items-center justify-center rounded-full bg-red-100 text-red-700 mr-2">
+                                        <svg 
+                                          className="w-3 h-3" 
+                                          xmlns="http://www.w3.org/2000/svg" 
+                                          viewBox="0 0 24 24"
+                                          fill="none"
+                                          stroke="currentColor"
+                                          strokeWidth="2"
+                                          strokeLinecap="round"
+                                          strokeLinejoin="round"
+                                        >
+                                          <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                                          <circle cx="8.5" cy="8.5" r="1.5"/>
+                                          <polyline points="21 15 16 10 5 21"/>
+                                        </svg>
+                                      </span>
+                                      DAMAGE EVIDENCE
                                     </h3>
-                                    <img
-                                      src={report.imageUrlReport}
-                                      alt="Damage Evidence"
-                                      className="w-full h-auto rounded-lg shadow-sm object-contain max-h-60"
-                                    />
+                                    <div className="relative overflow-hidden rounded-lg border border-gray-200">
+                                      <img
+                                        src={report.imageUrlReport}
+                                        alt="Damage Evidence"
+                                        className="w-full h-auto object-contain max-h-60"
+                                      />
+                                      <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent"></div>
+                                    </div>
                                   </div>
                                 )}
                               </div>
@@ -912,11 +1291,11 @@ const ReportDamage = () => {
                   <tr>
                     <td
                       colSpan="7"
-                      className="px-6 py-10 text-center text-gray-500"
+                      className="px-6 py-16 text-center text-gray-500"
                     >
                       <div className="flex flex-col items-center">
                         <svg
-                          className="w-12 h-12 text-gray-300 mb-4"
+                          className="w-16 h-16 text-gray-300 mb-4"
                           fill="none"
                           stroke="currentColor"
                           viewBox="0 0 24 24"
@@ -929,10 +1308,10 @@ const ReportDamage = () => {
                             d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
                           />
                         </svg>
-                        <p className="text-lg font-medium">
+                        <h3 className="text-lg font-medium text-gray-700 mb-1">
                           No damage reports found
-                        </p>
-                        <p className="text-sm">
+                        </h3>
+                        <p className="text-sm text-gray-500">
                           {searchTerm
                             ? "Try adjusting your search terms"
                             : filterStatus !== "all" 
@@ -950,21 +1329,21 @@ const ReportDamage = () => {
 
         {/* Pagination */}
         {!loading && filteredReports.length > 0 && (
-          <div className="flex flex-col md:flex-row justify-between items-center p-4 border-t border-gray-200 bg-gray-50">
+          <div className="flex flex-col md:flex-row justify-between items-center p-6 border-t border-gray-200 bg-gray-50 rounded-b-xl">
             <div className="text-sm text-gray-700 mb-4 md:mb-0">
               Showing{" "}
-              <span className="font-medium">{indexOfFirstItem + 1}</span> to{" "}
-              <span className="font-medium">
+              <span className="font-medium text-gray-900">{indexOfFirstItem + 1}</span> to{" "}
+              <span className="font-medium text-gray-900">
                 {Math.min(indexOfLastItem, filteredReports.length)}
               </span>{" "}
-              of <span className="font-medium">{filteredReports.length}</span>{" "}
+              of <span className="font-medium text-gray-900">{filteredReports.length}</span>{" "}
               entries
             </div>
             <div className="flex flex-wrap justify-center gap-2">
               <button
                 onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
                 disabled={currentPage === 1}
-                className="px-3 py-1 bg-gray-100 text-gray-700 rounded-md disabled:bg-gray-50 disabled:text-gray-400 hover:bg-gray-200 transition-colors"
+                className="px-3 py-1.5 bg-white border border-gray-300 text-gray-700 rounded-md disabled:bg-gray-50 disabled:text-gray-400 hover:bg-gray-50 transition-colors shadow-sm"
               >
                 Previous
               </button>
@@ -988,10 +1367,10 @@ const ReportDamage = () => {
                   <button
                     key={pageNumber}
                     onClick={() => setCurrentPage(pageNumber)}
-                    className={`px-3 py-1 rounded-md ${
+                    className={`px-3 py-1.5 rounded-md shadow-sm ${
                       currentPage === pageNumber
-                        ? "bg-amber-600 text-white"
-                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                        ? "bg-amber-600 text-white border border-amber-600"
+                        : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
                     } transition-colors`}
                   >
                     {pageNumber}
@@ -1000,11 +1379,9 @@ const ReportDamage = () => {
               })}
 
               <button
-                onClick={() =>
-                  setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-                }
+                onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
                 disabled={currentPage === totalPages}
-                className="px-3 py-1 bg-gray-100 text-gray-700 rounded-md disabled:bg-gray-50 disabled:text-gray-400 hover:bg-gray-200 transition-colors"
+                className="px-3 py-1.5 bg-white border border-gray-300 text-gray-700 rounded-md disabled:bg-gray-50 disabled:text-gray-400 hover:bg-gray-50 transition-colors shadow-sm"
               >
                 Next
               </button>
@@ -1016,12 +1393,14 @@ const ReportDamage = () => {
       {/* Compensation Modal */}
       {showCompensationModal && selectedReport && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-lg max-w-md w-full">
-            <div className="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-gray-700 to-amber-600">
+          <div className="bg-white rounded-xl shadow-lg max-w-md w-full overflow-hidden">
+            <div className="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-gray-800 to-amber-700">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-bold text-white flex items-center">
-                  <FaMoneyBillWave className="w-4 h-4 mr-2" />
-                  Record Compensation
+                  <FaMoneyBillWave className="w-5 h-5 mr-2" />
+                  {selectedReport.damageFee === 0 
+                    ? "Record Deposit Return" 
+                    : "Record Compensation"}
                 </h3>
                 <button 
                   onClick={closeCompensationModal}
@@ -1035,153 +1414,303 @@ const ReportDamage = () => {
             </div>
             
             <form onSubmit={handleSubmitCompensation}>
-              <div className="p-6 space-y-4">
+              <div className="p-6 max-h-[70vh] overflow-y-auto space-y-5">
                 {/* Summary information card */}
-                <div className="bg-gray-50 p-3 rounded-lg">
-                  <h4 className="font-medium text-sm text-gray-700 mb-2">Damage Report Information</h4>
-                  <p className="text-sm">Report #{selectedReport.reportId} for {itemsMap[selectedReport.itemId]?.itemName || "N/A"}</p>
+                <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                  <div className="flex items-center space-x-3 mb-3">
+                    <div className="bg-amber-100 p-2 rounded-full text-amber-600">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                      </svg>
+                    </div>
+                    <h4 className="font-medium text-gray-800 text-sm">Damage Report Details</h4>
+                  </div>
                   
-                  {/* Add more detailed information */}
-                  <div className="mt-2 grid grid-cols-2 gap-2 text-xs">
-                    <div>
-                      <span className="text-gray-500">Damage Fee:</span>
-                      <span className="font-medium text-amber-600 ml-1">
-                        {formatCurrency(selectedReport.damageFee || 0)}
-                      </span>
+                  <div className="flex items-center space-x-3 mb-2">
+                    <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center text-gray-500 font-bold text-xs">
+                      #{selectedReport.reportId}
                     </div>
                     <div>
-                      <span className="text-gray-500">Customer Deposit:</span>
-                      <span className="font-medium text-green-600 ml-1">
+                      <p className="text-sm font-medium text-gray-800">{itemsMap[selectedReport.itemId]?.itemName || "Unknown Device"}</p>
+                      <p className="text-xs text-gray-500">Report #{selectedReport.reportId}</p>
+                    </div>
+                  </div>
+                  
+                  {/* Damage fee and deposit summary */}
+                  <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
+                    <div className="p-3 bg-white rounded border border-gray-200">
+                      <p className="text-xs text-gray-500 mb-1">Damage Fee:</p>
+                      <p className="font-medium text-amber-600">
+                        {formatCurrency(selectedReport.damageFee || 0)}
+                      </p>
+                    </div>
+                    <div className="p-3 bg-white rounded border border-gray-200">
+                      <p className="text-xs text-gray-500 mb-1">Customer Deposit:</p>
+                      <p className="font-medium text-green-600">
                         {formatCurrency(
                           (() => {
                             const borrowHistory = borrowHistoryMap[selectedReport.borrowHistoryId] || {};
-                            const contractId = borrowHistory.requestId;
-                            return depositsMap[contractId]?.amount || 0;
+                            const requestId = borrowHistory.requestId;
+                            const contract = contractsMap[requestId] || {};
+                            const contractId = contract.contractId || 0;
+                            const deposit = depositsMap[contractId];
+                            return deposit?.amount || 0;
                           })()
                         )}
-                      </span>
+                      </p>
                     </div>
                   </div>
                 </div>
                 
-                {/* Amount field */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Total Compensation Amount
-                  </label>
-                  <div className="relative">
-                    <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500">₫</span>
-                    <input
-                      type="number"
-                      name="amount"
-                      value={compensationData.amount}
-                      onChange={handleInputChange}
-                      className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500"
-                      placeholder="0"
-                      min="0"
-                      max={selectedReport.damageFee || 0}
-                      required
-                    />
-                    <p className="mt-1 text-xs text-gray-500">
-                      Maximum: {formatCurrency(selectedReport.damageFee || 0)} (Damage Fee)
+                {selectedReport.damageFee === 0 ? (
+                  // Zero damage fee case - simplified UI
+                  <div className="bg-green-50 p-5 rounded-lg border border-green-100">
+                    <div className="flex items-center text-green-700 mb-3">
+                      <span className="w-6 h-6 flex items-center justify-center rounded-full bg-green-200 text-green-700 mr-2">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                      </span>
+                      <h4 className="font-medium">No Damage Fee</h4>
+                    </div>
+                    
+                    <p className="text-sm text-gray-700 mb-4 pl-8">
+                      There is no damage fee for this report. The full deposit will be returned to the customer.
                     </p>
-                  </div>
-                </div>
-                
-                {/* Compensation breakdown */}
-                <div className="bg-amber-50 p-4 rounded-lg border border-amber-100">
-                  <h4 className="font-medium text-sm text-amber-800 mb-3">Compensation Breakdown</h4>
-                  
-                  <div className="space-y-3">
-                    {/* Deposit Usage */}
-                    <div>
-                      <div className="flex justify-between items-center mb-1">
-                        <label className="block text-sm font-medium text-gray-700">
-                          From Customer Deposit
-                        </label>
-                        <span className="text-xs text-green-600">
-                          Available: {formatCurrency((() => {
+                    
+                    <div className="p-4 bg-white rounded-lg border border-green-100 text-sm">
+                      <div className="flex justify-between items-center mb-3">
+                        <span className="text-gray-600">Original Deposit:</span>
+                        <span className="font-medium text-green-600">
+                          {formatCurrency((() => {
                             const borrowHistory = borrowHistoryMap[selectedReport.borrowHistoryId] || {};
-                            const contractId = borrowHistory.requestId;
-                            return depositsMap[contractId]?.amount || 0;
+                            const requestId = borrowHistory.requestId;
+                            const contract = contractsMap[requestId] || {};
+                            const contractId = contract.contractId || 0;
+                            const deposit = depositsMap[contractId];
+                            return deposit?.amount || 0;
                           })())}
                         </span>
                       </div>
-                      <div className="relative">
-                        <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500">₫</span>
-                        <input
-                          type="number"
-                          name="usedDepositAmount"
-                          value={compensationData.usedDepositAmount}
-                          onChange={handleInputChange}
-                          className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500"
-                          placeholder="0"
-                          min="0"
-                          max={(() => {
-                            const borrowHistory = borrowHistoryMap[selectedReport.borrowHistoryId] || {};
-                            const contractId = borrowHistory.requestId;
-                            return Math.min(
-                              depositsMap[contractId]?.amount || 0,
-                              compensationData.amount
-                            );
-                          })()}
-                        />
-                      </div>
-                    </div>
-                    
-                    {/* Extra Payment */}
-                    <div>
-                      <div className="flex justify-between items-center mb-1">
-                        <label className="block text-sm font-medium text-gray-700">
-                          Additional Payment Required
-                        </label>
-                        <span className="text-xs text-amber-600">
-                          {compensationData.extraPaymentRequired > 0 
-                            ? "Payment needed" 
-                            : "No additional payment needed"}
+                      <div className="flex justify-between items-center mb-3">
+                        <span className="text-gray-600">Used for Compensation:</span>
+                        <span className="font-medium text-amber-600">
+                          {formatCurrency(0)}
                         </span>
                       </div>
+                      <div className="flex justify-between items-center pt-3 border-t border-green-100">
+                        <span className="font-medium text-gray-700">Amount to Return:</span>
+                        <span className="font-bold text-green-700">
+                          {formatCurrency((() => {
+                            const borrowHistory = borrowHistoryMap[selectedReport.borrowHistoryId] || {};
+                            const requestId = borrowHistory.requestId;
+                            const contract = contractsMap[requestId] || {};
+                            const contractId = contract.contractId || 0;
+                            const deposit = depositsMap[contractId];
+                            return deposit?.amount || 0;
+                          })())}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  // Regular damage fee case with compensation UI
+                  <>
+                    {/* Amount field */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Total Compensation Amount
+                      </label>
                       <div className="relative">
                         <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500">₫</span>
                         <input
                           type="number"
-                          name="extraPaymentRequired"
-                          value={compensationData.extraPaymentRequired}
+                          name="amount"
+                          value={compensationData.amount}
                           onChange={handleInputChange}
-                          className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500"
+                          className="w-full pl-8 pr-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 shadow-sm"
                           placeholder="0"
                           min="0"
+                          max={selectedReport.damageFee || 0}
+                          required
                         />
+                        <p className="mt-1.5 text-xs text-gray-500 flex items-center">
+                          <svg className="w-3 h-3 mr-1 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                          </svg>
+                          Maximum: {formatCurrency(selectedReport.damageFee || 0)} (Damage Fee)
+                        </p>
                       </div>
                     </div>
                     
-                    {/* Total Verification */}
-                    <div className="pt-2 border-t border-amber-200 flex justify-between text-sm">
-                      <span className="font-medium text-gray-700">Total:</span>
-                      <span className="font-bold text-amber-700">
-                        {formatCurrency(
-                          parseFloat(compensationData.usedDepositAmount || 0) + 
-                          parseFloat(compensationData.extraPaymentRequired || 0)
+                    {/* Compensation breakdown */}
+                    <div className="bg-amber-50 p-5 rounded-lg border border-amber-100">
+                      <h4 className="font-medium text-amber-800 mb-4 pb-2 border-b border-amber-100 flex items-center">
+                        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                        </svg>
+                        Compensation Breakdown
+                      </h4>
+                      
+                      <div className="space-y-4">
+                        {/* Deposit Usage */}
+                        <div>
+                          <div className="flex justify-between items-center mb-2">
+                            <label className="block text-sm font-medium text-gray-700">
+                              From Customer Deposit
+                            </label>
+                            <span className="text-xs text-green-600 flex items-center">
+                              <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                              </svg>
+                              Available: {formatCurrency((() => {
+                                const borrowHistory = borrowHistoryMap[selectedReport.borrowHistoryId] || {};
+                                const requestId = borrowHistory.requestId;
+                                const contract = contractsMap[requestId] || {};
+                                const contractId = contract.contractId || 0;
+                                const deposit = depositsMap[contractId];
+                                return deposit?.amount || 0;
+                              })())}
+                            </span>
+                          </div>
+                          <div className="relative">
+                            <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500">₫</span>
+                            <input
+                              type="number"
+                              name="usedDepositAmount"
+                              value={compensationData.usedDepositAmount}
+                              onChange={handleInputChange}
+                              className="w-full pl-8 pr-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 shadow-sm"
+                              placeholder="0"
+                              min="0"
+                              max={(() => {
+                                const borrowHistory = borrowHistoryMap[selectedReport.borrowHistoryId] || {};
+                                const requestId = borrowHistory.requestId;
+                                const contract = contractsMap[requestId] || {};
+                                const contractId = contract.contractId || 0;
+                                const deposit = depositsMap[contractId];
+                                return Math.min(
+                                  deposit?.amount || 0,
+                                  compensationData.amount
+                                );
+                              })()}
+                            />
+                          </div>
+                          {compensationData.amount < (() => {
+                            const borrowHistory = borrowHistoryMap[selectedReport.borrowHistoryId] || {};
+                            const requestId = borrowHistory.requestId;
+                            const contract = contractsMap[requestId] || {};
+                            const contractId = contract.contractId || 0;
+                            const deposit = depositsMap[contractId];
+                            return deposit?.amount || 0;
+                          })() && (
+                            <div className="mt-2 flex items-start">
+                              <svg className="w-4 h-4 text-green-500 mr-1.5 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                              </svg>
+                              <p className="text-xs text-green-600">
+                                Damage fee is less than deposit - partial deposit will be returned
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                        
+                        {/* Extra Payment */}
+                        <div>
+                          <div className="flex justify-between items-center mb-2">
+                            <label className="block text-sm font-medium text-gray-700">
+                              Additional Payment Required
+                            </label>
+                            <span className="text-xs flex items-center font-medium px-2 py-0.5 rounded-full"
+                              className={`text-xs flex items-center font-medium px-2 py-0.5 rounded-full ${
+                                compensationData.extraPaymentRequired > 0 
+                                  ? "bg-red-100 text-red-700" 
+                                  : "bg-green-100 text-green-700"
+                              }`}
+                            >
+                              <span className={`h-1.5 w-1.5 rounded-full mr-1 ${
+                                compensationData.extraPaymentRequired > 0 
+                                  ? "bg-red-500" 
+                                  : "bg-green-500"
+                              }`}></span>
+                              {compensationData.extraPaymentRequired > 0 
+                                ? "Payment needed" 
+                                : "No additional payment needed"}
+                            </span>
+                          </div>
+                          <div className="relative">
+                            <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500">₫</span>
+                            <input
+                              type="number"
+                              name="extraPaymentRequired"
+                              value={compensationData.extraPaymentRequired}
+                              onChange={handleInputChange}
+                              className="w-full pl-8 pr-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 shadow-sm"
+                              placeholder="0"
+                              min="0"
+                            />
+                          </div>
+                        </div>
+                        
+                        {/* Total Verification */}
+                        <div className="pt-3 border-t border-amber-200 flex justify-between items-center">
+                          <span className="font-medium text-gray-700">Total:</span>
+                          <div className="text-right">
+                            <span className="font-bold text-amber-700 block">
+                              {formatCurrency(
+                                parseFloat(compensationData.usedDepositAmount || 0) + 
+                                parseFloat(compensationData.extraPaymentRequired || 0)
+                              )}
+                            </span>
+                          </div>
+                        </div>
+                        
+                        {/* Deposit Return Notice */}
+                        {compensationData.amount < (() => {
+                          const borrowHistory = borrowHistoryMap[selectedReport.borrowHistoryId] || {};
+                          const requestId = borrowHistory.requestId;
+                          const contract = contractsMap[requestId] || {};
+                          const contractId = contract.contractId || 0;
+                          const deposit = depositsMap[contractId];
+                          return deposit?.amount || 0;
+                        })() && (
+                          <div className="p-3 mt-3 bg-green-50 rounded-md border border-green-100">
+                            <div className="flex items-center text-green-700 mb-1">
+                              <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                              </svg>
+                              <span className="font-medium text-sm">Partial Deposit Return</span>
+                            </div>
+                            <div className="flex justify-between items-center ml-6 mt-1">
+                              <span className="text-xs text-gray-600">Amount to return to customer:</span>
+                              <span className="font-medium text-sm text-green-700">
+                                {formatCurrency((() => {
+                                  const borrowHistory = borrowHistoryMap[selectedReport.borrowHistoryId] || {};
+                                  const requestId = borrowHistory.requestId;
+                                  const contract = contractsMap[requestId] || {};
+                                  const contractId = contract.contractId || 0;
+                                  const deposit = depositsMap[contractId];
+                                  return Math.max(0, (deposit?.amount || 0) - (compensationData.usedDepositAmount || 0));
+                                })())}
+                              </span>
+                            </div>
+                          </div>
                         )}
-                        {parseFloat(compensationData.amount || 0) !== 
-                         (parseFloat(compensationData.usedDepositAmount || 0) + 
-                          parseFloat(compensationData.extraPaymentRequired || 0)) && 
-                         " (Mismatch with total compensation!)"}
-                      </span>
+                      </div>
                     </div>
-                  </div>
-                </div>
+                  </>
+                )}
                 
-                {/* Existing fields */}
+                {/* Payment Method */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Payment Method (for additional payment)
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Payment Method {selectedReport.damageFee === 0 ? "(for returning deposit)" : "(for additional payment)"}
                   </label>
                   <select
                     name="paymentMethod"
                     value={compensationData.paymentMethod}
                     onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500"
+                    className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 shadow-sm appearance-none bg-white"
                     required
                   >
                     <option value="Cash">Cash</option>
@@ -1191,34 +1720,38 @@ const ReportDamage = () => {
                   </select>
                 </div>
                 
+                {/* Notes */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
                     Notes
                   </label>
                   <textarea
                     name="notes"
                     value={compensationData.notes}
                     onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500"
-                    rows="2"
+                    className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 shadow-sm"
+                    rows="3"
                     placeholder="Add any additional notes about the compensation"
                   ></textarea>
                 </div>
               </div>
               
+              {/* Footer with Buttons */}
               <div className="px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-end space-x-3">
                 <button
                   type="button"
                   onClick={closeCompensationModal}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors"
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors shadow-sm"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 text-sm font-medium text-white bg-amber-600 hover:bg-amber-700 rounded-md transition-colors"
+                  className="px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-amber-600 to-amber-500 rounded-lg hover:from-amber-700 hover:to-amber-600 transition-colors shadow-sm"
                 >
-                  Complete Compensation
+                  {selectedReport.damageFee === 0 
+                    ? "Confirm Deposit Return" 
+                    : "Complete Compensation"}
                 </button>
               </div>
             </form>
