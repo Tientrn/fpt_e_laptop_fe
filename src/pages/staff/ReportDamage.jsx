@@ -279,7 +279,7 @@ const ReportDamage = () => {
         compensationAmount: parseFloat(compensationData.amount) || 0, // Ensure it's a number
         usedDepositAmount: parseFloat(compensationData.usedDepositAmount) || 0, // Ensure it's a number
         extraPaymentRequired: parseFloat(compensationData.extraPaymentRequired) || 0, // Ensure it's a number
-        status: "done"
+        status: "done" // Set the status to "done" when creating the compensation transaction
       };
       
       console.log("Sending transaction data:", compensationTransactionData);

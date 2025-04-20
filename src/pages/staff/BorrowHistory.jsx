@@ -23,6 +23,18 @@ const BorrowHistory = () => {
   const [expandedRow, setExpandedRow] = useState(null);
   const [contractsMap, setContractsMap] = useState({});
   const [reportedDamageItems, setReportedDamageItems] = useState({});
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [selectedItem, setSelectedItem] = useState(null);
+  const [reportData, setReportData] = useState({
+    file: null,
+    ItemId: "",
+    BorrowHistoryId: "",
+    Note: "",
+    ConditionBeforeBorrow: "",
+    ConditionAfterReturn: "",
+    DamageFee: 0
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     fetchBorrowHistory();
@@ -207,12 +219,12 @@ const BorrowHistory = () => {
         String(item.requestId).includes(searchTerm)
       : true;
 
-    // Use status from API without checking returnDate
+    // Sử dụng status mới: 'Borrwing' thay cho 'Borrowed'
     const matchesFilter =
       filterStatus === "all" ||
       (filterStatus === "returned" && item.status === "Returned") ||
-      (filterStatus === "borrowed" && item.status === "Borrowed");
-
+      (filterStatus === "borrowed" && item.status === "Borrwing");
+    
     return matchesSearch && matchesFilter;
   });
 
@@ -234,9 +246,102 @@ const BorrowHistory = () => {
     }
   };
 
-  const handleReportDamage = () => {
-    // Instead of opening modal, navigate to the report-damage page
-    navigate('/staff/report-damage');
+  const handleReportDamage = (item) => {
+    setSelectedItem(item);
+    setReportData({
+      file: null,
+      ItemId: item.itemId.toString(),
+      BorrowHistoryId: item.borrowHistoryId.toString(),
+      Note: "",
+      ConditionBeforeBorrow: contractsMap[item.requestId]?.conditionBorrow || "",
+      ConditionAfterReturn: "",
+      DamageFee: 0
+    });
+    setShowReportModal(true);
+  };
+
+  const closeReportModal = () => {
+    setShowReportModal(false);
+    setSelectedItem(null);
+    setReportData({
+      file: null,
+      ItemId: "",
+      BorrowHistoryId: "",
+      Note: "",
+      ConditionBeforeBorrow: "",
+      ConditionAfterReturn: "",
+      DamageFee: 0
+    });
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value, files } = e.target;
+    
+    if (name === "file" && files && files.length > 0) {
+      setReportData({
+        ...reportData,
+        file: files[0]
+      });
+    } else if (name === "DamageFee") {
+      const fee = parseFloat(value);
+      if (!isNaN(fee) && fee >= 0) {
+        setReportData({
+          ...reportData,
+          [name]: fee
+        });
+      }
+    } else {
+      setReportData({
+        ...reportData,
+        [name]: value
+      });
+    }
+  };
+
+  const handleSubmitReport = async (e) => {
+    e.preventDefault();
+    
+    if (!reportData.ItemId || !reportData.BorrowHistoryId || !reportData.ConditionAfterReturn) {
+      toast.error("Please fill in all required fields");
+      return;
+    }
+    
+    try {
+      setIsSubmitting(true);
+      
+      const formData = new FormData();
+      if (reportData.file) {
+        formData.append("file", reportData.file);
+      }
+      formData.append("ItemId", reportData.ItemId);
+      formData.append("BorrowHistoryId", reportData.BorrowHistoryId);
+      formData.append("Note", reportData.Note);
+      formData.append("ConditionBeforeBorrow", reportData.ConditionBeforeBorrow);
+      formData.append("ConditionAfterReturn", reportData.ConditionAfterReturn);
+      formData.append("DamageFee", reportData.DamageFee.toString());
+      
+      const response = await reportdamagesApi.createReportDamage(formData);
+      
+      if (response.isSuccess) {
+        toast.success("Damage report submitted successfully");
+        
+        setReportedDamageItems(prev => ({
+          ...prev,
+          [reportData.BorrowHistoryId]: true
+        }));
+        
+        closeReportModal();
+        
+        fetchReportDamages();
+      } else {
+        toast.error(response.message || "Failed to submit damage report");
+      }
+    } catch (error) {
+      console.error("Error submitting damage report:", error);
+      toast.error("Failed to submit damage report. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -247,7 +352,7 @@ const BorrowHistory = () => {
           Borrow History
         </h1>
         <p className="text-center text-gray-500 mt-2">
-          View and manage device borrowing history
+          View and manage device Borrwing history
         </p>
       </div>
 
@@ -319,7 +424,7 @@ const BorrowHistory = () => {
       <div className="bg-white rounded-xl shadow-md overflow-hidden">
         <div className="p-6 border-b border-gray-100">
           <h2 className="text-xl font-bold text-gray-800">
-            Borrowing Records
+            Borrwing Records
             <span className="text-sm font-normal text-gray-500 ml-2">
               ({filteredHistory.length} items)
             </span>
@@ -362,7 +467,7 @@ const BorrowHistory = () => {
                       <tr
                         key={item.borrowHistoryId}
                         className={`hover:bg-opacity-75 ${
-                          item.status === "Borrowed" && 
+                          item.status === "Borrwing" && 
                           contractsMap[item.requestId] && 
                           isExpiringSoon(contractsMap[item.requestId].expectedReturnDate)
                             ? "bg-yellow-50 hover:bg-yellow-100"
@@ -453,7 +558,7 @@ const BorrowHistory = () => {
                                     ? format(
                                         new Date(contractsMap[item.requestId].expectedReturnDate),
                                         "dd/MM/yyyy"
-                                      ) + (item.status === "Borrowed" && 
+                                      ) + (item.status === "Borrwing" && 
                                           contractsMap[item.requestId] && 
                                           isExpiringSoon(contractsMap[item.requestId].expectedReturnDate)
                                           ? " (Due Soon)" 
@@ -468,7 +573,7 @@ const BorrowHistory = () => {
                             className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
                               item.status === "Returned"
                                 ? "bg-green-100 text-green-800"
-                                : item.status === "Borrowed" && contractsMap[item.requestId] && 
+                                : item.status === "Borrwing" && contractsMap[item.requestId] && 
                                   isExpiringSoon(contractsMap[item.requestId].expectedReturnDate)
                                   ? "bg-red-100 text-red-800"
                                   : "bg-blue-100 text-blue-800"
@@ -476,10 +581,10 @@ const BorrowHistory = () => {
                           >
                             {item.status === "Returned" 
                               ? "Returned" 
-                              : item.status === "Borrowed" && contractsMap[item.requestId] && 
+                              : item.status === "Borrwing" && contractsMap[item.requestId] && 
                                 isExpiringSoon(contractsMap[item.requestId].expectedReturnDate)
                                 ? "Due Soon"
-                                : "Borrowed"}
+                                : "Borrwing"}
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-center">
@@ -505,17 +610,12 @@ const BorrowHistory = () => {
                               <span>{expandedRow === item.borrowHistoryId ? "Hide" : "View"}</span>
                             </button>
                             
-                            {/* Add Report Damage button for borrowed items that are due soon */}
-                            {
-                              item.status === "Borrowed" && 
-                              contractsMap[item.requestId] && 
-                              isExpiringSoon(contractsMap[item.requestId].expectedReturnDate) && 
-                              !reportedDamageItems[item.borrowHistoryId] && (
+                            { !reportedDamageItems[item.borrowHistoryId] && (
                               <button
                                 className="flex items-center justify-center gap-1 px-2.5 py-1 text-xs rounded-md bg-red-100 text-red-700 hover:bg-red-200 transition-colors"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  handleReportDamage();
+                                  handleReportDamage(item);
                                 }}
                               >
                                 <svg className="w-3 h-3" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
@@ -525,10 +625,7 @@ const BorrowHistory = () => {
                               </button>
                             )}
                             
-                            {/* Show Reported label when damage has been reported */}
-                            {
-                              item.status === "Borrowed" &&
-                              reportedDamageItems[item.borrowHistoryId] && (
+                            {item.status === "Borrwing" && reportedDamageItems[item.borrowHistoryId] && (
                               <span className="flex items-center justify-center gap-1 px-2.5 py-1 text-xs rounded-md bg-gray-100 text-gray-500">
                                 <svg className="w-3 h-3" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                                   <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
@@ -779,7 +876,7 @@ const BorrowHistory = () => {
                                           className={`px-2 py-0.5 rounded-full text-xs ${
                                             item.status === "Returned"
                                               ? "bg-green-100 text-green-800"
-                                              : item.status === "Borrowed" && contractsMap[item.requestId] && 
+                                              : item.status === "Borrwing" && contractsMap[item.requestId] && 
                                                 isExpiringSoon(contractsMap[item.requestId].expectedReturnDate)
                                                 ? "bg-red-100 text-red-800"
                                                 : "bg-blue-100 text-blue-800"
@@ -787,10 +884,10 @@ const BorrowHistory = () => {
                                         >
                                           {item.status === "Returned"
                                             ? "Returned"
-                                            : item.status === "Borrowed" && contractsMap[item.requestId] && 
+                                            : item.status === "Borrwing" && contractsMap[item.requestId] && 
                                               isExpiringSoon(contractsMap[item.requestId].expectedReturnDate)
                                               ? "Due Soon"
-                                              : "Borrowed"}
+                                              : "Borrwing"}
                                         </span>
                                         
                                         {reportedDamageItems[item.borrowHistoryId] && (
@@ -893,7 +990,7 @@ const BorrowHistory = () => {
                         <p className="text-sm">
                           {searchTerm
                             ? "Try adjusting your search terms"
-                            : "No borrowing history available"}
+                            : "No Borrwing history available"}
                         </p>
                       </div>
                     </td>
@@ -1000,6 +1097,138 @@ const BorrowHistory = () => {
           </div>
         )}
       </div>
+
+      {/* Modal Báo Cáo Hỏng Hóc */}
+      {showReportModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-auto bg-black bg-opacity-50">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-xl mx-4 relative">
+            {/* Modal Header */}
+            <div className="p-5 border-b border-gray-200">
+              <h3 className="text-lg font-semibold text-gray-800">
+                Report Damage for Device
+              </h3>
+              <button
+                onClick={closeReportModal}
+                className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+              </button>
+            </div>
+            
+            {/* Modal Body */}
+            <div className="p-5">
+              <form onSubmit={handleSubmitReport}>
+                {selectedItem && (
+                  <div className="mb-4 p-3 bg-amber-50 rounded-lg">
+                    <p className="text-sm text-gray-700">
+                      <span className="font-medium">Device:</span> {itemsMap[selectedItem.itemId]?.itemName || "Unknown Device"}
+                    </p>
+                    <p className="text-sm text-gray-700">
+                      <span className="font-medium">User:</span> {userInfoMap[selectedItem.userId]?.fullName || "Unknown User"}
+                    </p>
+                    <p className="text-sm text-gray-700">
+                      <span className="font-medium">Borrow Date:</span> {format(new Date(selectedItem.borrowDate), "dd/MM/yyyy")}
+                    </p>
+                  </div>
+                )}
+                
+                {/* Input fields */}
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Damage Photo (Optional)
+                  </label>
+                  <input
+                    type="file"
+                    name="file"
+                    accept="image/*"
+                    onChange={handleInputChange}
+                    className="w-full p-2 border border-gray-300 rounded-md focus:ring-amber-500 focus:border-amber-500"
+                  />
+                </div>
+                
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Condition Before Borrowing
+                  </label>
+                  <input
+                    type="text"
+                    name="ConditionBeforeBorrow"
+                    value={reportData.ConditionBeforeBorrow}
+                    onChange={handleInputChange}
+                    className="w-full p-2 border border-gray-300 rounded-md focus:ring-amber-500 focus:border-amber-500"
+                    placeholder="E.g. Good condition, no scratches"
+                    required
+                  />
+                </div>
+                
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Current Condition <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    name="ConditionAfterReturn"
+                    value={reportData.ConditionAfterReturn}
+                    onChange={handleInputChange}
+                    className="w-full p-2 border border-gray-300 rounded-md focus:ring-amber-500 focus:border-amber-500"
+                    placeholder="E.g. Screen damaged, keyboard not working"
+                    required
+                  />
+                </div>
+                
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Damage Fee (₫)
+                  </label>
+                  <input
+                    type="number"
+                    name="DamageFee"
+                    value={reportData.DamageFee}
+                    onChange={handleInputChange}
+                    className="w-full p-2 border border-gray-300 rounded-md focus:ring-amber-500 focus:border-amber-500"
+                    placeholder="Enter amount in VND"
+                    min="0"
+                  />
+                </div>
+                
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Additional Notes
+                  </label>
+                  <textarea
+                    name="Note"
+                    value={reportData.Note}
+                    onChange={handleInputChange}
+                    rows="3"
+                    className="w-full p-2 border border-gray-300 rounded-md focus:ring-amber-500 focus:border-amber-500"
+                    placeholder="Any additional information about the damage"
+                  ></textarea>
+                </div>
+                
+                {/* Action buttons */}
+                <div className="flex justify-end mt-6 gap-3">
+                  <button
+                    type="button"
+                    onClick={closeReportModal}
+                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className={`px-4 py-2 text-sm font-medium text-white bg-amber-600 rounded-md hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 ${isSubmitting ? 'opacity-75 cursor-not-allowed' : ''}`}
+                  >
+                    {isSubmitting ? 'Submitting...' : 'Submit Report'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
