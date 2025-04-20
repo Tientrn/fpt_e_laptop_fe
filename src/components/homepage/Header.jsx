@@ -230,6 +230,14 @@ function HeaderHomePage() {
       case "Manage":
         return [
           <Link
+            key="manager-overview"
+            to="/manager/overview"
+            className="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-indigo-50 transition-colors"
+          >
+            <i className="fas fa-chart-pie text-indigo-500"></i>
+            Overview Dashboard
+          </Link>,
+          <Link
             key="manager-requests"
             to="/manager/borrow-requests"
             className="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-indigo-50 transition-colors"

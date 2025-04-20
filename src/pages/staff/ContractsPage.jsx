@@ -27,7 +27,7 @@ const ContractsPage = () => {
     itemId: 0,
     terms: "",
     conditionBorrow: "",
-    itemValue: 0,
+    itemValue: 1000000,
     expectedReturnDate: format(new Date(), "yyyy-MM-dd'T'HH:mm:ss.SSSxxx"),
   });
   const [userInfoMap, setUserInfoMap] = useState({});
@@ -232,7 +232,7 @@ const ContractsPage = () => {
       setContractForm({
         requestId: request.requestId,
         itemId: request.itemId,
-        itemValue: 0,
+        itemValue: 1000000,
         terms: `Contract for ${request.itemName}`,
         conditionBorrow: "good",
         expectedReturnDate: defaultReturnDate.toISOString().split('T')[0],
@@ -464,7 +464,7 @@ const ContractsPage = () => {
           itemId: 0,
           terms: "",
           conditionBorrow: "",
-          itemValue: 0,
+          itemValue: 1000000,
           expectedReturnDate: format(new Date(), "yyyy-MM-dd"),
         });
         
@@ -1121,16 +1121,16 @@ const ContractsPage = () => {
                     <label className="block text-xs font-medium text-gray-700 mb-1">
                       Item Value <span className="text-red-500">*</span>
                   </label>
-                  <input
-                    type="number"
-                      step="100000"
-                    value={contractForm.itemValue}
-                      onChange={(e) => 
-                        handleMoneyInputChange(e, setContractForm, "itemValue")
-                      }
-                      className="w-full px-3 py-2 text-sm rounded border border-gray-300 focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-                    required
-                  />
+                  <div className="relative">
+                    <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500">₫</span>
+                    <input
+                      type="text"
+                      readOnly
+                      value={contractForm.itemValue.toLocaleString()}
+                      className="w-full pl-8 py-2 text-sm rounded border border-gray-200 bg-gray-50 focus:ring-2 focus:ring-amber-500 focus:border-transparent cursor-not-allowed"
+                      required
+                    />
+                  </div>
                 </div>
 
                 {/* Terms */}

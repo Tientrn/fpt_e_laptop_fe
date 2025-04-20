@@ -62,6 +62,7 @@ import ReportDamage from "./pages/staff/ReportDamage";
   /* Manager */
 }
 import BorrowRequest from "./pages/manager/BorrowRequest";
+import OverviewPage from "./pages/manager/OverviewPage";
 {
   /* Sponsor */
 }
@@ -184,12 +185,9 @@ const App = () => {
 
         {/* Managerment Routes */}
         <Route path="/manager" element={<ManagerLayout />}>
-          <Route
-            index
-            element={<Navigate to="/manager/borrow-requests" replace />}
-          />
+          <Route index element={<OverviewPage />} />
+          <Route path="overview" element={<OverviewPage />} />
           <Route path="borrow-requests" element={<BorrowRequest />} />
-
         </Route>
 
         {/* Staff Routes */}
