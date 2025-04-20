@@ -1,9 +1,9 @@
-import DefaultHomePage from "../../components/page-base/home/Home";
+import ModernHome from "../../components/page-base/home/ModernHome";
 
 export default function HomePage() {
   return (
     <div>
-      <DefaultHomePage />
+      <ModernHome />
     </div>
   );
 }

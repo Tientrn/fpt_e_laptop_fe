@@ -95,7 +95,7 @@ const LaptopShopPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortOption, setSortOption] = useState("default");
   const [isSticky, setIsSticky] = useState(false);
-  const [showFilters, setShowFilters] = useState(false);
+  const [showFilters, setShowFilters] = useState(true);
   const [activeFilters, setActiveFilters] = useState({
     screenSize: "",
     cpu: "",
