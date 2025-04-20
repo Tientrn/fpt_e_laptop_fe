@@ -107,6 +107,16 @@ const CardDetail = () => {
     setSelectedImage(allImages[currentImageIndex === allImages.length - 1 ? 0 : currentImageIndex + 1]);
   };
 
+  const formatDate = (dateString) => {
+    if (!dateString) return "N/A";
+    const date = new Date(dateString);
+    return date.toLocaleDateString("en-US", { 
+      year: "numeric", 
+      month: "long", 
+      day: "numeric"
+    });
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-white p-4 flex items-center justify-center">
@@ -156,33 +166,34 @@ const CardDetail = () => {
   return (
     <div className="min-h-screen bg-white p-4 flex flex-col">
       <div className="flex-1 max-w-6xl mx-auto w-full">
+        <button
+          onClick={() => navigate(-1)}
+          className="flex items-center text-black hover:text-amber-600 mb-4"
+        >
+          <svg
+            className="w-5 h-5 mr-1"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              d="M10 19l-7-7m0 0l7-7m-7 7h18"
+            />
+          </svg>
+          Back to Listing
+        </button>
+
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Image Section with Thumbnails Below */}
           <div className="flex flex-col">
-            <button
-              onClick={() => navigate(-1)}
-              className="flex items-center text-black hover:text-amber-600 mb-4"
-            >
-              <svg
-                className="w-5 h-5 mr-1"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M10 19l-7-7m0 0l7-7m-7 7h18"
-                />
-              </svg>
-              Back to Listing
-            </button>
-            <div className="border border-gray-200 rounded overflow-hidden mb-4 relative">
+            <div className="border border-gray-200 rounded-lg overflow-hidden mb-4 relative shadow-md">
               <img
                 src={selectedImage}
                 alt={laptop.itemName}
-                className="w-full h-96 object-contain"
+                className="w-full h-96 object-contain bg-white"
               />
               
               {/* Navigation Buttons */}
@@ -237,7 +248,7 @@ const CardDetail = () => {
                 </div>
               </div>
             </div>
-            <div className="flex space-x-2 overflow-x-auto">
+            <div className="flex space-x-2 overflow-x-auto pb-2">
               <button
                 onClick={() => {
                   setSelectedImage(laptop.itemImage);
@@ -276,6 +287,43 @@ const CardDetail = () => {
                 </button>
               ))}
             </div>
+
+            {/* Device Information Card */}
+            <div className="mt-6 border border-gray-200 rounded-lg p-4 shadow-sm">
+              <h2 className="text-lg font-semibold text-black mb-3 flex items-center">
+                <svg className="w-5 h-5 text-amber-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                Device Information
+              </h2>
+              <div className="grid grid-cols-2 gap-3">
+                <InfoItem label="Model" value={laptop.model} />
+                <InfoItem label="Serial Number" value={laptop.serialNumber} />
+                <InfoItem label="Color" value={laptop.color} />
+                <InfoItem label="Production Year" value={laptop.productionYear} />
+                <InfoItem label="Operating System" value={laptop.operatingSystem} />
+                <InfoItem label="Item ID" value={laptop.itemId} />
+                <InfoItem label="Category" value={laptop.categoryId} />
+                <InfoItem label="Added" value={formatDate(laptop.createdDate)} />
+                <InfoItem label="Last Updated" value={formatDate(laptop.updatedDate)} />
+              </div>
+            </div>
+
+            {/* Usage Statistics Card */}
+            <div className="mt-4 border border-gray-200 rounded-lg p-4 shadow-sm">
+              <h2 className="text-lg font-semibold text-black mb-3 flex items-center">
+                <svg className="w-5 h-5 text-amber-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+                Usage Statistics
+              </h2>
+              <div className="flex items-center justify-center p-2">
+                <div className="text-center">
+                  <p className="text-xs text-gray-500">Total Times Borrowed</p>
+                  <p className="text-lg font-semibold text-amber-600">{laptop.totalBorrowedCount || 0}</p>
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Details Section */}
@@ -285,7 +333,7 @@ const CardDetail = () => {
                 {laptop.itemName}
               </h1>
               <span
-                className={`px-2 py-1 rounded text-xs font-medium ${
+                className={`px-3 py-1 rounded-full text-sm font-medium ${
                   laptop.status === "Available"
                     ? "bg-amber-100 text-amber-800"
                     : "bg-gray-100 text-gray-800"
@@ -295,42 +343,44 @@ const CardDetail = () => {
               </span>
             </div>
 
-            {/* Specifications */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-6">
-              <DetailItem icon="cpu" label="CPU" value={laptop.cpu} />
-              <DetailItem icon="ram" label="RAM" value={laptop.ram} />
-              <DetailItem
-                icon="storage"
-                label="Storage"
-                value={laptop.storage}
-              />
-              <DetailItem
-                icon="screen"
-                label="Screen Size"
-                value={laptop.screenSize}
-              />
-              <DetailItem
-                icon="condition"
-                label="Condition"
-                value={laptop.conditionItem}
-              />
-              <DetailItem
-                icon="status"
-                label="Status"
-                value={
-                  laptop.status === "Available" ? "In Stock" : "Out of Stock"
-                }
-                valueClassName={
-                  laptop.status === "Available"
-                    ? "text-amber-600 font-semibold"
-                    : "text-gray-600 font-semibold"
-                }
-              />
+            {/* Main Specifications Card */}
+            <div className="border border-gray-200 rounded-lg p-4 mb-4 shadow-sm">
+              <h2 className="text-lg font-semibold text-black mb-3 flex items-center">
+                <svg className="w-5 h-5 text-amber-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
+                </svg>
+                Main Specifications
+              </h2>
+              <div className="grid grid-cols-2 gap-3">
+                <DetailItem icon="cpu" label="CPU" value={laptop.cpu} />
+                <DetailItem icon="ram" label="RAM" value={laptop.ram} />
+                <DetailItem icon="storage" label="Storage" value={laptop.storage} />
+                <DetailItem icon="screen" label="Screen Size" value={laptop.screenSize} />
+                <DetailItem icon="condition" label="Condition" value={laptop.conditionItem} />
+                <DetailItem icon="graphics" label="Graphics Card" value={laptop.graphicsCard} />
+              </div>
+            </div>
+
+            {/* Connectivity Card */}
+            <div className="border border-gray-200 rounded-lg p-4 mb-4 shadow-sm">
+              <h2 className="text-lg font-semibold text-black mb-3 flex items-center">
+                <svg className="w-5 h-5 text-amber-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                </svg>
+                Connectivity
+              </h2>
+              <div className="grid grid-cols-2 gap-3">
+                <DetailItem icon="ports" label="Ports" value={laptop.ports} />
+                <DetailItem icon="battery" label="Battery Life" value={laptop.batteryLife} />
+              </div>
             </div>
 
             {/* Description */}
-            <div className="mb-6">
-              <h2 className="text-lg font-semibold text-black mb-2">
+            <div className="border border-gray-200 rounded-lg p-4 mb-6 shadow-sm">
+              <h2 className="text-lg font-semibold text-black mb-3 flex items-center">
+                <svg className="w-5 h-5 text-amber-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
                 Description
               </h2>
               <p className="text-black text-sm whitespace-pre-line">
@@ -342,6 +392,8 @@ Features:
 • ${laptop.ram} memory for multitasking
 • ${laptop.storage} storage capacity
 • ${laptop.screenSize} display for comfortable viewing
+${laptop.graphicsCard ? `• ${laptop.graphicsCard} for enhanced graphics performance` : ''}
+${laptop.operatingSystem ? `• Pre-installed with ${laptop.operatingSystem}` : ''}
 
 Perfect for students and professionals alike.`}
               </p>
@@ -352,29 +404,58 @@ Perfect for students and professionals alike.`}
               <button
                 onClick={handleBorrowClick}
                 disabled={laptop.status !== "Available"}
-                className={`w-full px-6 py-3 rounded text-white font-medium ${
+                className={`w-full px-6 py-3 rounded-lg text-white font-medium flex items-center justify-center ${
                   laptop.status === "Available"
                     ? "bg-slate-600 hover:bg-amber-600"
                     : "bg-gray-300 cursor-not-allowed"
-                } transition-colors duration-200`}
+                } transition-colors duration-200 shadow-sm`}
               >
+                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
                 {laptop.status === "Available" ? "Borrow Now" : "Not Available"}
               </button>
             </div>
           </div>
         </div>
 
-        {/* Feedback  */}
+        {/* Feedback */}
         <div className="mt-12 border-t pt-10 w-full">
-          <h2 className="text-2xl font-bold text-black mb-6">User Feedback</h2>
+          <h2 className="text-2xl font-bold text-black mb-6 flex items-center">
+            <svg className="w-6 h-6 text-amber-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+            </svg>
+            User Feedback
+          </h2>
 
           {feedbacks.length === 0 ? (
-            <p className="text-gray-500 text-sm">
-              No feedback available for this item.
-            </p>
+            <div className="text-center p-8 border border-gray-200 rounded-lg bg-gray-50">
+              <svg className="w-12 h-12 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <p className="text-gray-500">
+                No feedback available for this item.
+              </p>
+            </div>
           ) : (
             <>
-              <div className="mb-6 text-center">
+              <div className="mb-6 text-center p-4 bg-amber-50 rounded-lg border border-amber-100">
+                <div className="flex items-center justify-center mb-2">
+                  {Array.from({ length: 5 }).map((_, index) => (
+                    <svg
+                      key={index}
+                      className={`w-5 h-5 ${
+                        index < Math.round(feedbacks.reduce((sum, fb) => sum + fb.rating, 0) / feedbacks.length)
+                          ? "text-amber-400"
+                          : "text-gray-300"
+                      }`}
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                    </svg>
+                  ))}
+                </div>
                 <p className="text-lg text-slate-800">
                   Average Rating:{" "}
                   <span className="text-amber-600 font-semibold text-xl">
@@ -385,6 +466,7 @@ Perfect for students and professionals alike.`}
                     / 5
                   </span>
                 </p>
+                <p className="text-sm text-gray-500">Based on {feedbacks.length} user reviews</p>
               </div>
 
               <div className="space-y-4">
@@ -393,25 +475,34 @@ Perfect for students and professionals alike.`}
                     key={fb.feedbackBorrowId}
                     className="border border-gray-200 bg-white p-4 rounded-xl shadow-sm hover:shadow-md transition"
                   >
-                    <p className="text-sm text-gray-700 italic mb-1 font-bold">
-                      {fb.isAnonymous ? "Anonymous" : `User`}
-                    </p>
-                    <div className="flex justify-between items-center mb-2">
+                    <div className="flex items-center mb-2">
+                      <div className="w-8 h-8 bg-amber-100 rounded-full flex items-center justify-center text-amber-800 font-bold mr-2">
+                        {fb.isAnonymous ? "A" : "U"}
+                      </div>
                       <p className="text-sm font-medium text-black">
-                        Rating:{" "}
-                        <span className="text-amber-600 font-semibold">
-                          {fb.rating}/5
-                        </span>
+                        {fb.isAnonymous ? "Anonymous" : `User`}
                       </p>
-                      <p className="text-xs text-gray-400">
+                      <p className="text-xs text-gray-400 ml-auto">
                         {new Date(fb.feedbackDate).toLocaleDateString()}
                       </p>
                     </div>
-                    <p className="text-sm font-medium text-black">
-                      Comment:{" "}
-                      <span className=" text-gray-800 font-normal">
-                        {fb.comments}
-                      </span>
+                    <div className="flex items-center mb-2">
+                      {Array.from({ length: 5 }).map((_, index) => (
+                        <svg
+                          key={index}
+                          className={`w-4 h-4 ${
+                            index < fb.rating ? "text-amber-400" : "text-gray-300"
+                          }`}
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
+                        >
+                          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                        </svg>
+                      ))}
+                      <span className="ml-2 text-sm text-amber-600 font-medium">{fb.rating}/5</span>
+                    </div>
+                    <p className="text-sm text-gray-800 bg-gray-50 p-3 rounded-lg">
+                      {fb.comments || "No additional comments provided."}
                     </p>
                   </div>
                 ))}
@@ -424,7 +515,7 @@ Perfect for students and professionals alike.`}
   );
 };
 
-// DetailItem Component
+// DetailItem Component with Icon
 const DetailItem = ({ icon, label, value, valueClassName = "" }) => {
   const icons = {
     cpu: (
@@ -517,17 +608,74 @@ const DetailItem = ({ icon, label, value, valueClassName = "" }) => {
         />
       </svg>
     ),
+    graphics: (
+      <svg
+        className="w-5 h-5 text-amber-600"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="2"
+          d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+        />
+      </svg>
+    ),
+    ports: (
+      <svg
+        className="w-5 h-5 text-amber-600"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="2"
+          d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"
+        />
+      </svg>
+    ),
+    battery: (
+      <svg
+        className="w-5 h-5 text-amber-600"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="2"
+          d="M17 20H7V7a2 2 0 012-2h6a2 2 0 012 2v13zm-7-2h7M7 10h10M7 15h10"
+        />
+      </svg>
+    ),
   };
 
   return (
-    <div className="flex items-center p-2">
+    <div className="flex items-center p-2 bg-gray-50 rounded-lg">
       <div className="mr-2">{icons[icon]}</div>
       <div>
         <p className="text-xs text-gray-500">{label}</p>
-        <p className={`text-sm font-medium ${valueClassName}`}>
+        <p className={`text-sm font-medium ${valueClassName || "text-slate-800"}`}>
           {value || "N/A"}
         </p>
       </div>
+    </div>
+  );
+};
+
+// Simple Info Item without Icon
+const InfoItem = ({ label, value }) => {
+  return (
+    <div className="flex flex-col">
+      <p className="text-xs text-gray-500">{label}</p>
+      <p className="text-sm font-medium text-slate-800">
+        {value || "N/A"}
+      </p>
     </div>
   );
 };
