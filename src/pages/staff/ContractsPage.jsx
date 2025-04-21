@@ -337,11 +337,16 @@ const ContractsPage = () => {
             }
           );
           
-          if (response.data) {
-            uploadedImageUrls.push(response.data);
+          // The API returns data: null on success, so we need to construct the image URL ourselves
+          if (response.isSuccess) {
+            // Generate a predictable URL based on the contract ID and file name
+            // or use a timestamp to ensure uniqueness
+            const timestamp = new Date().getTime();
+            const imageUrl = `/contract-images/${contractId}/${file.name}?t=${timestamp}`;
+            uploadedImageUrls.push(imageUrl);
             toast.success(`Image ${i+1} uploaded successfully`);
           } else {
-            toast.warning(`Image ${i+1} upload response was empty`);
+            toast.warning(`Image ${i+1} upload failed: ${response.message || "Unknown error"}`);
           }
         } catch (fileError) {
           toast.error(`Failed to upload image ${i+1}: ${file.name}`);
@@ -352,10 +357,11 @@ const ContractsPage = () => {
       if (uploadedImageUrls.length > 0) {
         toast.success(`Successfully uploaded ${uploadedImageUrls.length} of ${totalImages} images`);
         
-        // Close modal and refresh data after successful upload
-        setIsDetailModalOpen(false);
-        await fetchContracts();
-        toast.success("Contract data refreshed successfully");
+        // First force reload the full contract data to get the new images
+        await forceReloadContract(contractId);
+        
+        // Clear the selected images since they've been uploaded
+        setSelectedImages([]);
       } else {
         toast.error("Failed to upload any images. Please try again.");
       }
@@ -366,7 +372,93 @@ const ContractsPage = () => {
     } finally {
       setIsUploading(false);
       setUploadProgress(0);
-      setSelectedImages([]);
+    }
+  };
+
+  // New function to handle multiple attempts to reload contract data
+  const forceReloadContract = async (contractId) => {
+    toast.info("Reloading contract data with new images...");
+    
+    // Make multiple attempts with increasing delays
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        // Add increasing delay between attempts
+        const delay = attempt * 1000; // 1s, 2s, 3s
+        toast.info(`Attempt ${attempt}/3: Waiting ${delay/1000}s for server processing...`);
+        
+        await new Promise(resolve => setTimeout(resolve, delay));
+        
+        // Close and reopen the modal to trigger a complete refresh
+        setIsDetailModalOpen(false);
+        
+        // Small delay before reopening
+        await new Promise(resolve => setTimeout(resolve, 300));
+        
+        // Fetch updated contracts list
+        await fetchContracts();
+        
+        // Find the contract in the updated list
+        const updatedContract = contracts.find(c => c.contractId === contractId);
+        
+        if (updatedContract) {
+          // Reopen the modal with the updated contract
+          handleDetailClick(updatedContract);
+          toast.success("Contract refreshed successfully with new images");
+          return true;
+        }
+      } catch (error) {
+        console.error(`Attempt ${attempt} failed:`, error);
+      }
+    }
+    
+    // If we reached here, all attempts failed
+    toast.warning("Could not refresh contract data automatically. Please close and reopen contract details to see new images.");
+    return false;
+  };
+
+  const fetchContractDetails = async (contractId) => {
+    try {
+      toast.info("Refreshing contract details from server...");
+      
+      // Get the contract with updated images
+      const contractResponse = await borrowcontractApi.getBorrowContractById(contractId);
+      
+      if (!contractResponse?.isSuccess) {
+        console.error("Contract response error:", contractResponse);
+        toast.error("Failed to get updated contract details");
+        return false;
+      }
+      
+      console.log("Received contract data:", contractResponse.data);
+      
+      // Only proceed if contract data has the needed properties
+      if (!contractResponse.data || !contractResponse.data.requestId) {
+        toast.error("Contract data is incomplete");
+        return false;
+      }
+      
+      // Get the request information associated with the contract
+      const requestResponse = await borrowrequestApi.getBorrowRequestById(
+        contractResponse.data.requestId
+      );
+      
+      if (!requestResponse?.isSuccess) {
+        toast.error("Failed to load updated request details");
+        return false;
+      }
+      
+      // Update the selected contract with the new data including images
+      setSelectedContract({
+        ...contractResponse.data,
+        requestDetails: requestResponse.data,
+      });
+      
+      toast.success("Contract details updated successfully");
+      return true;
+    } catch (error) {
+      console.error("Error fetching updated contract details:", error);
+      toast.error("Failed to refresh contract details: " + (error.message || "Unknown error"));
+      return false;
     }
   };
 
@@ -521,26 +613,55 @@ const ContractsPage = () => {
   const handleDetailClick = async (contract) => {
     try {
       toast.info("Loading contract details...");
+      setIsDetailModalOpen(true); // Open modal immediately to improve perceived loading speed
+      setSelectedImages([]);
+      
+      // Set initial data to show loading state
+      setSelectedContract({
+        ...contract,
+        isLoading: true
+      });
+      
+      // Get the contract with images
+      const contractResponse = await borrowcontractApi.getBorrowContractById(contract.contractId);
+      
+      if (!contractResponse?.isSuccess) {
+        toast.error("Failed to get contract details");
+        return;
+      }
+      
+      // Log contract data for debugging
+      console.log("Contract data received:", contractResponse.data);
       
       // Get the request information associated with the contract
       const response = await borrowrequestApi.getBorrowRequestById(
         contract.requestId
       );
-      if (response.isSuccess) {
-        toast.success("Contract details loaded successfully");
-        
+      
+      if (response?.isSuccess) {
+        // Remove loading state and set full contract data
         setSelectedContract({
-          ...contract,
+          ...contractResponse.data,
           requestDetails: response.data,
+          isLoading: false
         });
-        setSelectedImages([]);
-        setIsDetailModalOpen(true);
+        toast.success("Contract details loaded successfully");
       } else {
-        toast.error("Failed to load request details: " + (response.message || "Unknown error"));
+        toast.error("Failed to load request details: " + (response?.message || "Unknown error"));
+        setSelectedContract(prev => ({
+          ...prev,
+          isLoading: false,
+          loadError: true
+        }));
       }
     } catch (error) {
-      console.error("Error fetching request details:", error);
-      toast.error("Failed to load request details: " + (error.response?.data?.message || error.message || "Unknown error"));
+      console.error("Error fetching contract details:", error);
+      toast.error("Failed to load contract details: " + (error.message || "Unknown error"));
+      setSelectedContract(prev => ({
+        ...prev,
+        isLoading: false,
+        loadError: true
+      }));
     }
   };
 
