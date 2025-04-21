@@ -8,6 +8,10 @@ const statisticSponerUserApi = {
   getTopDonor: () => {
     return axiosClient.get("/donate-items/top-donors");
   },
+
+  getTransactionHistory: () => {
+    return axiosClient.get("/TransactionLog/get-all");
+  },
 };
 
 export default statisticSponerUserApi;
