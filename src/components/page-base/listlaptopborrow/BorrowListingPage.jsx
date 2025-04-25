@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
+import { FaTags } from "react-icons/fa";
 import SearchBar from "./SearchBar";
 import SortOptions from "./SortOptions";
 import FiltersSidebar from "./FiltersSidebar";
 import donateitemsApi from "../../../api/donateitemsApi";
+import categoryApi from "../../../api/categoryApi";
 import CardBorrow from "./CardBorrow";
 import LaptopIcon from "@mui/icons-material/Laptop";
 import FilterListIcon from "@mui/icons-material/FilterList";
@@ -12,6 +14,8 @@ import LaptopMacIcon from "@mui/icons-material/LaptopMac";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 
 const BorrowListingPage = () => {
+  const [categories, setCategories] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [sortOption, setSortOption] = useState("default");
   const [laptops, setLaptops] = useState([]);
@@ -27,6 +31,9 @@ const BorrowListingPage = () => {
     storage: "",
   });
   const [isSticky, setIsSticky] = useState(false);
+  const handleCategoryClick = (categoryId) => {
+    setSelectedCategory(categoryId);
+  };
 
   // Monitor scroll position for sticky navigation
   useEffect(() => {
@@ -35,6 +42,23 @@ const BorrowListingPage = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  // fetch categories
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const res = await categoryApi.getAllCategories();
+        if (res.isSuccess) {
+          setCategories(res.data);
+        }
+      } catch (err) {
+        console.error("Failed to fetch categories", err);
+      }
+    };
+
+    fetchCategories();
+  }, []);
+
+  //fetch laptops
   useEffect(() => {
     const fetchLaptops = async () => {
       try {
@@ -67,6 +91,12 @@ const BorrowListingPage = () => {
         laptop.itemName.toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
+    // Apply category filter
+    if (selectedCategory) {
+      filteredLaptops = filteredLaptops.filter(
+        (laptop) => laptop.categoryId === selectedCategory
+      );
+    }
 
     // Apply active filters
     Object.entries(activeFilters).forEach(([key, value]) => {
@@ -83,16 +113,21 @@ const BorrowListingPage = () => {
     // Apply sorting
     filteredLaptops.sort((a, b) => {
       switch (sortOption) {
-        case "ram-high-to-low": return parseInt(b.ram) - parseInt(a.ram);
-        case "ram-low-to-high": return parseInt(a.ram) - parseInt(b.ram);
-        case "newest": return new Date(b.createdAt) - new Date(a.createdAt);
-        case "oldest": return new Date(a.createdAt) - new Date(b.createdAt);
-        default: return 0;
+        case "ram-high-to-low":
+          return parseInt(b.ram) - parseInt(a.ram);
+        case "ram-low-to-high":
+          return parseInt(a.ram) - parseInt(b.ram);
+        case "newest":
+          return new Date(b.createdAt) - new Date(a.createdAt);
+        case "oldest":
+          return new Date(a.createdAt) - new Date(b.createdAt);
+        default:
+          return 0;
       }
     });
 
     setLaptops(filteredLaptops);
-  }, [searchQuery, sortOption, allLaptops, activeFilters]);
+  }, [searchQuery, sortOption, allLaptops, activeFilters, selectedCategory]);
 
   // Reset all filters
   const resetAllFilters = () => {
@@ -114,9 +149,14 @@ const BorrowListingPage = () => {
           <div className="relative w-16 h-16">
             <div className="absolute top-0 left-0 right-0 bottom-0 animate-pulse bg-indigo-600 rounded-full opacity-10"></div>
             <div className="absolute top-2 left-2 right-2 bottom-2 animate-spin rounded-full border-4 border-transparent border-t-indigo-600 border-r-indigo-600"></div>
-            <LaptopMacIcon className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-indigo-600 opacity-80" style={{ fontSize: 24 }} />
+            <LaptopMacIcon
+              className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-indigo-600 opacity-80"
+              style={{ fontSize: 24 }}
+            />
           </div>
-          <p className="mt-4 text-indigo-900 font-medium text-sm">Đang tải dữ liệu borrow...</p>
+          <p className="mt-4 text-indigo-900 font-medium text-sm">
+            Đang tải dữ liệu borrow...
+          </p>
         </div>
       </div>
     );
@@ -130,9 +170,11 @@ const BorrowListingPage = () => {
             <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mb-4">
               <InfoIcon style={{ fontSize: 32 }} className="text-red-500" />
             </div>
-            <h3 className="text-lg font-medium text-red-800 mb-2">Lỗi khi tải dữ liệu</h3>
+            <h3 className="text-lg font-medium text-red-800 mb-2">
+              Lỗi khi tải dữ liệu
+            </h3>
             <p className="text-red-600 font-medium mb-4 text-sm">{error}</p>
-            <button 
+            <button
               onClick={() => window.location.reload()}
               className="px-6 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-700 text-white rounded-xl hover:from-indigo-700 hover:to-purple-800 transition-all duration-300 text-sm font-medium shadow-sm"
             >
@@ -145,7 +187,10 @@ const BorrowListingPage = () => {
   }
 
   // Check if any filters are active
-  const hasActiveFilters = Object.values(activeFilters).some(value => value !== "") || searchQuery !== "" || sortOption !== "default";
+  const hasActiveFilters =
+    Object.values(activeFilters).some((value) => value !== "") ||
+    searchQuery !== "" ||
+    sortOption !== "default";
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50/40 to-purple-50/40">
@@ -155,12 +200,15 @@ const BorrowListingPage = () => {
           <div className="absolute top-0 right-0 w-96 h-96 bg-purple-400 rounded-full filter blur-3xl transform translate-x-1/3 -translate-y-1/2"></div>
           <div className="absolute bottom-0 left-0 w-96 h-96 bg-indigo-400 rounded-full filter blur-3xl transform -translate-x-1/3 translate-y-1/2"></div>
         </div>
-        
+
         <div className="max-w-7xl mx-auto px-4 py-16 md:py-20 relative z-10">
           <div className="flex flex-col items-center text-center mb-6">
             <div className="flex items-center gap-3 mb-4">
               <div className="bg-white/20 backdrop-blur-sm rounded-xl p-2.5 shadow-lg border border-white/30">
-                <LaptopMacIcon className="text-white" style={{ fontSize: 28 }} />
+                <LaptopMacIcon
+                  className="text-white"
+                  style={{ fontSize: 28 }}
+                />
               </div>
               <h1 className="text-3xl md:text-4xl font-bold drop-shadow-md">
                 Laptop Borrow Program
@@ -172,14 +220,12 @@ const BorrowListingPage = () => {
             </div>
             <div className="w-24 h-1 bg-gradient-to-r from-amber-400 to-amber-500 rounded-full mb-5"></div>
             <p className="max-w-2xl text-indigo-100 text-base mb-8">
-              Explore our collection of high-quality laptops available for borrowing
+              Explore our collection of high-quality laptops available for
+              borrowing
             </p>
 
             <div className="max-w-3xl w-full bg-white/10 backdrop-blur-sm rounded-2xl p-4 border border-white/20 shadow-lg">
-              <SearchBar
-                onSearch={setSearchQuery}
-                className="w-full"
-              />
+              <SearchBar onSearch={setSearchQuery} className="w-full" />
               <div className="flex items-center justify-center mt-3 text-indigo-200 text-xs">
                 <InfoIcon fontSize="small" className="mr-1.5" />
                 <p>Search by laptop name, brand, or specifications</p>
@@ -187,40 +233,64 @@ const BorrowListingPage = () => {
             </div>
           </div>
         </div>
-        
+
         {/* Wave divider */}
         <div className="absolute bottom-0 left-0 right-0 h-16 text-indigo-50/40">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320" className="w-full h-full">
-            <path fill="currentColor" fillOpacity="1" d="M0,96L48,112C96,128,192,160,288,160C384,160,480,128,576,112C672,96,768,96,864,117.3C960,139,1056,181,1152,181.3C1248,181,1344,139,1392,117.3L1440,96L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 1440 320"
+            className="w-full h-full"
+          >
+            <path
+              fill="currentColor"
+              fillOpacity="1"
+              d="M0,96L48,112C96,128,192,160,288,160C384,160,480,128,576,112C672,96,768,96,864,117.3C960,139,1056,181,1152,181.3C1248,181,1344,139,1392,117.3L1440,96L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"
+            ></path>
           </svg>
         </div>
       </div>
 
       {/* Sticky Navigation */}
-      <div className={`transition-all duration-300 ease-in-out z-30 bg-white shadow-md py-3 px-4 ${isSticky ? 'sticky top-0 animate-slideDown' : ''}`}>
+      <div
+        className={`transition-all duration-300 ease-in-out z-30 bg-white shadow-md py-3 px-4 ${
+          isSticky ? "sticky top-0 animate-slideDown" : ""
+        }`}
+      >
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2">
             <LaptopMacIcon className="text-indigo-600" fontSize="small" />
-            <h2 className="text-indigo-900 font-medium hidden md:block text-sm">Laptop Borrowing</h2>
+            <h2 className="text-indigo-900 font-medium hidden md:block text-sm">
+              Laptop Borrowing
+            </h2>
           </div>
 
           <div className="flex items-center gap-2.5">
-            <button 
+            <button
               onClick={() => setShowFilters(!showFilters)}
               className={`flex items-center gap-1.5 md:px-3.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all duration-300 ${
-                showFilters 
-                  ? "bg-indigo-100 text-indigo-800 border border-indigo-200" 
+                showFilters
+                  ? "bg-indigo-100 text-indigo-800 border border-indigo-200"
                   : "bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm"
               }`}
             >
-              {showFilters ? <CloseIcon fontSize="small" /> : <FilterListIcon fontSize="small" />}
-              <span className="hidden md:inline">{showFilters ? "Hide Filters" : "Show Filters"}</span>
+              {showFilters ? (
+                <CloseIcon fontSize="small" />
+              ) : (
+                <FilterListIcon fontSize="small" />
+              )}
+              <span className="hidden md:inline">
+                {showFilters ? "Hide Filters" : "Show Filters"}
+              </span>
             </button>
 
-            <SortOptions onSort={setSortOption} currentSort={sortOption} className="w-auto" />
-            
+            <SortOptions
+              onSort={setSortOption}
+              currentSort={sortOption}
+              className="w-auto"
+            />
+
             {hasActiveFilters && (
-              <button 
+              <button
                 onClick={resetAllFilters}
                 className="md:px-3.5 px-2.5 py-1.5 bg-red-500 text-white rounded-lg text-xs font-medium hover:bg-red-600 transition-all duration-300 shadow-sm"
               >
@@ -231,33 +301,111 @@ const BorrowListingPage = () => {
           </div>
         </div>
       </div>
+      <div className="bg-white shadow-sm mb-8 overflow-x-auto scrollbar-hide">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="flex items-center py-3 gap-1 md:gap-2">
+            <div className="flex items-center text-indigo-700 pr-3 border-r border-indigo-100">
+              <FaTags className="mr-2" />
+              <span className="text-sm font-medium">Categories</span>
+            </div>
+
+            <button
+              onClick={() => {
+                setSelectedCategory(null);
+                filterAndSortProducts(
+                  searchQuery,
+                  null,
+                  sortOption,
+                  activeFilters
+                );
+              }}
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap
+                ${
+                  selectedCategory === null
+                    ? "bg-gradient-to-r from-indigo-700 to-purple-700 text-white shadow-sm"
+                    : "text-indigo-700 hover:bg-indigo-50"
+                }`}
+            >
+              All Products
+            </button>
+
+            {categories.map((cat) => (
+              <button
+                key={cat.categoryId}
+                onClick={() => handleCategoryClick(cat.categoryId)}
+                className={`px-4 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap
+                  ${
+                    selectedCategory === cat.categoryId
+                      ? "bg-gradient-to-r from-indigo-700 to-purple-700 text-white shadow-sm"
+                      : "text-indigo-700 hover:bg-indigo-50"
+                  }`}
+              >
+                {cat.categoryName}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="flex flex-col md:flex-row gap-6">
           {/* Filters Sidebar - Mobile */}
-          {showFilters && <div className="md:hidden"><FiltersSidebar onFilterChange={handleFilterChange} currentFilters={activeFilters} /></div>}
+          {showFilters && (
+            <div className="md:hidden">
+              <FiltersSidebar
+                onFilterChange={handleFilterChange}
+                currentFilters={activeFilters}
+              />
+            </div>
+          )}
 
           {/* Filters Sidebar - Desktop */}
-          <div className={`hidden md:block transition-all duration-300 ${showFilters ? 'md:w-1/4 opacity-100' : 'md:w-0 overflow-hidden opacity-0'}`}>
-            {showFilters && <div className="sticky top-16"><FiltersSidebar onFilterChange={handleFilterChange} currentFilters={activeFilters} /></div>}
+          <div
+            className={`hidden md:block transition-all duration-300 ${
+              showFilters
+                ? "md:w-1/4 opacity-100"
+                : "md:w-0 overflow-hidden opacity-0"
+            }`}
+          >
+            {showFilters && (
+              <div className="sticky top-16">
+                <FiltersSidebar
+                  onFilterChange={handleFilterChange}
+                  currentFilters={activeFilters}
+                />
+              </div>
+            )}
           </div>
 
           {/* Laptops Grid */}
-          <div className={`flex-1 transition-all duration-300 ${showFilters ? 'md:w-3/4' : 'w-full'}`}>
+          <div
+            className={`flex-1 transition-all duration-300 ${
+              showFilters ? "md:w-3/4" : "w-full"
+            }`}
+          >
             {laptops.length > 0 ? (
               <>
                 <div className="flex justify-between items-center mb-5">
                   <div className="flex items-center gap-2">
-                    <h2 className="text-lg font-semibold text-indigo-900">Available Laptops</h2>
+                    <h2 className="text-lg font-semibold text-indigo-900">
+                      Available Laptops
+                    </h2>
                     <div className="bg-indigo-100 text-indigo-700 px-2.5 py-1 rounded-full text-xs font-medium">
-                      {laptops.length} {laptops.length === 1 ? "laptop" : "laptops"}
+                      {laptops.length}{" "}
+                      {laptops.length === 1 ? "laptop" : "laptops"}
                     </div>
                   </div>
-                  
+
                   {hasActiveFilters && (
                     <div className="text-indigo-600 text-xs hidden md:block">
-                      Filtered results • <button onClick={resetAllFilters} className="underline hover:text-indigo-800">Reset</button>
+                      Filtered results •{" "}
+                      <button
+                        onClick={resetAllFilters}
+                        className="underline hover:text-indigo-800"
+                      >
+                        Reset
+                      </button>
                     </div>
                   )}
                 </div>
@@ -275,13 +423,19 @@ const BorrowListingPage = () => {
               <div className="bg-white rounded-xl shadow-md p-8 text-center mt-5 border border-indigo-100">
                 <div className="flex flex-col items-center">
                   <div className="w-16 h-16 bg-indigo-50 rounded-full flex items-center justify-center mb-4">
-                    <LaptopIcon style={{ fontSize: 32 }} className="text-indigo-300" />
+                    <LaptopIcon
+                      style={{ fontSize: 32 }}
+                      className="text-indigo-300"
+                    />
                   </div>
-                  <h3 className="text-lg font-medium text-gray-800 mb-2">No Laptops Found</h3>
+                  <h3 className="text-lg font-medium text-gray-800 mb-2">
+                    No Laptops Found
+                  </h3>
                   <p className="text-gray-600 mb-5 max-w-md text-sm">
-                    There are no laptops matching your current search criteria. Try adjusting your filters or search terms.
+                    There are no laptops matching your current search criteria.
+                    Try adjusting your filters or search terms.
                   </p>
-                  <button 
+                  <button
                     onClick={resetAllFilters}
                     className="px-5 py-2 bg-gradient-to-r from-indigo-600 to-purple-700 text-white rounded-lg hover:from-indigo-700 hover:to-purple-800 transition-all duration-300 text-sm font-medium shadow-sm"
                   >
@@ -293,11 +447,13 @@ const BorrowListingPage = () => {
           </div>
         </div>
       </div>
-      
+
       {/* Footer */}
       <div className="bg-gradient-to-r from-indigo-900 to-purple-900 text-white py-6 mt-10">
         <div className="max-w-7xl mx-auto px-4 text-center">
-          <p className="text-indigo-200 text-sm">© {new Date().getFullYear()} FPT University Laptop Borrowing Program</p>
+          <p className="text-indigo-200 text-sm">
+            © {new Date().getFullYear()} FPT University Laptop Borrowing Program
+          </p>
         </div>
       </div>
     </div>
