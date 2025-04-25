@@ -92,13 +92,17 @@ const Contractstudent = () => {
       if (response.isSuccess) {
         console.log("Dữ liệu thô:", response.data);
         const transformedContracts = response.data
+          .sort((a, b) => b.contractId - a.contractId)
           .map((contract) => {
             console.log("Đang ánh xạ contract:", contract);
             return {
               id: contract.contractId,
               requestId: contract.requestId,
               userId: contract.userId, // Thêm userId vào đối tượng
-              contractNumber: `CTR-${contract.contractId}`,
+              contractNumber: `CTR-${String(contract.contractId).padStart(
+                5,
+                "0"
+              )}`,
               laptopName: contract.terms.split("Contract for ")[1] || "Unknown",
               startDate: contract.contractDate,
               endDate: contract.expectedReturnDate,

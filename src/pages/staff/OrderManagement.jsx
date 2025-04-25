@@ -92,10 +92,7 @@ const OrderManagement = () => {
       <div className="overflow-auto shadow-md rounded-lg">
         <table className="min-w-full bg-white border border-gray-200 rounded-lg shadow-sm">
           <thead>
-          <tr className="bg-gradient-to-r from-gray-500 to-green-500 text-white">
-              <th className="px-6 py-3 text-left text-sm font-medium text-white">
-                ID
-              </th>
+            <tr className="bg-gradient-to-r from-gray-500 to-green-500 text-white">
               <th className="px-6 py-3 text-left text-sm font-medium text-white">
                 CREATED DATE
               </th>
@@ -117,9 +114,6 @@ const OrderManagement = () => {
             {currentOrders.map((order) => (
               <tr key={order.orderId} className="border-t">
                 <td className="px-6 py-3 text-sm text-gray-800">
-                  {order.orderId}
-                </td>
-                <td className="px-6 py-3 text-sm text-gray-800">
                   {new Date(order.createdDate).toLocaleDateString()}
                 </td>
                 <td className="px-6 py-3 text-sm text-gray-800">
@@ -129,7 +123,20 @@ const OrderManagement = () => {
                   {order.orderAddress}
                 </td>
                 <td className="px-6 py-3 text-sm text-gray-800">
-                  {order.status}
+                  <span
+                    className={`px-2 py-1 rounded-full text-xs font-semibold
+          ${
+            order.status === "Pending"
+              ? "bg-yellow-100 text-yellow-800"
+              : order.status === "Paid"
+              ? "bg-green-100 text-green-800"
+              : order.status === "Cancelled"
+              ? "bg-red-100 text-red-800"
+              : "bg-gray-100 text-gray-700"
+          }`}
+                  >
+                    {order.status}
+                  </span>
                 </td>
                 <td className="px-6 py-3 text-sm">
                   <button
@@ -144,7 +151,7 @@ const OrderManagement = () => {
           </tbody>
         </table>
       </div>
-      
+
       {/* Pagination */}
       <div className="flex items-center justify-between mt-6 bg-gray-50 p-4 rounded-lg shadow-sm">
         <div className="text-sm text-gray-600">

@@ -154,21 +154,23 @@ const BorrowRequest = () => {
     }
   };
 
-  const filteredRequests = requests.filter((request) => {
-    const matchesSearch =
-      (request.userId &&
-        request.userId
-          .toString()
-          .toLowerCase()
-          .includes(searchTerm.toLowerCase())) ||
-      (request.itemName &&
-        request.itemName.toLowerCase().includes(searchTerm.toLowerCase()));
-    const matchesStatus =
-      filterStatus === "all" ||
-      (request.status &&
-        request.status.toLowerCase() === filterStatus.toLowerCase());
-    return matchesSearch && matchesStatus;
-  });
+  const filteredRequests = [...requests]
+    .sort((a, b) => b.requestId - a.requestId)
+    .filter((request) => {
+      const matchesSearch =
+        (request.userId &&
+          request.userId
+            .toString()
+            .toLowerCase()
+            .includes(searchTerm.toLowerCase())) ||
+        (request.itemName &&
+          request.itemName.toLowerCase().includes(searchTerm.toLowerCase()));
+      const matchesStatus =
+        filterStatus === "all" ||
+        (request.status &&
+          request.status.toLowerCase() === filterStatus.toLowerCase());
+      return matchesSearch && matchesStatus;
+    });
 
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
@@ -219,9 +221,9 @@ const BorrowRequest = () => {
           <table className="w-full">
             <thead>
               <tr className="bg-gradient-to-r from-gray-500 to-green-500 text-white">
-                <th className="px-6 py-3 text-left text-md font-semibold text-white">
+                {/* <th className="px-6 py-3 text-left text-md font-semibold text-white">
                   ID
-                </th>
+                </th> */}
                 <th className="px-6 py-3 text-left text-md font-semibold text-white">
                   Full Name
                 </th>
@@ -252,9 +254,9 @@ const BorrowRequest = () => {
                     key={request.requestId}
                     className="hover:bg-gray-50 transition-colors"
                   >
-                    <td className="px-6 py-3 text-md text-gray-800">
+                    {/* <td className="px-6 py-3 text-md text-gray-800">
                       {request.requestId}
-                    </td>
+                    </td> */}
                     <td className="px-6 py-3 text-md text-gray-800">
                       {userInfoMap[request.userId]?.fullName || "Loading..."}
                     </td>

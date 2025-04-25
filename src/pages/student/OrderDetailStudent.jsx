@@ -3,7 +3,13 @@ import { useParams } from "react-router-dom";
 import orderApis from "../../api/orderApi";
 import productApi from "../../api/productApi";
 import productFeedbackApi from "../../api/productFeedbackApi";
-import { FaInfoCircle, FaShoppingBag, FaStar, FaUserSecret, FaAngleRight } from "react-icons/fa";
+import {
+  FaInfoCircle,
+  FaShoppingBag,
+  FaStar,
+  FaUserSecret,
+  FaAngleRight,
+} from "react-icons/fa";
 import { toast, ToastContainer } from "react-toastify";
 import { jwtDecode } from "jwt-decode";
 import "react-toastify/dist/ReactToastify.css";
@@ -15,12 +21,15 @@ const OrderDetailStudent = () => {
   const [userId, setUserId] = useState(null);
   const [feedbacks, setFeedbacks] = useState({});
   const [orderInfo, setOrderInfo] = useState(null);
+  const [userName, setUserName] = useState("");
 
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (token) {
       const decoded = jwtDecode(token);
       setUserId(Number(decoded.userId));
+      const name = decoded.fullName || decoded.name || "";
+      setUserName(name);
     }
   }, []);
 
@@ -120,7 +129,7 @@ const OrderDetailStudent = () => {
           {status}
         </span>
       );
-    } else if (statusLower === "delivered" || statusLower === "approved") {
+    } else if (statusLower === "delivered" || statusLower === "paid") {
       return (
         <span className="bg-green-100 text-green-800 text-xs font-medium px-3 py-1 rounded-full">
           {status}
@@ -140,7 +149,9 @@ const OrderDetailStudent = () => {
       <div className="min-h-screen bg-gradient-to-b from-indigo-50 to-white flex justify-center items-center">
         <div className="flex flex-col items-center">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-600"></div>
-          <p className="mt-3 text-indigo-600 font-medium">Loading order details...</p>
+          <p className="mt-3 text-indigo-600 font-medium">
+            Loading order details...
+          </p>
         </div>
       </div>
     );
@@ -154,28 +165,40 @@ const OrderDetailStudent = () => {
             <h1 className="text-2xl font-bold text-white flex items-center">
               <FaShoppingBag className="mr-3" /> Order Details
             </h1>
-            <p className="text-indigo-100 mt-1">Review the details of your order and provide feedback</p>
+            <p className="text-indigo-100 mt-1">
+              Review the details of your order and provide feedback
+            </p>
           </div>
 
           {orderInfo && (
             <div className="border-b border-gray-200 px-8 py-4 bg-gray-50">
               <div className="flex flex-wrap items-center justify-between">
                 <div className="mb-2 md:mb-0">
-                  <span className="text-sm text-gray-600 font-medium">Order ID:</span>{" "}
-                  <span className="text-indigo-700 font-semibold">#{orderId}</span>
+                  <span className="text-sm text-gray-600 font-medium">
+                    User Name:
+                  </span>{" "}
+                  <span className="text-indigo-700 font-semibold">
+                    {userName}
+                  </span>
                 </div>
                 <div className="mb-2 md:mb-0">
-                  <span className="text-sm text-gray-600 font-medium">Status:</span>{" "}
+                  <span className="text-sm text-gray-600 font-medium">
+                    Status:
+                  </span>{" "}
                   {getStatusBadge(orderInfo.status)}
                 </div>
                 <div className="mb-2 md:mb-0">
-                  <span className="text-sm text-gray-600 font-medium">Date:</span>{" "}
+                  <span className="text-sm text-gray-600 font-medium">
+                    Date:
+                  </span>{" "}
                   <span className="text-gray-800">
                     {new Date(orderInfo.createdDate).toLocaleDateString()}
                   </span>
                 </div>
                 <div>
-                  <span className="text-sm text-gray-600 font-medium">Address:</span>{" "}
+                  <span className="text-sm text-gray-600 font-medium">
+                    Address:
+                  </span>{" "}
                   <span className="text-gray-800 max-w-xs truncate inline-block">
                     {orderInfo.orderAddress}
                   </span>
@@ -190,9 +213,12 @@ const OrderDetailStudent = () => {
                 <div className="text-indigo-400 mb-4">
                   <FaInfoCircle className="w-12 h-12 mx-auto" />
                 </div>
-                <h3 className="text-xl font-semibold text-gray-800 mb-2">No Items Found</h3>
+                <h3 className="text-xl font-semibold text-gray-800 mb-2">
+                  No Items Found
+                </h3>
                 <p className="text-gray-500 max-w-md mx-auto">
-                  This order does not contain any items. This could be due to an error or the order may have been canceled.
+                  This order does not contain any items. This could be due to an
+                  error or the order may have been canceled.
                 </p>
               </div>
             ) : (
@@ -200,19 +226,34 @@ const OrderDetailStudent = () => {
                 <table className="min-w-full divide-y divide-gray-200 rounded-lg overflow-hidden">
                   <thead className="bg-gray-50">
                     <tr>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th
+                        scope="col"
+                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      >
                         Product
                       </th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th
+                        scope="col"
+                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      >
                         Specifications
                       </th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th
+                        scope="col"
+                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      >
                         Quantity
                       </th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th
+                        scope="col"
+                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      >
                         Total
                       </th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th
+                        scope="col"
+                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      >
                         Feedback
                       </th>
                     </tr>
@@ -258,11 +299,15 @@ const OrderDetailStudent = () => {
                                 <span>{item.product?.ram}</span>
                               </div>
                               <div className="flex items-center">
-                                <span className="w-16 font-medium">Storage:</span>
+                                <span className="w-16 font-medium">
+                                  Storage:
+                                </span>
                                 <span>{item.product?.storage}</span>
                               </div>
                               <div className="flex items-center">
-                                <span className="w-16 font-medium">Screen:</span>
+                                <span className="w-16 font-medium">
+                                  Screen:
+                                </span>
                                 <span>{item.product?.screenSize} inch</span>
                               </div>
                             </div>
@@ -272,7 +317,10 @@ const OrderDetailStudent = () => {
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="text-sm font-medium text-gray-900">
-                              {(item.quantity * item.priceItem).toLocaleString()} đ
+                              {(
+                                item.quantity * item.priceItem
+                              ).toLocaleString()}{" "}
+                              đ
                             </div>
                             <div className="text-xs text-gray-500">
                               {item.priceItem.toLocaleString()} đ each
@@ -282,12 +330,16 @@ const OrderDetailStudent = () => {
                             {isPending ? (
                               <div className="flex items-center text-yellow-600 text-xs italic bg-yellow-50 p-3 rounded-lg">
                                 <FaInfoCircle className="mr-2" />
-                                <span>Cannot leave feedback while order is pending</span>
+                                <span>
+                                  Cannot leave feedback while order is pending
+                                </span>
                               </div>
                             ) : (
                               <div className="space-y-3">
                                 <div>
-                                  <label className="block text-xs text-gray-500 mb-1">Rating</label>
+                                  <label className="block text-xs text-gray-500 mb-1">
+                                    Rating
+                                  </label>
                                   <div className="relative">
                                     <select
                                       className="block w-full rounded-md border-gray-300 pr-10 focus:border-indigo-500 focus:ring-indigo-500 text-sm"
@@ -313,7 +365,9 @@ const OrderDetailStudent = () => {
                                   </div>
                                 </div>
                                 <div>
-                                  <label className="block text-xs text-gray-500 mb-1">Comments</label>
+                                  <label className="block text-xs text-gray-500 mb-1">
+                                    Comments
+                                  </label>
                                   <textarea
                                     rows={2}
                                     className="block w-full rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 text-sm"
@@ -342,11 +396,12 @@ const OrderDetailStudent = () => {
                                       )
                                     }
                                   />
-                                  <label 
+                                  <label
                                     htmlFor={`anonymous-${item.orderItemId}`}
                                     className="ml-2 block text-xs text-gray-500 flex items-center"
                                   >
-                                    <FaUserSecret className="mr-1" /> Post anonymously
+                                    <FaUserSecret className="mr-1" /> Post
+                                    anonymously
                                   </label>
                                 </div>
                                 <button
@@ -367,12 +422,14 @@ const OrderDetailStudent = () => {
               </div>
             )}
           </div>
-          
+
           {orderInfo && (
             <div className="border-t border-gray-200 px-8 py-6 bg-gray-50">
               <div className="flex justify-between">
                 <div>
-                  <span className="text-sm text-gray-600 font-medium">Total Amount:</span>{" "}
+                  <span className="text-sm text-gray-600 font-medium">
+                    Total Amount:
+                  </span>{" "}
                   <span className="text-xl font-bold text-indigo-700">
                     {orderInfo.totalPrice?.toLocaleString()} đ
                   </span>

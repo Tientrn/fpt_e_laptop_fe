@@ -1,6 +1,14 @@
 import { useEffect, useState } from "react";
 import orderApis from "../../api/orderApi";
-import { FaInfoCircle, FaShoppingBag, FaEye, FaTimesCircle, FaSpinner, FaSearch, FaFilter } from "react-icons/fa";
+import {
+  FaInfoCircle,
+  FaShoppingBag,
+  FaEye,
+  FaTimesCircle,
+  FaSpinner,
+  FaSearch,
+  FaFilter,
+} from "react-icons/fa";
 import { jwtDecode } from "jwt-decode";
 import { toast, ToastContainer } from "react-toastify";
 import { useNavigate } from "react-router-dom";
@@ -13,6 +21,7 @@ const OrderStudent = () => {
   const [userId, setUserId] = useState(null);
   const [statusFilter, setStatusFilter] = useState("All");
   const [searchTerm, setSearchTerm] = useState("");
+  const [userName, setUserName] = useState("");
 
   // Decode token lấy userId
   useEffect(() => {
@@ -21,7 +30,9 @@ const OrderStudent = () => {
       try {
         const decoded = jwtDecode(token);
         const id = Number(decoded.userId);
+        const name = decoded.fullName || decoded.name || "";
         setUserId(id);
+        setUserName(name);
       } catch (error) {
         console.error("❌ Token decode failed:", error);
       }
@@ -58,23 +69,23 @@ const OrderStudent = () => {
   // Filter và search
   useEffect(() => {
     let result = orders;
-    
+
     // Apply status filter
     if (statusFilter !== "All") {
       result = result.filter(
         (order) => order.status.toLowerCase() === statusFilter.toLowerCase()
       );
     }
-    
+
     // Apply search
     if (searchTerm) {
       result = result.filter(
-        (order) => 
+        (order) =>
           order.orderId.toString().includes(searchTerm) ||
           order.orderAddress.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
-    
+
     setFilteredOrders(result);
   }, [statusFilter, searchTerm, orders]);
 
@@ -128,7 +139,7 @@ const OrderStudent = () => {
         return `${baseStyle} bg-yellow-500`;
       case "cancelled":
         return `${baseStyle} bg-red-500`;
-      case "approved":
+      case "paid":
       case "delivered":
         return `${baseStyle} bg-green-500`;
       case "processing":
@@ -157,7 +168,9 @@ const OrderStudent = () => {
             <h1 className="text-2xl font-bold text-white flex items-center">
               <FaShoppingBag className="mr-3" /> Your Orders
             </h1>
-            <p className="text-indigo-100 mt-1">Manage and track your purchases</p>
+            <p className="text-indigo-100 mt-1">
+              Manage and track your purchases
+            </p>
           </div>
 
           {/* Search and Filter */}
@@ -199,9 +212,11 @@ const OrderStudent = () => {
                 <div className="text-indigo-400 mb-4">
                   <FaInfoCircle className="w-12 h-12 mx-auto" />
                 </div>
-                <h3 className="text-xl font-semibold text-gray-800 mb-2">No Orders Found</h3>
+                <h3 className="text-xl font-semibold text-gray-800 mb-2">
+                  No Orders Found
+                </h3>
                 <p className="text-gray-500 max-w-md mx-auto">
-                  {searchTerm || statusFilter !== "All" 
+                  {searchTerm || statusFilter !== "All"
                     ? "No orders match your current filters. Try changing your search criteria."
                     : "You haven't placed any orders yet. Start shopping to see orders here!"}
                 </p>
@@ -211,19 +226,51 @@ const OrderStudent = () => {
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead>
                     <tr className="bg-gray-50">
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order ID</th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Address</th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                      <th
+                        scope="col"
+                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      >
+                        User Name
+                      </th>
+                      <th
+                        scope="col"
+                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      >
+                        Date
+                      </th>
+                      <th
+                        scope="col"
+                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      >
+                        Total
+                      </th>
+                      <th
+                        scope="col"
+                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      >
+                        Address
+                      </th>
+                      <th
+                        scope="col"
+                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      >
+                        Status
+                      </th>
+                      <th
+                        scope="col"
+                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      >
+                        Actions
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
                     {filteredOrders.map((order) => (
                       <tr key={order.orderId} className="hover:bg-gray-50">
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm font-medium text-gray-900">#{order.orderId}</div>
+                          <div className="text-sm font-medium text-gray-900">
+                            {userName}
+                          </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm text-gray-500">
