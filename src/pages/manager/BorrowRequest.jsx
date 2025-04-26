@@ -1,7 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { toast } from "react-toastify";
 import { format } from "date-fns";
-import { FaSearch, FaFilter } from "react-icons/fa";
+import {
+  FaSearch,
+  FaFilter,
+  FaEdit,
+  FaTrash,
+  FaArrowLeft,
+  FaArrowRight,
+} from "react-icons/fa";
 import borrowrequestApi from "../../api/borrowrequestApi";
 import userApi from "../../api/userApi";
 
@@ -180,193 +187,271 @@ const BorrowRequest = () => {
   );
   const totalPages = Math.ceil(filteredRequests.length / itemsPerPage);
 
+  const getStatusStyles = (status) => {
+    switch (status) {
+      case "Pending":
+        return "bg-amber-100 text-amber-800 border-amber-200";
+      case "Approved":
+        return "bg-green-100 text-green-800 border-green-200";
+      case "Rejected":
+        return "bg-red-100 text-red-800 border-red-200";
+      case "Borrowing":
+        return "bg-blue-100 text-blue-800 border-blue-200";
+      default:
+        return "bg-gray-100 text-gray-800 border-gray-200";
+    }
+  };
+
   return (
-    <div className="">
-      {/* Header with Staff Role Indicator */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-3xl font-semibold text-black">Borrow Requests</h1>
-        </div>
-        <div className="flex items-center space-x-4">
-          <div className="relative w-64">
+    <div className="p-6 bg-gray-50 min-h-screen">
+      {/* Header with Title and Stats */}
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-800 mb-2">
+          Borrow Requests
+        </h1>
+        <p className="text-gray-600">
+          Manage and track all equipment borrow requests
+        </p>
+      </div>
+
+      {/* Search and Filter Bar */}
+      <div className="bg-white rounded-xl shadow-sm p-5 mb-6">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div className="relative flex-1">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <FaSearch className="text-gray-400" />
+            </div>
             <input
               type="text"
               placeholder="Search by user or item..."
-              className="w-full pl-10 pr-4 py-2 text-base border border-slate-300 rounded-md text-black focus:outline-none focus:ring-2 focus:ring-amber-600"
+              className="w-full pl-10 pr-4 py-3 text-gray-700 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
-            <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-600" />
           </div>
-          <div className="flex items-center space-x-2">
-            <FaFilter className="text-slate-600 text-sm" />
-            <select
-              value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
-              className="pl-3 pr-8 py-2 text-base border border-slate-300 rounded-md text-black focus:outline-none focus:ring-2 focus:ring-amber-600"
-            >
-              <option value="all">All Status</option>
-              <option value="Pending">Pending</option>
-              <option value="Approved">Approved</option>
-              <option value="Borrowing">Borrowing</option>
-              <option value="Rejected">Rejected</option>
-            </select>
+          <div className="flex items-center gap-3">
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <FaFilter className="text-gray-400" />
+              </div>
+              <select
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
+                className="pl-10 pr-10 py-3 text-gray-700 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all appearance-none"
+              >
+                <option value="all">All Status</option>
+                <option value="Pending">Pending</option>
+                <option value="Approved">Approved</option>
+                <option value="Borrowing">Borrowing</option>
+                <option value="Rejected">Rejected</option>
+              </select>
+              <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                <svg
+                  className="h-5 w-5 text-gray-400"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M19 9l-7 7-7-7"
+                  />
+                </svg>
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
+      {/* Loading Indicator */}
+      {loading && (
+        <div className="flex justify-center items-center py-10">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>
+        </div>
+      )}
+
       {/* Table */}
-      <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="bg-gradient-to-r from-gray-500 to-green-500 text-white">
-                {/* <th className="px-6 py-3 text-left text-md font-semibold text-white">
-                  ID
-                </th> */}
-                <th className="px-6 py-3 text-left text-md font-semibold text-white">
-                  Full Name
-                </th>
-                <th className="px-6 py-3 text-left text-md font-semibold text-white">
-                  Email
-                </th>
-                <th className="px-6 py-3 text-left text-md font-semibold text-white">
-                  Item Name
-                </th>
-                <th className="px-6 py-3 text-left text-md font-semibold text-white">
-                  Start Date
-                </th>
-                <th className="px-6 py-3 text-left text-md font-semibold text-white">
-                  End Date
-                </th>
-                <th className="px-6 py-3 text-left text-md font-semibold text-white">
-                  Status
-                </th>
-                <th className="px-6 py-3 text-left text-md font-semibold text-white">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {currentItems.length > 0 ? (
-                currentItems.map((request) => (
-                  <tr
-                    key={request.requestId}
-                    className="hover:bg-gray-50 transition-colors"
-                  >
-                    {/* <td className="px-6 py-3 text-md text-gray-800">
-                      {request.requestId}
-                    </td> */}
-                    <td className="px-6 py-3 text-md text-gray-800">
-                      {userInfoMap[request.userId]?.fullName || "Loading..."}
-                    </td>
-                    <td className="px-6 py-3 text-md text-gray-800">
-                      {userInfoMap[request.userId]?.email || "Loading..."}
-                    </td>
-                    <td className="px-6 py-3 text-md text-gray-800">
-                      {request.itemName}
-                    </td>
-                    <td className="px-6 py-3 text-md text-gray-800">
-                      {request.startDate
-                        ? format(new Date(request.startDate), "dd/MM/yyyy")
-                        : "N/A"}
-                    </td>
-                    <td className="px-6 py-3 text-md text-gray-800">
-                      {request.endDate
-                        ? format(new Date(request.endDate), "dd/MM/yyyy")
-                        : "N/A"}
-                    </td>
-                    <td className="px-6 py-3">
-                      <span
-                        className={`px-3 py-1 text-md font-medium rounded-full
-                        ${
-                          request.status === "Pending"
-                            ? "bg-amber-100 text-amber-800"
-                            : request.status === "Approved"
-                            ? "bg-green-100 text-green-800"
-                            : request.status === "Rejected"
-                            ? "bg-red-100 text-red-800"
-                            : request.status === "Borrowing"
-                            ? "bg-blue-100 text-blue-800"
-                            : "bg-gray-100 text-gray-800"
-                        }`}
-                      >
-                        {request.status || "Pending"}
-                      </span>
-                    </td>
-                    <td className="px-6 py-3">
-                      <div className="flex gap-2">
-                        {request.status === "Pending" && (
-                          <button
-                            onClick={() => handleEditClick(request)}
-                            className="px-3 py-1.5 text-md font-medium text-white bg-amber-500 rounded-lg hover:bg-amber-600 transition-colors"
-                          >
-                            Edit
-                          </button>
-                        )}
-                        <button
-                          onClick={() => handleDeleteClick(request.requestId)}
-                          className="px-3 py-1.5 text-md font-medium text-white bg-red-500 rounded-lg hover:bg-red-600 transition-colors"
+      {!loading && (
+        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="bg-gradient-to-r from-green-600 to-teal-500">
+                  <th className="px-6 py-4 text-left text-sm font-medium text-white">
+                    Full Name
+                  </th>
+                  <th className="px-6 py-4 text-left text-sm font-medium text-white">
+                    Email
+                  </th>
+                  <th className="px-6 py-4 text-left text-sm font-medium text-white">
+                    Item Name
+                  </th>
+                  <th className="px-6 py-4 text-left text-sm font-medium text-white">
+                    Start Date
+                  </th>
+                  <th className="px-6 py-4 text-left text-sm font-medium text-white">
+                    End Date
+                  </th>
+                  <th className="px-6 py-4 text-left text-sm font-medium text-white">
+                    Status
+                  </th>
+                  <th className="px-6 py-4 text-left text-sm font-medium text-white">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {currentItems.length > 0 ? (
+                  currentItems.map((request) => (
+                    <tr
+                      key={request.requestId}
+                      className="hover:bg-gray-50 transition-colors"
+                    >
+                      <td className="px-6 py-4 text-sm text-gray-800 font-medium">
+                        {userInfoMap[request.userId]?.fullName || "Loading..."}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-700">
+                        {userInfoMap[request.userId]?.email || "Loading..."}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-800 font-medium">
+                        {request.itemName}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-700">
+                        {request.startDate
+                          ? format(new Date(request.startDate), "dd/MM/yyyy")
+                          : "N/A"}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-700">
+                        {request.endDate
+                          ? format(new Date(request.endDate), "dd/MM/yyyy")
+                          : "N/A"}
+                      </td>
+                      <td className="px-6 py-4">
+                        <span
+                          className={`px-3 py-1 text-xs font-medium rounded-full border ${getStatusStyles(
+                            request.status
+                          )}`}
                         >
-                          Delete
-                        </button>
+                          {request.status || "Pending"}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex gap-2">
+                          {request.status === "Pending" && (
+                            <button
+                              onClick={() => handleEditClick(request)}
+                              className="p-2 text-green-600 hover:text-white hover:bg-green-500 rounded-full transition-colors"
+                              title="Edit Status"
+                            >
+                              <FaEdit />
+                            </button>
+                          )}
+                          <button
+                            onClick={() => handleDeleteClick(request.requestId)}
+                            className="p-2 text-red-600 hover:text-white hover:bg-red-500 rounded-full transition-colors"
+                            title="Delete Request"
+                          >
+                            <FaTrash />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td
+                      colSpan="7"
+                      className="px-6 py-10 text-center text-gray-500"
+                    >
+                      <div className="flex flex-col items-center justify-center">
+                        <svg
+                          className="w-12 h-12 text-gray-300 mb-3"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                          xmlns="http://www.w3.org/2000/svg"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                          ></path>
+                        </svg>
+                        <p className="text-lg font-medium">
+                          No borrow requests found
+                        </p>
+                        <p className="text-sm text-gray-400">
+                          Try adjusting your search or filter criteria
+                        </p>
                       </div>
                     </td>
                   </tr>
-                ))
-              ) : (
-                <tr>
-                  <td
-                    colSpan="8"
-                    className="px-6 py-6 text-center text-sm text-gray-500"
-                  >
-                    No borrow requests found
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Pagination */}
-      {filteredRequests.length > itemsPerPage && (
-        <div className="mt-6 flex items-center justify-between bg-white rounded-lg shadow-sm p-4">
+      {!loading && filteredRequests.length > itemsPerPage && (
+        <div className="mt-6 flex items-center justify-between bg-white rounded-xl shadow-sm p-4">
           <p className="text-sm text-gray-600">
-            Showing {indexOfFirstItem + 1} to{" "}
-            {Math.min(indexOfLastItem, filteredRequests.length)} of{" "}
-            {filteredRequests.length} entries
+            Showing <span className="font-medium">{indexOfFirstItem + 1}</span>{" "}
+            to{" "}
+            <span className="font-medium">
+              {Math.min(indexOfLastItem, filteredRequests.length)}
+            </span>{" "}
+            of <span className="font-medium">{filteredRequests.length}</span>{" "}
+            entries
           </p>
           <div className="flex gap-2">
             <button
               onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
               disabled={currentPage === 1}
-              className="px-3 py-1.5 text-sm font-medium text-white bg-amber-500 rounded-lg hover:bg-amber-600 transition-colors disabled:bg-gray-300"
+              className="p-2 rounded-lg flex items-center justify-center text-gray-600 disabled:text-gray-300 hover:bg-gray-100 transition-colors"
+              title="Previous Page"
             >
-              Previous
+              <FaArrowLeft />
             </button>
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-              <button
-                key={page}
-                onClick={() => setCurrentPage(page)}
-                className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors
-                  ${
-                    currentPage === page
-                      ? "bg-amber-500 text-white"
-                      : "bg-gray-100 text-gray-600 hover:bg-amber-100"
-                  }`}
-              >
-                {page}
-              </button>
-            ))}
+            {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+              let pageNumber;
+              if (totalPages <= 5) {
+                pageNumber = i + 1;
+              } else if (currentPage <= 3) {
+                pageNumber = i + 1;
+              } else if (currentPage >= totalPages - 2) {
+                pageNumber = totalPages - 4 + i;
+              } else {
+                pageNumber = currentPage - 2 + i;
+              }
+              return (
+                <button
+                  key={pageNumber}
+                  onClick={() => setCurrentPage(pageNumber)}
+                  className={`w-10 h-10 flex items-center justify-center text-sm font-medium rounded-lg transition-colors
+                    ${
+                      currentPage === pageNumber
+                        ? "bg-green-500 text-white"
+                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                    }`}
+                >
+                  {pageNumber}
+                </button>
+              );
+            })}
             <button
               onClick={() =>
                 setCurrentPage((prev) => Math.min(prev + 1, totalPages))
               }
               disabled={currentPage === totalPages}
-              className="px-3 py-1.5 text-sm font-medium text-white bg-amber-500 rounded-lg hover:bg-amber-600 transition-colors disabled:bg-gray-300"
+              className="p-2 rounded-lg flex items-center justify-center text-gray-600 disabled:text-gray-300 hover:bg-gray-100 transition-colors"
+              title="Next Page"
             >
-              Next
+              <FaArrowRight />
             </button>
           </div>
         </div>
@@ -374,56 +459,74 @@ const BorrowRequest = () => {
 
       {/* Edit Status Modal */}
       {isEditModalOpen && editingRequest && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-md p-6 max-w-md w-full">
-            <h2 className="text-xl font-semibold text-black mb-4">
-              Edit Request Status
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 backdrop-blur-sm">
+          <div className="bg-white rounded-xl p-6 max-w-md w-full shadow-2xl animate-fadeIn">
+            <h2 className="text-2xl font-bold text-gray-800 mb-4">
+              Update Request Status
             </h2>
             <form onSubmit={handleEditSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-black mb-1">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
                   Status
                 </label>
-                <select
-                  name="status"
-                  value={editFormData.status}
-                  onChange={handleEditFormChange}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-md text-black focus:outline-none focus:ring-2 focus:ring-amber-600"
-                  required
-                >
-                  {editingRequest.status === "Pending" && (
-                    <option value="Pending">Pending</option>
-                  )}
-                  <option value="Approved">Approved</option>
-                  <option value="Rejected">Rejected</option>
-                </select>
+                <div className="relative">
+                  <select
+                    name="status"
+                    value={editFormData.status}
+                    onChange={handleEditFormChange}
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all appearance-none"
+                    required
+                  >
+                    {editingRequest.status === "Pending" && (
+                      <option value="Pending">Pending</option>
+                    )}
+                    <option value="Approved">Approved</option>
+                    <option value="Rejected">Rejected</option>
+                  </select>
+                  <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                    <svg
+                      className="h-5 w-5 text-gray-400"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M19 9l-7 7-7-7"
+                      />
+                    </svg>
+                  </div>
+                </div>
               </div>
               {editFormData.status === "Rejected" && (
-                <div>
-                  <label className="block text-sm font-medium text-black mb-1">
+                <div className="animate-fadeIn">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
                     Rejection Reason
                   </label>
                   <textarea
                     name="rejectionReason"
                     value={editFormData.rejectionReason}
                     onChange={handleEditFormChange}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-md text-black focus:outline-none focus:ring-2 focus:ring-amber-600"
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
                     rows="3"
+                    placeholder="Please provide a reason for rejection..."
                     required={editFormData.status === "Rejected"}
                   />
                 </div>
               )}
-              <div className="flex justify-end space-x-3">
+              <div className="flex justify-end space-x-3 mt-6">
                 <button
                   type="button"
                   onClick={() => setIsEditModalOpen(false)}
-                  className="px-4 py-2 bg-slate-600 text-white rounded-md hover:bg-amber-600 transition-colors"
+                  className="px-5 py-2.5 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-200 transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-amber-600 text-white rounded-md hover:bg-amber-700 transition-colors"
+                  className="px-5 py-2.5 bg-green-500 text-white rounded-lg hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-offset-2 transition-colors"
                 >
                   Save Changes
                 </button>
@@ -435,32 +538,53 @@ const BorrowRequest = () => {
 
       {/* Delete Confirmation Modal */}
       {isDeleteModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-md p-6 max-w-sm w-full">
-            <h2 className="text-xl font-semibold text-black mb-4">
-              Confirm Delete
-            </h2>
-            <p className="text-black mb-6">
-              Are you sure you want to delete this request? This action cannot
-              be undone.
-            </p>
-            <div className="flex justify-end space-x-3">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 backdrop-blur-sm">
+          <div className="bg-white rounded-xl p-6 max-w-sm w-full shadow-2xl animate-fadeIn">
+            <div className="text-center mb-5">
+              <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-red-100 mb-4">
+                <FaTrash className="h-6 w-6 text-red-600" />
+              </div>
+              <h2 className="text-2xl font-bold text-gray-800 mb-2">
+                Confirm Delete
+              </h2>
+              <p className="text-gray-600">
+                Are you sure you want to delete this request? This action cannot
+                be undone.
+              </p>
+            </div>
+            <div className="flex justify-center space-x-4 mt-6">
               <button
                 onClick={() => setIsDeleteModalOpen(false)}
-                className="px-4 py-2 bg-slate-600 text-white rounded-md hover:bg-amber-600 transition-colors"
+                className="px-5 py-2.5 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-200 transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={handleDeleteConfirm}
-                className="px-4 py-2 bg-amber-600 text-white rounded-md hover:bg-amber-700 transition-colors"
+                className="px-5 py-2.5 bg-red-500 text-white rounded-lg hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2 transition-colors"
               >
-                Delete
+                Yes, Delete
               </button>
             </div>
           </div>
         </div>
       )}
+
+      <style jsx>{`
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+            transform: translateY(-10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        .animate-fadeIn {
+          animation: fadeIn 0.2s ease-out;
+        }
+      `}</style>
     </div>
   );
 };
