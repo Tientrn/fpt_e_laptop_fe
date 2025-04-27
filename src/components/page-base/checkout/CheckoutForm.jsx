@@ -50,7 +50,7 @@ const CheckoutForm = ({
 
     if (cancel === "true" || status === "cancel") {
       toast.info("You have canceled the payment");
-      navigate("/laptopshop");
+      navigate("/cart");
       return;
     }
 

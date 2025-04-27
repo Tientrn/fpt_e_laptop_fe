@@ -83,8 +83,31 @@ const CartPage = () => {
       return;
     }
 
+    // Check if there's an existing pending order
+    const pendingOrderData = localStorage.getItem("pending_order");
+    let shouldCreateNewOrder = true;
+    
+    if (pendingOrderData) {
+      try {
+        const pendingOrder = JSON.parse(pendingOrderData);
+        const creationTime = new Date(pendingOrder.createdAt);
+        const now = new Date();
+        const hoursSinceCreation = (now - creationTime) / (1000 * 60 * 60);
+        
+        // Always create a new order if the cart has changed
+        // We just need to clean up old orders if they're expired (older than 2 hours)
+        if (hoursSinceCreation >= 2) {
+          localStorage.removeItem("pending_order");
+        }
+      } catch (error) {
+        // If there's an error parsing the pending order, clear it
+        localStorage.removeItem("pending_order");
+      }
+    }
+
+    // Always create a new order regardless of pending orders (user wants each cart change to create a new order)
     const sum = selectedCartItems.reduce(
-      (acc, curr) => acc + curr.quantity * curr.totalPrice,
+      (acc, curr) => acc + curr.totalPrice,
       0
     );
 
@@ -102,6 +125,17 @@ const CartPage = () => {
     orderApis
       .createOrder(order)
       .then((data) => {
+        // Save this order as pending
+        localStorage.setItem("pending_order", JSON.stringify({
+          orderId: data.data.orderId,
+          createdAt: new Date().toISOString(),
+          totalPrice: sum,
+          cartHash: JSON.stringify(selectedCartItems.map(item => ({
+            id: item.productId,
+            quantity: item.quantity
+          })))
+        }));
+
         selectedCartItems.forEach((item) => {
           orderDetail.push({
             orderId: data.data.orderId,
@@ -220,7 +254,7 @@ const CartPage = () => {
                     <h3 className="text-indigo-900 font-medium text-lg truncate pr-4">
                       {item.productName}
                     </h3>
-                    <span className="font-semibold text-indigo-900 whitespace-nowrap">{formatPrice(item.totalPrice * item.quantity)}</span>
+                    <span className="font-semibold text-indigo-900 whitespace-nowrap">{formatPrice(item.totalPrice)}</span>
                   </div>
                   
                   <div className="flex flex-wrap gap-2 text-xs text-gray-500 mb-4">
@@ -293,7 +327,7 @@ const CartPage = () => {
                         </p>
                       </div>
                       <span className="text-indigo-900 font-semibold ml-4">
-                        {formatPrice(item.totalPrice * item.quantity)}
+                        {formatPrice(item.totalPrice)}
                       </span>
                     </div>
                   ))}
@@ -313,7 +347,7 @@ const CartPage = () => {
                       items
                         .filter((item) => selectedItems.includes(item.productId))
                         .reduce(
-                          (acc, item) => acc + item.totalPrice * item.quantity,
+                          (acc, item) => acc + item.totalPrice,
                           0
                         )
                     )}

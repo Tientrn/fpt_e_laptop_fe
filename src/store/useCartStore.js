@@ -16,10 +16,16 @@ const useCartStore = create(
         const userCart = carts[currentUserId] || [];
         const existingItem = userCart.find(item => item.productId === product.productId);
         
+        const unitPrice = parseFloat(product.price || 0);
+        
         if (existingItem) {
           const updatedCart = userCart.map(item =>
             item.productId === product.productId
-              ? { ...item, quantity: item.quantity + 1, totalPrice: (item.quantity + 1) * item.price }
+              ? { 
+                  ...item, 
+                  quantity: item.quantity + 1, 
+                  totalPrice: (item.unitPrice || item.price) * (item.quantity + 1)
+                }
               : item
           );
           set({
@@ -32,7 +38,15 @@ const useCartStore = create(
           set({
             carts: {
               ...carts,
-              [currentUserId]: [...userCart, { ...product, quantity: 1, totalPrice: product.price }]
+              [currentUserId]: [
+                ...userCart, 
+                { 
+                  ...product, 
+                  quantity: 1, 
+                  unitPrice: unitPrice,
+                  totalPrice: unitPrice
+                }
+              ]
             }
           });
         }
@@ -44,7 +58,11 @@ const useCartStore = create(
 
         const updatedCart = userCart.map(item =>
           item.productId === productId && item.quantity > 1
-            ? { ...item, quantity: item.quantity - 1, totalPrice: (item.quantity - 1) * item.price }
+            ? { 
+                ...item, 
+                quantity: item.quantity - 1, 
+                totalPrice: (item.unitPrice || item.price) * (item.quantity - 1)
+              }
             : item
         );
 
