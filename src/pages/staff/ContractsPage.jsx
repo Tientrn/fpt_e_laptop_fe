@@ -3,6 +3,7 @@ import { toast } from "react-toastify";
 import { format } from "date-fns";
 import borrowcontractApi from "../../api/borrowcontractApi";
 import borrowrequestApi from "../../api/borrowrequestApi";
+import donateitemsApi from "../../api/donateitemsApi";
 import userApi from "../../api/userApi";
 import deposittransactionApi from "../../api/deposittransactionApi";
 import borrowhistoryApi from "../../api/borrowhistoryApi";
@@ -701,11 +702,19 @@ const ContractsPage = () => {
         contract.requestId
       );
 
+      // Get donate item details để lấy Serial Number
+      const donateItemResponse = await donateitemsApi.getDonateItemById(
+        contract.itemId
+      );
+
       if (response?.isSuccess) {
         // Remove loading state and set full contract data
         setSelectedContract({
           ...contractResponse.data,
           requestDetails: response.data,
+          serialNumber: donateItemResponse?.isSuccess
+            ? donateItemResponse.data.serialNumber
+            : "Unknown",
           isLoading: false,
         });
         toast.success("Contract details loaded successfully");
@@ -1607,6 +1616,14 @@ const ContractsPage = () => {
                       {selectedContract.terms}
                     </span>
                   </div>
+                  <div>
+                    <span className="font-semibold text-gray-700">
+                      Serial Number:{" "}
+                    </span>
+                    <span className="text-gray-600">
+                      {selectedContract.serialNumber || "N/A"}
+                    </span>
+                  </div>
                 </div>
               </div>
 
@@ -2283,7 +2300,11 @@ const ContractsPage = () => {
                       className="w-full px-3 py-2 text-sm rounded border border-gray-300 focus:ring-2 focus:ring-amber-500 focus:border-transparent"
                       required
                     >
-                      <option value="Pending">Pending</option>
+                      {depositForm.status === "Pending" && (
+                        <option value="Pending" hidden>
+                          Pending
+                        </option>
+                      )}
                       <option value="Completed">Completed</option>
                     </select>
                   </div>

@@ -740,6 +740,24 @@ const BorrowHistory = () => {
                                     </svg>
                                     {itemsMap[item.itemId].ram || "N/A"}
                                   </span>
+
+                                  <span className="text-xs text-gray-500 mt-0.5 flex items-center">
+                                    <svg
+                                      className="w-3 h-3 mr-1 text-gray-400"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      viewBox="0 0 24 24"
+                                      xmlns="http://www.w3.org/2000/svg"
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth="2"
+                                        d="M15 12H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"
+                                      />
+                                    </svg>
+                                    Serial: {itemsMap[item.itemId].serialNumber}
+                                  </span>
                                 </div>
                               )}
                               {contractsMap[item.requestId] && (
@@ -1331,6 +1349,15 @@ const BorrowHistory = () => {
                                           <p className="text-sm font-medium">
                                             {itemsMap[item.itemId].screenSize ||
                                               "N/A"}
+                                          </p>
+                                        </div>
+
+                                        <div className="flex flex-col p-2 bg-gray-50 rounded-md">
+                                          <p className="text-xs text-gray-500">
+                                            Serial Number
+                                          </p>
+                                          <p className="text-sm font-medium">
+                                            {itemsMap[item.itemId].serialNumber}
                                           </p>
                                         </div>
                                       </div>

@@ -110,7 +110,7 @@ const Contractstudent = () => {
                 contract.status.toLowerCase() === "pending"
                   ? "active"
                   : "completed",
-              depositAmount: contract.itemValue * 0.1,
+              depositAmount: contract.itemValue,
               returnDate: null,
               laptopCondition: {
                 beforeBorrow: contract.conditionBorrow,

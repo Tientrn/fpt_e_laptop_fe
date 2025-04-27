@@ -240,7 +240,6 @@ const BorrowRequest = () => {
                 className="pl-10 pr-10 py-3 text-gray-700 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all appearance-none"
               >
                 <option value="all">All Status</option>
-                <option value="Pending">Pending</option>
                 <option value="Approved">Approved</option>
                 <option value="Borrowing">Borrowing</option>
                 <option value="Rejected">Rejected</option>
@@ -477,8 +476,11 @@ const BorrowRequest = () => {
                     className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all appearance-none"
                     required
                   >
-                    {editingRequest.status === "Pending" && (
-                      <option value="Pending">Pending</option>
+                    {/* Chỉ hiện "Pending" nếu nó đang được chọn, nhưng không render option cho chọn */}
+                    {editFormData.status === "Pending" && (
+                      <option value="Pending" hidden>
+                        Pending
+                      </option>
                     )}
                     <option value="Approved">Approved</option>
                     <option value="Rejected">Rejected</option>
