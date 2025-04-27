@@ -564,7 +564,7 @@ const ProductDetailPage = () => {
                   />
                 </button>
               )}
-              {images.slice(0, 4).map((image, index) => (
+              {images.map((image, index) => (
                 <button
                   key={image.productImageId || index}
                   onClick={() => setSelectedImage(image.imageUrl)}
