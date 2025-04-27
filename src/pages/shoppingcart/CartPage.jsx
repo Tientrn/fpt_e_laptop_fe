@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { FaTrash, FaMinus, FaPlus, FaArrowLeft } from "react-icons/fa";
+import { FaTrash, FaMinus, FaPlus, FaArrowLeft, FaShoppingBag } from "react-icons/fa";
 import useCartStore from "../../store/useCartStore";
 import { toast } from "react-toastify";
 import orderApis from "../../api/orderApi";
@@ -21,7 +21,7 @@ const CartPage = () => {
     items.map((item) => item.productId)
   );
 
-  // Đảm bảo selectedItems luôn khớp với giỏ hàng khi thay đổi
+  // Ensure selectedItems always match with cart changes
   useEffect(() => {
     setSelectedItems((prevSelected) =>
       items
@@ -211,19 +211,40 @@ const CartPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white via-gray-50 to-gray-100 py-16">
-      <div className="container mx-auto px-4">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-12">
-          <div>
-            <h1 className="text-3xl font-bold text-indigo-900 tracking-tight mb-1">Your Shopping Cart</h1>
-            <p className="text-gray-500 text-sm">{items.length} {items.length === 1 ? 'item' : 'items'} in your cart</p>
+    <div className="min-h-screen bg-gradient-to-b from-white via-gray-50 to-gray-100 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto">
+        {/* Progress tracker */}
+        <div className="mb-12">
+          <div className="flex justify-between items-center">
+            <div className="flex flex-col">
+              <h1 className="text-3xl font-bold text-indigo-900 tracking-tight mb-1">Your Shopping Cart</h1>
+              <p className="text-gray-500 text-sm">{items.length} {items.length === 1 ? 'item' : 'items'} in your cart</p>
+            </div>
+            
+            <div className="hidden sm:flex items-center">
+              <div className="flex items-center">
+                <div className="w-8 h-8 rounded-full bg-indigo-600 text-white flex items-center justify-center font-medium">1</div>
+                <div className="text-sm font-medium ml-2">Cart</div>
+              </div>
+              <div className="w-16 h-0.5 bg-gray-300 mx-2"></div>
+              <div className="flex items-center">
+                <div className="w-8 h-8 rounded-full bg-gray-200 text-gray-500 flex items-center justify-center font-medium">2</div>
+                <div className="text-sm text-gray-500 ml-2">Checkout</div>
+              </div>
+              <div className="w-16 h-0.5 bg-gray-300 mx-2"></div>
+              <div className="flex items-center">
+                <div className="w-8 h-8 rounded-full bg-gray-200 text-gray-500 flex items-center justify-center font-medium">3</div>
+                <div className="text-sm text-gray-500 ml-2">Complete</div>
+              </div>
+            </div>
+            
+            <Link
+              to="/laptopshop"
+              className="flex items-center gap-2 text-indigo-600 hover:text-indigo-800 transition-colors duration-200 px-4 py-2 rounded-full hover:bg-indigo-50"
+            >
+              <FaArrowLeft className="text-sm" /> Continue Shopping
+            </Link>
           </div>
-          <Link
-            to="/laptopshop"
-            className="flex items-center gap-2 text-indigo-600 hover:text-indigo-800 transition-colors duration-200 px-4 py-2 rounded-full hover:bg-indigo-50"
-          >
-            <FaArrowLeft className="text-sm" /> Continue Shopping
-          </Link>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -304,7 +325,7 @@ const CartPage = () => {
 
           {/* Order Summary */}
           <div className="lg:col-span-1">
-            <div className="bg-white border border-gray-100 rounded-xl p-8 sticky top-4 shadow-sm hover:shadow-md transition-all duration-300">
+            <div className="bg-white border border-gray-200 rounded-xl p-8 sticky top-4 shadow-sm hover:shadow-md transition-all duration-300">
               <h2 className="text-xl font-semibold text-indigo-900 mb-6 pb-4 border-b border-gray-100">
                 Order Summary
               </h2>
@@ -364,7 +385,7 @@ const CartPage = () => {
                     : 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 hover:shadow-lg transform hover:-translate-y-1'
                   }`}
               >
-                Proceed to Checkout
+                <FaShoppingBag className="text-sm" /> Proceed to Checkout
               </button>
               
               {selectedItems.length === 0 && (
