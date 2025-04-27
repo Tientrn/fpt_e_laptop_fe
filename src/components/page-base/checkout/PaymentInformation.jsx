@@ -1,6 +1,14 @@
 import React, { useState, useEffect } from "react";
+import PropTypes from "prop-types";
+import { FaCreditCard, FaMoneyBillWave, FaQrcode } from "react-icons/fa";
 
-const PaymentInformation = () => {
+const PaymentInformation = ({ onSelectPaymentMethod, selectedMethod }) => {
+  const PAYMENT_METHODS = [
+    { id: "shipCode", name: "Ship COD", icon: <FaMoneyBillWave className="w-4 h-4" /> },
+    { id: "payos", name: "Payos QR", icon: <FaQrcode className="w-4 h-4" /> },
+    { id: "creditCard", name: "Credit Card", icon: <FaCreditCard className="w-4 h-4" /> },
+  ];
+
   const [paymentMethod, setPaymentMethod] = useState("shipCode");
   const [cardNumber, setCardNumber] = useState("");
   const [expiryDate, setExpiryDate] = useState("");
@@ -51,6 +59,12 @@ const PaymentInformation = () => {
     setErrors(newErrors);
   }, [cardNumber, expiryDate, cvv]);
 
+  const handleSelectMethod = (methodId) => {
+    if (onSelectPaymentMethod) {
+      onSelectPaymentMethod(methodId);
+    }
+  };
+
   return (
     <div className="space-y-6 bg-white p-6 rounded-2xl shadow-md border border-gray-200">
       <h2 className="text-xl font-semibold text-black">Payment Information</h2>
@@ -60,108 +74,60 @@ const PaymentInformation = () => {
         <label className="block text-sm font-medium text-gray-700">
           Select Payment Method
         </label>
-        <div className="flex gap-4">
-          <button
-            className={`p-3 rounded-lg border text-black transition-all ${
-              paymentMethod === "shipCode"
-                ? "border-amber-600"
-                : "border-gray-300"
-            }`}
-            onClick={() => setPaymentMethod("shipCode")}
-          >
-            Ship with Code
-          </button>
-
-          <button
-            className={`p-3 rounded-lg border text-black transition-all ${
-              paymentMethod === "creditCard"
-                ? "border-amber-600"
-                : "border-gray-300"
-            }`}
-            onClick={() => setPaymentMethod("creditCard")}
-          >
-            Credit Card
-          </button>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {PAYMENT_METHODS.map((method) => (
+            <button
+              key={method.id}
+              className={`p-3 rounded-lg border transition-all flex items-center justify-center gap-2 ${
+                selectedMethod === method.id
+                  ? "border-indigo-600 bg-indigo-50 text-indigo-700"
+                  : "border-gray-300 text-gray-700 hover:border-indigo-300 hover:bg-indigo-50"
+              }`}
+              onClick={() => handleSelectMethod(method.id)}
+            >
+              {method.icon}
+              <span className="font-medium">{method.name}</span>
+            </button>
+          ))}
         </div>
       </div>
 
-      {/* Shipping Code Section */}
-      {paymentMethod === "shipCode" && (
-        <div className="space-y-2">
-          <label className="block text-sm font-medium text-gray-700">
-            Shipping Code
-          </label>
-          <input
-            type="text"
-            value={shippingCode}
-            onChange={(e) => setShippingCode(e.target.value)}
-            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-600"
-            placeholder="Enter your shipping code (optional)"
-          />
-        </div>
-      )}
-
-      {/* Credit Card Section */}
-      {paymentMethod === "creditCard" && (
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-gray-700">
-              Card Number
-            </label>
-            <input
-              type="text"
-              value={cardNumber}
-              onChange={(e) => setCardNumber(e.target.value)}
-              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-600"
-              placeholder="1234 5678 9012 3456"
-            />
+      {/* Payment Method Information */}
+      <div className="mt-4 text-sm text-gray-600">
+        {selectedMethod === "shipCode" && (
+          <div className="bg-blue-50 p-4 rounded-lg">
+            <p className="mb-2 font-medium text-blue-700">Cash On Delivery</p>
+            <p>
+              You will pay when you receive your order. Please prepare the exact amount for a smoother transaction.
+            </p>
           </div>
+        )}
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">
-                Expiry Date
-              </label>
-              <input
-                type="text"
-                value={expiryDate}
-                onChange={(e) => setExpiryDate(e.target.value)}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-600"
-                placeholder="MM/YY"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">
-                CVV
-              </label>
-              <input
-                type="text"
-                value={cvv}
-                onChange={(e) => setCvv(e.target.value)}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-600"
-                placeholder="123"
-              />
-            </div>
+        {selectedMethod === "payos" && (
+          <div className="bg-green-50 p-4 rounded-lg">
+            <p className="mb-2 font-medium text-green-700">Payos QR Payment</p>
+            <p>
+              A QR code will be generated for you to scan with your mobile banking app. The payment will be processed instantly.
+            </p>
           </div>
+        )}
 
-          {/* QR Code Section */}
-          <div className="mt-8 text-center space-y-4">
-            <h3 className="text-lg font-medium text-black">
-              Scan QR Code to Pay
-            </h3>
-            <div className="p-4 bg-gray-100 rounded-lg shadow-sm border border-gray-300 inline-block">
-              <img
-                src="/path/to/your-qr-code-image.png"
-                alt="QR Code"
-                className="w-48 h-48 object-contain"
-              />
-            </div>
+        {selectedMethod === "creditCard" && (
+          <div className="bg-purple-50 p-4 rounded-lg">
+            <p className="mb-2 font-medium text-purple-700">Credit Card</p>
+            <p>
+              Your card details will be securely processed. We accept Visa, Mastercard, and JCB.
+            </p>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
+};
+
+PaymentInformation.propTypes = {
+  onSelectPaymentMethod: PropTypes.func.isRequired,
+  selectedMethod: PropTypes.string.isRequired
 };
 
 export default PaymentInformation;

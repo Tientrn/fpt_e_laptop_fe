@@ -119,6 +119,12 @@ const CartPage = () => {
           autoClose: 1500,
         });
 
+        // Store the selected products for the checkout page
+        localStorage.setItem("checkout_products", JSON.stringify(selectedCartItems));
+        
+        // Store selected item IDs in local storage to be removed after successful payment
+        localStorage.setItem("pending_cart_removal", JSON.stringify(selectedItems));
+
         window.location.href = `/checkout/${orderDetail[0].orderId}`;
       })
       .catch((err) => {

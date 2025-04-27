@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from "react";
+import PropTypes from "prop-types";
 import { toast } from "react-toastify";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import useCartStore from "../../../store/useCartStore";
 import OrderSummary from "./OrderSummary";
-import { FaShoppingCart, FaLock } from "react-icons/fa";
+import PaymentQRCode from "./PaymentQRCode";
+import PaymentInformation from "./PaymentInformation";
+import { FaShoppingCart, FaLock, FaQrcode } from "react-icons/fa";
 import orderApis from "../../../api/orderApi";
 
 const CheckoutForm = ({
@@ -11,6 +14,8 @@ const CheckoutForm = ({
   cartItems: initialCartItems,
   shippingCost,
   onSuccess,
+  defaultPaymentMethod,
+  hidePaymentMethods,
 }) => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -18,6 +23,11 @@ const CheckoutForm = ({
   const userData = localStorage.getItem("user");
   const [orderTotal, setOrderTotal] = useState(0);
   const [cartItems, setCartItems] = useState([]);
+  const [paymentQRUrl, setPaymentQRUrl] = useState("");
+  const [paymentId, setPaymentId] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [paymentInitiated, setPaymentInitiated] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState(defaultPaymentMethod || "payos");
 
   useEffect(() => {
     const storedItems = JSON.parse(
@@ -43,7 +53,16 @@ const CheckoutForm = ({
       navigate("/laptopshop");
       return;
     }
-  }, [searchParams, navigate]);
+
+    if (status === "success") {
+      toast.success("Payment successful!");
+      if (onSuccess) onSuccess();
+      initializeCart();
+      setTimeout(() => {
+        navigate("/");
+      }, 2000);
+    }
+  }, [searchParams, navigate, onSuccess, initializeCart]);
 
   useEffect(() => {
     const newTotal = cartItems.reduce(
@@ -53,117 +72,194 @@ const CheckoutForm = ({
     setOrderTotal(newTotal);
   }, [cartItems]);
 
-  const handlePlaceOrder = async () => {
+  const createPayment = async () => {
+    setIsLoading(true);
     try {
-      if (cartItems.length === 0) {
-        toast.error("Your cart is empty!");
-        return;
+      if (!orderId) {
+        toast.error("Order ID is missing!");
+        return null;
       }
-
-      const currentTotal = cartItems.reduce(
-        (total, item) => total + item.totalPrice * item.quantity,
-        0
-      );
 
       const paymentResponse = await orderApis.createPayment({
         orderId,
-        paymentMethod: 1,
-        amount: currentTotal,
+        paymentMethod: paymentMethod === "payos" ? 1 : paymentMethod === "creditCard" ? 2 : 3,
       });
 
-      if (paymentResponse.data) {
-        const urlResponse = await orderApis.createPaymentUrl({
-          paymentId: paymentResponse.data.paymentId,
-          redirectUrl: window.location.href,
-          amount: currentTotal,
-        });
-
-        if (urlResponse.data) {
-          initializeCart(userData?.userId);
-          if (onSuccess) onSuccess();
-          window.open(urlResponse.data, "_blank");
-          toast.success("Payment successful! Redirecting to home page...");
-          setTimeout(() => {
-            navigate("/");
-          }, 2000);
-        } else {
-          throw new Error("Cannot create payment URL");
-        }
+      if (paymentResponse.data && paymentResponse.data.paymentId) {
+        setPaymentId(paymentResponse.data.paymentId);
+        return paymentResponse.data.paymentId;
+      } else {
+        toast.error("Failed to create payment");
+        return null;
       }
     } catch (error) {
-      console.error("Payment error:", error);
-      toast.error("An error occurred during the payment process!");
+      console.error("Payment creation error:", error);
+      toast.error("An error occurred during payment creation!");
+      return null;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const getPaymentUrl = async (paymentIdToUse) => {
+    setIsLoading(true);
+    try {
+      let currentPaymentId = paymentIdToUse || paymentId;
+      if (!currentPaymentId) {
+        const newPaymentId = await createPayment();
+        if (!newPaymentId) return;
+        currentPaymentId = newPaymentId;
+      }
+
+      const redirectUrl = `${window.location.origin}/checkout/${orderId}?status=success`;
+      
+      const urlResponse = await orderApis.createPaymentUrl({
+        paymentId: currentPaymentId,
+        redirectUrl,
+      });
+
+      if (urlResponse?.data) {
+        let paymentUrl;
+        
+        if (typeof urlResponse.data === 'string') {
+          paymentUrl = urlResponse.data;
+        } else if (urlResponse.data?.data && typeof urlResponse.data.data === 'string') {
+          paymentUrl = urlResponse.data.data;
+        } else if (urlResponse.data?.url && typeof urlResponse.data.url === 'string') {
+          paymentUrl = urlResponse.data.url;
+        }
+        
+        if (paymentUrl) {
+          console.log("Payment URL generated:", paymentUrl);
+          setPaymentQRUrl(paymentUrl);
+          setPaymentInitiated(true);
+        } else {
+          console.error("Invalid payment URL format:", urlResponse.data);
+          toast.error("Invalid payment URL format received");
+        }
+      } else {
+        toast.error("Cannot create payment URL");
+      }
+    } catch (error) {
+      console.error("Payment URL error:", error);
+      toast.error("An error occurred while generating payment QR code!");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleInitiatePayment = async () => {
+    if (cartItems.length === 0) {
+      toast.error("Your cart is empty!");
+      return;
+    }
+
+    if (paymentMethod === "shipCode") {
+      // Handle COD payment - skip QR code
+      toast.success("Your order has been placed successfully!");
+      if (onSuccess) onSuccess();
+      setTimeout(() => {
+        navigate("/");
+      }, 2000);
+      return;
+    }
+
+    const paymentId = await createPayment();
+    if (paymentId) {
+      getPaymentUrl(paymentId);
+    }
+  };
+
+  const handleRefreshQR = async () => {
+    return getPaymentUrl();
+  };
+
+  const handleSelectPaymentMethod = (method) => {
+    setPaymentMethod(method);
+    // Reset payment state when changing payment method
+    if (paymentInitiated) {
+      setPaymentInitiated(false);
+      setPaymentQRUrl("");
     }
   };
 
   return (
-    <div className="min-h-screen bg-white py-8">
-      <div className="max-w-4xl mx-auto px-4">
-        <h1 className="text-3xl font-bold text-black mb-6">Checkout</h1>
+    <div className="space-y-8">
+      {/* Payment info section */}
+      {!hidePaymentMethods && (
+        <PaymentInformation 
+          onSelectPaymentMethod={handleSelectPaymentMethod}
+          selectedMethod={paymentMethod}
+        />
+      )}
 
-        {cartItems.map((item) => (
-          <div
-            key={item.productId}
-            className="border border-gray-200 rounded-xl p-4 flex gap-4 items-start hover:shadow-sm"
-          >
-            <img
-              src={item.imageProduct}
-              alt={item.productName}
-              className="w-24 h-24 object-contain rounded border"
-            />
-            <div className="flex-1 space-y-1">
-              <div className="flex justify-between items-center">
-                <h3 className="font-semibold text-black text-base">
-                  {item.productName}
-                </h3>
-                <span className="text-amber-600 font-semibold text-sm">
-                  {item.totalPrice.toLocaleString("vi-VN")}₫
-                </span>
-              </div>
-              <div className="grid grid-cols-2 gap-x-4 text-sm text-gray-600">
-                <p>CPU: {item.cpu}</p>
-                <p>RAM: {item.ram}</p>
-                <p>Storage: {item.storage}</p>
-                <p>
-                  Số lượng:{" "}
-                  <span className="font-medium text-black">
-                    {item.quantity}
-                  </span>
-                </p>
-              </div>
-            </div>
-          </div>
-        ))}
+      {/* Payos payment section */}
+      <div className="rounded-xl border border-indigo-100 bg-indigo-50/50 p-4 flex flex-col sm:flex-row items-center gap-3">
+        <div className="p-2 bg-indigo-100 rounded-full">
+          <FaQrcode className="w-5 h-5 text-indigo-600" />
+        </div>
+        <div className="flex-1 text-center sm:text-left">
+          <h3 className="font-medium text-indigo-900">Payos Payment</h3>
+          <p className="text-sm text-indigo-600/70 mt-0.5">
+            Scan the QR code to complete payment securely and quickly through your banking app
+          </p>
+        </div>
+      </div>
 
-        <div className="mt-6 border-t pt-6">
-          <OrderSummary
-            totalPrice={orderTotal}
-            shippingCost={shippingCost}
-            grandTotal={orderTotal + shippingCost}
-          />
+      {/* Order Summary */}
+      <div>
 
+        {!paymentInitiated ? (
           <button
-            onClick={handlePlaceOrder}
-            disabled={cartItems.length === 0}
-            className={`mt-6 w-full py-3 rounded-lg font-medium flex items-center justify-center space-x-2 transition-colors duration-200
+            onClick={handleInitiatePayment}
+            disabled={cartItems.length === 0 || isLoading}
+            className={`mt-6 w-full py-3.5 rounded-lg font-medium flex items-center justify-center space-x-2 transition-all duration-300
               ${
-                cartItems.length === 0
+                cartItems.length === 0 || isLoading
                   ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                  : "bg-slate-600 hover:bg-amber-600 text-white"
+                  : "bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
               }
             `}
           >
-            <FaLock className="w-4 h-4" />
-            <span>Xác nhận thanh toán</span>
+            {isLoading ? (
+              <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white"></div>
+            ) : (
+              <>
+                <FaLock className="w-4 h-4" />
+                <span>Generate Payment QR Code</span>
+              </>
+            )}
           </button>
+        ) : (
+          <PaymentQRCode 
+            qrCodeUrl={paymentQRUrl} 
+            onRefresh={handleRefreshQR} 
+            totalAmount={orderTotal + shippingCost} 
+          />
+        )}
 
-          <div className="mt-4 text-center text-sm text-gray-500">
-            <span>Bạn sẽ được chuyển đến cổng thanh toán an toàn</span>
-          </div>
+        <div className="mt-4 text-center text-sm text-gray-500">
+          <span>Secure payment via Payos</span>
         </div>
       </div>
     </div>
   );
+};
+
+CheckoutForm.propTypes = {
+  orderId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+  cartItems: PropTypes.array,
+  shippingCost: PropTypes.number,
+  onSuccess: PropTypes.func,
+  defaultPaymentMethod: PropTypes.string,
+  hidePaymentMethods: PropTypes.bool
+};
+
+CheckoutForm.defaultProps = {
+  cartItems: [],
+  shippingCost: 0,
+  defaultPaymentMethod: "payos",
+  hidePaymentMethods: false
 };
 
 export default CheckoutForm;

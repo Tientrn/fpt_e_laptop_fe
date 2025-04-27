@@ -25,7 +25,7 @@ const orderApis = {
   // Create payment url
   createPaymentUrl: (data) => {
     return axiosClient.get(
-      `/Payment/${data.paymentId}/payment-url?redirectUrl=${data.redirectUrl}`
+      `/Payment/${data.paymentId}/payment-url?redirectUrl=${encodeURIComponent(data.redirectUrl)}`
     );
   },
 
