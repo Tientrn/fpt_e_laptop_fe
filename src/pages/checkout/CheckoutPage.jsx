@@ -209,12 +209,31 @@ const CheckoutPage = () => {
     localStorage.removeItem("checkout_products");
   };
 
-  const handleBackToCart = () => {
-    if (orderExpired) {
-      // Clear expired order
-      localStorage.removeItem("pending_order");
+  const handleBackToCart = async () => {
+    try {
+      // Get all payments and find matching order ID
+      const paymentsResponse = await orderApis.getAllPayments();
+      
+      if (paymentsResponse?.data?.data) {
+        const payment = paymentsResponse.data.data.find(
+          (payment) => payment.orderId.toString() === orderId
+        );
+        
+        if (payment && payment.transactionCode) {
+          // Call API to update payment status
+          await orderApis.updatePayment(payment.transactionCode, { status: "CANCELLED" });
+          toast.info("Payment has been cancelled");
+        }
+      }
+    } catch (error) {
+      console.error("Error cancelling payment:", error);
+    } finally {
+      if (orderExpired) {
+        // Clear expired order
+        localStorage.removeItem("pending_order");
+      }
+      navigate("/cart");
     }
-    navigate("/cart");
   };
 
   const handleCreateNewOrder = () => {

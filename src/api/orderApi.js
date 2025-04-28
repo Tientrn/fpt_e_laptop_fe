@@ -33,6 +33,10 @@ const orderApis = {
     return axiosClient.get(`/Payment/${id}`);
   },
 
+  getAllPayments: () => {
+    return axiosClient.get(`/Payment/get-all`);
+  },
+
   updatePayment: (id, data) => {
     return axiosClient.put(`/Payment/update/${id}`, data);
   },
