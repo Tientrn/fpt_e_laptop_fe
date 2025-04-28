@@ -776,8 +776,8 @@ const Contractstudent = () => {
                                 </span>
                                 <span className="text-sm font-medium text-amber-600">
                                   {formatCurrency(
-                                    compensationData[selectedContract.id]
-                                      ?.usedDepositAmount || 0
+                                    depositData[selectedContract.id]?.amount ||
+                                      0
                                   )}
                                 </span>
                               </div>
@@ -806,8 +806,8 @@ const Contractstudent = () => {
                                 {formatCurrency(
                                   Math.max(
                                     0,
-                                    (compensationData[selectedContract.id]
-                                      ?.usedDepositAmount ?? 0) -
+                                    (depositData[selectedContract.id]?.amount ??
+                                      0) -
                                       (compensationData[selectedContract.id]
                                         ?.compensationAmount ?? 0)
                                   )

@@ -193,13 +193,11 @@ const ContractsPage = () => {
   const handleRequestSelect = async (request) => {
     console.log("Selected Request:", request);
 
-
     try {
       // Fetch user information when selecting a request
       const userResponse = await userApi.getUserById(request.userId);
       if (userResponse.isSuccess) {
         setSelectedUserInfo(userResponse.data);
-  
       } else {
         toast.warning("Could not load user details, but you can continue");
       }
@@ -239,7 +237,6 @@ const ContractsPage = () => {
 
       // Open modal
       setIsModalOpen(true);
-
     } catch (error) {
       console.error("Error fetching user details:", error);
       toast.error(
@@ -491,15 +488,18 @@ const ContractsPage = () => {
   const handleCreateContract = async (e) => {
     e.preventDefault();
     try {
-
-      if (!contractForm.itemValue || contractForm.itemValue < 1000000) {
-        toast.error("Please enter a valid item value (at least 1,000,000đ)");
+      if (contractForm.itemValue === "" || contractForm.itemValue < 1000000) {
+        toast.error("Please enter a valid item value (at least 1,000,000₫)");
         return;
       }
 
       const isValid = validateMoneyBeforeSubmit(
         {
-          itemValue: { value: contractForm.itemValue, label: "item value", min: 1000000 },
+          itemValue: {
+            value: contractForm.itemValue,
+            label: "item value",
+            min: 1000000,
+          },
         },
         toast.error
       );
@@ -590,7 +590,7 @@ const ContractsPage = () => {
           itemId: 0,
           terms: "",
           conditionBorrow: "",
-          itemValue: 1000000,
+          itemValue: "",
           expectedReturnDate: format(new Date(), "yyyy-MM-dd"),
         });
 
@@ -1447,12 +1447,22 @@ const ContractsPage = () => {
                       <input
                         type="number"
                         value={contractForm.itemValue}
-                        onChange={e => {
-                          const value = parseInt(e.target.value.replace(/\D/g, "")) || 0;
-                          setContractForm({
-                            ...contractForm,
-                            itemValue: value,
-                          });
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          if (value === "") {
+                            setContractForm({
+                              ...contractForm,
+                              itemValue: "",
+                            });
+                          } else {
+                            const parsedValue = parseInt(
+                              value.replace(/\D/g, "")
+                            );
+                            setContractForm({
+                              ...contractForm,
+                              itemValue: isNaN(parsedValue) ? "" : parsedValue,
+                            });
+                          }
                         }}
                         min={1000000}
                         className="w-full pl-8 py-2 text-sm rounded border border-gray-200 bg-gray-50 focus:ring-2 focus:ring-amber-500 focus:border-transparent"

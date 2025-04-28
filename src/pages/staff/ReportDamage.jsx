@@ -2027,7 +2027,7 @@ const ReportDamage = () => {
                         Total Compensation Amount
                       </label>
                       <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center justify-center text-gray-500 pointer-events-none">
+                        <div className="absolute  top-0 inset-y-0 left-0 pl-3 flex items-center h-full justify-center text-gray-500 pointer-events-none">
                           <span className="text-base font-medium">₫</span>
                         </div>
                         <input
