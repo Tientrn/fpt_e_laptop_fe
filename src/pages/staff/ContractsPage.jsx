@@ -1588,7 +1588,7 @@ const ContractsPage = () => {
                       Item Value:{" "}
                     </span>
                     <span className="text-gray-600">
-                      {selectedContract.itemValue}
+                      {formatCurrency(selectedContract.itemValue || 0)}
                     </span>
                   </div>
                   <div>

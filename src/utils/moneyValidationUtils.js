@@ -9,41 +9,45 @@
  * @param {number} max - Maximum allowed value (default: Number.MAX_SAFE_INTEGER)
  * @returns {object} - Object containing validation result and formatted value
  */
-export const validateMoneyInput = (value, min = 0, max = Number.MAX_SAFE_INTEGER) => {
+export const validateMoneyInput = (
+  value,
+  min = 0,
+  max = Number.MAX_SAFE_INTEGER
+) => {
   // Convert to number and handle potential NaN
   const numValue = parseFloat(value);
-  
+
   // Check if it's a valid number
   if (isNaN(numValue)) {
     return {
       isValid: false,
       value: min,
-      error: "Please enter a valid amount"
+      error: "Please enter a valid amount",
     };
   }
-  
+
   // Check minimum value constraint
   if (numValue < min) {
     return {
       isValid: false,
       value: min,
-      error: `Amount cannot be less than ${formatCurrency(min)}`
+      error: `Amount cannot be less than ${formatCurrency(min)}`,
     };
   }
-  
+
   // Check maximum value constraint
   if (numValue > max) {
     return {
       isValid: false,
       value: max,
-      error: `Amount cannot exceed ${formatCurrency(max)}`
+      error: `Amount cannot exceed ${formatCurrency(max)}`,
     };
   }
-  
+
   return {
     isValid: true,
     value: numValue,
-    error: null
+    error: null,
   };
 };
 
@@ -53,7 +57,7 @@ export const validateMoneyInput = (value, min = 0, max = Number.MAX_SAFE_INTEGER
  * @returns {string} - Formatted currency string
  */
 export const formatCurrency = (value) => {
-  return `₫${parseFloat(value).toLocaleString()}`;
+  return `${parseFloat(value).toLocaleString()}đ`;
 };
 
 /**
@@ -65,27 +69,33 @@ export const formatCurrency = (value) => {
  * @param {number} max - Maximum allowed value
  * @returns {boolean} - Whether validation passed
  */
-export const handleMoneyInputChange = (e, setState, fieldName, min = 0, max = Number.MAX_SAFE_INTEGER) => {
+export const handleMoneyInputChange = (
+  e,
+  setState,
+  fieldName,
+  min = 0,
+  max = Number.MAX_SAFE_INTEGER
+) => {
   const { value } = e.target;
   const validationResult = validateMoneyInput(value, min, max);
-  
+
   if (validationResult.isValid) {
-    setState(prev => ({
+    setState((prev) => ({
       ...prev,
-      [fieldName]: validationResult.value
+      [fieldName]: validationResult.value,
     }));
     return true;
-  } else if (value === '') {
+  } else if (value === "") {
     // Allow empty input during typing
-    setState(prev => ({
+    setState((prev) => ({
       ...prev,
-      [fieldName]: ''
+      [fieldName]: "",
     }));
     return false;
   } else {
-    setState(prev => ({
+    setState((prev) => ({
       ...prev,
-      [fieldName]: validationResult.value
+      [fieldName]: validationResult.value,
     }));
     return false;
   }
@@ -99,19 +109,24 @@ export const handleMoneyInputChange = (e, setState, fieldName, min = 0, max = Nu
  * @param {number} max - Maximum allowed value
  * @returns {object} - Validation result with error message if invalid
  */
-export const validateMoneyField = (value, fieldLabel, min = 0, max = Number.MAX_SAFE_INTEGER) => {
+export const validateMoneyField = (
+  value,
+  fieldLabel,
+  min = 0,
+  max = Number.MAX_SAFE_INTEGER
+) => {
   const validationResult = validateMoneyInput(value, min, max);
-  
+
   if (!validationResult.isValid) {
     return {
       isValid: false,
-      error: validationResult.error || `Please enter a valid ${fieldLabel}`
+      error: validationResult.error || `Please enter a valid ${fieldLabel}`,
     };
   }
-  
+
   return {
     isValid: true,
-    error: null
+    error: null,
   };
 };
 
@@ -120,7 +135,7 @@ export const validateMoneyField = (value, fieldLabel, min = 0, max = Number.MAX_
  * @param {Object} fieldsToValidate - Object with field names as keys and validation params as values
  * @param {Function} errorHandler - Function to handle validation errors (e.g., toast.error)
  * @returns {boolean} - Whether all validations passed
- * 
+ *
  * Example usage:
  * validateMoneyBeforeSubmit(
  *   {
@@ -132,17 +147,22 @@ export const validateMoneyField = (value, fieldLabel, min = 0, max = Number.MAX_
  */
 export const validateMoneyBeforeSubmit = (fieldsToValidate, errorHandler) => {
   for (const fieldConfig of Object.values(fieldsToValidate)) {
-    const { value, label, min = 0, max = Number.MAX_SAFE_INTEGER } = fieldConfig;
+    const {
+      value,
+      label,
+      min = 0,
+      max = Number.MAX_SAFE_INTEGER,
+    } = fieldConfig;
     const validation = validateMoneyField(value, label, min, max);
-    
+
     if (!validation.isValid) {
-      if (typeof errorHandler === 'function') {
+      if (typeof errorHandler === "function") {
         errorHandler(validation.error);
       }
       return false;
     }
   }
-  
+
   return true;
 };
 
@@ -175,26 +195,34 @@ export const calculateMaximumDeposit = (itemValue, percentage = 30) => {
  * @param {number} minPercentage - Minimum deposit percentage (default: 10)
  * @returns {object} - Validation result with error message if invalid
  */
-export const validateDeposit = (depositAmount, itemValue, minPercentage = 10) => {
+export const validateDeposit = (
+  depositAmount,
+  itemValue,
+  minPercentage = 10
+) => {
   const minDeposit = calculateMinimumDeposit(itemValue, minPercentage);
-  
+
   if (depositAmount < minDeposit) {
     return {
       isValid: false,
-      error: `Deposit must be at least ${minPercentage}% (${formatCurrency(minDeposit)}) of the item value`
+      error: `Deposit must be at least ${minPercentage}% (${formatCurrency(
+        minDeposit
+      )}) of the item value`,
     };
   }
-  
+
   if (depositAmount > itemValue) {
     return {
       isValid: false,
-      error: `Deposit cannot exceed the item value (${formatCurrency(itemValue)})`
+      error: `Deposit cannot exceed the item value (${formatCurrency(
+        itemValue
+      )})`,
     };
   }
-  
+
   return {
     isValid: true,
-    error: null
+    error: null,
   };
 };
 
@@ -208,21 +236,25 @@ export const validateDamageFee = (damageFee, itemValue) => {
   if (damageFee > itemValue) {
     return {
       isValid: false,
-      error: `Damage fee cannot exceed the item value (${formatCurrency(itemValue)})`
+      error: `Damage fee cannot exceed the item value (${formatCurrency(
+        itemValue
+      )})`,
     };
   }
-  
+
   // Warning if damage fee is over 75% of item value
-  if (damageFee > (itemValue * 0.75)) {
+  if (damageFee > itemValue * 0.75) {
     return {
       isValid: true,
-      warning: `Warning: Damage fee is approaching item value (${formatCurrency(itemValue)})`
+      warning: `Warning: Damage fee is approaching item value (${formatCurrency(
+        itemValue
+      )})`,
     };
   }
-  
+
   return {
     isValid: true,
-    error: null
+    error: null,
   };
 };
 
@@ -236,32 +268,50 @@ export const validateDamageFee = (damageFee, itemValue) => {
  * @param {number} itemValue - The value of the item
  * @returns {object} - Validation result with field-specific errors
  */
-export const validateCompensation = (compensationAmount, usedDepositAmount, extraPaymentRequired, damageFee, depositAmount, itemValue) => {
+export const validateCompensation = (
+  compensationAmount,
+  usedDepositAmount,
+  extraPaymentRequired,
+  damageFee,
+  depositAmount,
+  itemValue
+) => {
   const errors = {};
-  
+
   // Validate compensation amount
   if (compensationAmount > damageFee) {
-    errors.compensationAmount = `Compensation cannot exceed damage fee (${formatCurrency(damageFee)})`;
+    errors.compensationAmount = `Compensation cannot exceed damage fee (${formatCurrency(
+      damageFee
+    )})`;
   }
-  
+
   if (compensationAmount > itemValue) {
-    errors.compensationAmount = `Compensation cannot exceed item value (${formatCurrency(itemValue)})`;
+    errors.compensationAmount = `Compensation cannot exceed item value (${formatCurrency(
+      itemValue
+    )})`;
   }
-  
+
   // Validate used deposit amount
   if (usedDepositAmount > depositAmount) {
-    errors.usedDepositAmount = `Cannot use more than available deposit (${formatCurrency(depositAmount)})`;
+    errors.usedDepositAmount = `Cannot use more than available deposit (${formatCurrency(
+      depositAmount
+    )})`;
   }
-  
+
   // Check if extraPaymentRequired matches the calculation
-  const calculatedExtraPayment = Math.max(0, compensationAmount - usedDepositAmount);
+  const calculatedExtraPayment = Math.max(
+    0,
+    compensationAmount - usedDepositAmount
+  );
   if (extraPaymentRequired !== calculatedExtraPayment) {
-    errors.extraPaymentRequired = `Extra payment should be ${formatCurrency(calculatedExtraPayment)} (Compensation - Used Deposit)`;
+    errors.extraPaymentRequired = `Extra payment should be ${formatCurrency(
+      calculatedExtraPayment
+    )} (Compensation - Used Deposit)`;
   }
-  
+
   return {
     isValid: Object.keys(errors).length === 0,
-    errors
+    errors,
   };
 };
 
@@ -271,6 +321,9 @@ export const validateCompensation = (compensationAmount, usedDepositAmount, extr
  * @param {number} usedDepositAmount - Amount taken from the deposit
  * @returns {number} - Extra payment required
  */
-export const calculateExtraPayment = (compensationAmount, usedDepositAmount) => {
+export const calculateExtraPayment = (
+  compensationAmount,
+  usedDepositAmount
+) => {
   return Math.max(0, compensationAmount - usedDepositAmount);
-}; 
+};

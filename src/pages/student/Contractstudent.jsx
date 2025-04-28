@@ -18,6 +18,7 @@ import {
 import borrowcontractApi from "../../api/borrowcontractApi";
 import borrowrequestApi from "../../api/borrowrequestApi";
 import compensationTransactionApi from "../../api/compensationTransactionApi";
+import deposittransactionApi from "../../api/deposittransactionApi";
 
 const Contractstudent = () => {
   const [contracts, setContracts] = useState([]);
@@ -31,6 +32,7 @@ const Contractstudent = () => {
   const [borrowRequestDetails, setBorrowRequestDetails] = useState(null);
   const [userId, setUserId] = useState(null);
   const [compensationData, setCompensationData] = useState({});
+  const [depositData, setDepositData] = useState({});
 
   // Lấy userId từ token khi component mount
   useEffect(() => {
@@ -61,6 +63,7 @@ const Contractstudent = () => {
   useEffect(() => {
     if (contracts.length > 0) {
       fetchCompensationData();
+      fetchDepositData();
     }
   }, [contracts]);
 
@@ -75,6 +78,24 @@ const Contractstudent = () => {
     } catch (error) {
       console.error("Error fetching borrow request details:", error);
       toast.error(error.message || "Error fetching details");
+    }
+  };
+
+  const fetchDepositData = async () => {
+    try {
+      const response = await deposittransactionApi.getAllDepositTransactions();
+      if (response.isSuccess && Array.isArray(response.data)) {
+        const depositMap = {};
+        response.data.forEach((transaction) => {
+          if (transaction.contractId) {
+            depositMap[transaction.contractId] = transaction;
+          }
+        });
+        console.log("Deposit data loaded:", depositMap);
+        setDepositData(depositMap);
+      }
+    } catch (error) {
+      console.error("Error fetching deposit data:", error);
     }
   };
 
@@ -362,10 +383,8 @@ const Contractstudent = () => {
                           <div className="text-sm font-medium text-gray-900 flex items-center">
                             <FaMoneyBillWave className="text-green-500 mr-2" />
                             {formatCurrency(
-                              compensationData[contract.id]
-                                ?.usedDepositAmount !== undefined
-                                ? compensationData[contract.id]
-                                    .usedDepositAmount
+                              depositData[contract.id]?.amount !== undefined
+                                ? depositData[contract.id].amount
                                 : "N/A"
                             )}
                           </div>
@@ -657,13 +676,12 @@ const Contractstudent = () => {
                       <p className="text-sm text-gray-900 font-medium flex flex-col">
                         <span className="flex items-center">
                           <FaMoneyBillWave className="text-green-500 mr-2" />
-                          {compensationData[selectedContract.id]
-                            ?.usedDepositAmount !== undefined
-                            ? formatCurrency(
-                                compensationData[selectedContract.id]
-                                  .usedDepositAmount
-                              )
-                            : "N/A"}
+                          {formatCurrency(
+                            depositData[selectedContract.id]?.amount !==
+                              undefined
+                              ? depositData[selectedContract.id].amount
+                              : "N/A"
+                          )}
                         </span>
 
                         {/* Deposit status indicator */}
@@ -724,13 +742,12 @@ const Contractstudent = () => {
                             Original Deposit:
                           </span>
                           <span className="text-sm font-medium text-gray-800">
-                            {compensationData[selectedContract.id]
-                              ?.usedDepositAmount !== undefined
-                              ? formatCurrency(
-                                  compensationData[selectedContract.id]
-                                    .usedDepositAmount
-                                )
-                              : "N/A"}
+                            {formatCurrency(
+                              depositData[selectedContract.id]?.amount !==
+                                undefined
+                                ? depositData[selectedContract.id].amount
+                                : "N/A"
+                            )}
                           </span>
                         </div>
 
