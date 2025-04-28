@@ -29,6 +29,14 @@ const orderApis = {
     );
   },
 
+  getPayment: (id) => {
+    return axiosClient.get(`/Payment/${id}`);
+  },
+
+  updatePayment: (id, data) => {
+    return axiosClient.put(`/Payment/update/${id}`, data);
+  },
+
   // Create order detail
   createOrderDetail: (data) => {
     return axiosClient.post("/orderdetails", data);
