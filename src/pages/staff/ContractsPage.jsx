@@ -112,8 +112,6 @@ const ContractsPage = () => {
       const response = await borrowcontractApi.getAllBorrowContracts();
       if (response.isSuccess) {
         setContracts(response.data || []);
-
-        // Fetch user info for borrowers (students)
         const borrowerIds = [
           ...new Set(response.data.map((contract) => contract.userId)),
         ];
@@ -140,18 +138,12 @@ const ContractsPage = () => {
         const existingContractRequestIds = contractResponse.data.map(
           (contract) => contract.requestId
         );
-
-        console.log(requestResponse.data);
-        // Lọc ra các request có status "Approved" và chưa có contract
         const approved = requestResponse.data.filter(
           (request) =>
             request.status === "Approved" &&
             !existingContractRequestIds.includes(request.requestId)
         );
-
         setApprovedRequests(approved);
-
-        // Fetch user info cho các approved requests
         const userIds = [...new Set(approved.map((request) => request.userId))];
         await fetchUserInfoForIds(userIds);
       }
@@ -186,7 +178,7 @@ const ContractsPage = () => {
         const depositsMap = response.data.reduce((acc, deposit) => {
           acc[deposit.contractId] = {
             ...deposit,
-            status: deposit.status || "Completed", // <- Đây là vấn đề
+            status: deposit.status || "Completed",
           };
           return acc;
         }, {});
@@ -200,19 +192,14 @@ const ContractsPage = () => {
 
   const handleRequestSelect = async (request) => {
     console.log("Selected Request:", request);
-    toast.info(
-      `Processing request #${request.requestId} for ${request.itemName}`
-    );
+
 
     try {
       // Fetch user information when selecting a request
-      toast.info("Loading user details...");
       const userResponse = await userApi.getUserById(request.userId);
       if (userResponse.isSuccess) {
         setSelectedUserInfo(userResponse.data);
-        toast.success(
-          `User details for ${userResponse.data.fullName} loaded successfully`
-        );
+  
       } else {
         toast.warning("Could not load user details, but you can continue");
       }
@@ -228,7 +215,6 @@ const ContractsPage = () => {
       // If startDate has passed, set default to today
       if (startDate < today) {
         defaultReturnDate = today;
-        toast.info("Start date has passed, setting return date to today");
       }
 
       // Ensure default date doesn't exceed endDate
@@ -237,7 +223,6 @@ const ContractsPage = () => {
         toast.info("Adjusting return date to match maximum allowed date");
       }
 
-      toast.info("Preparing contract form...");
       // Reset form and set new values
       setContractForm({
         requestId: request.requestId,
@@ -254,9 +239,7 @@ const ContractsPage = () => {
 
       // Open modal
       setIsModalOpen(true);
-      toast.success(
-        "Ready to create contract. Please fill in the remaining details."
-      );
+
     } catch (error) {
       console.error("Error fetching user details:", error);
       toast.error(
@@ -508,17 +491,15 @@ const ContractsPage = () => {
   const handleCreateContract = async (e) => {
     e.preventDefault();
     try {
-      // Validate monetary values
-      toast.info("Validating form data...");
 
-      if (!contractForm.itemValue || contractForm.itemValue <= 0) {
-        toast.error("Please enter a valid item value (greater than 0)");
+      if (!contractForm.itemValue || contractForm.itemValue < 1000000) {
+        toast.error("Please enter a valid item value (at least 1,000,000đ)");
         return;
       }
 
       const isValid = validateMoneyBeforeSubmit(
         {
-          itemValue: { value: contractForm.itemValue, label: "item value" },
+          itemValue: { value: contractForm.itemValue, label: "item value", min: 1000000 },
         },
         toast.error
       );
@@ -1464,10 +1445,17 @@ const ContractsPage = () => {
                         ₫
                       </span>
                       <input
-                        type="text"
-                        readOnly
-                        value={contractForm.itemValue.toLocaleString()}
-                        className="w-full pl-8 py-2 text-sm rounded border border-gray-200 bg-gray-50 focus:ring-2 focus:ring-amber-500 focus:border-transparent cursor-not-allowed"
+                        type="number"
+                        value={contractForm.itemValue}
+                        onChange={e => {
+                          const value = parseInt(e.target.value.replace(/\D/g, "")) || 0;
+                          setContractForm({
+                            ...contractForm,
+                            itemValue: value,
+                          });
+                        }}
+                        min={1000000}
+                        className="w-full pl-8 py-2 text-sm rounded border border-gray-200 bg-gray-50 focus:ring-2 focus:ring-amber-500 focus:border-transparent"
                         required
                       />
                     </div>

@@ -3,6 +3,8 @@ import React from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { PrivateRoute } from "./components/routes/PrivateRoute";
 import ScrollToTop from "./components/routes/ScrollToTop";
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 {
   /* Layout */
 }
@@ -85,6 +87,7 @@ const App = () => {
   return (
     <BrowserRouter>
       <ScrollToTop />
+      <ToastContainer position="top-right" autoClose={3000} />
       <Routes>
         {/* Public Routes */}
         <Route

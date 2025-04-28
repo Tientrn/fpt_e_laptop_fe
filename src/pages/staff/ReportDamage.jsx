@@ -590,7 +590,7 @@ const ReportDamage = () => {
 
       // Get deposit information
       const deposit = depositsMap[contractId] || { amount: 0 };
-
+      console.log("vinh log", deposit);
       let compensationTransactionData;
 
       if (isZeroDamageFee) {
@@ -599,7 +599,7 @@ const ReportDamage = () => {
           contractId: contractId,
           userId: parseInt(borrowHistory.userId) || 0,
           reportDamageId: parseInt(selectedReport.reportId) || 0,
-          depositTransactionId: deposit.depositTransactionId || 0,
+          depositTransactionId: deposit.depositId || 0,
           compensationAmount: 0, // No compensation amount
           usedDepositAmount: 0, // No deposit used
           extraPaymentRequired: 0, // No extra payment
@@ -629,7 +629,7 @@ const ReportDamage = () => {
           contractId: contractId,
           userId: parseInt(borrowHistory.userId) || 0,
           reportDamageId: parseInt(selectedReport.reportId) || 0,
-          depositTransactionId: deposit.depositTransactionId || 0,
+          depositTransactionId: deposit.depositId || 0,
           compensationAmount: totalAmount,
           usedDepositAmount: usedDeposit,
           extraPaymentRequired: extraPayment,
