@@ -17,7 +17,7 @@ const ListLaptopBorrow = ({ limit }) => {
         const response = await donateitemsApi.getAllDonateItems();
         if (response.isSuccess) {
           const laptopData = response.data || [];
-          
+
           // If limit is provided, limit the displayed laptops
           if (limit && limit > 0) {
             setDisplayedLaptops(laptopData.slice(0, limit));
@@ -210,6 +210,24 @@ const ListLaptopBorrow = ({ limit }) => {
                         Screen Size: {laptop.screenSize}
                       </span>
                     </div>
+                    <div className="flex items-center text-gray-600">
+                      <svg
+                        className="w-5 h-5 mr-2 flex-shrink-0 text-indigo-500"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M16 7a4 4 0 01-8 0M12 14v7m0 0H9m3 0h3"
+                        />
+                      </svg>
+                      <span className="truncate">
+                        Serial: {laptop.serialNumber}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -257,7 +275,7 @@ const ListLaptopBorrow = ({ limit }) => {
 
 // Prop type validation
 ListLaptopBorrow.propTypes = {
-  limit: PropTypes.number
+  limit: PropTypes.number,
 };
 
 // Default prop for when limit is not provided

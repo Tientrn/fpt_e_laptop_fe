@@ -110,7 +110,7 @@ const Contractstudent = () => {
                 contract.status.toLowerCase() === "pending"
                   ? "active"
                   : "completed",
-              depositAmount: contract.itemValue,
+              itemValue: contract.itemValue,
               returnDate: null,
               laptopCondition: {
                 beforeBorrow: contract.conditionBorrow,
@@ -361,7 +361,13 @@ const Contractstudent = () => {
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm font-medium text-gray-900 flex items-center">
                             <FaMoneyBillWave className="text-green-500 mr-2" />
-                            {formatCurrency(contract.depositAmount)}
+                            {formatCurrency(
+                              compensationData[contract.id]
+                                ?.usedDepositAmount !== undefined
+                                ? compensationData[contract.id]
+                                    .usedDepositAmount
+                                : "N/A"
+                            )}
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -605,13 +611,26 @@ const Contractstudent = () => {
                     </div>
                   </div>
 
-                  <div className="bg-indigo-50 p-4 rounded-lg">
-                    <p className="text-xs text-indigo-600 font-medium mb-1">
-                      Laptop
-                    </p>
-                    <p className="text-sm text-gray-900 font-medium">
-                      {borrowRequestDetails.itemName}
-                    </p>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="bg-indigo-50 p-4 rounded-lg">
+                      <p className="text-xs text-indigo-600 font-medium mb-1">
+                        Laptop
+                      </p>
+                      <p className="text-sm text-gray-900 font-medium">
+                        {borrowRequestDetails.itemName || "N/A"}
+                      </p>
+                    </div>
+
+                    <div className="bg-indigo-50 p-4 rounded-lg">
+                      <p className="text-xs text-indigo-600 font-medium mb-1">
+                        Laptop Value
+                      </p>
+                      <p className="text-sm text-gray-900 font-medium">
+                        {selectedContract.itemValue
+                          ? formatCurrency(selectedContract.itemValue)
+                          : "N/A"}
+                      </p>
+                    </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
@@ -638,7 +657,13 @@ const Contractstudent = () => {
                       <p className="text-sm text-gray-900 font-medium flex flex-col">
                         <span className="flex items-center">
                           <FaMoneyBillWave className="text-green-500 mr-2" />
-                          {formatCurrency(selectedContract.depositAmount)}
+                          {compensationData[selectedContract.id]
+                            ?.usedDepositAmount !== undefined
+                            ? formatCurrency(
+                                compensationData[selectedContract.id]
+                                  .usedDepositAmount
+                              )
+                            : "N/A"}
                         </span>
 
                         {/* Deposit status indicator */}
@@ -656,9 +681,8 @@ const Contractstudent = () => {
                                 {formatCurrency(
                                   Math.max(
                                     0,
-                                    selectedContract.depositAmount -
-                                      (compensationData[selectedContract.id]
-                                        ?.usedDepositAmount || 0)
+                                    compensationData[selectedContract.id]
+                                      ?.compensationAmount || 0
                                   )
                                 )}{" "}
                                 returned
@@ -700,7 +724,13 @@ const Contractstudent = () => {
                             Original Deposit:
                           </span>
                           <span className="text-sm font-medium text-gray-800">
-                            {formatCurrency(selectedContract.depositAmount)}
+                            {compensationData[selectedContract.id]
+                              ?.usedDepositAmount !== undefined
+                              ? formatCurrency(
+                                  compensationData[selectedContract.id]
+                                    .usedDepositAmount
+                                )
+                              : "N/A"}
                           </span>
                         </div>
 
@@ -759,9 +789,10 @@ const Contractstudent = () => {
                                 {formatCurrency(
                                   Math.max(
                                     0,
-                                    selectedContract.depositAmount -
+                                    (compensationData[selectedContract.id]
+                                      ?.usedDepositAmount ?? 0) -
                                       (compensationData[selectedContract.id]
-                                        ?.usedDepositAmount || 0)
+                                        ?.compensationAmount ?? 0)
                                   )
                                 )}
                               </span>
@@ -797,7 +828,13 @@ const Contractstudent = () => {
                                 </span>
                                 <span className="text-sm font-bold text-green-700">
                                   {formatCurrency(
-                                    selectedContract.depositAmount
+                                    Math.max(
+                                      0,
+                                      (compensationData[selectedContract.id]
+                                        ?.usedDepositAmount ?? 0) -
+                                        (compensationData[selectedContract.id]
+                                          ?.compensationAmount ?? 0)
+                                    )
                                   )}
                                 </span>
                               </div>

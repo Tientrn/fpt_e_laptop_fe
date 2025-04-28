@@ -10,7 +10,7 @@ import {
   FaTimes,
   FaInfoCircle,
   FaSpinner,
-  FaExclamationTriangle
+  FaExclamationTriangle,
 } from "react-icons/fa";
 import userinfoApi from "../../api/userinfoApi";
 import borrowhistoryApi from "../../api/borrowhistoryApi";
@@ -60,6 +60,7 @@ const RequestsPage = () => {
   const [request, setRequest] = useState(null);
   const [userInfo, setUserInfo] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showDetail, setShowDetail] = useState(false);
 
   const getAllBorrowHistories = () => {
     borrowhistoryApi
@@ -80,18 +81,21 @@ const RequestsPage = () => {
     try {
       // Use the donated items API to get item details
       const response = await donateitemsApi.getDonateItemById(itemId);
-      
+
       // Check if response is successful and contains data
       if (response?.isSuccess && response.data) {
         console.log("Item data:", response.data);
-        
+
         // Check if the item has a status property
         if (response.data.status) {
           return response.data.status;
         }
-        
+
         // If no status property exists, check if there is a state or condition property that might indicate availability
-        if (response.data.state === "Available" || response.data.condition === "Available") {
+        if (
+          response.data.state === "Available" ||
+          response.data.condition === "Available"
+        ) {
           return "Available";
         }
       }
@@ -124,15 +128,15 @@ const RequestsPage = () => {
 
             if (userRequests.length > 0) {
               const latestRequest = userRequests[userRequests.length - 1];
-              
+
               // Check if item status is "Available" when request status is "Approved"
               let displayStatus = latestRequest.status;
-              
+
               // If there's an itemId field, check its status
               if (latestRequest.itemId && latestRequest.status === "Approved") {
                 try {
                   const status = await checkItemStatus(latestRequest.itemId);
-                  
+
                   // If the item is "Available", update the display status
                   if (status === "Available") {
                     displayStatus = "Available";
@@ -142,7 +146,18 @@ const RequestsPage = () => {
                   console.error("Failed to check item status:", err);
                 }
               }
-              
+              let itemDetail = null;
+              try {
+                const itemResponse = await donateitemsApi.getDonateItemById(
+                  latestRequest.itemId
+                );
+                if (itemResponse?.isSuccess && itemResponse.data) {
+                  itemDetail = itemResponse.data;
+                }
+              } catch (error) {
+                console.error("Failed to fetch item detail:", error);
+              }
+
               setRequest({
                 id: latestRequest.requestId,
                 itemId: latestRequest.itemId,
@@ -151,6 +166,7 @@ const RequestsPage = () => {
                 originalStatus: latestRequest.status, // Keep the original status for reference
                 startDate: latestRequest.startDate,
                 endDate: latestRequest.endDate,
+                itemDetail: itemDetail || {},
               });
             } else {
               toast.info("No requests found for the current user");
@@ -233,7 +249,9 @@ const RequestsPage = () => {
       <div className="min-h-screen bg-gradient-to-b from-indigo-50 to-white flex justify-center items-center">
         <div className="flex flex-col items-center">
           <FaSpinner className="animate-spin h-12 w-12 text-indigo-600" />
-          <p className="mt-3 text-indigo-600 font-medium">Loading request status...</p>
+          <p className="mt-3 text-indigo-600 font-medium">
+            Loading request status...
+          </p>
         </div>
       </div>
     );
@@ -246,10 +264,14 @@ const RequestsPage = () => {
           <div className="text-indigo-600 mb-4">
             <FaExclamationTriangle className="w-16 h-16 mx-auto" />
           </div>
-          <h2 className="text-xl font-bold text-gray-800 mb-2">No Active Requests</h2>
-          <p className="text-gray-500 mb-6">You don&apos;t have any active borrow requests at the moment.</p>
-          <a 
-            href="#" 
+          <h2 className="text-xl font-bold text-gray-800 mb-2">
+            No Active Requests
+          </h2>
+          <p className="text-gray-500 mb-6">
+            You don&apos;t have any active borrow requests at the moment.
+          </p>
+          <a
+            href="#"
             className="px-5 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition duration-200"
           >
             Browse Laptops
@@ -283,12 +305,18 @@ const RequestsPage = () => {
             <h1 className="text-2xl font-bold text-white">
               Borrow Request Status
             </h1>
-            <p className="text-indigo-100 mt-1">Track and manage your laptop borrowing request</p>
+            <p className="text-indigo-100 mt-1">
+              Track and manage your laptop borrowing request
+            </p>
           </div>
 
           {/* Status Card */}
           <div className="p-6">
-            <div className={`p-6 rounded-lg border ${getStatusColor(request.status)} mb-8`}>
+            <div
+              className={`p-6 rounded-lg border ${getStatusColor(
+                request.status
+              )} mb-8`}
+            >
               <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
                 <div className="flex items-center mb-4 md:mb-0">
                   <div className="h-12 w-12 rounded-full bg-white flex items-center justify-center mr-4">
@@ -303,7 +331,8 @@ const RequestsPage = () => {
                         ? "Approved"
                         : request.status === "Rejected"
                         ? "Rejected"
-                        : request.status === "Available" && request.originalStatus === "Approved"
+                        : request.status === "Available" &&
+                          request.originalStatus === "Approved"
                         ? "Available for Pickup"
                         : request.status}
                     </span>
@@ -320,7 +349,9 @@ const RequestsPage = () => {
                 )}
               </div>
               <div className="mt-4 text-sm">
-                <p>{getStatusMessage(request.status, request.originalStatus)}</p>
+                <p>
+                  {getStatusMessage(request.status, request.originalStatus)}
+                </p>
               </div>
             </div>
 
@@ -353,15 +384,152 @@ const RequestsPage = () => {
 
               {/* Request Info Card */}
               <div className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm">
-                <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
-                  <FaLaptop className="text-indigo-600 mr-2" />
-                  Borrow Information
-                </h3>
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-lg font-semibold text-gray-800 flex items-center">
+                    <FaLaptop className="text-indigo-600 mr-2" />
+                    Borrow Information
+                  </h3>
+
+                  <button
+                    onClick={() => setShowDetail(!showDetail)}
+                    className="flex items-center gap-2 px-4 py-2 bg-indigo-100 text-indigo-700 font-semibold rounded-full hover:bg-indigo-200 transition-all duration-300 text-sm shadow-sm"
+                  >
+                    {showDetail ? (
+                      <>
+                        <FaTimes className="text-indigo-700" />
+                        Hide Detail
+                      </>
+                    ) : (
+                      <>
+                        <FaInfoCircle className="text-indigo-700" />
+                        Show Detail
+                      </>
+                    )}
+                  </button>
+                </div>
+                {showDetail && request.itemDetail && (
+                  <div className="bg-white p-6 rounded-2xl shadow-md mb-6 transition-all duration-500 border border-indigo-100">
+                    {/* Ảnh laptop */}
+                    <div className="w-full flex justify-center mb-6">
+                      <img
+                        src={request.itemDetail.itemImage}
+                        alt={request.itemDetail.itemName}
+                        className="rounded-lg shadow-lg object-cover w-full max-w-sm h-60"
+                      />
+                    </div>
+
+                    {/* Tên laptop */}
+                    <h4 className="text-indigo-700 font-bold text-2xl text-center mb-6">
+                      {request.itemDetail.itemName || "Laptop Detail"}
+                    </h4>
+
+                    {/* Thông tin chi tiết */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-gray-800 text-sm">
+                      {request.itemDetail.cpu && (
+                        <div>
+                          <span className="font-semibold">CPU:</span>{" "}
+                          {request.itemDetail.cpu}
+                        </div>
+                      )}
+                      {request.itemDetail.ram && (
+                        <div>
+                          <span className="font-semibold">RAM:</span>{" "}
+                          {request.itemDetail.ram}
+                        </div>
+                      )}
+                      {request.itemDetail.storage && (
+                        <div>
+                          <span className="font-semibold">Storage:</span>{" "}
+                          {request.itemDetail.storage}
+                        </div>
+                      )}
+                      {request.itemDetail.screenSize && (
+                        <div>
+                          <span className="font-semibold">Screen Size:</span>{" "}
+                          {request.itemDetail.screenSize} inches
+                        </div>
+                      )}
+                      {request.itemDetail.conditionItem && (
+                        <div>
+                          <span className="font-semibold">Condition:</span>{" "}
+                          {request.itemDetail.conditionItem}
+                        </div>
+                      )}
+                      {request.itemDetail.status && (
+                        <div>
+                          <span className="font-semibold">Status:</span>{" "}
+                          {request.itemDetail.status}
+                        </div>
+                      )}
+                      {request.itemDetail.model && (
+                        <div>
+                          <span className="font-semibold">Model:</span>{" "}
+                          {request.itemDetail.model}
+                        </div>
+                      )}
+                      {request.itemDetail.color && (
+                        <div>
+                          <span className="font-semibold">Color:</span>{" "}
+                          {request.itemDetail.color}
+                        </div>
+                      )}
+                      {request.itemDetail.graphicsCard && (
+                        <div>
+                          <span className="font-semibold">Graphics Card:</span>{" "}
+                          {request.itemDetail.graphicsCard}
+                        </div>
+                      )}
+                      {request.itemDetail.battery && (
+                        <div>
+                          <span className="font-semibold">Battery:</span>{" "}
+                          {request.itemDetail.battery}
+                        </div>
+                      )}
+                      {request.itemDetail.ports && (
+                        <div>
+                          <span className="font-semibold">Ports:</span>{" "}
+                          {request.itemDetail.ports}
+                        </div>
+                      )}
+                      {request.itemDetail.productionYear && (
+                        <div>
+                          <span className="font-semibold">
+                            Production Year:
+                          </span>{" "}
+                          {request.itemDetail.productionYear}
+                        </div>
+                      )}
+                      {request.itemDetail.operatingSystem && (
+                        <div>
+                          <span className="font-semibold">
+                            Operating System:
+                          </span>{" "}
+                          {request.itemDetail.operatingSystem}
+                        </div>
+                      )}
+                      {request.itemDetail.description &&
+                        request.itemDetail.description.trim() !== "" && (
+                          <div className="md:col-span-2">
+                            <span className="font-semibold">Description:</span>{" "}
+                            {request.itemDetail.description}
+                          </div>
+                        )}
+                    </div>
+                  </div>
+                )}
+
                 <div className="space-y-4">
                   <div>
                     <p className="text-sm text-gray-500">Laptop</p>
                     <p className="text-base font-medium text-gray-800">
                       {request.itemName}
+                    </p>
+                  </div>
+
+                  <div>
+                    <p className="text-sm text-gray-500">Serial Number</p>
+                    <p className="text-base font-medium text-gray-800">
+                      {request.itemDetail.serialNumber || "N/A"}
                     </p>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
@@ -397,15 +565,23 @@ const RequestsPage = () => {
                 </li>
                 <li className="flex items-start gap-2 text-indigo-800">
                   <FaCheck className="h-5 w-5 flex-shrink-0 text-indigo-600 mt-0.5" />
-                  <span>You must return the current laptop before borrowing another</span>
+                  <span>
+                    You must return the current laptop before borrowing another
+                  </span>
                 </li>
                 <li className="flex items-start gap-2 text-indigo-800">
                   <FaCheck className="h-5 w-5 flex-shrink-0 text-indigo-600 mt-0.5" />
-                  <span>The status will change to &apos;Returned&apos; after you return the laptop</span>
+                  <span>
+                    The status will change to &apos;Returned&apos; after you
+                    return the laptop
+                  </span>
                 </li>
                 <li className="flex items-start gap-2 text-indigo-800">
                   <FaCheck className="h-5 w-5 flex-shrink-0 text-indigo-600 mt-0.5" />
-                  <span>Handle the laptop with care and report any issues immediately</span>
+                  <span>
+                    Handle the laptop with care and report any issues
+                    immediately
+                  </span>
                 </li>
               </ul>
             </div>
