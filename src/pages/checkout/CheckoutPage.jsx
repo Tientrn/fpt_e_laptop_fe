@@ -36,40 +36,82 @@ const CheckoutPage = () => {
     localStorage.setItem("checkout_products", JSON.stringify(items));
   };
 
-  // New function to handle payment cancellation
-  const handlePaymentCancellation = async () => {
-    try {
-      const status = searchParams.get("status");
-      const orderCode = searchParams.get("orderCode");
-
-      if (status === "CANCELLED" && orderCode) {
-        // Use orderCode directly as the transactionCode
-        const transactionCode = orderCode;
-
-        // Call API to update payment status
-        await orderApis.updatePayment(transactionCode, { status: "CANCELLED" });
-
-        toast.info("Payment has been cancelled");
-        localStorage.removeItem("pending_order");
-
-        // Redirect after a delay
-        setTimeout(() => {
-          navigate("/cart");
-        }, 2000);
-      }
-    } catch (error) {
-      console.error("Error handling payment cancellation:", error);
-      toast.error("Failed to process payment cancellation");
-    }
+  const handleClearCheckoutData = () => {
+    localStorage.removeItem("checkout_products");
   };
 
-  // Check for payment cancellation on component mount
+  // Check for payment status
   useEffect(() => {
     const status = searchParams.get("status");
-    if (status === "CANCELLED") {
-      handlePaymentCancellation();
+    const orderCode = searchParams.get("orderCode");
+    
+    // Handle cancellation
+    if (status === "CANCELLED" && orderCode) {
+      (async () => {
+        try {
+          // Use orderCode directly as the transactionCode
+          const transactionCode = orderCode;
+
+          // Call API to update payment status
+          await orderApis.updatePayment(transactionCode, { status: "CANCELLED" });
+
+          toast.info("Payment has been cancelled");
+          localStorage.removeItem("pending_order");
+
+          // Redirect after a delay
+          setTimeout(() => {
+            navigate("/cart");
+          }, 2000);
+        } catch (error) {
+          console.error("Error handling payment cancellation:", error);
+          toast.error("Failed to process payment cancellation");
+        }
+      })();
     }
-  }, [searchParams]);
+    
+    // Handle success
+    if (status === "success" && orderCode && !paymentProcessed) {
+      (async () => {
+        try {
+          // Use orderCode directly as the transactionCode
+          const transactionCode = orderCode;
+
+          // Call API to update payment status
+          await orderApis.updatePayment(transactionCode, { status: "PAID" });
+          
+          toast.success("Payment successful! Your order is being processed.");
+
+          // Clear checkout data
+          handleClearCheckoutData();
+
+          // Remove items from the cart now that payment is successful
+          const pendingRemovalItems = JSON.parse(
+            localStorage.getItem("pending_cart_removal") || "[]"
+          );
+          if (pendingRemovalItems.length > 0) {
+            pendingRemovalItems.forEach((productId) => {
+              removeFromCart(productId);
+            });
+            // Clear the pending removal list
+            localStorage.removeItem("pending_cart_removal");
+            // Clear the pending order since it's now complete
+            localStorage.removeItem("pending_order");
+            toast.info("Your cart has been updated");
+          }
+
+          setPaymentProcessed(true);
+
+          // Redirect after a delay
+          setTimeout(() => {
+            navigate("/");
+          }, 3000);
+        } catch (error) {
+          console.error("Error handling payment success:", error);
+          toast.error("Failed to process successful payment");
+        }
+      })();
+    }
+  }, [searchParams, paymentProcessed, navigate, removeFromCart]);
 
   // Check if order is expired (older than 2 hours) or cart state has changed
   useEffect(() => {
@@ -151,40 +193,6 @@ const CheckoutPage = () => {
     }
   }, [selectedProducts]);
 
-  // Check for payment status from URL
-  useEffect(() => {
-    const status = searchParams.get("status");
-
-    if (status === "success" && !paymentProcessed) {
-      toast.success("Payment successful! Your order is being processed.");
-
-      // Clear checkout data
-      handleClearCheckoutData();
-
-      // Remove items from the cart now that payment is successful
-      const pendingRemovalItems = JSON.parse(
-        localStorage.getItem("pending_cart_removal") || "[]"
-      );
-      if (pendingRemovalItems.length > 0) {
-        pendingRemovalItems.forEach((productId) => {
-          removeFromCart(productId);
-        });
-        // Clear the pending removal list
-        localStorage.removeItem("pending_cart_removal");
-        // Clear the pending order since it's now complete
-        localStorage.removeItem("pending_order");
-        toast.info("Your cart has been updated");
-      }
-
-      setPaymentProcessed(true);
-
-      // Redirect after a delay
-      setTimeout(() => {
-        navigate("/");
-      }, 3000);
-    }
-  }, [searchParams, navigate, paymentProcessed, removeFromCart]);
-
   const handleUpdateQuantity = (id, newQuantity) => {
     setCartItems((prev) => {
       const updated = prev.map((item) =>
@@ -203,10 +211,6 @@ const CheckoutPage = () => {
       syncLocalStorage(updated);
       return updated;
     });
-  };
-
-  const handleClearCheckoutData = () => {
-    localStorage.removeItem("checkout_products");
   };
 
   const handleBackToCart = async () => {
