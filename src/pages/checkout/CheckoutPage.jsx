@@ -213,15 +213,17 @@ const CheckoutPage = () => {
     try {
       // Get all payments and find matching order ID
       const paymentsResponse = await orderApis.getAllPayments();
-      
+
       if (paymentsResponse?.data?.data) {
         const payment = paymentsResponse.data.data.find(
           (payment) => payment.orderId.toString() === orderId
         );
-        
+
         if (payment && payment.transactionCode) {
           // Call API to update payment status
-          await orderApis.updatePayment(payment.transactionCode, { status: "CANCELLED" });
+          await orderApis.updatePayment(payment.transactionCode, {
+            status: "CANCELLED",
+          });
           toast.info("Payment has been cancelled");
         }
       }
