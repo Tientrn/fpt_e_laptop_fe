@@ -115,9 +115,9 @@ const ShopProfile = () => {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-4">
-      <h1 className="text-3xl font-bold mb-4 text-amber-600 text-center">
+      <h2 className="text-3xl font-bold mb-4 text-amber-600 text-center">
         Shop Profile
-      </h1>
+      </h2>
 
       <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
         {/* Header with Avatar and Basic Info */}

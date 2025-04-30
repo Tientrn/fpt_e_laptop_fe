@@ -3,14 +3,14 @@ import { jwtDecode } from "jwt-decode";
 
 export const getWalletByUserId = async () => {
   try {
-    // Lấy token từ localStorage
+    
     const token = localStorage.getItem("token");
 
     if (!token) {
       throw new Error("Token not found");
     }
 
-    // Giải mã token để lấy userId
+    
     const decodedToken = jwtDecode(token);
     const userId = decodedToken.userId;
     console.log(userId);
@@ -19,14 +19,14 @@ export const getWalletByUserId = async () => {
       throw new Error("UserId not found in token");
     }
 
-    // Gọi API để lấy danh sách ví
+    
     const response = await walletApi.getWallet();
     
-    // Kiểm tra và lọc ví theo userId
+    
     if (response && response.data && Array.isArray(response.data)) {
-      // Tìm ví của user hiện tại trong danh sách
+      
       const userIdNumber = parseInt(userId);
-      // Tìm wallet có userId khớp, đảm bảo so sánh cùng kiểu dữ liệu
+      
       const userWallet = response.data.find(wallet => parseInt(wallet.userId) === userIdNumber);
       if (userWallet) {
         return userWallet;

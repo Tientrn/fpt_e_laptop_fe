@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { toast, ToastContainer } from "react-toastify";
-import productApi from "../../../api/productApi"; // createProduct, createProductImage
-import categoryApi from "../../../api/categoryApi"; // getAllCategories
+import productApi from "../../../api/productApi";
+import categoryApi from "../../../api/categoryApi";
 import { jwtDecode } from "jwt-decode";
 import productimageApi from "../../../api/productimageApi";
+import { FaUpload, FaPlus, FaTrash } from "react-icons/fa";
 
 const AddProduct = () => {
   const [userId, setUserId] = useState(null);
@@ -18,8 +19,11 @@ const AddProduct = () => {
     categoryId: "",
   });
   const [mainImage, setMainImage] = useState(null);
+  const [mainImagePreview, setMainImagePreview] = useState(null);
   const [extraImages, setExtraImages] = useState([]);
+  const [extraImagesPreview, setExtraImagesPreview] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -28,6 +32,7 @@ const AddProduct = () => {
         setCategories(res.data);
       } catch (err) {
         console.error("Failed to fetch categories", err);
+        toast.error("Failed to load categories");
       }
     };
     fetchCategories();
@@ -42,11 +47,43 @@ const AddProduct = () => {
   };
 
   const handleMainImageChange = (e) => {
-    setMainImage(e.target.files[0]);
+    const file = e.target.files[0];
+    if (file) {
+      setMainImage(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setMainImagePreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const handleExtraImagesChange = (e) => {
-    setExtraImages([...e.target.files]);
+    const files = Array.from(e.target.files);
+    setExtraImages(files);
+    
+    const previews = files.map(file => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      return new Promise((resolve) => {
+        reader.onloadend = () => {
+          resolve(reader.result);
+        };
+      });
+    });
+
+    Promise.all(previews).then(results => {
+      setExtraImagesPreview(results);
+    });
+  };
+
+  const removeExtraImage = (index) => {
+    const newImages = [...extraImages];
+    const newPreviews = [...extraImagesPreview];
+    newImages.splice(index, 1);
+    newPreviews.splice(index, 1);
+    setExtraImages(newImages);
+    setExtraImagesPreview(newPreviews);
   };
 
   useEffect(() => {
@@ -58,12 +95,14 @@ const AddProduct = () => {
         setUserId(id);
       } catch (error) {
         console.error("❌ Token decode failed:", error);
+        toast.error("Authentication error");
       }
     }
   }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsSubmitting(true);
 
     const shopId = parseInt(userId);
 
@@ -81,15 +120,8 @@ const AddProduct = () => {
       form.append("ImageFile", mainImage);
     }
 
-    console.log("📝 FormData to send:");
-    for (let pair of form.entries()) {
-      console.log(`${pair[0]}:`, pair[1]);
-    }
-
     try {
       const response = await productApi.createProduct(form);
-      console.log("✅ Product Created Response:", response);
-
       const newProductId = response?.data?.data?.productId;
       toast.success("Product created successfully!");
 
@@ -97,12 +129,12 @@ const AddProduct = () => {
         for (const file of extraImages) {
           const imgForm = new FormData();
           imgForm.append("ImageFile", file);
-          console.log("📷 Uploading extra image:", file.name);
           await productimageApi.createProductImage(newProductId, imgForm);
         }
         toast.success("Extra images uploaded!");
       }
 
+      // Reset form
       setFormData({
         productName: "",
         quantity: "",
@@ -114,7 +146,9 @@ const AddProduct = () => {
         categoryId: "",
       });
       setMainImage(null);
+      setMainImagePreview(null);
       setExtraImages([]);
+      setExtraImagesPreview([]);
     } catch (err) {
       console.error("❌ Create Product Error:", err);
       if (err.response?.data?.errors) {
@@ -123,95 +157,162 @@ const AddProduct = () => {
       } else {
         toast.error("Failed to create product.");
       }
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="max-w-2xl mx-auto p-6 bg-white rounded-xl shadow-md">
-      <h1 className="text-2xl text-center font-bold mb-6 text-amber-600">
-        Add New Product
-      </h1>
-      <form onSubmit={handleSubmit} className="space-y-4">
-        {[
-          { label: "Product Name", name: "productName" },
-          { label: "Quantity", name: "quantity", type: "number" },
-          { label: "Price", name: "price", type: "number" },
-          { label: "Screen Size", name: "screenSize" },
-          { label: "Storage", name: "storage" },
-          { label: "RAM", name: "ram" },
-          { label: "CPU", name: "cpu" },
-        ].map(({ label, name, type = "text" }) => (
-          <div key={name}>
-            <label className="block text-sm font-medium text-black mb-1">
-              {label}
-            </label>
-            <input
-              type={type}
-              name={name}
-              value={formData[name]}
-              onChange={handleChange}
-              required
-              className="w-full px-4 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500"
-            />
+    <div className="min-h-screen bg-gray-50 py-8">
+      <div className="max-w-4xl mx-auto px-4">
+        <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
+          <div className="bg-amber-600 px-6 py-4">
+            <h1 className="text-2xl font-bold text-white">Add New Product</h1>
           </div>
-        ))}
-
-        <div>
-          <label className="block text-sm font-medium text-black mb-1">
-            Category
-          </label>
-          <select
-            name="categoryId"
-            value={formData.categoryId}
-            onChange={handleChange}
-            required
-            className="w-full px-4 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500"
-          >
-            <option value="">-- Select Category --</option>
-            {Array.isArray(categories) &&
-              categories.map((cat) => (
-                <option key={cat.categoryId} value={cat.categoryId}>
-                  {cat.categoryName}
-                </option>
+          
+          <form onSubmit={handleSubmit} className="p-6 space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {[
+                { label: "Product Name", name: "productName", type: "text" },
+                { label: "Quantity", name: "quantity", type: "number" },
+                { label: "Price (VND)", name: "price", type: "number" },
+                { label: "Screen Size", name: "screenSize", type: "text" },
+                { label: "Storage", name: "storage", type: "text" },
+                { label: "RAM", name: "ram", type: "text" },
+                { label: "CPU", name: "cpu", type: "text" },
+              ].map(({ label, name, type }) => (
+                <div key={name} className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    {label}
+                  </label>
+                  <input
+                    type={type}
+                    name={name}
+                    value={formData[name]}
+                    onChange={handleChange}
+                    required
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition"
+                  />
+                </div>
               ))}
-          </select>
+
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">
+                  Category
+                </label>
+                <select
+                  name="categoryId"
+                  value={formData.categoryId}
+                  onChange={handleChange}
+                  required
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition"
+                >
+                  <option value="">-- Select Category --</option>
+                  {Array.isArray(categories) &&
+                    categories.map((cat) => (
+                      <option key={cat.categoryId} value={cat.categoryId}>
+                        {cat.categoryName}
+                      </option>
+                    ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">
+                  Main Product Image
+                </label>
+                <div className="flex items-center space-x-4">
+                  <div className="relative">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleMainImageChange}
+                      className="hidden"
+                      id="mainImage"
+                    />
+                    <label
+                      htmlFor="mainImage"
+                      className="flex items-center justify-center px-4 py-2 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition"
+                    >
+                      <FaUpload className="mr-2" />
+                      Choose Image
+                    </label>
+                  </div>
+                  {mainImagePreview && (
+                    <div className="relative w-24 h-24">
+                      <img
+                        src={mainImagePreview}
+                        alt="Main product preview"
+                        className="w-full h-full object-cover rounded-lg"
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">
+                  Additional Images (optional)
+                </label>
+                <div className="flex items-center space-x-4">
+                  <div className="relative">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      onChange={handleExtraImagesChange}
+                      className="hidden"
+                      id="extraImages"
+                    />
+                    <label
+                      htmlFor="extraImages"
+                      className="flex items-center justify-center px-4 py-2 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition"
+                    >
+                      <FaPlus className="mr-2" />
+                      Add Images
+                    </label>
+                  </div>
+                </div>
+                <div className="flex flex-wrap gap-4 mt-4">
+                  {extraImagesPreview.map((preview, index) => (
+                    <div key={index} className="relative w-24 h-24 group">
+                      <img
+                        src={preview}
+                        alt={`Extra image ${index + 1}`}
+                        className="w-full h-full object-cover rounded-lg"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeExtraImage(index)}
+                        className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition"
+                      >
+                        <FaTrash className="text-xs" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-4">
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className={`w-full py-3 px-4 bg-amber-600 text-white rounded-lg font-medium hover:bg-amber-700 transition ${
+                  isSubmitting ? "opacity-75 cursor-not-allowed" : ""
+                }`}
+              >
+                {isSubmitting ? "Creating Product..." : "Create Product"}
+              </button>
+            </div>
+          </form>
         </div>
-
-        <div>
-          <label className="block text-sm font-medium text-black mb-1">
-            Main Product Image
-          </label>
-          <input
-            type="file"
-            accept="image/*"
-            onChange={handleMainImageChange}
-            className="w-full px-3 py-2 border border-slate-300 rounded-md"
-          />
-        </div>
-
-        {/* <div>
-          <label className="block text-sm font-medium text-black mb-1">
-            Additional Images (optional)
-          </label>
-          <input
-            type="file"
-            accept="image/*"
-            multiple
-            onChange={handleExtraImagesChange}
-            className="w-full px-3 py-2 border border-slate-300 rounded-md"
-          />
-        </div> */}
-
-        <button
-          type="submit"
-          className="w-full py-2 px-4 bg-slate-600 text-white rounded-md hover:bg-slate-700 transition"
-        >
-          Submit Product
-        </button>
-      </form>
+      </div>
       <ToastContainer
         position="top-right"
-        autoClose={1500}
+        autoClose={3000}
         hideProgressBar={false}
         newestOnTop={false}
         closeOnClick

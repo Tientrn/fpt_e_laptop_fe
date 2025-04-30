@@ -137,20 +137,20 @@ export default function LoginPage() {
           setTimeout(() => {
             switch (userRoleId) {
               case 1:
-                navigate("/dashboard");
+                navigate("/admin/accounts");
                 break;
               case 2:
                 initializeCart(userId);
                 navigate("/home");
                 break;
               case 3:
-                navigate("/sponsor");
+                navigate("/sponsor/register");
                 break;
               case 4:
                 navigate("/staff/items");
                 break;
               case 5:
-                navigate("/manager");
+                navigate("/manager/overview");
                 break;
               default:
                 navigate("/home");

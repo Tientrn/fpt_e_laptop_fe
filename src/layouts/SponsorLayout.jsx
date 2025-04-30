@@ -14,6 +14,7 @@ import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
 import LoginIcon from "@mui/icons-material/Login";
 import PersonAddIcon from "@mui/icons-material/PersonAdd";
 import { jwtDecode } from "jwt-decode";
+import { FaHome, FaSignOutAlt } from "react-icons/fa";
 
 export const SponsorLayout = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -296,13 +297,21 @@ export const SponsorLayout = () => {
                   </div>
                   
                   {/* User profile for desktop - Only show when logged in */}
-                  <div className="hidden md:flex items-center">
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-r from-indigo-600 to-purple-500 flex items-center justify-center text-white font-bold text-sm shadow-sm">
-                      {getUserInitial()}
-                    </div>
-                    <span className="ml-2 text-sm font-medium text-gray-700">
-                      {userData?.fullName?.split(' ')[0] || "Sponsor"}
-                    </span>
+                  <div className="hidden md:flex items-center space-x-3">
+                    <button
+                      onClick={() => navigate("/")}
+                      className="flex items-center rounded-full bg-indigo-700 hover:bg-indigo-600 py-2 px-5 text-sm font-medium text-white transition-all hover:shadow-lg hover:-translate-y-0.5"
+                    >
+                      <FaHome className="w-4 h-4 mr-2" />
+                      Home
+                    </button>
+                    <button
+                      onClick={handleLogout}
+                      className="flex items-center rounded-full bg-white border border-gray-300 hover:bg-red-50 hover:text-red-600 hover:border-red-200 py-2 px-5 text-sm font-medium text-gray-700 transition-all hover:shadow-sm"
+                    >
+                      <FaSignOutAlt className="w-4 h-4 mr-2" />
+                      Logout
+                    </button>
                   </div>
                 </>
               ) : (
