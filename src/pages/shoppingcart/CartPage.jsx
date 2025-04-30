@@ -63,14 +63,54 @@ const CartPage = () => {
   };
 
   const handleRemoveItem = (productId) => {
-    const confirmDelete = window.confirm(
-      "Bạn có chắc chắn muốn xóa sản phẩm này khỏi giỏ hàng?"
+    const item = items.find(item => item.productId === productId);
+    toast.info(
+      <div className="p-6">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold text-gray-800 mb-4">Confirm Delete</h2>
+          <p className="text-gray-600 mb-8">
+            Are you sure you want to delete item <span className="font-medium text-gray-800">{item.productName}</span>?
+            <br />
+            <span className="text-sm">This action cannot be undone.</span>
+          </p>
+        </div>
+        <div className="flex justify-center gap-3">
+          <button 
+            onClick={() => toast.dismiss()} 
+            className="min-w-[120px] px-6 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-md transition duration-200 font-medium"
+          >
+            Cancel
+          </button>
+          <button 
+            onClick={() => {
+              removeFromCart(productId);
+              setSelectedItems((prev) => prev.filter((id) => id !== productId));
+              toast.dismiss();
+              toast.success("Item deleted successfully");
+            }} 
+            className="min-w-[120px] px-6 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-md transition duration-200 font-medium"
+          >
+            Delete
+          </button>
+        </div>
+      </div>,
+      {
+        position: "top-center",
+        autoClose: false,
+        closeOnClick: false,
+        closeButton: false,
+        draggable: false,
+        className: "bg-white rounded-lg shadow-xl",
+        progressClassName: "hidden",
+        style: {
+          background: "white",
+          minWidth: "400px",
+          maxWidth: "450px",
+          padding: 0,
+          margin: "0 auto",
+        },
+      }
     );
-    if (confirmDelete) {
-      removeFromCart(productId);
-      setSelectedItems((prev) => prev.filter((id) => id !== productId));
-      toast.success("Đã xóa sản phẩm khỏi giỏ hàng");
-    }
   };
 
   const handleCheckout = () => {
