@@ -5,6 +5,7 @@ import SortOptions from "./SortOptions";
 import FiltersSidebar from "./FiltersSidebar";
 import donateitemsApi from "../../../api/donateitemsApi";
 import categoryApi from "../../../api/categoryApi";
+import majorApi from "../../../api/major";
 import CardBorrow from "./CardBorrow";
 import LaptopIcon from "@mui/icons-material/Laptop";
 import FilterListIcon from "@mui/icons-material/FilterList";
@@ -12,14 +13,19 @@ import CloseIcon from "@mui/icons-material/Close";
 import InfoIcon from "@mui/icons-material/Info";
 import LaptopMacIcon from "@mui/icons-material/LaptopMac";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
+import SchoolIcon from "@mui/icons-material/School";
 
 const BorrowListingPage = () => {
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState(null);
+  const [majors, setMajors] = useState([]);
+  const [selectedMajor, setSelectedMajor] = useState(null);
+  const [suggestionMessage, setSuggestionMessage] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [sortOption, setSortOption] = useState("default");
   const [laptops, setLaptops] = useState([]);
   const [allLaptops, setAllLaptops] = useState([]);
+  const [currentBaseLaptops, setCurrentBaseLaptops] = useState([]); // Store current dataset before filters
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showFilters, setShowFilters] = useState(false);
@@ -31,8 +37,100 @@ const BorrowListingPage = () => {
     storage: "",
   });
   const [isSticky, setIsSticky] = useState(false);
+  const [showMajors, setShowMajors] = useState(false);
+  
   const handleCategoryClick = (categoryId) => {
     setSelectedCategory(categoryId);
+    setSelectedMajor(null);
+    setSuggestionMessage("");
+    
+    // Set current base laptops to all laptops filtered by category
+    const categoryLaptops = allLaptops.filter(laptop => laptop.categoryId === categoryId);
+    setCurrentBaseLaptops(categoryLaptops);
+    
+    // Apply existing filters to the new base
+    applyFiltersAndSort(categoryLaptops, searchQuery, activeFilters, sortOption);
+  };
+
+  const handleMajorClick = async (majorName) => {
+    try {
+      setLoading(true);
+      setSelectedMajor(majorName);
+      setSelectedCategory(null);
+      
+      const response = await donateitemsApi.getSuggestedLaptopsByMajor(majorName);
+      if (response.isSuccess) {
+        const majorLaptops = response.data.suitableLaptops || [];
+        setSuggestionMessage(response.data.suggestionMessage || "");
+        
+        // Set current base laptops to major-specific laptops
+        setCurrentBaseLaptops(majorLaptops);
+        
+        // Apply existing filters to the major-specific laptops
+        applyFiltersAndSort(majorLaptops, searchQuery, activeFilters, sortOption);
+      } else {
+        setError("Failed to fetch suggested laptops");
+      }
+    } catch (error) {
+      setError(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Apply filters and sort to the given dataset
+  const applyFiltersAndSort = (baseData, search, filters, sort) => {
+    let filteredLaptops = [...baseData];
+
+    // Apply search filter
+    if (search) {
+      filteredLaptops = filteredLaptops.filter((laptop) =>
+        laptop.itemName.toLowerCase().includes(search.toLowerCase())
+      );
+    }
+
+    // Apply active filters
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value) {
+        filteredLaptops = filteredLaptops.filter((laptop) => {
+          if (key === "ram" || key === "storage") {
+            return parseInt(laptop[key]) === parseInt(value);
+          }
+          return laptop[key]?.toLowerCase().includes(value.toLowerCase());
+        });
+      }
+    });
+
+    // Apply sorting
+    filteredLaptops.sort((a, b) => {
+      switch (sort) {
+        case "ram-high-to-low":
+          return parseInt(b.ram) - parseInt(a.ram);
+        case "ram-low-to-high":
+          return parseInt(a.ram) - parseInt(b.ram);
+        case "newest":
+          return new Date(b.createdAt) - new Date(a.createdAt);
+        case "oldest":
+          return new Date(a.createdAt) - new Date(b.createdAt);
+        default:
+          return 0;
+      }
+    });
+
+    setLaptops(filteredLaptops);
+  };
+
+  // Legacy function for backward compatibility
+  const filterAndSortProducts = (search, category, sort, filters) => {
+    let baseData = [...allLaptops];
+    
+    // Apply category filter if applicable
+    if (category) {
+      baseData = baseData.filter(laptop => laptop.categoryId === category);
+    }
+    
+    // Use common filter/sort function
+    applyFiltersAndSort(baseData, search, filters, sort);
   };
 
   // Monitor scroll position for sticky navigation
@@ -58,6 +156,22 @@ const BorrowListingPage = () => {
     fetchCategories();
   }, []);
 
+  // fetch majors
+  useEffect(() => {
+    const fetchMajors = async () => {
+      try {
+        const res = await majorApi.getAllMajor();
+        if (res.isSuccess) {
+          setMajors(res.data);
+        }
+      } catch (err) {
+        console.error("Failed to fetch majors", err);
+      }
+    };
+
+    fetchMajors();
+  }, []);
+
   //fetch laptops
   useEffect(() => {
     const fetchLaptops = async () => {
@@ -65,8 +179,10 @@ const BorrowListingPage = () => {
         setLoading(true);
         const response = await donateitemsApi.getAllDonateItems();
         if (response.isSuccess) {
-          setAllLaptops(response.data || []);
-          setLaptops(response.data || []);
+          const laptopsData = response.data || [];
+          setAllLaptops(laptopsData);
+          setCurrentBaseLaptops(laptopsData);
+          setLaptops(laptopsData);
         } else {
           setError("Failed to fetch laptops");
         }
@@ -80,59 +196,30 @@ const BorrowListingPage = () => {
   }, []);
 
   // Handle filter changes
-  const handleFilterChange = (newFilters) => setActiveFilters(newFilters);
+  const handleFilterChange = (newFilters) => {
+    setActiveFilters(newFilters);
+    applyFiltersAndSort(currentBaseLaptops, searchQuery, newFilters, sortOption);
+  };
 
-  useEffect(() => {
-    let filteredLaptops = [...allLaptops];
+  // Handle search query changes
+  const handleSearchChange = (query) => {
+    setSearchQuery(query);
+    applyFiltersAndSort(currentBaseLaptops, query, activeFilters, sortOption);
+  };
 
-    // Apply search filter
-    if (searchQuery) {
-      filteredLaptops = filteredLaptops.filter((laptop) =>
-        laptop.itemName.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-    }
-    // Apply category filter
-    if (selectedCategory) {
-      filteredLaptops = filteredLaptops.filter(
-        (laptop) => laptop.categoryId === selectedCategory
-      );
-    }
-
-    // Apply active filters
-    Object.entries(activeFilters).forEach(([key, value]) => {
-      if (value) {
-        filteredLaptops = filteredLaptops.filter((laptop) => {
-          if (key === "ram" || key === "storage") {
-            return parseInt(laptop[key]) === parseInt(value);
-          }
-          return laptop[key]?.toLowerCase().includes(value.toLowerCase());
-        });
-      }
-    });
-
-    // Apply sorting
-    filteredLaptops.sort((a, b) => {
-      switch (sortOption) {
-        case "ram-high-to-low":
-          return parseInt(b.ram) - parseInt(a.ram);
-        case "ram-low-to-high":
-          return parseInt(a.ram) - parseInt(b.ram);
-        case "newest":
-          return new Date(b.createdAt) - new Date(a.createdAt);
-        case "oldest":
-          return new Date(a.createdAt) - new Date(b.createdAt);
-        default:
-          return 0;
-      }
-    });
-
-    setLaptops(filteredLaptops);
-  }, [searchQuery, sortOption, allLaptops, activeFilters, selectedCategory]);
+  // Handle sort option changes
+  const handleSortChange = (option) => {
+    setSortOption(option);
+    applyFiltersAndSort(currentBaseLaptops, searchQuery, activeFilters, option);
+  };
 
   // Reset all filters
   const resetAllFilters = () => {
     setSearchQuery("");
     setSortOption("default");
+    setSelectedCategory(null);
+    setSelectedMajor(null);
+    setSuggestionMessage("");
     setActiveFilters({
       screenSize: "",
       status: "",
@@ -140,6 +227,19 @@ const BorrowListingPage = () => {
       ram: "",
       storage: "",
     });
+    
+    // Reset to all laptops
+    setCurrentBaseLaptops(allLaptops);
+    setLaptops(allLaptops);
+  };
+
+  // Handle "All Products" button click
+  const handleAllProductsClick = () => {
+    setSelectedCategory(null);
+    setSelectedMajor(null);
+    setSuggestionMessage("");
+    setCurrentBaseLaptops(allLaptops);
+    applyFiltersAndSort(allLaptops, searchQuery, activeFilters, sortOption);
   };
 
   if (loading) {
@@ -190,7 +290,9 @@ const BorrowListingPage = () => {
   const hasActiveFilters =
     Object.values(activeFilters).some((value) => value !== "") ||
     searchQuery !== "" ||
-    sortOption !== "default";
+    sortOption !== "default" ||
+    selectedMajor !== null ||
+    selectedCategory !== null;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50/40 to-purple-50/40">
@@ -225,7 +327,7 @@ const BorrowListingPage = () => {
             </p>
 
             <div className="max-w-3xl w-full bg-white/10 backdrop-blur-sm rounded-2xl p-4 border border-white/20 shadow-lg">
-              <SearchBar onSearch={setSearchQuery} className="w-full" />
+              <SearchBar onSearch={handleSearchChange} className="w-full" />
               <div className="flex items-center justify-center mt-3 text-indigo-200 text-xs">
                 <InfoIcon fontSize="small" className="mr-1.5" />
                 <p>Search by laptop name, brand, or specifications</p>
@@ -283,8 +385,22 @@ const BorrowListingPage = () => {
               </span>
             </button>
 
+            <button
+              onClick={() => setShowMajors(!showMajors)}
+              className={`flex items-center gap-1.5 md:px-3.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all duration-300 ${
+                showMajors
+                  ? "bg-indigo-100 text-indigo-800 border border-indigo-200"
+                  : "bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm"
+              }`}
+            >
+              <SchoolIcon fontSize="small" />
+              <span className="hidden md:inline">
+                {showMajors ? "Hide Majors" : "Suggest by Major"}
+              </span>
+            </button>
+
             <SortOptions
-              onSort={setSortOption}
+              onSort={handleSortChange}
               currentSort={sortOption}
               className="w-auto"
             />
@@ -301,7 +417,9 @@ const BorrowListingPage = () => {
           </div>
         </div>
       </div>
-      <div className="bg-white shadow-sm mb-8 overflow-x-auto scrollbar-hide">
+      
+      {/* Categories Section */}
+      <div className="bg-white shadow-sm mb-4 overflow-x-auto scrollbar-hide">
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex items-center py-3 gap-1 md:gap-2">
             <div className="flex items-center text-indigo-700 pr-3 border-r border-indigo-100">
@@ -310,18 +428,10 @@ const BorrowListingPage = () => {
             </div>
 
             <button
-              onClick={() => {
-                setSelectedCategory(null);
-                filterAndSortProducts(
-                  searchQuery,
-                  null,
-                  sortOption,
-                  activeFilters
-                );
-              }}
+              onClick={handleAllProductsClick}
               className={`px-4 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap
                 ${
-                  selectedCategory === null
+                  selectedCategory === null && selectedMajor === null
                     ? "bg-gradient-to-r from-indigo-700 to-purple-700 text-white shadow-sm"
                     : "text-indigo-700 hover:bg-indigo-50"
                 }`}
@@ -346,9 +456,53 @@ const BorrowListingPage = () => {
           </div>
         </div>
       </div>
+      
+      {/* Majors Section */}
+      {showMajors && (
+        <div className="bg-gradient-to-r from-indigo-50/80 to-purple-50/80 shadow-sm mb-8 py-4 overflow-x-auto scrollbar-hide">
+          <div className="max-w-7xl mx-auto px-4">
+            <div className="flex flex-col space-y-4">
+              <div className="flex items-center text-indigo-700 border-b border-indigo-100 pb-2">
+                <SchoolIcon className="mr-2" />
+                <span className="text-sm font-medium">Suggest Laptops by Major</span>
+              </div>
+              
+              <div className="flex flex-wrap gap-2">
+                {majors.map((major) => (
+                  <button
+                    key={major.majorId}
+                    onClick={() => handleMajorClick(major.name)}
+                    className={`px-4 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap
+                      ${
+                        selectedMajor === major.name
+                          ? "bg-gradient-to-r from-indigo-700 to-purple-700 text-white shadow-sm"
+                          : "text-indigo-700 bg-white/70 hover:bg-white border border-indigo-100"
+                      }`}
+                  >
+                    {major.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 py-8">
+        {/* Suggestion Message */}
+        {suggestionMessage && (
+          <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4 mb-6 text-indigo-800">
+            <div className="flex items-start">
+              <InfoIcon className="text-indigo-600 mr-3 mt-0.5" fontSize="small" />
+              <div>
+                <h3 className="font-medium text-indigo-900 mb-1">Suggested Configuration</h3>
+                <p className="text-sm">{suggestionMessage}</p>
+              </div>
+            </div>
+          </div>
+        )}
+        
         <div className="flex flex-col md:flex-row gap-6">
           {/* Filters Sidebar - Mobile */}
           {showFilters && (
@@ -389,7 +543,7 @@ const BorrowListingPage = () => {
                 <div className="flex justify-between items-center mb-5">
                   <div className="flex items-center gap-2">
                     <h2 className="text-lg font-semibold text-indigo-900">
-                      Available Laptops
+                      {selectedMajor ? `Laptops for ${selectedMajor}` : "Available Laptops"}
                     </h2>
                     <div className="bg-indigo-100 text-indigo-700 px-2.5 py-1 rounded-full text-xs font-medium">
                       {laptops.length}{" "}

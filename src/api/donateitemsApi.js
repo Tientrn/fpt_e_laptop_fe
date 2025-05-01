@@ -55,6 +55,13 @@ const donateitemsApi = {
   deleteDonateItem: (id) => {
     return axiosClient.delete(`/donate-items/${id}`);
   },
+
+  // Get suggested laptops by major
+  getSuggestedLaptopsByMajor: (major) => {
+    return axiosClient.get(`/donate-items/suggest-laptops`, {
+      params: { major }
+    });
+  }
 };
 
 export default donateitemsApi;
