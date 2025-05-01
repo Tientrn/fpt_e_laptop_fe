@@ -1,18 +1,20 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { FaTrash, FaMinus, FaPlus, FaArrowLeft, FaShoppingBag } from "react-icons/fa";
+import {
+  FaTrash,
+  FaMinus,
+  FaPlus,
+  FaArrowLeft,
+  FaShoppingBag,
+} from "react-icons/fa";
 import useCartStore from "../../store/useCartStore";
 import { toast } from "react-toastify";
 import orderApis from "../../api/orderApi";
 
 const CartPage = () => {
   const [quantityErrors, setQuantityErrors] = useState({});
-  const {
-    getCurrentCart,
-    removeFromCart,
-    addToCart,
-    decreaseQuantity,
-  } = useCartStore();
+  const { getCurrentCart, removeFromCart, addToCart, decreaseQuantity } =
+    useCartStore();
 
   const items = getCurrentCart();
   const userData = localStorage.getItem("user");
@@ -63,31 +65,37 @@ const CartPage = () => {
   };
 
   const handleRemoveItem = (productId) => {
-    const item = items.find(item => item.productId === productId);
+    const item = items.find((item) => item.productId === productId);
     toast.info(
       <div className="p-6">
         <div className="text-center">
-          <h2 className="text-xl font-semibold text-gray-800 mb-4">Confirm Delete</h2>
+          <h2 className="text-xl font-semibold text-gray-800 mb-4">
+            Confirm Delete
+          </h2>
           <p className="text-gray-600 mb-8">
-            Are you sure you want to delete item <span className="font-medium text-gray-800">{item.productName}</span>?
+            Are you sure you want to delete item{" "}
+            <span className="font-medium text-gray-800">
+              {item.productName}
+            </span>
+            ?
             <br />
             <span className="text-sm">This action cannot be undone.</span>
           </p>
         </div>
         <div className="flex justify-center gap-3">
-          <button 
-            onClick={() => toast.dismiss()} 
+          <button
+            onClick={() => toast.dismiss()}
             className="min-w-[120px] px-6 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-md transition duration-200 font-medium"
           >
             Cancel
           </button>
-          <button 
+          <button
             onClick={() => {
               removeFromCart(productId);
               setSelectedItems((prev) => prev.filter((id) => id !== productId));
               toast.dismiss();
               toast.success("Item deleted successfully");
-            }} 
+            }}
             className="min-w-[120px] px-6 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-md transition duration-200 font-medium"
           >
             Delete
@@ -119,21 +127,21 @@ const CartPage = () => {
     );
 
     if (selectedCartItems.length === 0) {
-      toast.warning("Vui lòng chọn ít nhất một sản phẩm để thanh toán");
+      toast.warning("Please select at least one item to checkout");
       return;
     }
 
     // Check if there's an existing pending order
     const pendingOrderData = localStorage.getItem("pending_order");
     let shouldCreateNewOrder = true;
-    
+
     if (pendingOrderData) {
       try {
         const pendingOrder = JSON.parse(pendingOrderData);
         const creationTime = new Date(pendingOrder.createdAt);
         const now = new Date();
         const hoursSinceCreation = (now - creationTime) / (1000 * 60 * 60);
-        
+
         // Always create a new order if the cart has changed
         // We just need to clean up old orders if they're expired (older than 2 hours)
         if (hoursSinceCreation >= 2) {
@@ -166,15 +174,20 @@ const CartPage = () => {
       .createOrder(order)
       .then((data) => {
         // Save this order as pending
-        localStorage.setItem("pending_order", JSON.stringify({
-          orderId: data.data.orderId,
-          createdAt: new Date().toISOString(),
-          totalPrice: sum,
-          cartHash: JSON.stringify(selectedCartItems.map(item => ({
-            id: item.productId,
-            quantity: item.quantity
-          })))
-        }));
+        localStorage.setItem(
+          "pending_order",
+          JSON.stringify({
+            orderId: data.data.orderId,
+            createdAt: new Date().toISOString(),
+            totalPrice: sum,
+            cartHash: JSON.stringify(
+              selectedCartItems.map((item) => ({
+                id: item.productId,
+                quantity: item.quantity,
+              }))
+            ),
+          })
+        );
 
         selectedCartItems.forEach((item) => {
           orderDetail.push({
@@ -188,22 +201,28 @@ const CartPage = () => {
         return orderApis.createOrderDetail(orderDetail);
       })
       .then(() => {
-        toast.success("Tạo đơn hàng thành công!", {
+        toast.success("Successfully created order!", {
           position: "top-right",
           autoClose: 1500,
         });
 
         // Store the selected products for the checkout page
-        localStorage.setItem("checkout_products", JSON.stringify(selectedCartItems));
-        
+        localStorage.setItem(
+          "checkout_products",
+          JSON.stringify(selectedCartItems)
+        );
+
         // Store selected item IDs in local storage to be removed after successful payment
-        localStorage.setItem("pending_cart_removal", JSON.stringify(selectedItems));
+        localStorage.setItem(
+          "pending_cart_removal",
+          JSON.stringify(selectedItems)
+        );
 
         window.location.href = `/checkout/${orderDetail[0].orderId}`;
       })
       .catch((err) => {
         console.error(err);
-        toast.error("Tạo đơn hàng lỗi", {
+        toast.error("Create order error", {
           position: "top-right",
           autoClose: 1500,
         });
@@ -215,7 +234,9 @@ const CartPage = () => {
       <div className="min-h-screen bg-gradient-to-b from-white via-gray-50 to-gray-100">
         <div className="container mx-auto px-4 py-16">
           <div className="flex justify-between items-center mb-10">
-            <h1 className="text-3xl font-bold text-indigo-900 tracking-tight">Your Shopping Cart</h1>
+            <h1 className="text-3xl font-bold text-indigo-900 tracking-tight">
+              Your Shopping Cart
+            </h1>
             <Link
               to="/laptopshop"
               className="flex items-center gap-2 text-indigo-600 hover:text-indigo-800 transition-colors duration-200 px-4 py-2 rounded-full hover:bg-indigo-50"
@@ -223,12 +244,23 @@ const CartPage = () => {
               <FaArrowLeft className="text-sm" /> Continue Shopping
             </Link>
           </div>
-          
+
           <div className="flex items-center justify-center py-20">
             <div className="text-center px-12 py-16 max-w-md mx-auto bg-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100">
               <div className="text-indigo-400 mb-8">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-28 w-28 mx-auto opacity-90" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-28 w-28 mx-auto opacity-90"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={1.5}
+                    d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
+                  />
                 </svg>
               </div>
               <h2 className="text-2xl font-semibold text-indigo-900 mb-4">
@@ -257,27 +289,38 @@ const CartPage = () => {
         <div className="mb-12">
           <div className="flex justify-between items-center">
             <div className="flex flex-col">
-              <h1 className="text-3xl font-bold text-indigo-900 tracking-tight mb-1">Your Shopping Cart</h1>
-              <p className="text-gray-500 text-sm">{items.length} {items.length === 1 ? 'item' : 'items'} in your cart</p>
+              <h1 className="text-3xl font-bold text-indigo-900 tracking-tight mb-1">
+                Your Shopping Cart
+              </h1>
+              <p className="text-gray-500 text-sm">
+                {items.length} {items.length === 1 ? "item" : "items"} in your
+                cart
+              </p>
             </div>
-            
+
             <div className="hidden sm:flex items-center">
               <div className="flex items-center">
-                <div className="w-8 h-8 rounded-full bg-indigo-600 text-white flex items-center justify-center font-medium">1</div>
+                <div className="w-8 h-8 rounded-full bg-indigo-600 text-white flex items-center justify-center font-medium">
+                  1
+                </div>
                 <div className="text-sm font-medium ml-2">Cart</div>
               </div>
               <div className="w-16 h-0.5 bg-gray-300 mx-2"></div>
               <div className="flex items-center">
-                <div className="w-8 h-8 rounded-full bg-gray-200 text-gray-500 flex items-center justify-center font-medium">2</div>
+                <div className="w-8 h-8 rounded-full bg-gray-200 text-gray-500 flex items-center justify-center font-medium">
+                  2
+                </div>
                 <div className="text-sm text-gray-500 ml-2">Checkout</div>
               </div>
               <div className="w-16 h-0.5 bg-gray-300 mx-2"></div>
               <div className="flex items-center">
-                <div className="w-8 h-8 rounded-full bg-gray-200 text-gray-500 flex items-center justify-center font-medium">3</div>
+                <div className="w-8 h-8 rounded-full bg-gray-200 text-gray-500 flex items-center justify-center font-medium">
+                  3
+                </div>
                 <div className="text-sm text-gray-500 ml-2">Complete</div>
               </div>
             </div>
-            
+
             <Link
               to="/laptopshop"
               className="flex items-center gap-2 text-indigo-600 hover:text-indigo-800 transition-colors duration-200 px-4 py-2 rounded-full hover:bg-indigo-50"
@@ -315,13 +358,21 @@ const CartPage = () => {
                     <h3 className="text-indigo-900 font-medium text-lg truncate pr-4">
                       {item.productName}
                     </h3>
-                    <span className="font-semibold text-indigo-900 whitespace-nowrap">{formatPrice(item.totalPrice)}</span>
+                    <span className="font-semibold text-indigo-900 whitespace-nowrap">
+                      {formatPrice(item.totalPrice)}
+                    </span>
                   </div>
-                  
+
                   <div className="flex flex-wrap gap-2 text-xs text-gray-500 mb-4">
-                    <span className="py-1 px-3 bg-indigo-50 rounded-full text-center">CPU: {item.cpu}</span>
-                    <span className="py-1 px-3 bg-indigo-50 rounded-full text-center">RAM: {item.ram}</span>
-                    <span className="py-1 px-3 bg-indigo-50 rounded-full text-center">Storage: {item.storage}</span>
+                    <span className="py-1 px-3 bg-indigo-50 rounded-full text-center">
+                      CPU: {item.cpu}
+                    </span>
+                    <span className="py-1 px-3 bg-indigo-50 rounded-full text-center">
+                      RAM: {item.ram}
+                    </span>
+                    <span className="py-1 px-3 bg-indigo-50 rounded-full text-center">
+                      Storage: {item.storage}
+                    </span>
                   </div>
 
                   <div className="flex items-center justify-between">
@@ -384,7 +435,8 @@ const CartPage = () => {
                           {item.productName}
                         </p>
                         <p className="text-gray-500">
-                          <span className="text-xs">×</span>{item.quantity}
+                          <span className="text-xs">×</span>
+                          {item.quantity}
                         </p>
                       </div>
                       <span className="text-indigo-900 font-semibold ml-4">
@@ -398,19 +450,22 @@ const CartPage = () => {
               <div className="space-y-3 py-4 border-t border-gray-100">
                 <div className="flex justify-between text-gray-600">
                   <span>Total Items</span>
-                  <span className="font-medium">{items.filter(item => selectedItems.includes(item.productId)).reduce((acc, item) => acc + item.quantity, 0)}</span>
+                  <span className="font-medium">
+                    {items
+                      .filter((item) => selectedItems.includes(item.productId))
+                      .reduce((acc, item) => acc + item.quantity, 0)}
+                  </span>
                 </div>
-                
+
                 <div className="flex justify-between font-semibold text-lg text-indigo-900 pt-2">
                   <span>Total Amount</span>
                   <span>
                     {formatPrice(
                       items
-                        .filter((item) => selectedItems.includes(item.productId))
-                        .reduce(
-                          (acc, item) => acc + item.totalPrice,
-                          0
+                        .filter((item) =>
+                          selectedItems.includes(item.productId)
                         )
+                        .reduce((acc, item) => acc + item.totalPrice, 0)
                     )}
                   </span>
                 </div>
@@ -420,14 +475,15 @@ const CartPage = () => {
                 onClick={handleCheckout}
                 disabled={selectedItems.length === 0}
                 className={`w-full py-4 mt-6 rounded-lg font-semibold text-white shadow-md transition-all duration-300 flex items-center justify-center gap-2
-                  ${selectedItems.length === 0 
-                    ? 'bg-gray-400 cursor-not-allowed' 
-                    : 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 hover:shadow-lg transform hover:-translate-y-1'
+                  ${
+                    selectedItems.length === 0
+                      ? "bg-gray-400 cursor-not-allowed"
+                      : "bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 hover:shadow-lg transform hover:-translate-y-1"
                   }`}
               >
                 <FaShoppingBag className="text-sm" /> Proceed to Checkout
               </button>
-              
+
               {selectedItems.length === 0 && (
                 <p className="text-xs text-center text-gray-500 mt-2">
                   Please select at least one item to checkout

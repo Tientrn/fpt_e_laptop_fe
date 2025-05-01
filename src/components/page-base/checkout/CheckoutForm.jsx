@@ -27,7 +27,9 @@ const CheckoutForm = ({
   const [paymentId, setPaymentId] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [paymentInitiated, setPaymentInitiated] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState(defaultPaymentMethod || "payos");
+  const [paymentMethod, setPaymentMethod] = useState(
+    defaultPaymentMethod || "payos"
+  );
 
   useEffect(() => {
     const storedItems = JSON.parse(
@@ -82,7 +84,12 @@ const CheckoutForm = ({
 
       const paymentResponse = await orderApis.createPayment({
         orderId,
-        paymentMethod: paymentMethod === "payos" ? 1 : paymentMethod === "creditCard" ? 2 : 3,
+        paymentMethod:
+          paymentMethod === "payos"
+            ? 1
+            : paymentMethod === "creditCard"
+            ? 2
+            : 3,
       });
 
       if (paymentResponse.data && paymentResponse.data.paymentId) {
@@ -112,7 +119,7 @@ const CheckoutForm = ({
       }
 
       const redirectUrl = `${window.location.origin}/checkout/${orderId}?status=success`;
-      
+
       const urlResponse = await orderApis.createPaymentUrl({
         paymentId: currentPaymentId,
         redirectUrl,
@@ -120,15 +127,21 @@ const CheckoutForm = ({
 
       if (urlResponse?.data) {
         let paymentUrl;
-        
-        if (typeof urlResponse.data === 'string') {
+
+        if (typeof urlResponse.data === "string") {
           paymentUrl = urlResponse.data;
-        } else if (urlResponse.data?.data && typeof urlResponse.data.data === 'string') {
+        } else if (
+          urlResponse.data?.data &&
+          typeof urlResponse.data.data === "string"
+        ) {
           paymentUrl = urlResponse.data.data;
-        } else if (urlResponse.data?.url && typeof urlResponse.data.url === 'string') {
+        } else if (
+          urlResponse.data?.url &&
+          typeof urlResponse.data.url === "string"
+        ) {
           paymentUrl = urlResponse.data.url;
         }
-        
+
         if (paymentUrl) {
           console.log("Payment URL generated:", paymentUrl);
           setPaymentQRUrl(paymentUrl);
@@ -187,7 +200,7 @@ const CheckoutForm = ({
     <div className="space-y-8">
       {/* Payment info section */}
       {!hidePaymentMethods && (
-        <PaymentInformation 
+        <PaymentInformation
           onSelectPaymentMethod={handleSelectPaymentMethod}
           selectedMethod={paymentMethod}
         />
@@ -201,14 +214,14 @@ const CheckoutForm = ({
         <div className="flex-1 text-center sm:text-left">
           <h3 className="font-medium text-indigo-900">Payos Payment</h3>
           <p className="text-sm text-indigo-600/70 mt-0.5">
-            Scan the QR code to complete payment securely and quickly through your banking app
+            Scan the QR code to complete payment securely and quickly through
+            your banking app
           </p>
         </div>
       </div>
 
       {/* Order Summary */}
       <div>
-
         {!paymentInitiated ? (
           <button
             onClick={handleInitiatePayment}
@@ -231,10 +244,10 @@ const CheckoutForm = ({
             )}
           </button>
         ) : (
-          <PaymentQRCode 
-            qrCodeUrl={paymentQRUrl} 
-            onRefresh={handleRefreshQR} 
-            totalAmount={orderTotal + shippingCost} 
+          <PaymentQRCode
+            qrCodeUrl={paymentQRUrl}
+            onRefresh={handleRefreshQR}
+            totalAmount={orderTotal + shippingCost}
           />
         )}
 
@@ -252,14 +265,14 @@ CheckoutForm.propTypes = {
   shippingCost: PropTypes.number,
   onSuccess: PropTypes.func,
   defaultPaymentMethod: PropTypes.string,
-  hidePaymentMethods: PropTypes.bool
+  hidePaymentMethods: PropTypes.bool,
 };
 
 CheckoutForm.defaultProps = {
   cartItems: [],
   shippingCost: 0,
   defaultPaymentMethod: "payos",
-  hidePaymentMethods: false
+  hidePaymentMethods: false,
 };
 
 export default CheckoutForm;

@@ -44,7 +44,7 @@ const CheckoutPage = () => {
   useEffect(() => {
     const status = searchParams.get("status");
     const orderCode = searchParams.get("orderCode");
-    
+
     // Handle cancellation
     if (status === "CANCELLED" && orderCode) {
       (async () => {
@@ -53,7 +53,9 @@ const CheckoutPage = () => {
           const transactionCode = orderCode;
 
           // Call API to update payment status
-          await orderApis.updatePayment(transactionCode, { status: "CANCELLED" });
+          await orderApis.updatePayment(transactionCode, {
+            status: "CANCELLED",
+          });
 
           toast.info("Payment has been cancelled");
           localStorage.removeItem("pending_order");
@@ -68,17 +70,15 @@ const CheckoutPage = () => {
         }
       })();
     }
-    
+
     // Handle success
-    if (status === "success" && orderCode && !paymentProcessed) {
+    if (status === "PAID" && orderCode && !paymentProcessed) {
       (async () => {
         try {
           // Use orderCode directly as the transactionCode
-          const transactionCode = orderCode;
 
           // Call API to update payment status
-          await orderApis.updatePayment(transactionCode, { status: "PAID" });
-          
+
           toast.success("Payment successful! Your order is being processed.");
 
           // Clear checkout data

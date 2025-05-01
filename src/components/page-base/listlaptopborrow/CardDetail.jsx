@@ -15,6 +15,7 @@ const CardDetail = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [feedbacks, setFeedbacks] = useState([]);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [showAllFeedbacks, setShowAllFeedbacks] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -92,28 +93,36 @@ const CardDetail = () => {
   };
 
   const handlePrevImage = () => {
-    const allImages = [laptop.itemImage, ...images.map(img => img.imageUrl)];
-    setCurrentImageIndex((prev) => 
+    const allImages = [laptop.itemImage, ...images.map((img) => img.imageUrl)];
+    setCurrentImageIndex((prev) =>
       prev === 0 ? allImages.length - 1 : prev - 1
     );
-    setSelectedImage(allImages[currentImageIndex === 0 ? allImages.length - 1 : currentImageIndex - 1]);
+    setSelectedImage(
+      allImages[
+        currentImageIndex === 0 ? allImages.length - 1 : currentImageIndex - 1
+      ]
+    );
   };
 
   const handleNextImage = () => {
-    const allImages = [laptop.itemImage, ...images.map(img => img.imageUrl)];
-    setCurrentImageIndex((prev) => 
+    const allImages = [laptop.itemImage, ...images.map((img) => img.imageUrl)];
+    setCurrentImageIndex((prev) =>
       prev === allImages.length - 1 ? 0 : prev + 1
     );
-    setSelectedImage(allImages[currentImageIndex === allImages.length - 1 ? 0 : currentImageIndex + 1]);
+    setSelectedImage(
+      allImages[
+        currentImageIndex === allImages.length - 1 ? 0 : currentImageIndex + 1
+      ]
+    );
   };
 
   const formatDate = (dateString) => {
     if (!dateString) return "N/A";
     const date = new Date(dateString);
-    return date.toLocaleDateString("en-US", { 
-      year: "numeric", 
-      month: "long", 
-      day: "numeric"
+    return date.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
     });
   };
 
@@ -195,7 +204,7 @@ const CardDetail = () => {
                 alt={laptop.itemName}
                 className="w-full h-96 object-contain bg-white"
               />
-              
+
               {/* Navigation Buttons */}
               <div className="absolute inset-y-0 left-0 flex items-center">
                 <button
@@ -244,7 +253,11 @@ const CardDetail = () => {
               {/* Image Counter */}
               <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2">
                 <div className="bg-black bg-opacity-50 text-white px-3 py-1 rounded-full text-sm">
-                  {currentImageIndex + 1} / {[laptop.itemImage, ...images.map(img => img.imageUrl)].length}
+                  {currentImageIndex + 1} /{" "}
+                  {
+                    [laptop.itemImage, ...images.map((img) => img.imageUrl)]
+                      .length
+                  }
                 </div>
               </div>
             </div>
@@ -291,8 +304,18 @@ const CardDetail = () => {
             {/* Device Information Card */}
             <div className="mt-6 border border-gray-200 rounded-lg p-4 shadow-sm">
               <h2 className="text-lg font-semibold text-black mb-3 flex items-center">
-                <svg className="w-5 h-5 text-amber-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                <svg
+                  className="w-5 h-5 text-amber-600 mr-2"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                  />
                 </svg>
                 Device Information
               </h2>
@@ -300,27 +323,50 @@ const CardDetail = () => {
                 <InfoItem label="Model" value={laptop.model} />
                 <InfoItem label="Serial Number" value={laptop.serialNumber} />
                 <InfoItem label="Color" value={laptop.color} />
-                <InfoItem label="Production Year" value={laptop.productionYear} />
-                <InfoItem label="Operating System" value={laptop.operatingSystem} />
-                <InfoItem label="Item ID" value={laptop.itemId} />
-                <InfoItem label="Category" value={laptop.categoryId} />
-                <InfoItem label="Added" value={formatDate(laptop.createdDate)} />
-                <InfoItem label="Last Updated" value={formatDate(laptop.updatedDate)} />
+                <InfoItem
+                  label="Production Year"
+                  value={laptop.productionYear}
+                />
+                <InfoItem
+                  label="Operating System"
+                  value={laptop.operatingSystem}
+                />
+
+                <InfoItem
+                  label="Added"
+                  value={formatDate(laptop.createdDate)}
+                />
+                <InfoItem
+                  label="Last Updated"
+                  value={formatDate(laptop.updatedDate)}
+                />
               </div>
             </div>
 
             {/* Usage Statistics Card */}
             <div className="mt-4 border border-gray-200 rounded-lg p-4 shadow-sm">
               <h2 className="text-lg font-semibold text-black mb-3 flex items-center">
-                <svg className="w-5 h-5 text-amber-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                <svg
+                  className="w-5 h-5 text-amber-600 mr-2"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                  />
                 </svg>
                 Usage Statistics
               </h2>
               <div className="flex items-center justify-center p-2">
                 <div className="text-center">
                   <p className="text-xs text-gray-500">Total Times Borrowed</p>
-                  <p className="text-lg font-semibold text-amber-600">{laptop.totalBorrowedCount || 0}</p>
+                  <p className="text-lg font-semibold text-amber-600">
+                    {laptop.totalBorrowedCount || 0}
+                  </p>
                 </div>
               </div>
             </div>
@@ -346,54 +392,112 @@ const CardDetail = () => {
             {/* Main Specifications Card */}
             <div className="border border-gray-200 rounded-lg p-4 mb-4 shadow-sm">
               <h2 className="text-lg font-semibold text-black mb-3 flex items-center">
-                <svg className="w-5 h-5 text-amber-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
+                <svg
+                  className="w-5 h-5 text-amber-600 mr-2"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"
+                  />
                 </svg>
                 Main Specifications
               </h2>
               <div className="grid grid-cols-2 gap-3">
                 <DetailItem icon="cpu" label="CPU" value={laptop.cpu} />
                 <DetailItem icon="ram" label="RAM" value={laptop.ram} />
-                <DetailItem icon="storage" label="Storage" value={laptop.storage} />
-                <DetailItem icon="screen" label="Screen Size" value={laptop.screenSize} />
-                <DetailItem icon="condition" label="Condition" value={laptop.conditionItem} />
-                <DetailItem icon="graphics" label="Graphics Card" value={laptop.graphicsCard} />
+                <DetailItem
+                  icon="storage"
+                  label="Storage"
+                  value={laptop.storage}
+                />
+                <DetailItem
+                  icon="screen"
+                  label="Screen Size"
+                  value={laptop.screenSize}
+                />
+                <DetailItem
+                  icon="condition"
+                  label="Condition"
+                  value={laptop.conditionItem}
+                />
+                <DetailItem
+                  icon="graphics"
+                  label="Graphics Card"
+                  value={laptop.graphicsCard}
+                />
               </div>
             </div>
 
             {/* Connectivity Card */}
             <div className="border border-gray-200 rounded-lg p-4 mb-4 shadow-sm">
               <h2 className="text-lg font-semibold text-black mb-3 flex items-center">
-                <svg className="w-5 h-5 text-amber-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                <svg
+                  className="w-5 h-5 text-amber-600 mr-2"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"
+                  />
                 </svg>
                 Connectivity
               </h2>
               <div className="grid grid-cols-2 gap-3">
                 <DetailItem icon="ports" label="Ports" value={laptop.ports} />
-                <DetailItem icon="battery" label="Battery Life" value={laptop.batteryLife} />
+                <DetailItem
+                  icon="battery"
+                  label="Battery Life"
+                  value={laptop.batteryLife}
+                />
               </div>
             </div>
 
             {/* Description */}
             <div className="border border-gray-200 rounded-lg p-4 mb-6 shadow-sm">
               <h2 className="text-lg font-semibold text-black mb-3 flex items-center">
-                <svg className="w-5 h-5 text-amber-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <svg
+                  className="w-5 h-5 text-amber-600 mr-2"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
                 </svg>
                 Description
               </h2>
               <p className="text-black text-sm whitespace-pre-line">
                 {laptop.description ||
-                  `This ${laptop.itemName} is in ${laptop.conditionItem} condition and ready for use.
+                  `This ${laptop.itemName} is in ${
+                    laptop.conditionItem
+                  } condition and ready for use.
                   
 Features:
 • ${laptop.cpu} processor for smooth performance
 • ${laptop.ram} memory for multitasking
 • ${laptop.storage} storage capacity
 • ${laptop.screenSize} display for comfortable viewing
-${laptop.graphicsCard ? `• ${laptop.graphicsCard} for enhanced graphics performance` : ''}
-${laptop.operatingSystem ? `• Pre-installed with ${laptop.operatingSystem}` : ''}
+${
+  laptop.graphicsCard
+    ? `• ${laptop.graphicsCard} for enhanced graphics performance`
+    : ""
+}
+${
+  laptop.operatingSystem ? `• Pre-installed with ${laptop.operatingSystem}` : ""
+}
 
 Perfect for students and professionals alike.`}
               </p>
@@ -410,8 +514,18 @@ Perfect for students and professionals alike.`}
                     : "bg-gray-300 cursor-not-allowed"
                 } transition-colors duration-200 shadow-sm`}
               >
-                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <svg
+                  className="w-5 h-5 mr-2"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
                 </svg>
                 {laptop.status === "Available" ? "Borrow Now" : "Not Available"}
               </button>
@@ -422,16 +536,36 @@ Perfect for students and professionals alike.`}
         {/* Feedback */}
         <div className="mt-12 border-t pt-10 w-full">
           <h2 className="text-2xl font-bold text-black mb-6 flex items-center">
-            <svg className="w-6 h-6 text-amber-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+            <svg
+              className="w-6 h-6 text-amber-600 mr-2"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"
+              />
             </svg>
             User Feedback
           </h2>
 
           {feedbacks.length === 0 ? (
             <div className="text-center p-8 border border-gray-200 rounded-lg bg-gray-50">
-              <svg className="w-12 h-12 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              <svg
+                className="w-12 h-12 text-gray-300 mx-auto mb-3"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M8 12h.01M12 12h.01M16 12h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
               </svg>
               <p className="text-gray-500">
                 No feedback available for this item.
@@ -445,7 +579,11 @@ Perfect for students and professionals alike.`}
                     <svg
                       key={index}
                       className={`w-5 h-5 ${
-                        index < Math.round(feedbacks.reduce((sum, fb) => sum + fb.rating, 0) / feedbacks.length)
+                        index <
+                        Math.round(
+                          feedbacks.reduce((sum, fb) => sum + fb.rating, 0) /
+                            feedbacks.length
+                        )
                           ? "text-amber-400"
                           : "text-gray-300"
                       }`}
@@ -466,46 +604,64 @@ Perfect for students and professionals alike.`}
                     / 5
                   </span>
                 </p>
-                <p className="text-sm text-gray-500">Based on {feedbacks.length} user reviews</p>
+                <p className="text-sm text-gray-500">
+                  Based on {feedbacks.length} user reviews
+                </p>
               </div>
 
               <div className="space-y-4">
-                {feedbacks.map((fb) => (
-                  <div
-                    key={fb.feedbackBorrowId}
-                    className="border border-gray-200 bg-white p-4 rounded-xl shadow-sm hover:shadow-md transition"
-                  >
-                    <div className="flex items-center mb-2">
-                      <div className="w-8 h-8 bg-amber-100 rounded-full flex items-center justify-center text-amber-800 font-bold mr-2">
-                        {fb.isAnonymous ? "A" : "U"}
+                {(showAllFeedbacks ? feedbacks : feedbacks.slice(0, 2)).map(
+                  (fb) => (
+                    <div
+                      key={fb.feedbackBorrowId}
+                      className="border border-gray-200 bg-white p-4 rounded-xl shadow-sm hover:shadow-md transition"
+                    >
+                      <div className="flex items-center mb-2">
+                        <div className="w-8 h-8 bg-amber-100 rounded-full flex items-center justify-center text-amber-800 font-bold mr-2">
+                          {fb.isAnonymous ? "A" : "U"}
+                        </div>
+                        <p className="text-sm font-medium text-black">
+                          {fb.isAnonymous ? "Anonymous" : `User`}
+                        </p>
+                        <p className="text-xs text-gray-400 ml-auto">
+                          {new Date(fb.feedbackDate).toLocaleDateString()}
+                        </p>
                       </div>
-                      <p className="text-sm font-medium text-black">
-                        {fb.isAnonymous ? "Anonymous" : `User`}
-                      </p>
-                      <p className="text-xs text-gray-400 ml-auto">
-                        {new Date(fb.feedbackDate).toLocaleDateString()}
+                      <div className="flex items-center mb-2">
+                        {Array.from({ length: 5 }).map((_, index) => (
+                          <svg
+                            key={index}
+                            className={`w-4 h-4 ${
+                              index < fb.rating
+                                ? "text-amber-400"
+                                : "text-gray-300"
+                            }`}
+                            fill="currentColor"
+                            viewBox="0 0 20 20"
+                          >
+                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                          </svg>
+                        ))}
+                        <span className="ml-2 text-sm text-amber-600 font-medium">
+                          {fb.rating}/5
+                        </span>
+                      </div>
+                      <p className="text-sm text-gray-800 bg-gray-50 p-3 rounded-lg">
+                        {fb.comments || "No additional comments provided."}
                       </p>
                     </div>
-                    <div className="flex items-center mb-2">
-                      {Array.from({ length: 5 }).map((_, index) => (
-                        <svg
-                          key={index}
-                          className={`w-4 h-4 ${
-                            index < fb.rating ? "text-amber-400" : "text-gray-300"
-                          }`}
-                          fill="currentColor"
-                          viewBox="0 0 20 20"
-                        >
-                          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                        </svg>
-                      ))}
-                      <span className="ml-2 text-sm text-amber-600 font-medium">{fb.rating}/5</span>
-                    </div>
-                    <p className="text-sm text-gray-800 bg-gray-50 p-3 rounded-lg">
-                      {fb.comments || "No additional comments provided."}
-                    </p>
+                  )
+                )}
+                {feedbacks.length > 2 && (
+                  <div className="text-center mt-4">
+                    <button
+                      onClick={() => setShowAllFeedbacks(!showAllFeedbacks)}
+                      className="text-sm text-amber-600 hover:underline"
+                    >
+                      {showAllFeedbacks ? "Hide" : "Show more"}
+                    </button>
                   </div>
-                ))}
+                )}
               </div>
             </>
           )}
@@ -660,7 +816,11 @@ const DetailItem = ({ icon, label, value, valueClassName = "" }) => {
       <div className="mr-2">{icons[icon]}</div>
       <div>
         <p className="text-xs text-gray-500">{label}</p>
-        <p className={`text-sm font-medium ${valueClassName || "text-slate-800"}`}>
+        <p
+          className={`text-sm font-medium ${
+            valueClassName || "text-slate-800"
+          }`}
+        >
           {value || "N/A"}
         </p>
       </div>
@@ -673,9 +833,7 @@ const InfoItem = ({ label, value }) => {
   return (
     <div className="flex flex-col">
       <p className="text-xs text-gray-500">{label}</p>
-      <p className="text-sm font-medium text-slate-800">
-        {value || "N/A"}
-      </p>
+      <p className="text-sm font-medium text-slate-800">{value || "N/A"}</p>
     </div>
   );
 };

@@ -130,6 +130,125 @@ const DetailItem = ({ icon, label, value, valueClassName = "text-black" }) => {
         />
       </svg>
     ),
+    model: (
+      <svg
+        className="w-5 h-5 text-amber-600"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="2"
+          d="M12 6v6l4 2"
+        />
+      </svg>
+    ),
+    color: (
+      <svg
+        className="w-5 h-5 text-amber-600"
+        fill="currentColor"
+        viewBox="0 0 20 20"
+      >
+        <circle cx="10" cy="10" r="8" />
+      </svg>
+    ),
+    graphicsCard: (
+      <svg
+        className="w-5 h-5 text-amber-600"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="2"
+          d="M9 14l6-4-6-4v8z"
+        />
+      </svg>
+    ),
+    battery: (
+      <svg
+        className="w-5 h-5 text-amber-600"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <rect
+          width="16"
+          height="10"
+          x="2"
+          y="7"
+          rx="2"
+          ry="2"
+          strokeWidth="2"
+        />
+        <path d="M22 11v2" strokeWidth="2" />
+      </svg>
+    ),
+    ports: (
+      <svg
+        className="w-5 h-5 text-amber-600"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="2"
+          d="M4 7h16M4 17h16M4 12h8"
+        />
+      </svg>
+    ),
+    operatingSystem: (
+      <svg
+        className="w-5 h-5 text-amber-600"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="2"
+          d="M12 4v16m8-8H4"
+        />
+      </svg>
+    ),
+    productionYear: (
+      <svg
+        className="w-5 h-5 text-amber-600"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="2"
+          d="M12 8v4l3 3"
+        />
+        <circle cx="12" cy="12" r="9" strokeWidth="2" />
+      </svg>
+    ),
+    shop: (
+      <svg
+        className="w-5 h-5 text-amber-600"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="2"
+          d="M3 9l9-6 9 6v6a9 9 0 11-18 0V9z"
+        />
+      </svg>
+    ),
   };
 
   return (
@@ -306,11 +425,14 @@ const ProductDetailPage = () => {
     const currentQty = existingItem ? existingItem.quantity : 0;
 
     if (currentQty >= product.quantity) {
-      toast.error("Số lượng trong giỏ hàng đã đạt giới hạn tồn kho!", {
-        position: "top-right",
-        autoClose: 2000,
-        style: { fontSize: "14px", fontWeight: "500" },
-      });
+      toast.error(
+        "The number of items in the cart has reached the inventory limit!",
+        {
+          position: "top-right",
+          autoClose: 2000,
+          style: { fontSize: "14px", fontWeight: "500" },
+        }
+      );
       return;
     }
 
@@ -326,7 +448,7 @@ const ProductDetailPage = () => {
       quantityAvailable: product.quantity,
     });
 
-    toast.success("Đã thêm vào giỏ hàng thành công!", {
+    toast.success("Successfully added to cart!", {
       position: "top-right",
       autoClose: 2000,
       style: { fontSize: "14px", fontWeight: "500" },
@@ -640,6 +762,34 @@ const ProductDetailPage = () => {
                 value={formatPrice(product.price)}
                 valueClassName="text-amber-600 font-semibold"
               />
+              <DetailItem icon="model" label="Model" value={product.model} />
+              <DetailItem icon="color" label="Color" value={product.color} />
+              <DetailItem
+                icon="graphicsCard"
+                label="Graphics Card"
+                value={product.graphicsCard}
+              />
+              <DetailItem
+                icon="battery"
+                label="Battery"
+                value={product.battery}
+              />
+              <DetailItem icon="ports" label="Ports" value={product.ports} />
+              <DetailItem
+                icon="operatingSystem"
+                label="OS"
+                value={product.operatingSystem}
+              />
+              <DetailItem
+                icon="productionYear"
+                label="Year"
+                value={product.productionYear}
+              />
+              <DetailItem
+                icon="shop"
+                label="Shop"
+                value={product.shopName || "Unknown"}
+              />
             </div>
 
             <div className="mb-6">
@@ -647,15 +797,24 @@ const ProductDetailPage = () => {
                 Description
               </h2>
               <p className="text-black text-sm whitespace-pre-line">
-                {`This ${product.productName} features:
-                
-Features:
-• ${product.cpu || "N/A"} processor for smooth performance
-• ${product.ram || "N/A"} memory for multitasking
-• ${product.storage || "N/A"} storage capacity
-• ${product.screenSize || "N/A"}" display for comfortable viewing
+                {`This ${product.productName} by ${
+                  product.shopName || "Unknown Shop"
+                } features:
 
-Perfect for students and professionals alike.`}
+Features:
+• CPU: ${product.cpu || "N/A"} – for smooth performance
+• RAM: ${product.ram || "N/A"} – handles multitasking easily
+• Storage: ${product.storage || "N/A"} – enough space for your files
+• Screen Size: ${product.screenSize || "N/A"}" – crisp, clear display
+• Graphics Card: ${product.graphicsCard || "N/A"} – for better visual experience
+• Battery: ${product.battery || "N/A"} – long-lasting usage
+• Ports: ${product.ports || "N/A"} – connect all your devices
+• OS: ${product.operatingSystem || "N/A"} – optimized for productivity
+• Color: ${product.color || "N/A"} – stylish and sleek
+• Model: ${product.model || "N/A"}
+• Year: ${product.productionYear || "N/A"}
+
+Perfect for students, professionals, or anyone needing reliable performance.`}
               </p>
             </div>
 

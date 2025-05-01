@@ -8,6 +8,8 @@ const ProductFeedback = ({ productId, onFeedbacksLoaded }) => {
   const [feedbacks, setFeedbacks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [userNames, setUserNames] = useState({});
+  const [showAll, setShowAll] = useState(false);
+  const visibleFeedbacks = showAll ? feedbacks : feedbacks.slice(0, 2);
 
   useEffect(() => {
     const fetchFeedbacks = async () => {
@@ -95,7 +97,7 @@ const ProductFeedback = ({ productId, onFeedbacksLoaded }) => {
         </p>
       ) : (
         <div className="space-y-6">
-          {feedbacks.map(
+          {visibleFeedbacks.map(
             (feedback, index) => (
               console.log(feedback.createdDate),
               (
@@ -132,6 +134,16 @@ const ProductFeedback = ({ productId, onFeedbacksLoaded }) => {
                 </div>
               )
             )
+          )}
+          {feedbacks.length > 2 && (
+            <div className="text-center mt-4">
+              <button
+                onClick={() => setShowAll(!showAll)}
+                className="text-sm text-amber-600 hover:underline"
+              >
+                {showAll ? "Hide" : "Show more"}
+              </button>
+            </div>
           )}
         </div>
       )}
