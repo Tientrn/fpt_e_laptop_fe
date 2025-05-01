@@ -33,6 +33,8 @@ const MyProductShop = () => {
 
         // Lấy thông tin shop của user
         const shopsRes = await shopApi.getAllShops();
+
+        console.log("Shops response:", shopsRes);
         if (!shopsRes || !shopsRes.isSuccess) {
           throw new Error("Failed to fetch shops");
         }
