@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { toast } from "react-toastify";
 import { format } from "date-fns";
 import { FaSearch } from "react-icons/fa";
@@ -27,6 +27,7 @@ const BorrowHistory = () => {
   const [compensationMap, setCompensationMap] = useState({});
   const [showReportModal, setShowReportModal] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
+  const [sortConfig, setSortConfig] = useState({ key: 'borrowHistoryId', direction: 'desc' });
   const [reportData, setReportData] = useState({
     file: null,
     ItemId: "",
@@ -106,10 +107,7 @@ const BorrowHistory = () => {
     try {
       const response = await borrowhistoryApi.getAllBorrowHistories();
       if (response.isSuccess) {
-        const sortedData = (response.data || []).sort(
-          (a, b) => b.borrowHistoryId - a.borrowHistoryId
-        );
-        setBorrowHistory(sortedData);
+        setBorrowHistory(response.data || []);
       } else {
         toast.error("Failed to load borrow history");
       }
@@ -260,9 +258,60 @@ const BorrowHistory = () => {
     return matchesSearch && matchesFilter;
   });
 
+  // Sort function
+  const handleSort = (key) => {
+    let direction = 'asc';
+    
+    if (sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc';
+    }
+    
+    setSortConfig({ key, direction });
+    setCurrentPage(1); // Reset to first page when sorting changes
+  };
+
+  // Apply sorting to filteredHistory
+  const sortedFilteredHistory = useMemo(() => {
+    let sortableItems = [...filteredHistory];
+    
+    if (sortConfig.key) {
+      sortableItems.sort((a, b) => {
+        // Handle nested properties for user and item info
+        let aValue, bValue;
+        
+        if (sortConfig.key === 'userName') {
+          aValue = userInfoMap[a.userId]?.fullName || '';
+          bValue = userInfoMap[b.userId]?.fullName || '';
+        } else if (sortConfig.key === 'itemName') {
+          aValue = itemsMap[a.itemId]?.itemName || '';
+          bValue = itemsMap[b.itemId]?.itemName || '';
+        } else if (sortConfig.key === 'borrowDate' || sortConfig.key === 'returnDate') {
+          aValue = new Date(a[sortConfig.key] || 0);
+          bValue = new Date(b[sortConfig.key] || 0);
+        } else if (sortConfig.key === 'expectedReturnDate') {
+          aValue = new Date(contractsMap[a.requestId]?.expectedReturnDate || 0);
+          bValue = new Date(contractsMap[b.requestId]?.expectedReturnDate || 0);
+        } else {
+          aValue = a[sortConfig.key];
+          bValue = b[sortConfig.key];
+        }
+        
+        if (aValue < bValue) {
+          return sortConfig.direction === 'asc' ? -1 : 1;
+        }
+        if (aValue > bValue) {
+          return sortConfig.direction === 'asc' ? 1 : -1;
+        }
+        return 0;
+      });
+    }
+    
+    return sortableItems;
+  }, [filteredHistory, sortConfig, userInfoMap, itemsMap, contractsMap]);
+
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentItems = filteredHistory.slice(indexOfFirstItem, indexOfLastItem);
+  const currentItems = sortedFilteredHistory.slice(indexOfFirstItem, indexOfLastItem);
   const totalPages = Math.ceil(filteredHistory.length / itemsPerPage);
 
   const handleFilterChange = (status) => {
@@ -400,11 +449,11 @@ const BorrowHistory = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      {/* Enhanced Header */}
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-6">
+      {/* Enhanced Header with subtle animation */}
       <div className="mb-8 animate-fadeIn">
         <div className="flex flex-col items-center mb-4">
-          <div className="bg-amber-100 rounded-full p-3 mb-4">
+          <div className="bg-amber-100 rounded-full p-3 mb-4 shadow-md transform hover:scale-105 transition-transform duration-300">
             <svg
               className="w-10 h-10 text-amber-600"
               fill="none"
@@ -420,23 +469,27 @@ const BorrowHistory = () => {
               ></path>
             </svg>
           </div>
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">
+          <h1 className="text-3xl font-bold text-gray-800 mb-2 relative">
             Borrow History
+            <span className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-amber-400 to-amber-600 transform scale-x-0 transition-transform duration-300 group-hover:scale-x-100"></span>
           </h1>
+          <p className="text-gray-600 text-center max-w-2xl">
+            Manage and track all device borrowing activities
+          </p>
         </div>
       </div>
 
-      {/* Enhanced Search and Filter Controls */}
+      {/* Enhanced Search and Filter Controls with improved visuals */}
       <div className="mb-8 animate-fadeIn">
-        <div className="bg-white rounded-xl shadow-md p-4">
+        <div className="bg-white rounded-xl shadow-lg p-4 border border-gray-100 hover:shadow-xl transition-shadow duration-300">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <div className="flex flex-wrap gap-2">
               <button
                 onClick={() => handleFilterChange("all")}
                 className={`px-4 py-2 rounded-lg transition-all duration-200 flex items-center gap-1.5 ${
                   filterStatus === "all"
-                    ? "bg-amber-600 text-white shadow-md"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    ? "bg-gradient-to-r from-amber-500 to-amber-600 text-white shadow-md transform scale-105"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200 hover:scale-105 transform"
                 }`}
               >
                 <svg
@@ -459,8 +512,8 @@ const BorrowHistory = () => {
                 onClick={() => handleFilterChange("returned")}
                 className={`px-4 py-2 rounded-lg transition-all duration-200 flex items-center gap-1.5 ${
                   filterStatus === "returned"
-                    ? "bg-green-600 text-white shadow-md"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    ? "bg-gradient-to-r from-green-500 to-green-600 text-white shadow-md transform scale-105"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200 hover:scale-105 transform"
                 }`}
               >
                 <svg
@@ -483,8 +536,8 @@ const BorrowHistory = () => {
                 onClick={() => handleFilterChange("borrowed")}
                 className={`px-4 py-2 rounded-lg transition-all duration-200 flex items-center gap-1.5 ${
                   filterStatus === "borrowed"
-                    ? "bg-blue-600 text-white shadow-md"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md transform scale-105"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200 hover:scale-105 transform"
                 }`}
               >
                 <svg
@@ -505,15 +558,15 @@ const BorrowHistory = () => {
               </button>
             </div>
 
-            <div className="relative w-full md:w-64">
+            <div className="relative w-full md:w-64 group">
               <input
                 type="text"
                 placeholder="Search by name, email, item..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full px-10 py-2 border-0 bg-gray-100 rounded-lg focus:ring-2 focus:ring-amber-500 focus:bg-white transition-all"
+                className="w-full px-10 py-2 border border-gray-200 bg-gray-50 rounded-lg focus:ring-2 focus:ring-amber-500 focus:bg-white transition-all group-hover:shadow-md"
               />
-              <div className="absolute left-3 top-2.5 text-gray-400">
+              <div className="absolute left-3 top-2.5 text-gray-400 group-hover:text-amber-500 transition-colors">
                 <FaSearch />
               </div>
               {searchTerm && (
@@ -542,11 +595,11 @@ const BorrowHistory = () => {
         </div>
       </div>
 
-      {/* Add Report Damage button - Enhanced */}
+      {/* Improved Manage Damage Reports button */}
       <div className="mb-4 flex justify-end animate-fadeIn">
         <button
           onClick={() => navigate("/staff/report-damages")}
-          className="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors flex items-center gap-2 shadow-md hover:shadow-lg"
+          className="px-4 py-2 bg-gradient-to-r from-amber-500 to-amber-600 text-white rounded-lg hover:from-amber-600 hover:to-amber-700 transition-all duration-300 flex items-center gap-2 shadow-md hover:shadow-lg transform hover:translate-y-[-2px]"
         >
           <svg
             className="w-5 h-5"
@@ -564,9 +617,9 @@ const BorrowHistory = () => {
         </button>
       </div>
 
-      {/* Table */}
-      <div className="bg-white rounded-xl shadow-md overflow-hidden">
-        <div className="p-6 border-b border-gray-100">
+      {/* Enhanced Table Container */}
+      <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100 hover:shadow-xl transition-all duration-300">
+        <div className="p-6 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-amber-50">
           <h2 className="text-xl font-bold text-gray-800">
             Borrowing Records
             <span className="text-sm font-normal text-gray-500 ml-2">
@@ -583,18 +636,86 @@ const BorrowHistory = () => {
           <div className="overflow-auto">
             <table className="min-w-full divide-y divide-gray-200">
               <thead>
-                <tr className="bg-gradient-to-r from-gray-600 to-amber-600 text-white">
-                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
-                    User
+                <tr className="bg-gradient-to-r from-gray-700 to-amber-700 text-white">
+                  <th 
+                    className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider cursor-pointer hover:bg-amber-600 transition-colors"
+                    onClick={() => handleSort('userName')}
+                  >
+                    <div className="flex items-center">
+                      User
+                      {sortConfig.key === 'userName' && (
+                        <span className="ml-2 bg-white bg-opacity-20 rounded-full p-0.5 w-5 h-5 flex items-center justify-center">
+                          {sortConfig.direction === 'asc' ? 
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 15l7-7 7 7"></path>
+                            </svg> : 
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                          }
+                        </span>
+                      )}
+                    </div>
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
-                    Device
+                  <th 
+                    className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider cursor-pointer hover:bg-amber-600 transition-colors"
+                    onClick={() => handleSort('itemName')}
+                  >
+                    <div className="flex items-center">
+                      Device
+                      {sortConfig.key === 'itemName' && (
+                        <span className="ml-2 bg-white bg-opacity-20 rounded-full p-0.5 w-5 h-5 flex items-center justify-center">
+                          {sortConfig.direction === 'asc' ? 
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 15l7-7 7 7"></path>
+                            </svg> : 
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                          }
+                        </span>
+                      )}
+                    </div>
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
-                    Dates
+                  <th 
+                    className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider cursor-pointer hover:bg-amber-600 transition-colors"
+                    onClick={() => handleSort('borrowDate')}
+                  >
+                    <div className="flex items-center">
+                      Dates
+                      {sortConfig.key === 'borrowDate' && (
+                        <span className="ml-2 bg-white bg-opacity-20 rounded-full p-0.5 w-5 h-5 flex items-center justify-center">
+                          {sortConfig.direction === 'asc' ? 
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 15l7-7 7 7"></path>
+                            </svg> : 
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                          }
+                        </span>
+                      )}
+                    </div>
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
-                    Status
+                  <th 
+                    className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider cursor-pointer hover:bg-amber-600 transition-colors"
+                    onClick={() => handleSort('status')}
+                  >
+                    <div className="flex items-center">
+                      Status
+                      {sortConfig.key === 'status' && (
+                        <span className="ml-2 bg-white bg-opacity-20 rounded-full p-0.5 w-5 h-5 flex items-center justify-center">
+                          {sortConfig.direction === 'asc' ? 
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 15l7-7 7 7"></path>
+                            </svg> : 
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                          }
+                        </span>
+                      )}
+                    </div>
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
                     Actions
@@ -607,7 +728,7 @@ const BorrowHistory = () => {
                     <>
                       <tr
                         key={item.borrowHistoryId}
-                        className={`hover:bg-gray-50 transition-all duration-200 ${
+                        className={`hover:bg-amber-50 transition-all duration-200 ${
                           item.status === "Borrowing" &&
                           contractsMap[item.requestId] &&
                           isExpiringSoon(
@@ -615,12 +736,12 @@ const BorrowHistory = () => {
                           )
                             ? "bg-yellow-50 hover:bg-yellow-100"
                             : ""
-                        } cursor-pointer`}
+                        } cursor-pointer group`}
                         onClick={() => toggleRowExpansion(item.borrowHistoryId)}
                       >
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
-                            <div className="flex-shrink-0 h-10 w-10 bg-amber-100 rounded-full flex items-center justify-center mr-3">
+                            <div className="flex-shrink-0 h-10 w-10 bg-gradient-to-br from-amber-100 to-amber-200 rounded-full flex items-center justify-center mr-3 shadow-sm group-hover:shadow group-hover:scale-110 transition-all duration-300">
                               <span className="text-amber-600 font-medium text-sm">
                                 {userInfoMap[item.userId]?.fullName
                                   ? userInfoMap[item.userId].fullName
@@ -631,12 +752,12 @@ const BorrowHistory = () => {
                             </div>
                             <div className="flex flex-col">
                               <div className="flex items-center">
-                                <span className="text-sm font-medium text-gray-900">
+                                <span className="text-sm font-medium text-gray-900 group-hover:text-amber-700 transition-colors">
                                   {userInfoMap[item.userId]?.fullName ||
                                     "Unknown User"}
                                 </span>
                                 {userInfoMap[item.userId]?.roleName && (
-                                  <span className="ml-2 text-xs px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded-sm">
+                                  <span className="ml-2 text-xs px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded-md shadow-sm">
                                     {userInfoMap[item.userId].roleName}
                                   </span>
                                 )}
@@ -1073,7 +1194,7 @@ const BorrowHistory = () => {
                       </tr>
 
                       {expandedRow === item.borrowHistoryId && (
-                        <tr className="bg-amber-50">
+                        <tr className="bg-gradient-to-r from-amber-50 to-amber-100">
                           <td colSpan="6" className="px-6 py-4">
                             <div className="animate-fadeIn">
                               <div className="flex items-center justify-between mb-4">
@@ -1769,9 +1890,9 @@ const BorrowHistory = () => {
                       colSpan="6"
                       className="px-6 py-10 text-center text-gray-500"
                     >
-                      <div className="flex flex-col items-center">
+                      <div className="flex flex-col items-center p-8">
                         <svg
-                          className="w-12 h-12 text-gray-300 mb-4"
+                          className="w-16 h-16 text-gray-300 mb-4 animate-pulse"
                           fill="none"
                           stroke="currentColor"
                           viewBox="0 0 24 24"
@@ -1784,14 +1905,23 @@ const BorrowHistory = () => {
                             d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
                           />
                         </svg>
-                        <p className="text-lg font-medium">
+                        <p className="text-lg font-medium text-gray-600">
                           No history records found
                         </p>
-                        <p className="text-sm">
+                        <p className="text-sm text-gray-500 mt-2">
                           {searchTerm
                             ? "Try adjusting your search terms"
                             : "No Borrowing history available"}
                         </p>
+                        <button 
+                          onClick={() => {
+                            setSearchTerm("");
+                            setFilterStatus("all");
+                          }}
+                          className="mt-4 px-4 py-2 bg-amber-100 text-amber-700 rounded-md hover:bg-amber-200 transition-colors duration-300"
+                        >
+                          Reset Filters
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -1801,24 +1931,27 @@ const BorrowHistory = () => {
           </div>
         )}
 
-        {/* Pagination */}
+        {/* Enhanced Pagination */}
         {!loading && filteredHistory.length > 0 && (
-          <div className="flex flex-col md:flex-row justify-between items-center p-4 border-t border-gray-200 bg-gray-50">
+          <div className="flex flex-col md:flex-row justify-between items-center p-4 border-t border-gray-200 bg-gradient-to-r from-gray-50 to-amber-50">
             <div className="text-sm text-gray-700 mb-4 md:mb-0">
               Showing{" "}
-              <span className="font-medium">{indexOfFirstItem + 1}</span> to{" "}
-              <span className="font-medium">
+              <span className="font-medium text-amber-700">{indexOfFirstItem + 1}</span> to{" "}
+              <span className="font-medium text-amber-700">
                 {Math.min(indexOfLastItem, filteredHistory.length)}
               </span>{" "}
-              of <span className="font-medium">{filteredHistory.length}</span>{" "}
+              of <span className="font-medium text-amber-700">{filteredHistory.length}</span>{" "}
               entries
             </div>
             <div className="flex flex-wrap justify-center gap-2">
               <button
                 onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
                 disabled={currentPage === 1}
-                className="px-3 py-1 bg-gray-100 text-gray-700 rounded-md disabled:bg-gray-50 disabled:text-gray-400 hover:bg-gray-200 transition-colors"
+                className="px-3 py-1 bg-white border border-gray-200 text-gray-700 rounded-md disabled:bg-gray-50 disabled:text-gray-400 hover:bg-amber-50 hover:border-amber-200 transition-colors shadow-sm disabled:shadow-none flex items-center gap-1"
               >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7"></path>
+                </svg>
                 Previous
               </button>
 
@@ -1830,9 +1963,9 @@ const BorrowHistory = () => {
                     onClick={() => setCurrentPage(i + 1)}
                     className={`px-3 py-1 rounded-md ${
                       currentPage === i + 1
-                        ? "bg-amber-600 text-white"
-                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                    } transition-colors`}
+                        ? "bg-gradient-to-r from-amber-500 to-amber-600 text-white shadow-md border border-amber-400"
+                        : "bg-white text-gray-700 hover:bg-amber-50 border border-gray-200 hover:border-amber-200 shadow-sm"
+                    } transition-all duration-300 transform ${currentPage === i + 1 ? "scale-110" : "hover:scale-105"}`}
                   >
                     {i + 1}
                   </button>
@@ -1846,26 +1979,34 @@ const BorrowHistory = () => {
                       onClick={() => setCurrentPage(pageNum)}
                       className={`px-3 py-1 rounded-md ${
                         currentPage === pageNum
-                          ? "bg-amber-600 text-white"
-                          : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                      } transition-colors`}
+                          ? "bg-gradient-to-r from-amber-500 to-amber-600 text-white shadow-md border border-amber-400"
+                          : "bg-white text-gray-700 hover:bg-amber-50 border border-gray-200 hover:border-amber-200 shadow-sm"
+                      } transition-all duration-300 transform ${currentPage === pageNum ? "scale-110" : "hover:scale-105"}`}
                     >
                       {pageNum}
                     </button>
                   ))}
 
                   {currentPage > 3 && (
-                    <span className="px-2 py-1 text-gray-500">...</span>
+                    <span className="px-2 py-1 text-gray-500 flex items-center">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z"></path>
+                      </svg>
+                    </span>
                   )}
 
                   {currentPage > 2 && currentPage < totalPages - 1 && (
-                    <button className="px-3 py-1 rounded-md bg-amber-600 text-white">
+                    <button className="px-3 py-1 rounded-md bg-gradient-to-r from-amber-500 to-amber-600 text-white shadow-md border border-amber-400 transform scale-110">
                       {currentPage}
                     </button>
                   )}
 
                   {currentPage < totalPages - 2 && (
-                    <span className="px-2 py-1 text-gray-500">...</span>
+                    <span className="px-2 py-1 text-gray-500 flex items-center">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z"></path>
+                      </svg>
+                    </span>
                   )}
 
                   {[totalPages - 1, totalPages].map((pageNum) => (
@@ -1874,9 +2015,9 @@ const BorrowHistory = () => {
                       onClick={() => setCurrentPage(pageNum)}
                       className={`px-3 py-1 rounded-md ${
                         currentPage === pageNum
-                          ? "bg-amber-600 text-white"
-                          : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                      } transition-colors`}
+                          ? "bg-gradient-to-r from-amber-500 to-amber-600 text-white shadow-md border border-amber-400"
+                          : "bg-white text-gray-700 hover:bg-amber-50 border border-gray-200 hover:border-amber-200 shadow-sm"
+                      } transition-all duration-300 transform ${currentPage === pageNum ? "scale-110" : "hover:scale-105"}`}
                     >
                       {pageNum}
                     </button>
@@ -1889,27 +2030,33 @@ const BorrowHistory = () => {
                   setCurrentPage((prev) => Math.min(prev + 1, totalPages))
                 }
                 disabled={currentPage === totalPages}
-                className="px-3 py-1 bg-gray-100 text-gray-700 rounded-md disabled:bg-gray-50 disabled:text-gray-400 hover:bg-gray-200 transition-colors"
+                className="px-3 py-1 bg-white border border-gray-200 text-gray-700 rounded-md disabled:bg-gray-50 disabled:text-gray-400 hover:bg-amber-50 hover:border-amber-200 transition-colors shadow-sm disabled:shadow-none flex items-center gap-1"
               >
                 Next
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path>
+                </svg>
               </button>
             </div>
           </div>
         )}
       </div>
 
-      {/* Modal Báo Cáo Hỏng Hóc */}
+      {/* Enhanced Modal */}
       {showReportModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-auto bg-black bg-opacity-50">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-xl mx-4 relative">
-            {/* Modal Header */}
-            <div className="p-5 border-b border-gray-200">
-              <h3 className="text-lg font-semibold text-gray-800">
+        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-auto bg-black bg-opacity-60 backdrop-blur-sm transition-all duration-300">
+          <div className="bg-white rounded-lg shadow-2xl w-full max-w-xl mx-4 relative transform transition-all duration-300 scale-100 opacity-100">
+            {/* Modal Header with gradient */}
+            <div className="p-5 border-b border-gray-200 bg-gradient-to-r from-amber-50 to-amber-100 rounded-t-lg">
+              <h3 className="text-lg font-semibold text-gray-800 flex items-center">
+                <svg className="w-5 h-5 text-amber-600 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                </svg>
                 Report Damage for Device
               </h3>
               <button
                 onClick={closeReportModal}
-                className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+                className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors duration-200 hover:rotate-90 transform"
               >
                 <svg
                   className="w-6 h-6"
@@ -1928,44 +2075,65 @@ const BorrowHistory = () => {
               </button>
             </div>
 
-            {/* Modal Body */}
-            <div className="p-5">
+            {/* Modal Body with improved styling */}
+            <div className="p-6">
               <form onSubmit={handleSubmitReport}>
                 {selectedItem && (
-                  <div className="mb-4 p-3 bg-amber-50 rounded-lg">
-                    <p className="text-sm text-gray-700">
-                      <span className="font-medium">Device:</span>{" "}
-                      {itemsMap[selectedItem.itemId]?.itemName ||
-                        "Unknown Device"}
-                    </p>
-                    <p className="text-sm text-gray-700">
-                      <span className="font-medium">User:</span>{" "}
-                      {userInfoMap[selectedItem.userId]?.fullName ||
-                        "Unknown User"}
-                    </p>
-                    <p className="text-sm text-gray-700">
-                      <span className="font-medium">Borrow Date:</span>{" "}
-                      {format(new Date(selectedItem.borrowDate), "dd/MM/yyyy")}
-                    </p>
+                  <div className="mb-4 p-4 bg-gradient-to-r from-amber-50 to-amber-100 rounded-lg shadow-sm border border-amber-200">
+                    <div className="flex items-center mb-2">
+                      <div className="w-8 h-8 rounded-full bg-amber-200 flex items-center justify-center mr-2">
+                        <svg className="w-4 h-4 text-amber-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                      </div>
+                      <h4 className="text-sm font-medium text-amber-800">Device Information</h4>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div className="flex flex-col">
+                        <p className="text-xs text-gray-500">Device</p>
+                        <p className="text-sm font-medium text-gray-800">
+                          {itemsMap[selectedItem.itemId]?.itemName || "Unknown Device"}
+                        </p>
+                      </div>
+                      <div className="flex flex-col">
+                        <p className="text-xs text-gray-500">User</p>
+                        <p className="text-sm font-medium text-gray-800">
+                          {userInfoMap[selectedItem.userId]?.fullName || "Unknown User"}
+                        </p>
+                      </div>
+                      <div className="flex flex-col">
+                        <p className="text-xs text-gray-500">Borrow Date</p>
+                        <p className="text-sm font-medium text-gray-800">
+                          {format(new Date(selectedItem.borrowDate), "dd/MM/yyyy")}
+                        </p>
+                      </div>
+                      <div className="flex flex-col">
+                        <p className="text-xs text-gray-500">ID</p>
+                        <p className="text-sm font-medium text-gray-800">#{selectedItem.borrowHistoryId}</p>
+                      </div>
+                    </div>
                   </div>
                 )}
 
-                {/* Input fields */}
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                {/* Input fields with improved styling */}
+                <div className="mb-4 group">
+                  <label className="block text-sm font-medium text-gray-700 mb-1 group-hover:text-amber-600 transition-colors">
                     Damage Photo (Optional)
                   </label>
-                  <input
-                    type="file"
-                    name="file"
-                    accept="image/*"
-                    onChange={handleInputChange}
-                    className="w-full p-2 border border-gray-300 rounded-md focus:ring-amber-500 focus:border-amber-500"
-                  />
+                  <div className="relative">
+                    <input
+                      type="file"
+                      name="file"
+                      accept="image/*"
+                      onChange={handleInputChange}
+                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-amber-500 focus:border-amber-500 hover:border-amber-300 transition-colors bg-white file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-amber-50 file:text-amber-700 hover:file:bg-amber-100"
+                    />
+                  </div>
+                  <p className="mt-1 text-xs text-gray-500">Upload a clear image of the damage</p>
                 </div>
 
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                <div className="mb-4 group">
+                  <label className="block text-sm font-medium text-gray-700 mb-1 group-hover:text-amber-600 transition-colors">
                     Condition Before Borrowing
                   </label>
                   <input
@@ -1973,14 +2141,14 @@ const BorrowHistory = () => {
                     name="ConditionBeforeBorrow"
                     value={reportData.ConditionBeforeBorrow}
                     onChange={handleInputChange}
-                    className="w-full p-2 border border-gray-300 rounded-md focus:ring-amber-500 focus:border-amber-500"
+                    className="w-full p-3 border border-gray-300 rounded-md focus:ring-amber-500 focus:border-amber-500 hover:border-amber-300 transition-colors bg-gray-50 focus:bg-white"
                     placeholder="E.g. Good condition, no scratches"
                     required
                   />
                 </div>
 
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                <div className="mb-4 group">
+                  <label className="block text-sm font-medium text-gray-700 mb-1 group-hover:text-amber-600 transition-colors">
                     Current Condition <span className="text-red-500">*</span>
                   </label>
                   <input
@@ -1988,24 +2156,29 @@ const BorrowHistory = () => {
                     name="ConditionAfterReturn"
                     value={reportData.ConditionAfterReturn}
                     onChange={handleInputChange}
-                    className="w-full p-2 border border-gray-300 rounded-md focus:ring-amber-500 focus:border-amber-500"
+                    className="w-full p-3 border border-gray-300 rounded-md focus:ring-amber-500 focus:border-amber-500 hover:border-amber-300 transition-colors bg-gray-50 focus:bg-white"
                     placeholder="E.g. Screen damaged, keyboard not working"
                     required
                   />
                 </div>
 
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                <div className="mb-4 group">
+                  <label className="block text-sm font-medium text-gray-700 mb-1 group-hover:text-amber-600 transition-colors">
                     Damage Fee (₫)
                   </label>
-                  <input
-                    type="text"
-                    name="DamageFee"
-                    value={reportData.DamageFee}
-                    onChange={handleInputChange}
-                    className="w-full p-2 border border-gray-300 rounded-md focus:ring-amber-500 focus:border-amber-500"
-                    placeholder="Enter amount in VND"
-                  />
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <span className="text-gray-500 sm:text-sm">₫</span>
+                    </div>
+                    <input
+                      type="text"
+                      name="DamageFee"
+                      value={reportData.DamageFee}
+                      onChange={handleInputChange}
+                      className="w-full pl-8 p-3 border border-gray-300 rounded-md focus:ring-amber-500 focus:border-amber-500 hover:border-amber-300 transition-colors bg-gray-50 focus:bg-white"
+                      placeholder="Enter amount in VND"
+                    />
+                  </div>
                   <div className="mt-1">
                     <p className="text-xs text-gray-500">
                       Enter the amount in Vietnamese Dong (VND)
@@ -2013,8 +2186,8 @@ const BorrowHistory = () => {
                   </div>
                 </div>
 
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                <div className="mb-4 group">
+                  <label className="block text-sm font-medium text-gray-700 mb-1 group-hover:text-amber-600 transition-colors">
                     Additional Notes
                   </label>
                   <textarea
@@ -2022,28 +2195,43 @@ const BorrowHistory = () => {
                     value={reportData.Note}
                     onChange={handleInputChange}
                     rows="3"
-                    className="w-full p-2 border border-gray-300 rounded-md focus:ring-amber-500 focus:border-amber-500"
+                    className="w-full p-3 border border-gray-300 rounded-md focus:ring-amber-500 focus:border-amber-500 hover:border-amber-300 transition-colors bg-gray-50 focus:bg-white"
                     placeholder="Any additional information about the damage"
                   ></textarea>
                 </div>
 
-                {/* Action buttons */}
+                {/* Action buttons with improved styling */}
                 <div className="flex justify-end mt-6 gap-3">
                   <button
                     type="button"
                     onClick={closeReportModal}
-                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 shadow-sm transition-all duration-200"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className={`px-4 py-2 text-sm font-medium text-white bg-amber-600 rounded-md hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 ${
-                      isSubmitting ? "opacity-75 cursor-not-allowed" : ""
+                    className={`px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-amber-500 to-amber-600 rounded-md hover:from-amber-600 hover:to-amber-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 shadow-md transition-all duration-200 ${
+                      isSubmitting ? "opacity-75 cursor-not-allowed" : "transform hover:translate-y-[-2px]"
                     }`}
                   >
-                    {isSubmitting ? "Submitting..." : "Submit Report"}
+                    {isSubmitting ? (
+                      <div className="flex items-center">
+                        <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Submitting...
+                      </div>
+                    ) : (
+                      <div className="flex items-center">
+                        <svg className="w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                        </svg>
+                        Submit Report
+                      </div>
+                    )}
                   </button>
                 </div>
               </form>
