@@ -67,7 +67,8 @@ export default function ModernHome() {
                 Your<span className="text-[#3d5a80]">.</span>Tech
                 <span className="text-[#ee6c4d]">.</span>
                 <span className="block mt-1">
-                  Your Future<span className="text-[#ee6c4d]">.</span>
+                  Your<span className="text-[#3d5a80]">.</span> Future
+                  <span className="text-[#ee6c4d]">.</span>
                 </span>
               </motion.h1>
 

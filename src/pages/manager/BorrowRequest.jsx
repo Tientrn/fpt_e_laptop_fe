@@ -240,8 +240,8 @@ const BorrowRequest = () => {
                 className="pl-10 pr-10 py-3 text-gray-700 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all appearance-none"
               >
                 <option value="all">All Status</option>
+                <option value="Pending">Pending</option>
                 <option value="Approved">Approved</option>
-                <option value="Borrowing">Borrowing</option>
                 <option value="Rejected">Rejected</option>
               </select>
               <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">

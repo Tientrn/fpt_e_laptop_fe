@@ -1,15 +1,8 @@
+import React from "react";
 import { useState, useEffect } from "react";
 import { toast } from "react-toastify";
 import { format } from "date-fns";
-import {
-  FaSearch,
-  FaEye,
-  FaHistory,
-  FaMoneyBillWave,
-  FaSort,
-  FaSortUp,
-  FaSortDown,
-} from "react-icons/fa";
+import { FaSearch, FaEye, FaHistory, FaMoneyBillWave } from "react-icons/fa";
 import reportdamagesApi from "../../api/reportdamagesApi";
 import donateitemsApi from "../../api/donateitemsApi";
 import userinfoApi from "../../api/userinfoApi";
@@ -34,10 +27,7 @@ const ReportDamage = () => {
   const [expandedRow, setExpandedRow] = useState(null);
   const [showCompensationModal, setShowCompensationModal] = useState(false);
   const [selectedReport, setSelectedReport] = useState(null);
-  const [sortConfig, setSortConfig] = useState({
-    key: "reportId",
-    direction: "asc",
-  });
+
   const [compensationData, setCompensationData] = useState({
     reportId: "",
     amount: 0,
@@ -48,6 +38,7 @@ const ReportDamage = () => {
   });
   const [depositsMap, setDepositsMap] = useState({});
   const [contractsMap, setContractsMap] = useState({});
+
   const encodeReportId = (id) => {
     return `RP-${id.toString(36).toUpperCase()}`;
   };
@@ -102,7 +93,6 @@ const ReportDamage = () => {
         await compensationTransactionApi.getAllCompensationTransactions();
 
       if (response.isSuccess) {
-        // Create a map of compensation records by reportDamageId
         const compensationMapByReport = {};
 
         if (response.data && Array.isArray(response.data)) {
@@ -131,7 +121,6 @@ const ReportDamage = () => {
 
   const fetchUserInfo = async () => {
     try {
-      // Get unique user IDs from borrowHistories
       const userIds = [
         ...new Set(
           Object.values(borrowHistoryMap)
@@ -168,7 +157,6 @@ const ReportDamage = () => {
     }
   };
 
-  // Fetch missing user information for each history item's user
   const fetchMissingUserInfo = async () => {
     try {
       const userIds = [
@@ -201,17 +189,14 @@ const ReportDamage = () => {
 
   const fetchItemsInfo = async () => {
     try {
-      // Get unique item IDs from reports
       const itemIds = [...new Set(reports.map((report) => report.itemId))];
 
       if (itemIds.length > 0) {
-        // Fetch details for each item
         const itemPromises = itemIds.map((id) =>
           donateitemsApi.getDonateItemById(id)
         );
         const itemResponses = await Promise.all(itemPromises);
 
-        // Create a map of item details
         const items = {};
         itemResponses.forEach((response) => {
           if (response.isSuccess && response.data) {
@@ -228,7 +213,6 @@ const ReportDamage = () => {
 
   const fetchBorrowHistories = async () => {
     try {
-      // Get unique borrow history IDs
       const borrowHistoryIds = [
         ...new Set(reports.map((report) => report.borrowHistoryId)),
       ];
@@ -237,7 +221,6 @@ const ReportDamage = () => {
         const response = await borrowhistoryApi.getAllBorrowHistories();
 
         if (response.isSuccess) {
-          // Create a map of borrow histories
           const histories = {};
           response.data.forEach((history) => {
             histories[history.borrowHistoryId] = history;
@@ -253,7 +236,6 @@ const ReportDamage = () => {
 
   const fetchContracts = async () => {
     try {
-      // Get unique request IDs from borrow histories
       const requestIds = [
         ...new Set(
           Object.values(borrowHistoryMap)
@@ -263,29 +245,15 @@ const ReportDamage = () => {
       ];
 
       if (requestIds.length > 0) {
-        // Get all contracts at once
         const response = await borrowcontractApi.getAllBorrowContracts();
 
         if (response.isSuccess && Array.isArray(response.data)) {
-          // Filter contracts by requestIds and create a map
           const contracts = {};
-
-          // Log all contracts for debugging
-          console.log("All contracts:", response.data);
-
-          // First, create a map of contracts by requestId
           response.data.forEach((contract) => {
             if (requestIds.includes(contract.requestId)) {
               contracts[contract.requestId] = contract;
             }
           });
-
-          console.log("Filtered contracts by requestId:", contracts);
-          console.log(
-            "Number of contracts mapped:",
-            Object.keys(contracts).length
-          );
-          console.log("Request IDs that we needed:", requestIds);
 
           setContractsMap(contracts);
         } else {
@@ -299,7 +267,6 @@ const ReportDamage = () => {
 
   const fetchDeposits = async () => {
     try {
-      // Get the actual contract IDs from the contracts map
       const contractIds = [
         ...new Set(
           Object.values(contractsMap)
@@ -308,56 +275,35 @@ const ReportDamage = () => {
         ),
       ];
 
-      console.log("Contracts map:", contractsMap);
-      console.log("Fetching deposits for contract IDs:", contractIds);
-
       if (contractIds.length > 0) {
         const response =
           await deposittransactionApi.getAllDepositTransactions();
 
         if (response.isSuccess && Array.isArray(response.data)) {
-          console.log("All deposit transactions:", response.data);
-
-          // Create a map of deposits by contract ID
           const deposits = {};
-
-          // Group deposit transactions by contractId to find the valid deposit for each contract
           const depositsByContract = {};
 
           response.data.forEach((deposit) => {
             if (deposit.contractId) {
-              // Initialize array if it doesn't exist
               if (!depositsByContract[deposit.contractId]) {
                 depositsByContract[deposit.contractId] = [];
               }
-
-              // Add this deposit to the contract's array
               depositsByContract[deposit.contractId].push(deposit);
             }
           });
 
-          console.log("Grouped deposits by contract:", depositsByContract);
-
-          // For each contract, find the valid deposit amount
           Object.keys(depositsByContract).forEach((contractId) => {
-            // Sort deposits by date (newest first) to get the most recent valid deposit
             const contractDeposits = depositsByContract[contractId].sort(
               (a, b) =>
                 new Date(b.depositDate || 0) - new Date(a.depositDate || 0)
             );
 
-            // Use the most recent deposit
             if (contractDeposits.length > 0) {
               deposits[contractId] = contractDeposits[0];
-              console.log(
-                `Deposit for contract ${contractId}:`,
-                deposits[contractId]
-              );
             }
           });
 
           setDepositsMap(deposits);
-          console.log("Final deposits map:", deposits);
         }
       } else {
         console.warn("No valid contract IDs found for fetching deposits");
@@ -369,7 +315,7 @@ const ReportDamage = () => {
 
   const handleFilterChange = (status) => {
     setFilterStatus(status);
-    setCurrentPage(1); // Reset to first page when filter changes
+    setCurrentPage(1);
   };
 
   const toggleRowExpansion = (id) => {
@@ -383,27 +329,15 @@ const ReportDamage = () => {
   const openCompensationModal = (report) => {
     setSelectedReport(report);
 
-    // Get the borrowHistory information
     const borrowHistory = borrowHistoryMap[report.borrowHistoryId] || {};
     const requestId = borrowHistory.requestId;
-
-    // Get the contract information using requestId
     const contract = contractsMap[requestId] || {};
-    const contractId = contract.contractId || 0; // Use actual contractId from contract
-
-    // Get deposit information using the contractId
+    const contractId = contract.contractId || 0;
     const deposit = depositsMap[contractId] || { amount: 0 };
-
-    // Get the damage fee
     const damageFee = report.damageFee || 0;
-
-    // Default used deposit is the available deposit amount
     const depositAmount = deposit.amount || 0;
 
-    // Check if this is a zero damage fee case
     if (damageFee === 0) {
-      // If damage fee is 0, we'll just record the transaction with deposit amount
-      // No extra payment needed and we'll return the full deposit to customer
       setCompensationData({
         reportId: report.reportId,
         amount: 0,
@@ -412,15 +346,7 @@ const ReportDamage = () => {
         usedDepositAmount: 0,
         extraPaymentRequired: 0,
       });
-
-      console.log(
-        "Zero damage fee case - recording compensation with no charges"
-      );
-    }
-    // Check if damage fee is less than deposit
-    else if (damageFee < depositAmount) {
-      // Damage fee is less than deposit, so we'll use part of the deposit
-      // No extra payment needed and we'll return the remaining deposit to customer
+    } else if (damageFee < depositAmount) {
       setCompensationData({
         reportId: report.reportId,
         amount: damageFee,
@@ -433,13 +359,8 @@ const ReportDamage = () => {
         usedDepositAmount: damageFee,
         extraPaymentRequired: 0,
       });
-
-      console.log("Partial deposit usage case - damage fee less than deposit");
     } else {
-      // Normal case with damage fee
-      // Calculate extra payment required if damage fee exceeds deposit
       const extraPayment = Math.max(0, damageFee - depositAmount);
-
       setCompensationData({
         reportId: report.reportId,
         amount: damageFee,
@@ -456,18 +377,6 @@ const ReportDamage = () => {
         extraPaymentRequired: extraPayment,
       });
     }
-
-    // Log detailed information for debugging
-    console.log("Opening compensation modal with:");
-    console.log("- Report:", report);
-    console.log("- Borrow History:", borrowHistory);
-    console.log("- Request ID:", requestId);
-    console.log("- Contract:", contract);
-    console.log("- Contract ID:", contractId);
-    console.log("- Deposit object:", deposit);
-    console.log("- Deposit amount:", depositAmount);
-    console.log("- Damage fee:", damageFee);
-    console.log("- Compensation data:", compensationData);
 
     setShowCompensationModal(true);
   };
@@ -487,33 +396,21 @@ const ReportDamage = () => {
 
   const handleInputChange = (e) => {
     const { name, value, type } = e.target;
-
-    // Get the damage fee and deposit amount for reference
     const damageFee = selectedReport?.damageFee || 0;
     const borrowHistory =
       borrowHistoryMap[selectedReport?.borrowHistoryId] || {};
     const requestId = borrowHistory.requestId;
-
-    // Get the contract information using requestId
     const contract = contractsMap[requestId] || {};
     const contractId = contract.contractId || 0;
-
-    // Get deposit information using the contractId
     const deposit = depositsMap[contractId] || { amount: 0 };
     const depositAmount = deposit.amount || 0;
 
     if (type === "number") {
       if (name === "amount") {
-        // Validate the total compensation amount
         const numValue = parseFloat(value);
         if (!isNaN(numValue)) {
-          // Cap the amount at the damage fee
           const validAmount = Math.min(numValue, damageFee);
-
-          // Used deposit is always the deposit amount (or lower if total amount is lower)
           const usedDeposit = Math.min(depositAmount, validAmount);
-
-          // Extra payment is what remains after using deposit
           const extraPayment = Math.max(0, validAmount - usedDeposit);
 
           setCompensationData((prev) => ({
@@ -524,10 +421,8 @@ const ReportDamage = () => {
           }));
         }
       } else if (name === "usedDepositAmount") {
-        // When adjusting deposit amount
         const numValue = parseFloat(value);
         if (!isNaN(numValue)) {
-          // Limit to available deposit and total compensation amount
           const validDepositAmount = Math.min(
             numValue,
             depositAmount,
@@ -541,13 +436,9 @@ const ReportDamage = () => {
           }));
         }
       } else if (name === "extraPaymentRequired") {
-        // When adjusting extra payment
         const numValue = parseFloat(value);
         if (!isNaN(numValue)) {
           const totalAmount = compensationData.amount;
-
-          // Calculate used deposit based on extra payment
-          // Cannot exceed available deposit
           const calculatedDepositUsage = Math.min(
             depositAmount,
             Math.max(0, totalAmount - numValue)
@@ -580,44 +471,30 @@ const ReportDamage = () => {
       const borrowHistory =
         borrowHistoryMap[selectedReport.borrowHistoryId] || {};
       const requestId = borrowHistory.requestId || 0;
-
-      // Get the contract information using requestId
       const contract = contractsMap[requestId] || {};
       const contractId = contract.contractId || 0;
-
-      // Check if this is a zero damage fee case
       const isZeroDamageFee = selectedReport.damageFee === 0;
-
-      // Get deposit information
       const deposit = depositsMap[contractId] || { amount: 0 };
-      console.log("vinh log", deposit);
+
       let compensationTransactionData;
 
       if (isZeroDamageFee) {
-        // Zero damage fee case - record a transaction showing full deposit return
         compensationTransactionData = {
           contractId: contractId,
           userId: parseInt(borrowHistory.userId) || 0,
           reportDamageId: parseInt(selectedReport.reportId) || 0,
           depositTransactionId: deposit.depositId || 0,
-          compensationAmount: 0, // No compensation amount
-          usedDepositAmount: 0, // No deposit used
-          extraPaymentRequired: 0, // No extra payment
+          compensationAmount: 0,
+          usedDepositAmount: 0,
+          extraPaymentRequired: 0,
           status: "done",
         };
-
-        console.log(
-          "Zero damage fee compensation data:",
-          compensationTransactionData
-        );
       } else {
-        // Regular damage fee case - validate the compensation values
         const totalAmount = parseFloat(compensationData.amount) || 0;
         const usedDeposit = parseFloat(compensationData.usedDepositAmount) || 0;
         const extraPayment =
           parseFloat(compensationData.extraPaymentRequired) || 0;
 
-        // Ensure the sum matches
         if (Math.abs(usedDeposit + extraPayment - totalAmount) > 0.01) {
           toast.error(
             "The deposit amount and extra payment must add up to the total compensation amount"
@@ -637,12 +514,6 @@ const ReportDamage = () => {
         };
       }
 
-      // Log the contract and transaction data for debugging
-      console.log("Submitting compensation with contract:", contract);
-      console.log("Contract ID:", contractId);
-      console.log("Sending transaction data:", compensationTransactionData);
-
-      // Call the API to create a compensation transaction
       const transactionResponse =
         await compensationTransactionApi.createCompensationTransaction(
           compensationTransactionData
@@ -655,33 +526,21 @@ const ReportDamage = () => {
             : "Compensation transaction recorded successfully"
         );
 
-        // Get the item ID from the selected report
         const itemId = selectedReport.itemId;
 
-        // Update the item status to "Available"
         try {
-          // First, get the current item data
           const itemResponse = await donateitemsApi.getDonateItemById(itemId);
 
           if (itemResponse.isSuccess && itemResponse.data) {
             const itemData = itemResponse.data;
-
-            // Prepare the updated item data with status set to "Available"
             const updatedItemData = new FormData();
-
-            // Add all the existing item properties
             updatedItemData.append("itemId", itemData.itemId);
-
-            // Update the status to "Available"
             updatedItemData.append("status", "Available");
 
-            // If there's an image, we need to handle it properly
             if (itemData.itemImage && !itemData.itemImage.startsWith("http")) {
-              // This is a file path, not a File object, so we'll keep the existing image
               updatedItemData.append("itemImage", itemData.itemImage);
             }
 
-            // Update the item
             const updateResponse = await donateitemsApi.updateDonateItem(
               itemId,
               updatedItemData
@@ -689,8 +548,6 @@ const ReportDamage = () => {
 
             if (updateResponse.isSuccess) {
               toast.success("Item status updated to Available");
-
-              // Also update the local item data in state
               setItemsMap((prev) => ({
                 ...prev,
                 [itemId]: {
@@ -703,10 +560,6 @@ const ReportDamage = () => {
                 isZeroDamageFee
                   ? "Deposit return recorded but failed to update item status"
                   : "Compensation recorded but failed to update item status"
-              );
-              console.error(
-                "Failed to update item status:",
-                updateResponse.message
               );
             }
           } else {
@@ -726,16 +579,12 @@ const ReportDamage = () => {
         }
 
         closeCompensationModal();
-
-        // Update local compensation map
         const newTransaction =
           transactionResponse.data || compensationTransactionData;
         setCompensationMap((prev) => ({
           ...prev,
           [selectedReport.reportId]: newTransaction,
         }));
-
-        // Refresh both reports and compensation transactions data
         fetchReports();
         fetchCompensationTransactions();
       } else {
@@ -760,12 +609,10 @@ const ReportDamage = () => {
     }
   };
 
-  // Helper function to check if a report has compensation transaction
   const hasCompensation = (reportId) => {
     return compensationMap[reportId] !== undefined;
   };
 
-  // Helper function to get report status - uses compensation status if available
   const getReportStatus = (report) => {
     const compensation = compensationMap[report.reportId];
 
@@ -776,28 +623,6 @@ const ReportDamage = () => {
     return report.status || "pending";
   };
 
-  // Sorting function
-  const requestSort = (key) => {
-    let direction = "asc";
-    if (sortConfig.key === key && sortConfig.direction === "asc") {
-      direction = "desc";
-    }
-    setSortConfig({ key, direction });
-  };
-
-  // Function to get the appropriate sort icon
-  const getSortIcon = (key) => {
-    if (sortConfig.key === key) {
-      return sortConfig.direction === "asc" ? (
-        <FaSortUp className="ml-1 text-amber-500" />
-      ) : (
-        <FaSortDown className="ml-1 text-amber-500" />
-      );
-    }
-    return <FaSort className="ml-1 text-gray-400" />;
-  };
-
-  // Filter reports based on search term and status filter
   const filteredReports = reports
     .filter((report) => {
       const borrowHistory = borrowHistoryMap[report.borrowHistoryId] || {};
@@ -805,7 +630,6 @@ const ReportDamage = () => {
       const itemInfo = itemsMap[report.itemId] || {};
       const reportStatus = getReportStatus(report);
 
-      // Check if any of these fields match the search term
       const matchesSearch = searchTerm
         ? (userInfo.fullName || "")
             .toLowerCase()
@@ -823,7 +647,6 @@ const ReportDamage = () => {
           String(report.borrowHistoryId).includes(searchTerm)
         : true;
 
-      // Filter by status
       const matchesFilter =
         filterStatus === "all" ||
         (filterStatus === "pending" && reportStatus !== "done") ||
@@ -831,58 +654,13 @@ const ReportDamage = () => {
 
       return matchesSearch && matchesFilter;
     })
-    .sort((a, b) => {
-      if (!sortConfig.key) return 0;
+    .sort((a, b) => b.reportId - a.reportId);
 
-      // Helper function to get the sortable value from a report
-      const getValue = (report, key) => {
-        const borrowHistory = borrowHistoryMap[report.borrowHistoryId] || {};
-        const userInfo = userInfoMap[borrowHistory.userId] || {};
-        const itemInfo = itemsMap[report.itemId] || {};
-
-        switch (key) {
-          case "reportId":
-            return report.reportId;
-          case "user":
-            return userInfo.fullName || "";
-          case "device":
-            return itemInfo.itemName || "";
-          case "damageFee":
-            return report.damageFee || 0;
-          case "reportDate":
-            return new Date(report.createdDate || 0).getTime();
-          case "status":
-            return getReportStatus(report);
-          default:
-            return "";
-        }
-      };
-
-      const aValue = getValue(a, sortConfig.key);
-      const bValue = getValue(b, sortConfig.key);
-
-      // Handle string sorting
-      if (typeof aValue === "string" && typeof bValue === "string") {
-        if (sortConfig.direction === "asc") {
-          return aValue.localeCompare(bValue);
-        }
-        return bValue.localeCompare(aValue);
-      }
-
-      // Handle number and date sorting
-      if (sortConfig.direction === "asc") {
-        return aValue - bValue;
-      }
-      return bValue - aValue;
-    });
-
-  // Pagination
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentItems = filteredReports.slice(indexOfFirstItem, indexOfLastItem);
   const totalPages = Math.ceil(filteredReports.length / itemsPerPage);
 
-  // Format date function
   const formatDate = (dateString) => {
     if (!dateString) return "N/A";
     try {
@@ -894,7 +672,6 @@ const ReportDamage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
-      {/* Header */}
       <div className="mb-8">
         <h1 className="text-3xl text-center font-bold text-gray-800">
           Damage Reports
@@ -904,7 +681,6 @@ const ReportDamage = () => {
         </p>
       </div>
 
-      {/* Search and Filter Controls */}
       <div className="mb-8 bg-white rounded-xl shadow-md p-4">
         <div className="flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="flex space-x-2">
@@ -955,7 +731,6 @@ const ReportDamage = () => {
         </div>
       </div>
 
-      {/* Reports Table */}
       <div className="bg-white rounded-xl shadow-md overflow-hidden">
         <div className="p-6 border-b border-gray-100">
           <h2 className="text-xl font-bold text-gray-800">
@@ -975,59 +750,23 @@ const ReportDamage = () => {
             <table className="min-w-full divide-y divide-gray-200">
               <thead>
                 <tr className="bg-gradient-to-r from-gray-600 to-amber-600 text-white">
-                  <th
-                    className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider cursor-pointer hover:bg-gray-700/10 transition-colors"
-                    onClick={() => requestSort("reportId")}
-                  >
-                    <div className="flex items-center">
-                      Report ID
-                      {getSortIcon("reportId")}
-                    </div>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                    Report ID
                   </th>
-                  <th
-                    className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider cursor-pointer hover:bg-gray-700/10 transition-colors"
-                    onClick={() => requestSort("user")}
-                  >
-                    <div className="flex items-center">
-                      User
-                      {getSortIcon("user")}
-                    </div>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                    User
                   </th>
-                  <th
-                    className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider cursor-pointer hover:bg-gray-700/10 transition-colors"
-                    onClick={() => requestSort("device")}
-                  >
-                    <div className="flex items-center">
-                      Device
-                      {getSortIcon("device")}
-                    </div>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                    Device
                   </th>
-                  <th
-                    className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider cursor-pointer hover:bg-gray-700/10 transition-colors"
-                    onClick={() => requestSort("damageFee")}
-                  >
-                    <div className="flex items-center">
-                      Damage Fee
-                      {getSortIcon("damageFee")}
-                    </div>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                    Damage Fee
                   </th>
-                  <th
-                    className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider cursor-pointer hover:bg-gray-700/10 transition-colors"
-                    onClick={() => requestSort("reportDate")}
-                  >
-                    <div className="flex items-center">
-                      Report Date
-                      {getSortIcon("reportDate")}
-                    </div>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                    Report Date
                   </th>
-                  <th
-                    className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider cursor-pointer hover:bg-gray-700/10 transition-colors"
-                    onClick={() => requestSort("status")}
-                  >
-                    <div className="flex items-center">
-                      Status
-                      {getSortIcon("status")}
-                    </div>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                    Status
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
                     Actions
@@ -1045,9 +784,8 @@ const ReportDamage = () => {
                     const compensation = compensationMap[report.reportId];
 
                     return (
-                      <>
+                      <React.Fragment key={report.reportId}>
                         <tr
-                          key={report.reportId}
                           className="hover:bg-gray-50 cursor-pointer transition-colors border-b border-gray-100 last:border-b-0"
                           onClick={() => toggleRowExpansion(report.reportId)}
                         >
@@ -1137,7 +875,6 @@ const ReportDamage = () => {
                               >
                                 <FaEye size={14} />
                               </button>
-
                               {!hasCompensation(report.reportId) ? (
                                 <button
                                   className="p-2 text-green-600 hover:text-green-800 hover:bg-green-50 rounded-full transition-colors"
@@ -1169,12 +906,10 @@ const ReportDamage = () => {
                             </div>
                           </td>
                         </tr>
-
                         {expandedRow === report.reportId && (
                           <tr className="bg-gray-50">
                             <td colSpan="7" className="px-6 py-6">
                               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                {/* Report Details */}
                                 <div className="bg-white p-5 rounded-lg shadow-sm border border-gray-200">
                                   <h3 className="text-sm font-semibold text-gray-800 mb-4 pb-2 border-b flex items-center">
                                     <span className="w-5 h-5 flex items-center justify-center rounded-full bg-indigo-100 text-indigo-700 mr-2">
@@ -1251,8 +986,6 @@ const ReportDamage = () => {
                                     </div>
                                   </div>
                                 </div>
-
-                                {/* Financial Information */}
                                 <div className="bg-white p-5 rounded-lg shadow-sm border border-gray-200">
                                   <h3 className="text-sm font-semibold text-gray-800 mb-4 pb-2 border-b flex items-center">
                                     <span className="w-5 h-5 flex items-center justify-center rounded-full bg-green-100 text-green-700 mr-2">
@@ -1269,11 +1002,9 @@ const ReportDamage = () => {
                                         {formatCurrency(report.damageFee || 0)}
                                       </p>
                                     </div>
-
                                     {compensation && (
                                       <>
                                         {report.damageFee === 0 ? (
-                                          // Zero damage fee case
                                           <div className="col-span-2">
                                             <div className="p-4 bg-green-50 rounded-md border border-green-100 mt-2">
                                               <div className="flex items-center text-green-700 mb-3">
@@ -1297,7 +1028,6 @@ const ReportDamage = () => {
                                                   Full Deposit Returned
                                                 </span>
                                               </div>
-
                                               <div className="space-y-2 pl-8">
                                                 <div className="flex justify-between items-center">
                                                   <span className="text-gray-700">
@@ -1331,7 +1061,6 @@ const ReportDamage = () => {
                                                     )}
                                                   </span>
                                                 </div>
-
                                                 <div className="flex justify-between items-center border-t border-green-100 pt-2 mt-2">
                                                   <span className="text-gray-700 font-medium">
                                                     Returned to Customer:
@@ -1365,7 +1094,6 @@ const ReportDamage = () => {
                                                   </span>
                                                 </div>
                                               </div>
-
                                               <div className="mt-3 pt-2 border-t border-green-100 flex items-center text-xs text-gray-500">
                                                 <svg
                                                   className="w-4 h-4 mr-1 text-gray-400"
@@ -1403,7 +1131,6 @@ const ReportDamage = () => {
                                               depositsMap[contractId];
                                             return deposit?.amount || 0;
                                           })() ? (
-                                          // Partial deposit return case - damage fee less than deposit
                                           <div className="col-span-2">
                                             <div className="p-4 bg-green-50 rounded-md border border-green-100 mt-2">
                                               <div className="flex items-center text-green-700 mb-3">
@@ -1427,7 +1154,6 @@ const ReportDamage = () => {
                                                   Partial Deposit Returned
                                                 </span>
                                               </div>
-
                                               <div className="space-y-2 pl-8">
                                                 <div className="flex justify-between items-center">
                                                   <span className="text-gray-700">
@@ -1461,7 +1187,6 @@ const ReportDamage = () => {
                                                     )}
                                                   </span>
                                                 </div>
-
                                                 <div className="flex justify-between items-center">
                                                   <span className="text-gray-700">
                                                     Damage Fee:
@@ -1473,19 +1198,40 @@ const ReportDamage = () => {
                                                     )}
                                                   </span>
                                                 </div>
-
                                                 <div className="flex justify-between items-center">
                                                   <span className="text-gray-700">
                                                     Used from Deposit:
                                                   </span>
                                                   <span className="font-medium text-amber-600">
                                                     {formatCurrency(
-                                                      compensation.usedDepositAmount ||
-                                                        0
+                                                      Math.min(
+                                                        (() => {
+                                                          const borrowHistory =
+                                                            borrowHistoryMap[
+                                                              report
+                                                                .borrowHistoryId
+                                                            ] || {};
+                                                          const requestId =
+                                                            borrowHistory.requestId;
+                                                          const contract =
+                                                            contractsMap[
+                                                              requestId
+                                                            ] || {};
+                                                          const contractId =
+                                                            contract.contractId ||
+                                                            0;
+                                                          const deposit =
+                                                            depositsMap[
+                                                              contractId
+                                                            ];
+                                                          return (
+                                                            deposit?.amount || 0
+                                                          );
+                                                        })()
+                                                      )
                                                     )}
                                                   </span>
                                                 </div>
-
                                                 <div className="flex justify-between items-center border-t border-green-100 pt-2 mt-2">
                                                   <span className="text-gray-700 font-medium">
                                                     Returned to Customer:
@@ -1523,7 +1269,6 @@ const ReportDamage = () => {
                                                   </span>
                                                 </div>
                                               </div>
-
                                               <div className="mt-3 pt-2 border-t border-green-100 flex items-center text-xs text-gray-500">
                                                 <svg
                                                   className="w-4 h-4 mr-1 text-gray-400"
@@ -1546,7 +1291,6 @@ const ReportDamage = () => {
                                             </div>
                                           </div>
                                         ) : (
-                                          // Regular damage fee case - exceeds deposit
                                           <div className="col-span-2">
                                             <div className="p-4 bg-amber-50 rounded-md border border-amber-100 mt-2">
                                               <div className="flex items-center text-amber-700 mb-3">
@@ -1557,7 +1301,6 @@ const ReportDamage = () => {
                                                   Damage Compensation
                                                 </span>
                                               </div>
-
                                               <div className="space-y-2 pl-8">
                                                 <div className="flex justify-between items-center">
                                                   <span className="text-gray-700">
@@ -1570,19 +1313,42 @@ const ReportDamage = () => {
                                                     )}
                                                   </span>
                                                 </div>
-
                                                 <div className="flex justify-between items-center">
                                                   <span className="text-gray-700">
                                                     Used Deposit:
                                                   </span>
                                                   <span className="font-medium text-blue-600">
                                                     {formatCurrency(
-                                                      compensation.usedDepositAmount ||
-                                                        0
+                                                      Math.min(
+                                                        compensation.compensationAmount ||
+                                                          0,
+                                                        (() => {
+                                                          const borrowHistory =
+                                                            borrowHistoryMap[
+                                                              report
+                                                                .borrowHistoryId
+                                                            ] || {};
+                                                          const requestId =
+                                                            borrowHistory.requestId;
+                                                          const contract =
+                                                            contractsMap[
+                                                              requestId
+                                                            ] || {};
+                                                          const contractId =
+                                                            contract.contractId ||
+                                                            0;
+                                                          const deposit =
+                                                            depositsMap[
+                                                              contractId
+                                                            ];
+                                                          return (
+                                                            deposit?.amount || 0
+                                                          );
+                                                        })()
+                                                      )
                                                     )}
                                                   </span>
                                                 </div>
-
                                                 <div className="flex justify-between items-center">
                                                   <span className="text-gray-700">
                                                     Extra Payment:
@@ -1594,7 +1360,6 @@ const ReportDamage = () => {
                                                     )}
                                                   </span>
                                                 </div>
-
                                                 {compensation.extraPaymentRequired >
                                                   0 && (
                                                   <div className="mt-2 bg-red-50 p-2 rounded border border-red-100">
@@ -1605,7 +1370,6 @@ const ReportDamage = () => {
                                                     </p>
                                                   </div>
                                                 )}
-
                                                 {report.compensationNotes && (
                                                   <div className="mt-2 pt-2 border-t border-amber-100">
                                                     <p className="text-xs text-gray-500">
@@ -1615,7 +1379,6 @@ const ReportDamage = () => {
                                                   </div>
                                                 )}
                                               </div>
-
                                               <div className="mt-3 pt-2 border-t border-amber-100 flex items-center text-xs text-gray-500">
                                                 <svg
                                                   className="w-4 h-4 mr-1 text-gray-400"
@@ -1640,7 +1403,6 @@ const ReportDamage = () => {
                                         )}
                                       </>
                                     )}
-
                                     {!hasCompensation(report.reportId) ? (
                                       <div className="col-span-2 mt-4">
                                         <button
@@ -1679,8 +1441,6 @@ const ReportDamage = () => {
                                     )}
                                   </div>
                                 </div>
-
-                                {/* Damage Image */}
                                 {report.imageUrlReport && (
                                   <div className="bg-white p-5 rounded-lg shadow-sm border border-gray-200">
                                     <h3 className="text-sm font-semibold text-gray-800 mb-4 pb-2 border-b flex items-center">
@@ -1723,7 +1483,7 @@ const ReportDamage = () => {
                             </td>
                           </tr>
                         )}
-                      </>
+                      </React.Fragment>
                     );
                   })
                 ) : (
@@ -1766,7 +1526,6 @@ const ReportDamage = () => {
           </div>
         )}
 
-        {/* Pagination */}
         {!loading && filteredReports.length > 0 && (
           <div className="flex flex-col md:flex-row justify-between items-center p-6 border-t border-gray-200 bg-gray-50 rounded-b-xl">
             <div className="text-sm text-gray-700 mb-4 md:mb-0">
@@ -1792,10 +1551,8 @@ const ReportDamage = () => {
               >
                 Previous
               </button>
-
               {[...Array(Math.min(totalPages, 5))].map((_, i) => {
                 let pageNumber;
-
                 if (totalPages <= 5) {
                   pageNumber = i + 1;
                 } else {
@@ -1807,7 +1564,6 @@ const ReportDamage = () => {
                     pageNumber = currentPage - 2 + i;
                   }
                 }
-
                 return (
                   <button
                     key={pageNumber}
@@ -1822,7 +1578,6 @@ const ReportDamage = () => {
                   </button>
                 );
               })}
-
               <button
                 onClick={() =>
                   setCurrentPage((prev) => Math.min(prev + 1, totalPages))
@@ -1837,7 +1592,6 @@ const ReportDamage = () => {
         )}
       </div>
 
-      {/* Compensation Modal */}
       {showCompensationModal && selectedReport && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl shadow-lg max-w-md w-full overflow-hidden">
@@ -1869,10 +1623,8 @@ const ReportDamage = () => {
                 </button>
               </div>
             </div>
-
             <form onSubmit={handleSubmitCompensation}>
               <div className="p-6 max-h-[70vh] overflow-y-auto space-y-5">
-                {/* Summary information card */}
                 <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
                   <div className="flex items-center space-x-3 mb-3">
                     <div className="bg-amber-100 p-2 rounded-full text-amber-600">
@@ -1894,7 +1646,6 @@ const ReportDamage = () => {
                       Damage Report Details
                     </h4>
                   </div>
-
                   <div className="flex items-center space-x-3 mb-2">
                     <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center text-gray-500 font-bold text-xs">
                       #{selectedReport.reportId}
@@ -1909,8 +1660,6 @@ const ReportDamage = () => {
                       </p>
                     </div>
                   </div>
-
-                  {/* Damage fee and deposit summary */}
                   <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
                     <div className="p-3 bg-white rounded border border-gray-200">
                       <p className="text-xs text-gray-500 mb-1">Damage Fee:</p>
@@ -1940,9 +1689,7 @@ const ReportDamage = () => {
                     </div>
                   </div>
                 </div>
-
                 {selectedReport.damageFee === 0 ? (
-                  // Zero damage fee case - simplified UI
                   <div className="bg-green-50 p-5 rounded-lg border border-green-100">
                     <div className="flex items-center text-green-700 mb-3">
                       <span className="w-6 h-6 flex items-center justify-center rounded-full bg-green-200 text-green-700 mr-2">
@@ -1963,12 +1710,10 @@ const ReportDamage = () => {
                       </span>
                       <h4 className="font-medium">No Damage Fee</h4>
                     </div>
-
                     <p className="text-sm text-gray-700 mb-4 pl-8">
                       There is no damage fee for this report. The full deposit
                       will be returned to the customer.
                     </p>
-
                     <div className="p-4 bg-white rounded-lg border border-green-100 text-sm">
                       <div className="flex justify-between items-center mb-3">
                         <span className="text-gray-600">Original Deposit:</span>
@@ -2019,15 +1764,13 @@ const ReportDamage = () => {
                     </div>
                   </div>
                 ) : (
-                  // Regular damage fee case with compensation UI
                   <>
-                    {/* Amount field */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Total Compensation Amount
                       </label>
                       <div className="relative">
-                        <div className="absolute  top-0 inset-y-0 left-0 pl-3 flex items-center h-full justify-center text-gray-500 pointer-events-none">
+                        <div className="absolute top-0 inset-y-0 left-0 pl-3 flex items-center h-full justify-center text-gray-500 pointer-events-none">
                           <span className="text-base font-medium">₫</span>
                         </div>
                         <input
@@ -2061,8 +1804,6 @@ const ReportDamage = () => {
                         </p>
                       </div>
                     </div>
-
-                    {/* Compensation breakdown */}
                     <div className="bg-amber-50 p-5 rounded-lg border border-amber-100">
                       <h4 className="font-medium text-amber-800 mb-4 pb-2 border-b border-amber-100 flex items-center">
                         <svg
@@ -2075,14 +1816,12 @@ const ReportDamage = () => {
                             strokeLinecap="round"
                             strokeLinejoin="round"
                             strokeWidth="2"
-                            d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"
+                            d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 劳动力11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"
                           ></path>
                         </svg>
                         Compensation Breakdown
                       </h4>
-
                       <div className="space-y-4">
-                        {/* Deposit Usage */}
                         <div>
                           <div className="flex justify-between items-center mb-2">
                             <label className="block text-sm font-medium text-gray-700">
@@ -2181,8 +1920,6 @@ const ReportDamage = () => {
                             </div>
                           )}
                         </div>
-
-                        {/* Extra Payment */}
                         <div>
                           <div className="flex justify-between items-center mb-2">
                             <label className="block text-sm font-medium text-gray-700">
@@ -2222,8 +1959,6 @@ const ReportDamage = () => {
                             />
                           </div>
                         </div>
-
-                        {/* Total Verification */}
                         <div className="pt-3 border-t border-amber-200 flex justify-between items-center">
                           <span className="font-medium text-gray-700">
                             Total:
@@ -2241,8 +1976,6 @@ const ReportDamage = () => {
                             </span>
                           </div>
                         </div>
-
-                        {/* Deposit Return Notice */}
                         {compensationData.amount <
                           (() => {
                             const borrowHistory =
@@ -2307,8 +2040,6 @@ const ReportDamage = () => {
                     </div>
                   </>
                 )}
-
-                {/* Payment Method */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Payment Method{" "}
@@ -2329,8 +2060,6 @@ const ReportDamage = () => {
                     <option value="Other">Other</option>
                   </select>
                 </div>
-
-                {/* Notes */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Notes
@@ -2346,7 +2075,6 @@ const ReportDamage = () => {
                 </div>
               </div>
 
-              {/* Footer with Buttons */}
               <div className="px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-end space-x-3">
                 <button
                   type="button"

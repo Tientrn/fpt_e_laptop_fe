@@ -941,7 +941,7 @@ const ContractsPage = () => {
           contractId: 0,
           userId: 0,
           status: "Pending",
-          amount: 0,
+          amount: 1000000,
           depositDate: new Date().toISOString(),
         });
       } else {
@@ -1214,8 +1214,8 @@ const ContractsPage = () => {
                                   setDepositForm({
                                     contractId: item.contractId,
                                     userId: item.userId,
-                                    status: "Pending",
-                                    amount: Math.round(item.itemValue * 0.1), // Default to 10% of item value
+                                    status: "Completed",
+                                    amount: 1000000, // Default to 10% of item value
                                     depositDate: new Date().toISOString(),
                                   });
                                   setIsDepositModalOpen(true);
@@ -2183,6 +2183,7 @@ const ContractsPage = () => {
                         type="number"
                         name="amount"
                         step="10000"
+                        disabled
                         value={depositForm.amount}
                         onChange={(e) => {
                           const value = parseFloat(e.target.value) || 0;
@@ -2226,22 +2227,7 @@ const ContractsPage = () => {
                       />
                     </div>
                     <div className="mt-1 text-xs space-y-1">
-                      <div className="flex justify-between">
-                        <p className="text-amber-600">
-                          Min:{" "}
-                          {formatCurrency(
-                            calculateMinimumDeposit(
-                              selectedContractForDeposit?.itemValue || 0
-                            )
-                          )}
-                        </p>
-                        <p className="text-amber-600">
-                          Max:{" "}
-                          {formatCurrency(
-                            selectedContractForDeposit?.itemValue || 0
-                          )}
-                        </p>
-                      </div>
+                      <div className="flex justify-between"></div>
                       <div className="w-full bg-gray-200 rounded-full h-1.5 mt-1">
                         <div
                           className="bg-amber-600 h-1.5 rounded-full"
@@ -2271,14 +2257,6 @@ const ContractsPage = () => {
                           selectedContractForDeposit?.itemValue || 0
                         )}
                       </p>
-                      <p className="text-gray-500">
-                        Recommended (30%):{" "}
-                        {formatCurrency(
-                          calculateMaximumDeposit(
-                            selectedContractForDeposit?.itemValue || 0
-                          )
-                        )}
-                      </p>
                     </div>
                   </div>
 
@@ -2287,24 +2265,12 @@ const ContractsPage = () => {
                     <label className="block text-xs font-medium text-gray-700 mb-1">
                       Status <span className="text-red-500">*</span>
                     </label>
-                    <select
-                      value={depositForm.status}
-                      onChange={(e) =>
-                        setDepositForm({
-                          ...depositForm,
-                          status: e.target.value,
-                        })
-                      }
-                      className="w-full px-3 py-2 text-sm rounded border border-gray-300 focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-                      required
-                    >
-                      {depositForm.status === "Pending" && (
-                        <option value="Pending" hidden>
-                          Pending
-                        </option>
-                      )}
-                      <option value="Completed">Completed</option>
-                    </select>
+                    <input
+                      type="text"
+                      value="Completed"
+                      disabled
+                      className="w-full px-3 py-2 text-sm rounded border border-gray-300 bg-gray-100 text-gray-600"
+                    />
                   </div>
 
                   {/* Deposit Date */}

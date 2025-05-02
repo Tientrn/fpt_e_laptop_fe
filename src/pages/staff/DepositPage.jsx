@@ -57,7 +57,7 @@ const DepositPage = () => {
         setContractDetails(response.data);
         setDepositForm((prev) => ({
           ...prev,
-          amount: Math.round(response.data.itemValue * 0.3),
+          amount: 1000000,
           userId: response.data.userId || 0,
         }));
       } else {
@@ -227,11 +227,12 @@ const DepositPage = () => {
       >
         <div>
           <label className="block text-sm font-medium text-black mb-1">
-            Deposit Amount (30% of item value)
+            Deposit Amount
           </label>
           <input
             type="number"
             value={depositForm.amount}
+            readOnly
             onChange={(e) =>
               setDepositForm({
                 ...depositForm,
