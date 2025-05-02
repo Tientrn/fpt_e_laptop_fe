@@ -258,11 +258,11 @@ const App = () => {
         <Route
           path="/admin/analytics"
           element={
-            // <PrivateRoute>
-            <AdminLayout>
-              <AnalyticPage />
-            </AdminLayout>
-            // </PrivateRoute>
+            <PrivateRoute restrictedTo={['Manager']} redirectTo="/login">
+              <AdminLayout>
+                <AnalyticPage />
+              </AdminLayout>
+            </PrivateRoute>
           }
         />
         <Route
