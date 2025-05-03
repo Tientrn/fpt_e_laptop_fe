@@ -5,8 +5,18 @@ import "react-toastify/dist/ReactToastify.css";
 import donateitemsApi from "../../api/donateitemsApi";
 import userinfoApi from "../../api/userinfoApi";
 import borrowrequestApi from "../../api/borrowrequestApi";
-import { ArrowLeft, Calendar, User, Check, XCircle, Clock, Shield, ChevronRight, Info } from "lucide-react";
-import majorApi from "../../api/major"; 
+import {
+  ArrowLeft,
+  Calendar,
+  User,
+  Check,
+  XCircle,
+  Clock,
+  Shield,
+  ChevronRight,
+  Info,
+} from "lucide-react";
+import majorApi from "../../api/major";
 
 const BorrowRequestPage = () => {
   const { id } = useParams();
@@ -30,13 +40,13 @@ const BorrowRequestPage = () => {
     const start = new Date(startDate);
     const minEndDate = new Date(start);
     minEndDate.setMonth(start.getMonth() + 4);
-    
+
     const maxEndDate = new Date(start);
     maxEndDate.setMonth(start.getMonth() + 8);
 
     return {
       min: minEndDate.toISOString().split("T")[0],
-      max: maxEndDate.toISOString().split("T")[0]
+      max: maxEndDate.toISOString().split("T")[0],
     };
   };
 
@@ -44,9 +54,9 @@ const BorrowRequestPage = () => {
   useEffect(() => {
     if (formData.borrowDate) {
       const { min } = calculateEndDateConstraints(formData.borrowDate);
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
-        endDate: min
+        endDate: min,
       }));
     }
   }, [formData.borrowDate]);
@@ -64,7 +74,11 @@ const BorrowRequestPage = () => {
         const laptopResponse = await donateitemsApi.getDonateItemById(id);
         const userResponse = await userinfoApi.getUserInfo();
         const majorResponse = await majorApi.getAllMajor();
-        if (laptopResponse.isSuccess && userResponse.isSuccess && majorResponse.isSuccess) {
+        if (
+          laptopResponse.isSuccess &&
+          userResponse.isSuccess &&
+          majorResponse.isSuccess
+        ) {
           setLaptop(laptopResponse.data);
           setUserInfo(userResponse.data);
           setMajor(majorResponse.data);
@@ -87,26 +101,26 @@ const BorrowRequestPage = () => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    
+
     if (name === "borrowDate") {
       const { min } = calculateEndDateConstraints(value);
       setFormData({
         ...formData,
         borrowDate: value,
-        endDate: min
+        endDate: min,
       });
     } else if (name === "endDate") {
       const { min, max } = calculateEndDateConstraints(formData.borrowDate);
       if (value >= min && value <= max) {
-        setFormData(prev => ({
+        setFormData((prev) => ({
           ...prev,
-          endDate: value
+          endDate: value,
         }));
       }
     } else {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
-        [name]: value
+        [name]: value,
       }));
     }
   };
@@ -127,7 +141,8 @@ const BorrowRequestPage = () => {
     }
 
     if (formData.endDate < min || formData.endDate > max) {
-      validationErrors.endDate = "End date must be between 4 and 8 months from start date.";
+      validationErrors.endDate =
+        "End date must be between 4 and 8 months from start date.";
     }
 
     if (!formData.majorId) {
@@ -153,11 +168,16 @@ const BorrowRequestPage = () => {
         toast.error("Missing laptop or user information. Please try again.");
         return;
       }
-      
+
       // Double-check laptop availability right before submitting
       try {
-        const freshLaptopResponse = await donateitemsApi.getDonateItemById(laptop.itemId);
-        if (!freshLaptopResponse.isSuccess || freshLaptopResponse.data.status !== "Available") {
+        const freshLaptopResponse = await donateitemsApi.getDonateItemById(
+          laptop.itemId
+        );
+        if (
+          !freshLaptopResponse.isSuccess ||
+          freshLaptopResponse.data.status !== "Available"
+        ) {
           toast.error("This laptop is no longer available for borrowing.");
           return;
         }
@@ -175,21 +195,25 @@ const BorrowRequestPage = () => {
         majorId: Number(formData.majorId),
       };
 
-      const requestResponse = await borrowrequestApi.createBorrowRequest(requestData);
-      
+      const requestResponse = await borrowrequestApi.createBorrowRequest(
+        requestData
+      );
+
       if (requestResponse?.isSuccess) {
         toast.success("Request created successfully! Redirecting...", {
           autoClose: 2000,
         });
         setTimeout(() => navigate("/student/requests"), 2000);
       } else {
-        toast.error(requestResponse?.message || "Failed to submit borrow request");
+        toast.error(
+          requestResponse?.message || "Failed to submit borrow request"
+        );
       }
     } catch (err) {
       console.error("Error creating request:", err);
       toast.error(
-        err?.response?.data?.message || 
-        "An error occurred while processing your request. Please try again later."
+        err?.response?.data?.message ||
+          "You have another borrow laptop please complete contract and return it before borrowing again."
       );
     } finally {
       setSubmitting(false);
@@ -201,7 +225,9 @@ const BorrowRequestPage = () => {
       <div className="min-h-screen bg-gradient-to-b from-amber-50 to-white flex items-center justify-center">
         <div className="text-center p-6 bg-white rounded-2xl shadow-md">
           <div className="w-14 h-14 border-4 border-amber-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
-          <p className="text-gray-600 font-medium mt-4">Loading request details...</p>
+          <p className="text-gray-600 font-medium mt-4">
+            Loading request details...
+          </p>
         </div>
       </div>
     );
@@ -231,7 +257,7 @@ const BorrowRequestPage = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-amber-50 to-white py-8 px-4 sm:px-6 lg:px-8">
       <ToastContainer position="top-right" autoClose={2000} theme="light" />
-      
+
       <div className="max-w-4xl mx-auto">
         {/* Header Section */}
         <div className="mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -261,23 +287,27 @@ const BorrowRequestPage = () => {
                   className="w-32 h-32 md:w-full md:h-auto object-cover rounded-lg shadow-md"
                 />
               </div>
-              
+
               {/* Laptop Details */}
               <div className="flex-1 p-5">
                 <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-4">
                   <div>
-                    <h2 className="text-xl font-bold text-gray-900">{laptop.itemName}</h2>
+                    <h2 className="text-xl font-bold text-gray-900">
+                      {laptop.itemName}
+                    </h2>
                     <span className="inline-block mt-1 px-2.5 py-1 rounded-full bg-green-100 text-green-800 text-xs font-medium">
                       {laptop.status}
                     </span>
                   </div>
-                  
+
                   <div className="mt-2 md:mt-0">
-                    <h3 className="text-sm font-medium text-gray-500">Student: {userInfo.fullName}</h3>
+                    <h3 className="text-sm font-medium text-gray-500">
+                      Student: {userInfo.fullName}
+                    </h3>
                     <p className="text-xs text-gray-500">{userInfo.email}</p>
                   </div>
                 </div>
-                
+
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                   <div className="p-2 bg-gray-50 rounded-lg">
                     <p className="text-xs text-gray-500">CPU</p>
@@ -308,7 +338,7 @@ const BorrowRequestPage = () => {
                 Request Details
               </h2>
             </div>
-            
+
             <form onSubmit={handleSubmit} className="p-5">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
                 <div className="relative">
@@ -328,10 +358,12 @@ const BorrowRequestPage = () => {
                     <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-amber-500" />
                   </div>
                   {errors.borrowDate && (
-                    <p className="mt-1 text-xs text-red-500">{errors.borrowDate}</p>
+                    <p className="mt-1 text-xs text-red-500">
+                      {errors.borrowDate}
+                    </p>
                   )}
                 </div>
-                
+
                 <div className="relative">
                   <label className="block text-sm font-medium text-gray-700 mb-1.5">
                     End Date
@@ -350,7 +382,9 @@ const BorrowRequestPage = () => {
                     <Clock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-amber-500" />
                   </div>
                   {errors.endDate && (
-                    <p className="mt-1 text-xs text-red-500">{errors.endDate}</p>
+                    <p className="mt-1 text-xs text-red-500">
+                      {errors.endDate}
+                    </p>
                   )}
                   <p className="mt-1 text-xs text-gray-500">
                     Must be between 4-8 months from start date
@@ -372,11 +406,12 @@ const BorrowRequestPage = () => {
                     className="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-colors appearance-none"
                   >
                     <option value="">Select your major</option>
-                    {major && major.map((item) => (
-                      <option key={item.id} value={item.id}>
-                        {item.name}
-                      </option>
-                    ))}
+                    {major &&
+                      major.map((item) => (
+                        <option key={item.id} value={item.id}>
+                          {item.name}
+                        </option>
+                      ))}
                   </select>
                   <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-amber-500" />
                   <ChevronRight className="absolute right-3 top-1/2 transform -translate-y-1/2 rotate-90 w-4 h-4 text-gray-500" />
@@ -385,17 +420,24 @@ const BorrowRequestPage = () => {
                   <p className="mt-1 text-xs text-red-500">{errors.majorId}</p>
                 )}
               </div>
-              
+
               {/* Terms and Conditions */}
               <div className="p-4 mb-5 bg-amber-50 rounded-lg border border-amber-100">
                 <div className="flex items-center mb-3">
                   <Shield className="w-4 h-4 text-amber-600 mr-2" />
-                  <h3 className="text-sm font-semibold text-amber-800">Terms and Conditions</h3>
+                  <h3 className="text-sm font-semibold text-amber-800">
+                    Terms and Conditions
+                  </h3>
                 </div>
                 <ul className="list-disc list-inside text-xs text-amber-900 space-y-1 ml-1 mb-3">
-                  <li>You must return the laptop in the same condition as received.</li>
+                  <li>
+                    You must return the laptop in the same condition as
+                    received.
+                  </li>
                   <li>Any damage or loss will be your responsibility.</li>
-                  <li>The borrowing period is strictly between the selected dates.</li>
+                  <li>
+                    The borrowing period is strictly between the selected dates.
+                  </li>
                   <li>Extensions must be requested before the end date.</li>
                   <li>Failure to return on time may result in penalties.</li>
                 </ul>
@@ -409,12 +451,17 @@ const BorrowRequestPage = () => {
                       className="w-4 h-4 text-amber-600 border-amber-300 rounded focus:ring-amber-500"
                     />
                   </div>
-                  <label htmlFor="terms" className="ml-2 text-xs text-amber-900 font-medium">
+                  <label
+                    htmlFor="terms"
+                    className="ml-2 text-xs text-amber-900 font-medium"
+                  >
                     I agree to care for and return the laptop in good condition.
                   </label>
                 </div>
                 {errors.terms && (
-                  <p className="mt-1 text-xs text-red-500 ml-6">{errors.terms}</p>
+                  <p className="mt-1 text-xs text-red-500 ml-6">
+                    {errors.terms}
+                  </p>
                 )}
               </div>
 
@@ -451,7 +498,7 @@ const BorrowRequestPage = () => {
               </div>
             </form>
           </div>
-          
+
           {/* Help Text */}
           <div className="text-center">
             <div className="inline-flex items-center text-xs text-gray-500">
