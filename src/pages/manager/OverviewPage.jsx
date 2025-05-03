@@ -8,6 +8,8 @@ import {
   FaLaptop,
   FaChartPie,
   FaChartLine,
+  FaChevronLeft,
+  FaChevronRight,
 } from "react-icons/fa";
 import { getWalletByUserId } from "../../utils/getWalletByUserId";
 import { formatCurrency } from "../../utils/moneyValidationUtils";
@@ -37,6 +39,10 @@ const OverviewPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState("overview");
+  
+  // Add pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
 
   const COLORS = [
     "#0088FE",
@@ -205,6 +211,18 @@ const OverviewPage = () => {
       return new Date(a.monthYear) - new Date(b.monthYear);
     }
   );
+
+  // Add pagination calculation functions
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentTransactions = transactions.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(transactions.length / itemsPerPage);
+
+  const paginate = (pageNumber) => {
+    if (pageNumber > 0 && pageNumber <= totalPages) {
+      setCurrentPage(pageNumber);
+    }
+  };
 
   if (loading) {
     return (
@@ -510,10 +528,25 @@ const OverviewPage = () => {
                       Type
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Amount
+                      Total Amount
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Used Deposit
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Extra Required
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Refund Amount
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Cash Flow
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Date
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Note
                     </th>
                   </tr>
                 </thead>
@@ -521,40 +554,90 @@ const OverviewPage = () => {
                   {transactions
                     .sort((a, b) => b.transactionId - a.transactionId)
                     .slice(0, 5)
-                    .map((transaction) => (
-                      <tr
-                        key={transaction.transactionId}
-                        className="hover:bg-gray-50"
-                      >
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {encodeId(transaction.transactionId)}
-                        </td>
+                    .map((transaction) => {
+                      // Calculate the cash flow
+                      let cashFlow = 0;
+                      let flowType = "";
 
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span
-                            className={`px-2 py-1 text-xs font-semibold rounded-full 
-                          ${
-                            transaction.transactionType === "Deposit"
-                              ? "bg-green-100 text-green-800"
-                              : transaction.transactionType === "Compensation"
-                              ? "bg-red-100 text-red-800"
-                              : "bg-blue-100 text-blue-800"
-                          }`}
-                          >
-                            {transaction.transactionType}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {formatCurrency(transaction.amount)}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {format(
-                            new Date(transaction.createdDate),
-                            "dd/MM/yyyy"
-                          )}
-                        </td>
-                      </tr>
-                    ))}
+                      if (transaction.transactionType === "Deposit") {
+                        cashFlow = transaction.amount;
+                        flowType = "in";
+                      } else if (transaction.transactionType === "Compensation") {
+                        if (transaction.extraPaymentRequired > 0) {
+                          cashFlow = transaction.extraPaymentRequired;
+                          flowType = "in";
+                        } else if (transaction.refundAmount !== null && transaction.refundAmount > 0) {
+                          cashFlow = transaction.refundAmount;
+                          flowType = "out";
+                        } else if (transaction.usedDepositAmount < transaction.amount) {
+                          cashFlow = transaction.amount - transaction.usedDepositAmount;
+                          flowType = "out";
+                        }
+                      } else if (transaction.transactionType === "Refund") {
+                        cashFlow = transaction.amount;
+                        flowType = "out";
+                      }
+
+                      return (
+                        <tr key={transaction.transactionId} className="hover:bg-gray-50">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {encodeId(transaction.transactionId)}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span
+                              className={`px-2 py-1 text-xs font-semibold rounded-full 
+                              ${
+                                transaction.transactionType === "Deposit"
+                                  ? "bg-green-100 text-green-800"
+                                  : transaction.transactionType === "Compensation"
+                                  ? "bg-amber-100 text-amber-800"
+                                  : "bg-blue-100 text-blue-800"
+                              }`}
+                            >
+                              {transaction.transactionType}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {formatCurrency(transaction.amount)}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {transaction.usedDepositAmount !== null
+                              ? formatCurrency(transaction.usedDepositAmount)
+                              : "-"}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {transaction.extraPaymentRequired !== null
+                              ? formatCurrency(transaction.extraPaymentRequired)
+                              : "-"}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {transaction.refundAmount !== null
+                              ? formatCurrency(transaction.refundAmount)
+                              : "-"}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            {flowType && (
+                              <span
+                                className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                                  flowType === "in"
+                                    ? "bg-green-100 text-green-800"
+                                    : "bg-red-100 text-red-800"
+                                }`}
+                              >
+                                {flowType === "in" ? "+" : "-"}
+                                {formatCurrency(cashFlow)}
+                              </span>
+                            )}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {format(new Date(transaction.createdDate), "dd/MM/yyyy HH:mm")}
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-500 max-w-xs truncate">
+                            {transaction.note}
+                          </td>
+                        </tr>
+                      );
+                    })}
                 </tbody>
               </table>
             </div>
@@ -750,7 +833,6 @@ const OverviewPage = () => {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     ID
                   </th>
-
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Type
                   </th>
@@ -778,7 +860,7 @@ const OverviewPage = () => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {transactions.map((transaction) => {
+                {currentTransactions.map((transaction) => {
                   // Calculate the cash flow
                   let cashFlow = 0;
                   let flowType = "";
@@ -874,6 +956,116 @@ const OverviewPage = () => {
                 })}
               </tbody>
             </table>
+
+            {/* Pagination Controls */}
+            <div className="flex items-center justify-between px-4 py-3 bg-white border-t border-gray-200 sm:px-6">
+              <div className="flex justify-between flex-1 sm:hidden">
+                <button
+                  onClick={() => paginate(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  className={`relative inline-flex items-center px-4 py-2 text-sm font-medium rounded-md
+                    ${currentPage === 1
+                      ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                      : 'bg-white text-gray-700 hover:bg-gray-50'
+                    } border border-gray-300`}
+                >
+                  Previous
+                </button>
+                <button
+                  onClick={() => paginate(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  className={`relative inline-flex items-center px-4 py-2 ml-3 text-sm font-medium rounded-md
+                    ${currentPage === totalPages
+                      ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                      : 'bg-white text-gray-700 hover:bg-gray-50'
+                    } border border-gray-300`}
+                >
+                  Next
+                </button>
+              </div>
+              <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-sm text-gray-700">
+                    Showing{' '}
+                    <span className="font-medium">{indexOfFirstItem + 1}</span>
+                    {' '}-{' '}
+                    <span className="font-medium">
+                      {Math.min(indexOfLastItem, transactions.length)}
+                    </span>
+                    {' '}of{' '}
+                    <span className="font-medium">{transactions.length}</span>
+                    {' '}results
+                  </p>
+                </div>
+                <div>
+                  <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                    <button
+                      onClick={() => paginate(currentPage - 1)}
+                      disabled={currentPage === 1}
+                      className={`relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium
+                        ${currentPage === 1
+                          ? 'text-gray-300 cursor-not-allowed'
+                          : 'text-gray-500 hover:bg-gray-50'
+                        }`}
+                    >
+                      <span className="sr-only">Previous</span>
+                      <FaChevronLeft className="h-4 w-4" />
+                    </button>
+                    
+                    {/* Page Numbers */}
+                    {[...Array(totalPages)].map((_, index) => {
+                      const pageNumber = index + 1;
+                      // Show first page, last page, current page, and pages around current page
+                      if (
+                        pageNumber === 1 ||
+                        pageNumber === totalPages ||
+                        (pageNumber >= currentPage - 1 && pageNumber <= currentPage + 1)
+                      ) {
+                        return (
+                          <button
+                            key={pageNumber}
+                            onClick={() => paginate(pageNumber)}
+                            className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium
+                              ${pageNumber === currentPage
+                                ? 'z-10 bg-amber-50 border-amber-500 text-amber-600'
+                                : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
+                              }`}
+                          >
+                            {pageNumber}
+                          </button>
+                        );
+                      } else if (
+                        pageNumber === currentPage - 2 ||
+                        pageNumber === currentPage + 2
+                      ) {
+                        return (
+                          <span
+                            key={pageNumber}
+                            className="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700"
+                          >
+                            ...
+                          </span>
+                        );
+                      }
+                      return null;
+                    })}
+
+                    <button
+                      onClick={() => paginate(currentPage + 1)}
+                      disabled={currentPage === totalPages}
+                      className={`relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium
+                        ${currentPage === totalPages
+                          ? 'text-gray-300 cursor-not-allowed'
+                          : 'text-gray-500 hover:bg-gray-50'
+                        }`}
+                    >
+                      <span className="sr-only">Next</span>
+                      <FaChevronRight className="h-4 w-4" />
+                    </button>
+                  </nav>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       )}
