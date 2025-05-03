@@ -3,6 +3,7 @@ import productApi from "../../../api/productApi";
 import { useNavigate } from "react-router-dom";
 import formatPrice from "../../../utils/formatPrice";
 import PropTypes from "prop-types";
+import shopApi from "../../../api/shopApi";
 
 const ListLaptopShop = ({ limit }) => {
   const navigate = useNavigate();
@@ -17,13 +18,27 @@ const ListLaptopShop = ({ limit }) => {
         setLoading(true);
         const response = await productApi.getAllProducts();
         if (response.isSuccess) {
-          const laptopData = response.data || [];
-          
-          // If limit is provided, limit the displayed laptops
+          let laptopData = response.data || [];
+
+          // Gọi API shop cho từng product (song song)
+          const enrichedData = await Promise.all(
+            laptopData.map(async (item) => {
+              try {
+                const shopRes = await shopApi.getShopById(item.shopId);
+                return {
+                  ...item,
+                  shopName: shopRes.data?.shopName || "Unknown Shop",
+                };
+              } catch {
+                return { ...item, shopName: "Unknown Shop" };
+              }
+            })
+          );
+
           if (limit && limit > 0) {
-            setDisplayedLaptops(laptopData.slice(0, limit));
+            setDisplayedLaptops(enrichedData.slice(0, limit));
           } else {
-            setDisplayedLaptops(laptopData);
+            setDisplayedLaptops(enrichedData);
           }
         } else {
           setError("Failed to fetch laptops");
@@ -35,6 +50,7 @@ const ListLaptopShop = ({ limit }) => {
         setLoading(false);
       }
     };
+
     fetchLaptops();
   }, [limit]);
 
@@ -134,11 +150,12 @@ const ListLaptopShop = ({ limit }) => {
                   )}
                   <div
                     className={`absolute top-4 right-4 px-3 py-1 rounded-md text-sm font-medium text-white 
-                  ${
-                    laptop.quantity > 0 ? "bg-purple-600" : "bg-gray-600"
-                  }`}
+                  ${laptop.quantity > 0 ? "bg-purple-600" : "bg-gray-600"}`}
                   >
                     {laptop.quantity > 0 ? "In Stock" : "Out of Stock"}
+                  </div>
+                  <div className="absolute top-4 left-4 px-3 py-1 bg-indigo-500 text-white rounded-md text-sm font-medium">
+                    {laptop.shopName}
                   </div>
                 </div>
 
@@ -224,7 +241,8 @@ const ListLaptopShop = ({ limit }) => {
                         <div>
                           <p className="text-lg font-bold text-purple-600">
                             {formatPrice(
-                              laptop.price * (1 - laptop.discountPercentage / 100)
+                              laptop.price *
+                                (1 - laptop.discountPercentage / 100)
                             )}
                           </p>
                           <p className="text-sm text-gray-500 line-through">
@@ -284,7 +302,7 @@ const ListLaptopShop = ({ limit }) => {
 
 // Prop type validation
 ListLaptopShop.propTypes = {
-  limit: PropTypes.number
+  limit: PropTypes.number,
 };
 
 // Default prop for when limit is not provided
