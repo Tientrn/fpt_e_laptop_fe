@@ -22,7 +22,7 @@ const BorrowRequest = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingRequest, setEditingRequest] = useState(null);
   const [editFormData, setEditFormData] = useState({
-    status: "",
+    status: "Approved",
     rejectionReason: "",
   });
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -114,7 +114,7 @@ const BorrowRequest = () => {
   const handleEditClick = (request) => {
     setEditingRequest(request);
     setEditFormData({
-      status: request.status || "Pending",
+      status: "Approved",
       rejectionReason: request.rejectionReason || "",
     });
     setIsEditModalOpen(true);
@@ -197,6 +197,8 @@ const BorrowRequest = () => {
         return "bg-red-100 text-red-800 border-red-200";
       case "Borrowing":
         return "bg-blue-100 text-blue-800 border-blue-200";
+      case "Done":
+        return "bg-indigo-100 text-indigo-800 border-indigo-200";
       default:
         return "bg-gray-100 text-gray-800 border-gray-200";
     }
@@ -476,12 +478,6 @@ const BorrowRequest = () => {
                     className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all appearance-none"
                     required
                   >
-                    {/* Chỉ hiện "Pending" nếu nó đang được chọn, nhưng không render option cho chọn */}
-                    {editFormData.status === "Pending" && (
-                      <option value="Pending" hidden>
-                        Pending
-                      </option>
-                    )}
                     <option value="Approved">Approved</option>
                     <option value="Rejected">Rejected</option>
                   </select>
