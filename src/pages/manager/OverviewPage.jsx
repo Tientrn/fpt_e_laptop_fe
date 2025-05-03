@@ -112,7 +112,10 @@ const OverviewPage = () => {
         acc[type].inflow += transaction.extraPaymentRequired;
       }
 
-      if (transaction.usedDepositAmount < transaction.amount) {
+      if (transaction.refundAmount !== null && transaction.refundAmount > 0) {
+        // Case: refund is specified (money going out)
+        acc[type].outflow += transaction.refundAmount;
+      } else if (transaction.usedDepositAmount < transaction.amount) {
         // Case: deposit > damage, remainder refunded (money going out)
         acc[type].outflow += transaction.amount - transaction.usedDepositAmount;
       }
@@ -134,6 +137,10 @@ const OverviewPage = () => {
       if (transaction.extraPaymentRequired > 0) {
         // Extra payment is inflow
         return total + transaction.extraPaymentRequired;
+      }
+      if (transaction.refundAmount !== null && transaction.refundAmount > 0) {
+        // Refund amount is outflow
+        return total - transaction.refundAmount;
       }
       if (transaction.usedDepositAmount < transaction.amount) {
         // Refund is outflow
@@ -176,12 +183,19 @@ const OverviewPage = () => {
         Deposit: 0,
         Compensation: 0,
         Refund: 0,
+        RefundFromCompensation: 0,
       };
     }
 
     acc[monthYear].totalAmount += transaction.amount;
     acc[monthYear][transaction.transactionType] =
       (acc[monthYear][transaction.transactionType] || 0) + transaction.amount;
+      
+    // Track refunds from compensation transactions separately
+    if (transaction.transactionType === "Compensation" && transaction.refundAmount !== null && transaction.refundAmount > 0) {
+      acc[monthYear].RefundFromCompensation = 
+        (acc[monthYear].RefundFromCompensation || 0) + transaction.refundAmount;
+    }
 
     return acc;
   }, {});
@@ -432,7 +446,7 @@ const OverviewPage = () => {
                 </h2>
               </div>
 
-              <div className="h-72">
+              <div className="h-80">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart
                     data={monthlyTransactionData}
@@ -455,6 +469,12 @@ const OverviewPage = () => {
                       type="monotone"
                       dataKey="Compensation"
                       stroke="#ff7300"
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="RefundFromCompensation"
+                      stroke="#d884a8"
+                      name="Refund From Compensation"
                     />
                   </LineChart>
                 </ResponsiveContainer>
@@ -584,6 +604,12 @@ const OverviewPage = () => {
                     stackId="a"
                     fill="#8884d8"
                     name="Refund"
+                  />
+                  <Bar
+                    dataKey="RefundFromCompensation"
+                    stackId="a"
+                    fill="#d884a8"
+                    name="Refund From Compensation"
                   />
                 </BarChart>
               </ResponsiveContainer>
@@ -738,6 +764,9 @@ const OverviewPage = () => {
                     Extra Required
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Refund Amount
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Cash Flow
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -761,6 +790,9 @@ const OverviewPage = () => {
                     if (transaction.extraPaymentRequired > 0) {
                       cashFlow = transaction.extraPaymentRequired;
                       flowType = "in";
+                    } else if (transaction.refundAmount !== null && transaction.refundAmount > 0) {
+                      cashFlow = transaction.refundAmount;
+                      flowType = "out";
                     } else if (
                       transaction.usedDepositAmount < transaction.amount
                     ) {
@@ -807,6 +839,11 @@ const OverviewPage = () => {
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {transaction.extraPaymentRequired !== null
                           ? formatCurrency(transaction.extraPaymentRequired)
+                          : "-"}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {transaction.refundAmount !== null
+                          ? formatCurrency(transaction.refundAmount)
                           : "-"}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
