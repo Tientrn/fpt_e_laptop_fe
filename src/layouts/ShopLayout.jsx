@@ -13,13 +13,17 @@ import {
   FaArrowLeft,
   FaCog,
   FaQuestion,
+  FaWallet,
 } from "react-icons/fa";
 import { toast } from "react-toastify";
 import shopApi from "../api/shopApi";
+import walletApi from "../api/walletApi";
 
 const ShopLayout = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [hasShop, setHasShop] = useState(false);
+  const [hasWallet, setHasWallet] = useState(false);
+  const [isCreatingWallet, setIsCreatingWallet] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
@@ -62,19 +66,63 @@ const ShopLayout = () => {
     checkShopExists();
   }, [user, location.pathname, navigate]);
 
+  // Check if user has a wallet
+  useEffect(() => {
+    const checkWalletExists = async () => {
+      try {
+        const userId = user?.userId;
+        if (!userId) return;
+
+        const walletResponse = await walletApi.getWallet();
+        if (walletResponse && walletResponse.data) {
+          const existingWallet = walletResponse.data.find(
+            wallet => wallet.userId === Number(userId)
+          );
+          setHasWallet(!!existingWallet);
+        }
+      } catch (error) {
+        console.error("Error checking wallet:", error);
+      }
+    };
+
+    checkWalletExists();
+  }, [user]);
+
+  const handleCreateWallet = async () => {
+    try {
+      setIsCreatingWallet(true);
+      const type = user?.roles?.includes("Shop") ? "Shop" : "Shop";
+      const response = await walletApi.createWallet(type);
+      
+      if (response && response.isSuccess) {
+        setHasWallet(true);
+        toast.success("Ví đã được tạo thành công!");
+      } else {
+        toast.error(response?.message || "Không thể tạo ví. Vui lòng thử lại sau.");
+      }
+    } catch (error) {
+      console.error("Error creating wallet:", error);
+      toast.error("Đã xảy ra lỗi khi tạo ví. Vui lòng thử lại sau.");
+    } finally {
+      setIsCreatingWallet(false);
+    }
+  };
+
   const getMenuItems = () => {
     const baseMenuItems = [
       {
         path: "/shop/profile",
         name: "Shop Profile",
         icon: <FaUserCircle className="w-5 h-5" />,
-        requiresShop: true
+        requiresShop: true,
+        requiresWallet: true
       },
       {
         path: "/shop/products",
         name: "My Products",
         icon: <FaBoxOpen className="w-5 h-5" />,
-        requiresShop: true
+        requiresShop: true,
+        requiresWallet: true
       },
       // {
       //   path: "/shop/orders",
@@ -86,13 +134,15 @@ const ShopLayout = () => {
         path: "/shop/add-product",
         name: "Add Product",
         icon: <FaPlusSquare className="w-5 h-5" />,
-        requiresShop: true
+        requiresShop: true,
+        requiresWallet: true
       },
       {
         path: "/shop/analytics",
         name: "Analytics",
         icon: <FaChartPie className="w-5 h-5" />,
-        requiresShop: true
+        requiresShop: true,
+        requiresWallet: true
       }
     ];
 
@@ -101,7 +151,8 @@ const ShopLayout = () => {
         path: "/shop/create-profile",
         name: "Create Shop Info",
         icon: <FaPlusCircle className="w-5 h-5" />,
-        requiresShop: false
+        requiresShop: false,
+        requiresWallet: true
       });
     }
 
@@ -182,6 +233,46 @@ const ShopLayout = () => {
 
   return (
     <div className="flex h-screen bg-gray-50">
+      {/* Wallet Create Modal */}
+      {!hasWallet && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center">
+          <div className="bg-white rounded-xl shadow-xl p-8 max-w-md mx-4 w-full border border-indigo-100 animate-fade-in">
+            <div className="w-20 h-20 mx-auto mb-6 flex items-center justify-center rounded-full bg-indigo-100 text-indigo-600">
+              <FaWallet className="w-10 h-10" />
+            </div>
+            <h2 className="text-2xl font-bold text-center text-gray-800 mb-4">
+              Cần tạo ví trước khi tiếp tục
+            </h2>
+            <p className="text-gray-600 text-center mb-6">
+              Để sử dụng các tính năng của shop, bạn cần tạo ví trước. Ví sẽ được sử dụng cho các giao dịch và thanh toán.
+            </p>
+            <button
+              onClick={handleCreateWallet}
+              disabled={isCreatingWallet}
+              className={`w-full py-3 rounded-xl font-medium text-white 
+                ${isCreatingWallet 
+                  ? 'bg-gray-400 cursor-not-allowed' 
+                  : 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 hover:shadow-lg transform hover:-translate-y-0.5'
+                } transition-all duration-200 flex items-center justify-center`}
+            >
+              {isCreatingWallet ? (
+                <>
+                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Đang tạo ví...
+                </>
+              ) : (
+                <>
+                  <FaWallet className="w-5 h-5 mr-2" /> Tạo ví ngay
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Overlay for mobile when sidebar is open */}
       {isSidebarOpen && window.innerWidth < 1024 && (
         <div 
@@ -240,9 +331,13 @@ const ShopLayout = () => {
               </p>
               <p className="text-xs text-gray-500 truncate">{user?.email || "shop@fpt.edu.vn"}</p>
               <div className="mt-1 flex items-center">
-                <div className="h-1.5 w-1.5 rounded-full bg-green-500 mr-1.5"></div>
-                <span className="text-xs text-green-700 font-medium">
-                  {hasShop ? "Active Vendor" : "Setup Required"}
+                <div className={`h-1.5 w-1.5 rounded-full ${hasWallet && hasShop ? "bg-green-500" : "bg-amber-500"} mr-1.5`}></div>
+                <span className={`text-xs font-medium ${hasWallet && hasShop ? "text-green-700" : "text-amber-700"}`}>
+                  {!hasWallet 
+                    ? "Wallet Required" 
+                    : hasShop 
+                      ? "Active Vendor" 
+                      : "Setup Required"}
                 </span>
               </div>
             </div>
@@ -258,7 +353,7 @@ const ShopLayout = () => {
         {/* Sidebar Navigation */}
         <nav className="flex-1 px-3 py-5 space-y-1.5 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
           {getMenuItems().map((item) => {
-            const isDisabled = item.requiresShop && !hasShop;
+            const isDisabled = (item.requiresShop && !hasShop) || (item.requiresWallet && !hasWallet);
             
             return (
               <Link
@@ -267,7 +362,11 @@ const ShopLayout = () => {
                 onClick={(e) => {
                   if (isDisabled) {
                     e.preventDefault();
-                    toast.warning("Vui lòng tạo thông tin shop trước!");
+                    if (!hasWallet) {
+                      toast.warning("Vui lòng tạo ví trước!");
+                    } else if (!hasShop) {
+                      toast.warning("Vui lòng tạo thông tin shop trước!");
+                    }
                   }
                 }}
                 className={`
@@ -336,7 +435,14 @@ const ShopLayout = () => {
                   Shop Portal
                 </span>
               </div>
-              {!hasShop && (
+              {!hasWallet && (
+                <div className="ml-3">
+                  <span className="bg-red-100 text-red-800 text-xs px-2.5 py-1 rounded-full font-medium animate-pulse">
+                    Wallet Required
+                  </span>
+                </div>
+              )}
+              {hasWallet && !hasShop && (
                 <div className="ml-3">
                   <span className="bg-amber-100 text-amber-800 text-xs px-2.5 py-1 rounded-full font-medium animate-pulse">
                     Setup Required
@@ -367,7 +473,43 @@ const ShopLayout = () => {
         {/* Page Content */}
         <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 p-4 md:p-6">
           <div className="max-w-7xl mx-auto">
-            {!hasShop && location.pathname !== "/shop/create-profile" ? (
+            {!hasWallet ? (
+              <div className="bg-white rounded-xl shadow-sm p-8 text-center border border-red-100">
+                <div className="w-20 h-20 mx-auto mb-6 flex items-center justify-center rounded-full bg-red-50 text-red-500">
+                  <FaWallet className="w-10 h-10" />
+                </div>
+                <h2 className="text-xl font-bold text-gray-800 mb-4">
+                  Bạn cần tạo ví trước khi sử dụng các tính năng khác
+                </h2>
+                <p className="text-gray-600 mb-6 max-w-md mx-auto">
+                  Để quản lý sản phẩm và thực hiện các giao dịch, bạn cần tạo ví trước.
+                </p>
+                <button
+                  onClick={handleCreateWallet}
+                  disabled={isCreatingWallet}
+                  className={`inline-flex items-center px-6 py-3 
+                    ${isCreatingWallet
+                      ? 'bg-gray-400 cursor-not-allowed'
+                      : 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 transform hover:-translate-y-0.5'
+                    } text-white rounded-full transition-all shadow-md hover:shadow-lg`}
+                >
+                  {isCreatingWallet ? (
+                    <>
+                      <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Đang tạo ví...
+                    </>
+                  ) : (
+                    <>
+                      <FaWallet className="w-4 h-4 mr-2" />
+                      Tạo ví
+                    </>
+                  )}
+                </button>
+              </div>
+            ) : !hasShop && location.pathname !== "/shop/create-profile" ? (
               <div className="bg-white rounded-xl shadow-sm p-8 text-center border border-amber-100">
                 <div className="w-20 h-20 mx-auto mb-6 flex items-center justify-center rounded-full bg-amber-50 text-amber-500">
                   <FaStore className="w-10 h-10" />

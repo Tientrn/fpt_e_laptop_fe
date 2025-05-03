@@ -3,13 +3,15 @@ import { toast } from "react-toastify";
 import { jwtDecode } from "jwt-decode";
 import shopApi from "../../../api/shopApi";
 import userApi from "../../../api/userApi";
-import { FaStoreAlt, FaUserCircle, FaMapMarkerAlt, FaPhoneAlt, FaEnvelope, FaIdCard, FaUniversity, FaCreditCard } from "react-icons/fa";
+import walletApi from "../../../api/walletApi";
+import { FaStoreAlt, FaUserCircle, FaMapMarkerAlt, FaPhoneAlt, FaEnvelope, FaIdCard, FaUniversity, FaCreditCard, FaWallet, FaMoneyBillWave, FaCalendarAlt, FaTag } from "react-icons/fa";
 import { MdVerified, MdErrorOutline } from "react-icons/md";
 import PropTypes from "prop-types";
 
 const ShopProfile = () => {
   const [shop, setShop] = useState(null);
   const [userInfo, setUserInfo] = useState(null);
+  const [walletInfo, setWalletInfo] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -82,6 +84,23 @@ const ShopProfile = () => {
           toast.error("Unable to load shop information");
         }
 
+        // Lấy thông tin ví
+        try {
+          const walletRes = await walletApi.getWallet();
+          console.log("Wallet Response:", walletRes);
+          
+          if (walletRes && walletRes.data) {
+            const userWallet = walletRes.data.find(
+              (w) => w.userId === Number(userId)
+            );
+            console.log("Found wallet:", userWallet);
+            setWalletInfo(userWallet || null);
+          }
+        } catch (walletError) {
+          console.error("Error fetching wallet:", walletError);
+          toast.error("Unable to load wallet information");
+        }
+
       } catch (error) {
         console.error("Main error:", error);
         toast.error(error.message || "An error occurred while loading information");
@@ -92,6 +111,22 @@ const ShopProfile = () => {
 
     fetchData();
   }, []);
+
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat('vi-VN', {
+      style: 'currency',
+      currency: 'VND'
+    }).format(amount);
+  };
+
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('vi-VN', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
 
   if (loading) {
     return (
@@ -179,6 +214,60 @@ const ShopProfile = () => {
 
           {/* Content */}
           <div className="p-6 md:p-8">
+            {/* Wallet Summary Card */}
+            {walletInfo && (
+              <div className="mb-8 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-2xl overflow-hidden shadow-lg transform transition-all hover:shadow-xl hover:-translate-y-1">
+                <div className="p-6 text-white">
+                  <div className="flex items-center justify-between mb-6">
+                    <h3 className="text-xl font-bold flex items-center">
+                      <FaWallet className="mr-2" />
+                      Shop Wallet
+                    </h3>
+                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                      walletInfo.status === "Active" 
+                        ? "bg-green-500/20 text-green-100" 
+                        : "bg-red-500/20 text-red-100"
+                    }`}>
+                      {walletInfo.status}
+                    </span>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
+                      <div className="text-white/70 text-sm mb-1 flex items-center">
+                        <FaMoneyBillWave className="mr-2" />
+                        Current Balance
+                      </div>
+                      <div className="text-2xl font-bold">{formatCurrency(walletInfo.balance)}</div>
+                    </div>
+                    
+                    <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
+                      <div className="text-white/70 text-sm mb-1 flex items-center">
+                        <FaTag className="mr-2" />
+                        Wallet Type
+                      </div>
+                      <div className="text-2xl font-bold">{walletInfo.type}</div>
+                    </div>
+                    
+                    <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
+                      <div className="text-white/70 text-sm mb-1 flex items-center">
+                        <FaCalendarAlt className="mr-2" />
+                        Created Date
+                      </div>
+                      <div className="text-lg font-medium">{formatDate(walletInfo.createdDate)}</div>
+                    </div>
+                  </div>
+                  
+                  <div className="mt-6 flex justify-end">
+                    <button className="px-4 py-2 bg-white text-indigo-700 rounded-lg font-medium transition-all hover:bg-indigo-50 flex items-center">
+                      <FaWallet className="mr-2" />
+                      Manage Wallet
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
               {/* Business Information Card */}
               <div className="bg-gradient-to-br from-indigo-50 to-white rounded-xl shadow-md overflow-hidden transform transition-all hover:shadow-lg hover:-translate-y-1">
@@ -248,53 +337,22 @@ const ShopProfile = () => {
                   <div className="flex items-start">
                     <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0">
                       {shop.status === "Active" ? (
-                        <MdVerified className="text-indigo-500 text-xl" />
+                        <MdVerified className="text-indigo-600 text-lg" />
                       ) : (
-                        <MdErrorOutline className="text-indigo-500 text-xl" />
+                        <MdErrorOutline className="text-red-500 text-lg" />
                       )}
                     </div>
                     <div className="ml-4 flex-1">
-                      <span className="text-sm text-gray-500 block mb-1">Status</span>
-                      <span
-                        className={`inline-flex items-center px-3 py-1 text-sm font-medium rounded-full ${
-                          shop.status === "Active" 
-                            ? "bg-green-100 text-green-700" 
-                            : "bg-red-100 text-red-700"
-                        }`}
-                      >
-                        {shop.status === "Active" ? (
-                          <MdVerified className="mr-1" />
-                        ) : (
-                          <MdErrorOutline className="mr-1" />
-                        )}
+                      <h4 className="text-gray-700 text-sm font-medium">Status</h4>
+                      <p className={`text-base ${
+                        shop.status === "Active" ? "text-green-600" : "text-red-600"
+                      }`}>
                         {shop.status}
-                      </span>
+                      </p>
                     </div>
                   </div>
                 </div>
               </div>
-            </div>
-            
-            {/* Shop Stats Summary (you could add this as an enhancement) */}
-            <div className="mt-8 grid grid-cols-2 md:grid-cols-4 gap-4">
-              {[
-                { label: "Products", value: "0", color: "from-indigo-400 to-indigo-500" },
-                { label: "Orders", value: "0", color: "from-purple-400 to-purple-500" },
-                { label: "Revenue", value: "0₫", color: "from-violet-400 to-violet-500" },
-                { label: "Rating", value: "N/A", color: "from-amber-400 to-amber-500" }
-              ].map((stat, index) => (
-                <div key={index} className={`bg-gradient-to-r ${stat.color} rounded-xl p-4 text-white shadow-md`}>
-                  <h4 className="text-white/80 text-sm font-medium">{stat.label}</h4>
-                  <p className="text-2xl font-bold mt-1">{stat.value}</p>
-                </div>
-              ))}
-            </div>
-            
-            {/* Edit Profile Button */}
-            <div className="mt-8 text-center">
-              <button className="px-6 py-2.5 bg-gradient-to-r from-indigo-600 to-indigo-700 text-white font-medium rounded-lg shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5">
-                Edit Shop Profile
-              </button>
             </div>
           </div>
         </div>
@@ -303,21 +361,29 @@ const ShopProfile = () => {
   );
 };
 
-// Reusable InfoItem component for displaying profile information
+// Info Item Component
 const InfoItem = ({ icon, label, value, isSensitive = false }) => {
-  // For sensitive information like account numbers, we can mask part of it
-  const displayValue = isSensitive && value ? 
-    value.slice(0, 4) + "•".repeat(Math.max(0, value.length - 8)) + value.slice(-4) : 
-    value;
+  // Mask sensitive information like account numbers
+  const maskValue = (val) => {
+    if (!val) return "N/A";
+    if (typeof val !== 'string') val = String(val);
     
+    // Mask all but last 4 characters
+    const visible = val.slice(-4);
+    const masked = "*".repeat(val.length - 4);
+    return masked + visible;
+  };
+
   return (
-    <div className="flex items-start group">
-      <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0 group-hover:bg-indigo-200 transition-colors">
+    <div className="flex items-start">
+      <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0">
         {icon}
       </div>
       <div className="ml-4 flex-1">
-        <span className="text-sm text-gray-500 block mb-1">{label}</span>
-        <span className="text-base font-medium text-gray-800">{displayValue || "N/A"}</span>
+        <h4 className="text-gray-700 text-sm font-medium">{label}</h4>
+        <p className="text-gray-800 text-base">
+          {isSensitive ? maskValue(value) : value || "N/A"}
+        </p>
       </div>
     </div>
   );
@@ -326,7 +392,7 @@ const InfoItem = ({ icon, label, value, isSensitive = false }) => {
 InfoItem.propTypes = {
   icon: PropTypes.node.isRequired,
   label: PropTypes.string.isRequired,
-  value: PropTypes.string,
+  value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   isSensitive: PropTypes.bool
 };
 
