@@ -19,7 +19,8 @@ import {
   FaQuestion,
   FaClipboardList,
 } from "react-icons/fa";
-import { toast } from "react-toastify";
+import { toast, ToastContainer } from "react-toastify";
+import 'react-toastify/dist/ReactToastify.css';
 
 const StaffLayout = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -144,6 +145,7 @@ const StaffLayout = () => {
 
   return (
     <div className="flex h-screen bg-gray-50">
+      <ToastContainer position="top-right" autoClose={3000} closeOnClick pauseOnHover />
       {/* Overlay for mobile when sidebar is open */}
       {isSidebarOpen && window.innerWidth < 1024 && (
         <div 

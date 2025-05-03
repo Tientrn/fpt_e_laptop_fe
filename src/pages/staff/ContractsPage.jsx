@@ -283,13 +283,10 @@ const ContractsPage = () => {
       );
       const isValidSize = file.size <= 5 * 1024 * 1024; // 5MB
 
-      if (!isValidType) {
+      if (!isValidType || !isValidSize) {
         toast.error(
-          `${file.name} is not a valid image format. Only JPG and PNG are allowed.`
+          `${file.name}: ${!isValidType ? "Invalid format" : "Exceeds 5MB limit"}`
         );
-      }
-      if (!isValidSize) {
-        toast.error(`${file.name} exceeds the 5MB size limit.`);
       }
 
       return isValidType && isValidSize;
@@ -304,11 +301,6 @@ const ContractsPage = () => {
       return;
     }
 
-    toast.info(
-      `Preparing to upload ${selectedImages.length} image${
-        selectedImages.length !== 1 ? "s" : ""
-      }...`
-    );
     setIsUploading(true);
     setUploadProgress(0);
 
@@ -321,8 +313,6 @@ const ContractsPage = () => {
         const formData = new FormData();
         formData.append("ImageBorrowConract", file);
         formData.append("BorrowContractId", contractId);
-
-        toast.info(`Uploading image ${i + 1} of ${totalImages}: ${file.name}`);
 
         try {
           const response = await axiosClient.post(
@@ -342,14 +332,10 @@ const ContractsPage = () => {
             }
           );
 
-          // The API returns data: null on success, so we need to construct the image URL ourselves
           if (response.isSuccess) {
-            // Generate a predictable URL based on the contract ID and file name
-            // or use a timestamp to ensure uniqueness
             const timestamp = new Date().getTime();
             const imageUrl = `/contract-images/${contractId}/${file.name}?t=${timestamp}`;
             uploadedImageUrls.push(imageUrl);
-            toast.success(`Image ${i + 1} uploaded successfully`);
           } else {
             toast.warning(
               `Image ${i + 1} upload failed: ${
@@ -387,18 +373,11 @@ const ContractsPage = () => {
 
   // New function to handle multiple attempts to reload contract data
   const forceReloadContract = async (contractId) => {
-    toast.info("Reloading contract data with new images...");
-
     // Make multiple attempts with increasing delays
     for (let attempt = 1; attempt <= 3; attempt++) {
       try {
         // Add increasing delay between attempts
         const delay = attempt * 1000; // 1s, 2s, 3s
-        toast.info(
-          `Attempt ${attempt}/3: Waiting ${
-            delay / 1000
-          }s for server processing...`
-        );
 
         await new Promise((resolve) => setTimeout(resolve, delay));
 
@@ -419,7 +398,6 @@ const ContractsPage = () => {
         if (updatedContract) {
           // Reopen the modal with the updated contract
           handleDetailClick(updatedContract);
-          toast.success("Contract refreshed successfully with new images");
           return true;
         }
       } catch (error) {
@@ -436,8 +414,6 @@ const ContractsPage = () => {
 
   const fetchContractDetails = async (contractId) => {
     try {
-      toast.info("Refreshing contract details from server...");
-
       // Get the contract with updated images
       const contractResponse = await borrowcontractApi.getBorrowContractById(
         contractId
@@ -473,7 +449,6 @@ const ContractsPage = () => {
         requestDetails: requestResponse.data,
       });
 
-      toast.success("Contract details updated successfully");
       return true;
     } catch (error) {
       console.error("Error fetching updated contract details:", error);
@@ -538,7 +513,6 @@ const ContractsPage = () => {
         return;
       }
 
-      toast.info("Preparing contract data...");
       const contractData = {
         requestId: parseInt(contractForm.requestId),
         itemId: parseInt(contractForm.itemId),
@@ -549,11 +523,10 @@ const ContractsPage = () => {
           new Date(contractForm.expectedReturnDate),
           "yyyy-MM-dd'T'HH:mm:ss.SSSxxx"
         ),
-        userId: parseInt(selectedRequest.userId), // Ensure we're using the correct userId from the selected request
+        userId: parseInt(selectedRequest.userId),
       };
 
       console.log("Submitting contract data:", contractData);
-      toast.info("Creating contract...");
 
       const response = await borrowcontractApi.createBorrowContract(
         contractData
@@ -563,10 +536,8 @@ const ContractsPage = () => {
         toast.success("Contract created successfully!");
 
         if (selectedImages.length > 0) {
-          toast.info(`Uploading ${selectedImages.length} contract images...`);
           try {
             await handleUploadContractImages(response.data.contractId);
-            toast.success("Contract images uploaded successfully");
           } catch (uploadError) {
             console.error("Upload error:", uploadError);
             toast.error("Failed to upload images, but contract was created");
@@ -576,13 +547,11 @@ const ContractsPage = () => {
         setIsModalOpen(false);
 
         // Refresh data
-        toast.info("Refreshing contract data...");
         await Promise.all([
           fetchContracts(),
           fetchApprovedRequests(),
           fetchDeposits(),
         ]);
-        toast.success("Data refreshed successfully");
 
         // Reset form
         setContractForm({
@@ -593,8 +562,6 @@ const ContractsPage = () => {
           itemValue: "",
           expectedReturnDate: format(new Date(), "yyyy-MM-dd"),
         });
-
-        toast.info("Ready to create new contracts or deposits");
       } else {
         toast.error(response.message || "Failed to create contract");
       }
@@ -609,11 +576,8 @@ const ContractsPage = () => {
 
   const handleDeleteContract = async (contract) => {
     try {
-      toast.info("Preparing to delete contract #" + contract.contractId);
-
       // Check for associated deposit
       if (deposits[contract.contractId]) {
-        toast.info("Deleting associated deposit transaction first...");
         const deleteDepositResponse =
           await deposittransactionApi.deleteDepositTransaction(
             deposits[contract.contractId].depositId
@@ -629,17 +593,13 @@ const ContractsPage = () => {
       }
 
       // Delete the contract
-      toast.info("Deleting contract...");
       const response = await borrowcontractApi.deleteBorrowContract(
         contract.contractId
       );
       if (response.isSuccess) {
         toast.success("Contract deleted successfully");
 
-        toast.info("Refreshing data...");
         await Promise.all([fetchContracts(), fetchDeposits()]);
-        toast.success("Data refreshed successfully");
-
         setIsDeleteModalOpen(false);
       } else {
         toast.error(response.message || "Failed to delete contract");
@@ -655,7 +615,6 @@ const ContractsPage = () => {
 
   const handleDetailClick = async (contract) => {
     try {
-      toast.info("Loading contract details...");
       setIsDetailModalOpen(true); // Open modal immediately to improve perceived loading speed
       setSelectedImages([]);
 
@@ -698,7 +657,6 @@ const ContractsPage = () => {
             : "Unknown",
           isLoading: false,
         });
-        toast.success("Contract details loaded successfully");
       } else {
         toast.error(
           "Failed to load request details: " +
@@ -852,8 +810,6 @@ const ContractsPage = () => {
         return;
       }
 
-      toast.info("Retrieving contract details...");
-
       // Get contract and request details
       const contractResponse = await borrowcontractApi.getBorrowContractById(
         depositForm.contractId
@@ -864,7 +820,6 @@ const ContractsPage = () => {
       }
 
       const contract = contractResponse.data;
-      toast.info("Contract details retrieved successfully");
 
       // Get request details
       const requestResponse = await borrowrequestApi.getBorrowRequestById(
@@ -876,7 +831,6 @@ const ContractsPage = () => {
       }
 
       const request = requestResponse.data;
-      toast.info("Request details retrieved successfully");
 
       const depositData = {
         contractId: parseInt(depositForm.contractId),
@@ -887,7 +841,6 @@ const ContractsPage = () => {
       };
 
       console.log("Submitting deposit data:", depositData);
-      toast.info("Creating deposit transaction...");
 
       const response = await deposittransactionApi.createDepositTransaction(
         depositData
@@ -898,8 +851,6 @@ const ContractsPage = () => {
 
         // After successful deposit, create borrow history
         try {
-          toast.info("Creating borrow history record...");
-
           const historyData = {
             requestId: parseInt(contract.requestId),
             itemId: parseInt(contract.itemId),
@@ -914,9 +865,7 @@ const ContractsPage = () => {
             historyData
           );
 
-          if (historyResponse?.isSuccess) {
-            toast.success("Borrow history created successfully");
-          } else {
+          if (!historyResponse?.isSuccess) {
             toast.error(
               historyResponse?.message || "Failed to create borrow history"
             );
@@ -932,9 +881,7 @@ const ContractsPage = () => {
         setIsDepositModalOpen(false);
 
         // Refresh deposits data
-        toast.info("Refreshing deposit data...");
         await fetchDeposits();
-        toast.success("Data refreshed successfully");
 
         // Reset form
         setDepositForm({
@@ -1554,7 +1501,6 @@ const ContractsPage = () => {
                 onClick={() => {
                   setIsDetailModalOpen(false);
                   setSelectedImages([]);
-                  toast.info("Contract detail view closed");
                 }}
                 className="text-gray-500 hover:text-gray-700 transition-colors"
               >
@@ -1740,11 +1686,6 @@ const ContractsPage = () => {
                                 selectedContract.contractId
                               } - Page ${index + 1}`}
                               className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                              onLoad={() =>
-                                toast.info(
-                                  `Image ${index + 1} loaded successfully`
-                                )
-                              }
                               onError={() =>
                                 toast.error(`Failed to load image ${index + 1}`)
                               }
@@ -1761,11 +1702,6 @@ const ContractsPage = () => {
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="p-1.5 bg-amber-600 rounded-full hover:bg-amber-700 transition-colors"
-                                onClick={() =>
-                                  toast.info(
-                                    `Opening image ${index + 1} in new tab`
-                                  )
-                                }
                               >
                                 <svg
                                   className="w-4 h-4"
@@ -1796,9 +1732,6 @@ const ContractsPage = () => {
                                 className="p-1.5 bg-green-600 rounded-full hover:bg-green-700 transition-colors"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  toast.success(
-                                    `Downloading image ${index + 1}`
-                                  );
                                 }}
                               >
                                 <svg
@@ -1903,7 +1836,6 @@ const ContractsPage = () => {
                                   <button
                                     onClick={() => {
                                       setSelectedImages([]);
-                                      toast.info("Image selection cleared");
                                     }}
                                     className="px-3 py-1 text-xs bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition-colors flex items-center gap-1"
                                     disabled={isUploading}
@@ -1946,9 +1878,6 @@ const ContractsPage = () => {
                                           const newFiles = [...selectedImages];
                                           newFiles.splice(index, 1);
                                           setSelectedImages(newFiles);
-                                          toast.info(
-                                            `Removed image ${index + 1}`
-                                          );
                                         }}
                                       >
                                         <svg
@@ -2039,7 +1968,6 @@ const ContractsPage = () => {
                 onClick={() => {
                   setIsDetailModalOpen(false);
                   setSelectedImages([]);
-                  toast.info("Contract detail view closed");
                 }}
                 className="px-6 py-2.5 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors font-medium"
               >
@@ -2211,10 +2139,6 @@ const ContractsPage = () => {
                               `Amount should not exceed ${formatCurrency(
                                 maxValue
                               )}`
-                            );
-                          } else if (value >= minValue && value <= maxValue) {
-                            toast.success(
-                              `Valid deposit amount: ${formatCurrency(value)}`
                             );
                           }
                         }}
