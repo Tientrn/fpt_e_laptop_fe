@@ -6,6 +6,7 @@ import productApi from "../../api/productApi";
 import productimageApi from "../../api/productimageApi";
 import useCartStore from "../../store/useCartStore";
 import ProductFeedback from "../../components/product/ProductFeedback";
+import shopApi from "../../api/shopApi";
 
 // Detail Item Component
 const DetailItem = ({ icon, label, value, valueClassName = "text-black" }) => {
@@ -333,6 +334,7 @@ const ProductDetailPage = () => {
   const addToCart = useCartStore((state) => state.addToCart);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const getCurrentCart = useCartStore((state) => state.getCurrentCart);
+  const [shopName, setShopName] = useState("Loading...");
 
   useEffect(() => {
     let isMounted = true;
@@ -351,6 +353,21 @@ const ProductDetailPage = () => {
         if (productResponse.isSuccess && productResponse.data) {
           const productData = productResponse.data;
           setProduct(productData);
+          if (productData.shopId) {
+            try {
+              const shopResponse = await shopApi.getShopById(
+                productData.shopId
+              );
+              if (shopResponse.isSuccess && shopResponse.data?.shopName) {
+                setShopName(shopResponse.data.shopName);
+              } else {
+                setShopName("Unknown");
+              }
+            } catch (shopError) {
+              console.error("Error fetching shop:", shopError);
+              setShopName("Unknown");
+            }
+          }
 
           if (productData.imageProduct) {
             setSelectedImage(productData.imageProduct);
@@ -785,11 +802,7 @@ const ProductDetailPage = () => {
                 label="Year"
                 value={product.productionYear}
               />
-              <DetailItem
-                icon="shop"
-                label="Shop"
-                value={product.shopName || "Unknown"}
-              />
+              <DetailItem icon="shop" label="Shop" value={shopName} />
             </div>
 
             <div className="mb-6">

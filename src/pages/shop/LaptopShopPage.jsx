@@ -1,6 +1,15 @@
 import { useState, useEffect } from "react";
 import productApi from "../../api/productApi";
-import { FaShoppingCart, FaSearch, FaLaptop, FaTimesCircle, FaTags, FaSort, FaRegLightbulb, FaFilter } from "react-icons/fa";
+import {
+  FaShoppingCart,
+  FaSearch,
+  FaLaptop,
+  FaTimesCircle,
+  FaTags,
+  FaSort,
+  FaRegLightbulb,
+  FaFilter,
+} from "react-icons/fa";
 import { toast, ToastContainer } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import useCartStore from "../../store/useCartStore";
@@ -8,6 +17,7 @@ import "react-toastify/dist/ReactToastify.css";
 import categoryApi from "../../api/categoryApi";
 import PropTypes from "prop-types";
 import CreativeFilterSidebar from "../../components/shop/CreativeFilterSidebar";
+import shopApi from "../../api/shopApi";
 
 // Custom compact SearchBar with creative design
 const CreativeSearchBar = ({ onSearch, className }) => {
@@ -41,7 +51,7 @@ const CreativeSearchBar = ({ onSearch, className }) => {
 
 CreativeSearchBar.propTypes = {
   onSearch: PropTypes.func.isRequired,
-  className: PropTypes.string
+  className: PropTypes.string,
 };
 
 // Custom creative SortOptions
@@ -74,8 +84,18 @@ const CreativeSortOptions = ({ onSort, className }) => {
           <FaSort className="text-lg" />
         </div>
         <div className="pointer-events-none absolute right-4 top-1/2 transform -translate-y-1/2 text-indigo-500 group-hover:text-indigo-600 transition-colors duration-300">
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+          <svg
+            className="w-4 h-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              d="M19 9l-7 7-7-7"
+            />
           </svg>
         </div>
       </div>
@@ -85,7 +105,7 @@ const CreativeSortOptions = ({ onSort, className }) => {
 
 CreativeSortOptions.propTypes = {
   onSort: PropTypes.func.isRequired,
-  className: PropTypes.string
+  className: PropTypes.string,
 };
 
 const LaptopShopPage = () => {
@@ -101,7 +121,7 @@ const LaptopShopPage = () => {
     cpu: "",
     ram: "",
     storage: "",
-    status: ""
+    status: "",
   });
   const navigate = useNavigate();
   const addToCart = useCartStore((state) => state.addToCart);
@@ -137,8 +157,25 @@ const LaptopShopPage = () => {
         setLoading(true);
         const response = await productApi.getAllProducts();
         if (response.isSuccess) {
-          setAllProducts(response.data || []);
-          setProducts(response.data || []);
+          const productsRaw = response.data || [];
+
+          // Gọi API lấy shopName cho mỗi product
+          const enrichedProducts = await Promise.all(
+            productsRaw.map(async (product) => {
+              try {
+                const shopRes = await shopApi.getShopById(product.shopId);
+                return {
+                  ...product,
+                  shopName: shopRes.data?.shopName || "Unknown Shop",
+                };
+              } catch (err) {
+                return { ...product, shopName: "Unknown Shop" };
+              }
+            })
+          );
+
+          setAllProducts(enrichedProducts);
+          setProducts(enrichedProducts);
         } else {
           toast.error("Failed to fetch products");
         }
@@ -170,25 +207,30 @@ const LaptopShopPage = () => {
 
   const handleFilterChange = (newFilters) => {
     setActiveFilters(newFilters);
-    filterAndSortProducts(searchQuery, selectedCategory, sortOption, newFilters);
+    filterAndSortProducts(
+      searchQuery,
+      selectedCategory,
+      sortOption,
+      newFilters
+    );
   };
 
   // Combined function to filter and sort products
   const filterAndSortProducts = (query, category, sortOpt, filters) => {
     let filtered = [...allProducts];
-    
+
     // Apply search filter
     if (query) {
       filtered = filtered.filter((product) =>
         product.productName.toLowerCase().includes(query.toLowerCase())
       );
     }
-    
+
     // Apply category filter
     if (category) {
       filtered = filtered.filter((product) => product.categoryId === category);
     }
-    
+
     // Apply advanced filters
     Object.entries(filters).forEach(([key, value]) => {
       if (value) {
@@ -208,18 +250,23 @@ const LaptopShopPage = () => {
         });
       }
     });
-    
+
     // Apply sorting
     filtered.sort((a, b) => {
       switch (sortOpt) {
-        case "ram-high-to-low": return parseInt(b.ram) - parseInt(a.ram);
-        case "ram-low-to-high": return parseInt(a.ram) - parseInt(b.ram);
-        case "newest": return new Date(b.createdAt) - new Date(a.createdAt);
-        case "oldest": return new Date(a.createdAt) - new Date(b.createdAt);
-        default: return 0;
+        case "ram-high-to-low":
+          return parseInt(b.ram) - parseInt(a.ram);
+        case "ram-low-to-high":
+          return parseInt(a.ram) - parseInt(b.ram);
+        case "newest":
+          return new Date(b.createdAt) - new Date(a.createdAt);
+        case "oldest":
+          return new Date(a.createdAt) - new Date(b.createdAt);
+        default:
+          return 0;
       }
     });
-    
+
     setProducts(filtered);
   };
 
@@ -243,22 +290,25 @@ const LaptopShopPage = () => {
       cpu: "",
       ram: "",
       storage: "",
-      status: ""
+      status: "",
     });
     setProducts(allProducts);
   };
 
   // Check if any filters are active
-  const hasActiveFilters = searchQuery !== "" || 
-                          selectedCategory !== null || 
-                          sortOption !== "default" || 
-                          Object.values(activeFilters).some(value => value !== "");
+  const hasActiveFilters =
+    searchQuery !== "" ||
+    selectedCategory !== null ||
+    sortOption !== "default" ||
+    Object.values(activeFilters).some((value) => value !== "");
 
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-600"></div>
-        <p className="ml-3 text-indigo-800 font-medium text-sm">Loading amazing laptops...</p>
+        <p className="ml-3 text-indigo-800 font-medium text-sm">
+          Loading amazing laptops...
+        </p>
       </div>
     );
   }
@@ -286,14 +336,18 @@ const LaptopShopPage = () => {
             </div>
             <div className="w-28 h-1.5 bg-gradient-to-r from-white/60 to-white/90 rounded-full mb-5"></div>
             <p className="max-w-2xl text-indigo-100 text-lg mb-8 font-light">
-              Discover premium laptops for work, gaming, and everything in between
+              Discover premium laptops for work, gaming, and everything in
+              between
             </p>
 
             <div className="max-w-xl w-full">
               <CreativeSearchBar onSearch={handleSearch} className="w-full" />
               <div className="flex items-center justify-center mt-3 text-indigo-100 text-xs">
                 <FaRegLightbulb className="mr-1.5" />
-                <p>Type a keyword to find your dream laptop or browse by category below</p>
+                <p>
+                  Type a keyword to find your dream laptop or browse by category
+                  below
+                </p>
               </div>
             </div>
           </div>
@@ -301,33 +355,41 @@ const LaptopShopPage = () => {
       </div>
 
       {/* Sticky Navigation - Stylish & Clean */}
-      <div 
+      <div
         className={`transition-all duration-300 ease-in-out z-30 bg-white border-b border-indigo-100 shadow-sm 
-          ${isSticky ? 'sticky top-0 py-2 px-4' : 'py-3 px-4'}`}
+          ${isSticky ? "sticky top-0 py-2 px-4" : "py-3 px-4"}`}
       >
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2">
             <FaLaptop className="text-indigo-600" />
-            <h2 className="text-indigo-800 font-medium hidden md:block">Tech Haven</h2>
+            <h2 className="text-indigo-800 font-medium hidden md:block">
+              Tech Haven
+            </h2>
           </div>
 
           <div className="flex items-center gap-3">
-            <button 
+            <button
               onClick={() => setShowFilters(!showFilters)}
               className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-medium transition-all ${
-                showFilters 
-                  ? "bg-indigo-100 text-indigo-800 shadow-sm" 
+                showFilters
+                  ? "bg-indigo-100 text-indigo-800 shadow-sm"
                   : "bg-gradient-to-r from-indigo-700 to-purple-700 text-white shadow-sm hover:shadow"
               }`}
             >
-              {showFilters ? <FaTimesCircle className="text-sm" /> : <FaFilter className="text-sm" />}
-              <span className="hidden md:inline">{showFilters ? "Hide Filters" : "Show Filters"}</span>
+              {showFilters ? (
+                <FaTimesCircle className="text-sm" />
+              ) : (
+                <FaFilter className="text-sm" />
+              )}
+              <span className="hidden md:inline">
+                {showFilters ? "Hide Filters" : "Show Filters"}
+              </span>
             </button>
 
             <CreativeSortOptions onSort={handleSort} className="w-auto" />
-            
+
             {hasActiveFilters && (
-              <button 
+              <button
                 onClick={resetAllFilters}
                 className="flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-red-500 to-pink-500 text-white rounded-full text-xs font-medium hover:from-red-600 hover:to-pink-600 transition-all shadow-sm hover:shadow"
               >
@@ -347,16 +409,22 @@ const LaptopShopPage = () => {
               <FaTags className="mr-2" />
               <span className="text-sm font-medium">Categories</span>
             </div>
-            
+
             <button
               onClick={() => {
                 setSelectedCategory(null);
-                filterAndSortProducts(searchQuery, null, sortOption, activeFilters);
+                filterAndSortProducts(
+                  searchQuery,
+                  null,
+                  sortOption,
+                  activeFilters
+                );
               }}
               className={`px-4 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap
-                ${selectedCategory === null
-                  ? "bg-gradient-to-r from-indigo-700 to-purple-700 text-white shadow-sm"
-                  : "text-indigo-700 hover:bg-indigo-50"
+                ${
+                  selectedCategory === null
+                    ? "bg-gradient-to-r from-indigo-700 to-purple-700 text-white shadow-sm"
+                    : "text-indigo-700 hover:bg-indigo-50"
                 }`}
             >
               All Products
@@ -367,9 +435,10 @@ const LaptopShopPage = () => {
                 key={cat.categoryId}
                 onClick={() => handleCategoryClick(cat.categoryId)}
                 className={`px-4 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap
-                  ${selectedCategory === cat.categoryId
-                    ? "bg-gradient-to-r from-indigo-700 to-purple-700 text-white shadow-sm"
-                    : "text-indigo-700 hover:bg-indigo-50"
+                  ${
+                    selectedCategory === cat.categoryId
+                      ? "bg-gradient-to-r from-indigo-700 to-purple-700 text-white shadow-sm"
+                      : "text-indigo-700 hover:bg-indigo-50"
                   }`}
               >
                 {cat.categoryName}
@@ -385,21 +454,23 @@ const LaptopShopPage = () => {
           {/* Mobile Filters (shown when showFilters is true) */}
           {showFilters && (
             <div className="md:hidden">
-              <CreativeFilterSidebar 
-                onFilterChange={handleFilterChange} 
+              <CreativeFilterSidebar
+                onFilterChange={handleFilterChange}
                 currentFilters={activeFilters}
               />
             </div>
           )}
 
           {/* Desktop Filters */}
-          <div className={`hidden md:block md:w-1/4 transition-all duration-300 ${
-            showFilters ? 'opacity-100' : 'opacity-0 md:w-0 overflow-hidden'
-          }`}>
+          <div
+            className={`hidden md:block md:w-1/4 transition-all duration-300 ${
+              showFilters ? "opacity-100" : "opacity-0 md:w-0 overflow-hidden"
+            }`}
+          >
             {showFilters && (
               <div className="sticky top-20">
-                <CreativeFilterSidebar 
-                  onFilterChange={handleFilterChange} 
+                <CreativeFilterSidebar
+                  onFilterChange={handleFilterChange}
                   currentFilters={activeFilters}
                 />
               </div>
@@ -407,15 +478,22 @@ const LaptopShopPage = () => {
           </div>
 
           {/* Products Grid */}
-          <div className={`flex-1 transition-all duration-300 ${showFilters ? 'md:w-3/4' : 'w-full'}`}>
+          <div
+            className={`flex-1 transition-all duration-300 ${
+              showFilters ? "md:w-3/4" : "w-full"
+            }`}
+          >
             {products.length > 0 ? (
               <>
                 <div className="flex justify-between items-center mb-6">
                   <h2 className="text-xl font-bold text-indigo-900">
-                    <span className="border-b-2 border-indigo-400 pb-1">Available Products</span>
+                    <span className="border-b-2 border-indigo-400 pb-1">
+                      Available Products
+                    </span>
                   </h2>
                   <div className="text-indigo-700 bg-indigo-50 px-3 py-1.5 rounded-full text-sm font-medium shadow-sm">
-                    {products.length} {products.length === 1 ? "product" : "products"} found
+                    {products.length}{" "}
+                    {products.length === 1 ? "product" : "products"} found
                   </div>
                 </div>
 
@@ -442,16 +520,21 @@ const LaptopShopPage = () => {
                             Out of Stock
                           </span>
                         )}
+                        <span className="absolute top-3 left-3 bg-indigo-600 text-white px-3 py-1 rounded-full text-xs font-medium shadow-sm">
+                          {product.shopName}
+                        </span>
                         <div className="absolute bottom-3 left-4 text-white">
-                          <p className="text-lg font-bold drop-shadow-md">{formatPrice(product.price)}</p>
+                          <p className="text-lg font-bold drop-shadow-md">
+                            {formatPrice(product.price)}
+                          </p>
                         </div>
                       </div>
-                      
+
                       <div className="p-5">
                         <h3 className="text-indigo-900 font-semibold text-lg mb-2 line-clamp-2 min-h-[3rem] group-hover:text-indigo-600 transition-colors">
                           {product.productName}
                         </h3>
-                        
+
                         <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm text-indigo-700 mb-4">
                           <div className="flex items-center">
                             <span className="w-3 h-3 bg-indigo-100 rounded-full mr-2"></span>
@@ -479,13 +562,15 @@ const LaptopShopPage = () => {
                               const existingItem = cart.find(
                                 (item) => item.productId === product.productId
                               );
-                              const currentQty = existingItem ? existingItem.quantity : 0;
+                              const currentQty = existingItem
+                                ? existingItem.quantity
+                                : 0;
 
                               if (currentQty >= product.quantity) {
                                 toast.error("Maximum quantity reached");
                                 return;
                               }
-                              
+
                               if (product.quantity > 0) {
                                 addToCart({
                                   productId: product.productId,
@@ -510,9 +595,10 @@ const LaptopShopPage = () => {
                             }}
                             disabled={product.quantity <= 0}
                             className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-white text-sm font-medium shadow-sm 
-                              ${product.quantity > 0
-                                ? "bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
-                                : "bg-gray-300 cursor-not-allowed"
+                              ${
+                                product.quantity > 0
+                                  ? "bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
+                                  : "bg-gray-300 cursor-not-allowed"
                               }`}
                           >
                             <FaShoppingCart />
@@ -530,11 +616,15 @@ const LaptopShopPage = () => {
                   <div className="w-20 h-20 flex items-center justify-center bg-indigo-50 rounded-full mb-4">
                     <FaLaptop size={32} className="text-indigo-400" />
                   </div>
-                  <h3 className="text-xl font-bold text-indigo-900 mb-2">No Products Found</h3>
+                  <h3 className="text-xl font-bold text-indigo-900 mb-2">
+                    No Products Found
+                  </h3>
                   <p className="text-indigo-700 mb-6 max-w-md">
-                    We couldn&apos;t find any products matching your search criteria. Try adjusting your filters or browse our entire collection.
+                    We couldn&apos;t find any products matching your search
+                    criteria. Try adjusting your filters or browse our entire
+                    collection.
                   </p>
-                  <button 
+                  <button
                     onClick={resetAllFilters}
                     className="px-6 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-full hover:from-indigo-700 hover:to-purple-700 transition-all shadow-sm hover:shadow font-medium"
                   >
