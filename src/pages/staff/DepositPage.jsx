@@ -38,12 +38,9 @@ const DepositPage = () => {
       const response = await userApi.getUserById(depositForm.userId);
       if (response.isSuccess) {
         setUserInfo(response.data);
-      } else {
-        toast.error("Failed to load user details");
       }
     } catch (error) {
       console.error("Error:", error);
-      toast.error("Error loading user details");
     }
   };
 
@@ -80,49 +77,32 @@ const DepositPage = () => {
       const contractResponse = await borrowcontractApi.getBorrowContractById(
         contractId
       );
-      console.log("📦 Contract loaded:", contractResponse.data);
       if (!contractResponse.isSuccess) {
         toast.error("Failed to get contract details");
         return;
       }
       const requestId = contractResponse.data.requestId;
-      console.log("Contract details:", contractResponse.data); // Debug log
-      console.log("📝 Deposit form before submit:", depositForm);
       // Tạo deposit transaction
       const createResponse =
         await deposittransactionApi.createDepositTransaction(depositForm);
 
       if (createResponse.isSuccess) {
         const newDepositId = createResponse.data.depositId;
-        console.log("Created deposit with ID:", newDepositId); // Debug log
-
         // Lấy thông tin deposit hiện tại
         const getResponse =
           await deposittransactionApi.getDepositTransactionById(newDepositId);
 
         if (getResponse.isSuccess) {
           const currentDeposit = getResponse.data;
-          console.log("Current deposit data:", currentDeposit); // Debug log
-
           // Update status của deposit thành Completed
           const updateDepositResponse =
             await deposittransactionApi.updateDepositTransaction(newDepositId, {
               ...currentDeposit,
               status: "Completed",
             });
-          console.log(
-            "📥 Response from updateDepositTransaction:",
-            updateDepositResponse
-          );
-          console.log(
-            "isSuccess value & type:",
-            updateDepositResponse.isSuccess,
-            typeof updateDepositResponse.isSuccess
-          );
 
           if (updateDepositResponse.isSuccess) {
             // Update request status sang Borrowing
-            console.log("Updating request status for requestId:", requestId); // Debug log
             const requestUpdateResponse =
               await borrowrequestApi.updateBorrowRequest(requestId, {
                 status: "Borrowing",
@@ -134,14 +114,9 @@ const DepositPage = () => {
               );
               navigate("/staff/contracts");
             } else {
-              console.error(
-                "Failed to update request status:",
-                requestUpdateResponse
-              );
               toast.error("Failed to update request status");
             }
           } else {
-            console.error("Failed to update deposit:", updateDepositResponse);
             toast.error("Failed to update deposit status");
           }
         } else {

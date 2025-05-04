@@ -9,6 +9,7 @@ import borrowcontractApi from "../../api/borrowcontractApi";
 import userApi from "../../api/userApi";
 import reportdamagesApi from "../../api/reportdamagesApi";
 import compensationTransactionApi from "../../api/compensationTransactionApi";
+import deposittransactionApi from "../../api/deposittransactionApi";
 import { formatCurrency } from "../../utils/moneyValidationUtils";
 
 const BorrowHistory = () => {
@@ -27,7 +28,10 @@ const BorrowHistory = () => {
   const [compensationMap, setCompensationMap] = useState({});
   const [showReportModal, setShowReportModal] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
-  const [sortConfig, setSortConfig] = useState({ key: 'borrowHistoryId', direction: 'desc' });
+  const [sortConfig, setSortConfig] = useState({
+    key: "borrowHistoryId",
+    direction: "desc",
+  });
   const [reportData, setReportData] = useState({
     file: null,
     ItemId: "",
@@ -38,11 +42,13 @@ const BorrowHistory = () => {
     DamageFee: 0,
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [depositTransactionsMap, setDepositTransactionsMap] = useState({});
 
   useEffect(() => {
     fetchBorrowHistory();
     fetchReportDamages();
     fetchCompensationTransactions();
+    fetchDepositTransactions();
   }, []);
 
   useEffect(() => {
@@ -195,6 +201,32 @@ const BorrowHistory = () => {
     }
   };
 
+  // Fetch deposit transactions
+  const fetchDepositTransactions = async () => {
+    try {
+      const response = await deposittransactionApi.getAllDepositTransactions();
+      if (response.isSuccess && Array.isArray(response.data)) {
+        // Map by contractId for quick lookup
+        const map = {};
+        response.data.forEach((tx) => {
+          if (tx.contractId) {
+            // Only keep the latest transaction per contractId
+            if (
+              !map[tx.contractId] ||
+              new Date(tx.depositDate) >
+                new Date(map[tx.contractId].depositDate)
+            ) {
+              map[tx.contractId] = tx;
+            }
+          }
+        });
+        setDepositTransactionsMap(map);
+      }
+    } catch (error) {
+      console.error("Error fetching deposit transactions:", error);
+    }
+  };
+
   // Check if an item should be marked as returned based on compensation
   const isItemReturned = (item) => {
     // First check if the item is already marked as returned
@@ -260,12 +292,12 @@ const BorrowHistory = () => {
 
   // Sort function
   const handleSort = (key) => {
-    let direction = 'asc';
-    
-    if (sortConfig.key === key && sortConfig.direction === 'asc') {
-      direction = 'desc';
+    let direction = "asc";
+
+    if (sortConfig.key === key && sortConfig.direction === "asc") {
+      direction = "desc";
     }
-    
+
     setSortConfig({ key, direction });
     setCurrentPage(1); // Reset to first page when sorting changes
   };
@@ -273,45 +305,51 @@ const BorrowHistory = () => {
   // Apply sorting to filteredHistory
   const sortedFilteredHistory = useMemo(() => {
     let sortableItems = [...filteredHistory];
-    
+
     if (sortConfig.key) {
       sortableItems.sort((a, b) => {
         // Handle nested properties for user and item info
         let aValue, bValue;
-        
-        if (sortConfig.key === 'userName') {
-          aValue = userInfoMap[a.userId]?.fullName || '';
-          bValue = userInfoMap[b.userId]?.fullName || '';
-        } else if (sortConfig.key === 'itemName') {
-          aValue = itemsMap[a.itemId]?.itemName || '';
-          bValue = itemsMap[b.itemId]?.itemName || '';
-        } else if (sortConfig.key === 'borrowDate' || sortConfig.key === 'returnDate') {
+
+        if (sortConfig.key === "userName") {
+          aValue = userInfoMap[a.userId]?.fullName || "";
+          bValue = userInfoMap[b.userId]?.fullName || "";
+        } else if (sortConfig.key === "itemName") {
+          aValue = itemsMap[a.itemId]?.itemName || "";
+          bValue = itemsMap[b.itemId]?.itemName || "";
+        } else if (
+          sortConfig.key === "borrowDate" ||
+          sortConfig.key === "returnDate"
+        ) {
           aValue = new Date(a[sortConfig.key] || 0);
           bValue = new Date(b[sortConfig.key] || 0);
-        } else if (sortConfig.key === 'expectedReturnDate') {
+        } else if (sortConfig.key === "expectedReturnDate") {
           aValue = new Date(contractsMap[a.requestId]?.expectedReturnDate || 0);
           bValue = new Date(contractsMap[b.requestId]?.expectedReturnDate || 0);
         } else {
           aValue = a[sortConfig.key];
           bValue = b[sortConfig.key];
         }
-        
+
         if (aValue < bValue) {
-          return sortConfig.direction === 'asc' ? -1 : 1;
+          return sortConfig.direction === "asc" ? -1 : 1;
         }
         if (aValue > bValue) {
-          return sortConfig.direction === 'asc' ? 1 : -1;
+          return sortConfig.direction === "asc" ? 1 : -1;
         }
         return 0;
       });
     }
-    
+
     return sortableItems;
   }, [filteredHistory, sortConfig, userInfoMap, itemsMap, contractsMap]);
 
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentItems = sortedFilteredHistory.slice(indexOfFirstItem, indexOfLastItem);
+  const currentItems = sortedFilteredHistory.slice(
+    indexOfFirstItem,
+    indexOfLastItem
+  );
   const totalPages = Math.ceil(filteredHistory.length / itemsPerPage);
 
   const handleFilterChange = (status) => {
@@ -637,82 +675,174 @@ const BorrowHistory = () => {
             <table className="min-w-full divide-y divide-gray-200">
               <thead>
                 <tr className="bg-gradient-to-r from-gray-700 to-amber-700 text-white">
-                  <th 
+                  <th
                     className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider cursor-pointer hover:bg-amber-600 transition-colors"
-                    onClick={() => handleSort('userName')}
+                    onClick={() => handleSort("userName")}
                   >
                     <div className="flex items-center">
                       User
-                      {sortConfig.key === 'userName' && (
+                      {sortConfig.key === "userName" && (
                         <span className="ml-2 bg-white bg-opacity-20 rounded-full p-0.5 w-5 h-5 flex items-center justify-center">
-                          {sortConfig.direction === 'asc' ? 
-                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 15l7-7 7 7"></path>
-                            </svg> : 
-                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
+                          {sortConfig.direction === "asc" ? (
+                            <svg
+                              className="w-3 h-3"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                              xmlns="http://www.w3.org/2000/svg"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth="2"
+                                d="M5 15l7-7 7 7"
+                              ></path>
                             </svg>
-                          }
+                          ) : (
+                            <svg
+                              className="w-3 h-3"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                              xmlns="http://www.w3.org/2000/svg"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth="2"
+                                d="M19 9l-7 7-7-7"
+                              ></path>
+                            </svg>
+                          )}
                         </span>
                       )}
                     </div>
                   </th>
-                  <th 
+                  <th
                     className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider cursor-pointer hover:bg-amber-600 transition-colors"
-                    onClick={() => handleSort('itemName')}
+                    onClick={() => handleSort("itemName")}
                   >
                     <div className="flex items-center">
                       Device
-                      {sortConfig.key === 'itemName' && (
+                      {sortConfig.key === "itemName" && (
                         <span className="ml-2 bg-white bg-opacity-20 rounded-full p-0.5 w-5 h-5 flex items-center justify-center">
-                          {sortConfig.direction === 'asc' ? 
-                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 15l7-7 7 7"></path>
-                            </svg> : 
-                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
+                          {sortConfig.direction === "asc" ? (
+                            <svg
+                              className="w-3 h-3"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                              xmlns="http://www.w3.org/2000/svg"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth="2"
+                                d="M5 15l7-7 7 7"
+                              ></path>
                             </svg>
-                          }
+                          ) : (
+                            <svg
+                              className="w-3 h-3"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                              xmlns="http://www.w3.org/2000/svg"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth="2"
+                                d="M19 9l-7 7-7-7"
+                              ></path>
+                            </svg>
+                          )}
                         </span>
                       )}
                     </div>
                   </th>
-                  <th 
+                  <th
                     className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider cursor-pointer hover:bg-amber-600 transition-colors"
-                    onClick={() => handleSort('borrowDate')}
+                    onClick={() => handleSort("borrowDate")}
                   >
                     <div className="flex items-center">
                       Dates
-                      {sortConfig.key === 'borrowDate' && (
+                      {sortConfig.key === "borrowDate" && (
                         <span className="ml-2 bg-white bg-opacity-20 rounded-full p-0.5 w-5 h-5 flex items-center justify-center">
-                          {sortConfig.direction === 'asc' ? 
-                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 15l7-7 7 7"></path>
-                            </svg> : 
-                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
+                          {sortConfig.direction === "asc" ? (
+                            <svg
+                              className="w-3 h-3"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                              xmlns="http://www.w3.org/2000/svg"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth="2"
+                                d="M5 15l7-7 7 7"
+                              ></path>
                             </svg>
-                          }
+                          ) : (
+                            <svg
+                              className="w-3 h-3"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                              xmlns="http://www.w3.org/2000/svg"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth="2"
+                                d="M19 9l-7 7-7-7"
+                              ></path>
+                            </svg>
+                          )}
                         </span>
                       )}
                     </div>
                   </th>
-                  <th 
+                  <th
                     className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider cursor-pointer hover:bg-amber-600 transition-colors"
-                    onClick={() => handleSort('status')}
+                    onClick={() => handleSort("status")}
                   >
                     <div className="flex items-center">
                       Status
-                      {sortConfig.key === 'status' && (
+                      {sortConfig.key === "status" && (
                         <span className="ml-2 bg-white bg-opacity-20 rounded-full p-0.5 w-5 h-5 flex items-center justify-center">
-                          {sortConfig.direction === 'asc' ? 
-                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 15l7-7 7 7"></path>
-                            </svg> : 
-                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
+                          {sortConfig.direction === "asc" ? (
+                            <svg
+                              className="w-3 h-3"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                              xmlns="http://www.w3.org/2000/svg"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth="2"
+                                d="M5 15l7-7 7 7"
+                              ></path>
                             </svg>
-                          }
+                          ) : (
+                            <svg
+                              className="w-3 h-3"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                              xmlns="http://www.w3.org/2000/svg"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth="2"
+                                d="M19 9l-7 7-7-7"
+                              ></path>
+                            </svg>
+                          )}
                         </span>
                       )}
                     </div>
@@ -1747,6 +1877,44 @@ const BorrowHistory = () => {
                                   </div>
                                 )}
 
+                                {/* Deposit Transaction Amount */}
+                                {contractsMap[item.requestId] && (
+                                  <div className="bg-white p-4 rounded-lg shadow border-l-4 border-amber-500 mt-4 md:col-span-2">
+                                    <div className="flex items-center gap-3">
+                                      <svg
+                                        className="w-5 h-5 text-amber-500"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                        xmlns="http://www.w3.org/2000/svg"
+                                      >
+                                        <path
+                                          strokeLinecap="round"
+                                          strokeLinejoin="round"
+                                          strokeWidth="2"
+                                          d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                                        />
+                                      </svg>
+                                      <span className="font-semibold text-amber-700">
+                                        Deposit Transaction Amount:
+                                      </span>
+                                      <span className="ml-2 text-base font-bold text-amber-600">
+                                        {depositTransactionsMap[
+                                          contractsMap[item.requestId]
+                                            ?.contractId
+                                        ]?.amount
+                                          ? formatCurrency(
+                                              depositTransactionsMap[
+                                                contractsMap[item.requestId]
+                                                  ?.contractId
+                                              ].amount
+                                            )
+                                          : "N/A"}
+                                      </span>
+                                    </div>
+                                  </div>
+                                )}
+
                                 {/* Actions Card - New */}
                                 <div className="bg-white p-5 rounded-lg shadow-md border-l-4 border-purple-500 transform transition-all duration-300 hover:shadow-lg">
                                   <div className="flex items-center justify-between mb-4 pb-2 border-b">
@@ -1913,7 +2081,7 @@ const BorrowHistory = () => {
                             ? "Try adjusting your search terms"
                             : "No Borrowing history available"}
                         </p>
-                        <button 
+                        <button
                           onClick={() => {
                             setSearchTerm("");
                             setFilterStatus("all");
@@ -1936,11 +2104,17 @@ const BorrowHistory = () => {
           <div className="flex flex-col md:flex-row justify-between items-center p-4 border-t border-gray-200 bg-gradient-to-r from-gray-50 to-amber-50">
             <div className="text-sm text-gray-700 mb-4 md:mb-0">
               Showing{" "}
-              <span className="font-medium text-amber-700">{indexOfFirstItem + 1}</span> to{" "}
+              <span className="font-medium text-amber-700">
+                {indexOfFirstItem + 1}
+              </span>{" "}
+              to{" "}
               <span className="font-medium text-amber-700">
                 {Math.min(indexOfLastItem, filteredHistory.length)}
               </span>{" "}
-              of <span className="font-medium text-amber-700">{filteredHistory.length}</span>{" "}
+              of{" "}
+              <span className="font-medium text-amber-700">
+                {filteredHistory.length}
+              </span>{" "}
               entries
             </div>
             <div className="flex flex-wrap justify-center gap-2">
@@ -1949,8 +2123,19 @@ const BorrowHistory = () => {
                 disabled={currentPage === 1}
                 className="px-3 py-1 bg-white border border-gray-200 text-gray-700 rounded-md disabled:bg-gray-50 disabled:text-gray-400 hover:bg-amber-50 hover:border-amber-200 transition-colors shadow-sm disabled:shadow-none flex items-center gap-1"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7"></path>
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M15 19l-7-7 7-7"
+                  ></path>
                 </svg>
                 Previous
               </button>
@@ -1965,7 +2150,9 @@ const BorrowHistory = () => {
                       currentPage === i + 1
                         ? "bg-gradient-to-r from-amber-500 to-amber-600 text-white shadow-md border border-amber-400"
                         : "bg-white text-gray-700 hover:bg-amber-50 border border-gray-200 hover:border-amber-200 shadow-sm"
-                    } transition-all duration-300 transform ${currentPage === i + 1 ? "scale-110" : "hover:scale-105"}`}
+                    } transition-all duration-300 transform ${
+                      currentPage === i + 1 ? "scale-110" : "hover:scale-105"
+                    }`}
                   >
                     {i + 1}
                   </button>
@@ -1981,7 +2168,11 @@ const BorrowHistory = () => {
                         currentPage === pageNum
                           ? "bg-gradient-to-r from-amber-500 to-amber-600 text-white shadow-md border border-amber-400"
                           : "bg-white text-gray-700 hover:bg-amber-50 border border-gray-200 hover:border-amber-200 shadow-sm"
-                      } transition-all duration-300 transform ${currentPage === pageNum ? "scale-110" : "hover:scale-105"}`}
+                      } transition-all duration-300 transform ${
+                        currentPage === pageNum
+                          ? "scale-110"
+                          : "hover:scale-105"
+                      }`}
                     >
                       {pageNum}
                     </button>
@@ -1989,8 +2180,19 @@ const BorrowHistory = () => {
 
                   {currentPage > 3 && (
                     <span className="px-2 py-1 text-gray-500 flex items-center">
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z"></path>
+                      <svg
+                        className="w-5 h-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z"
+                        ></path>
                       </svg>
                     </span>
                   )}
@@ -2003,8 +2205,19 @@ const BorrowHistory = () => {
 
                   {currentPage < totalPages - 2 && (
                     <span className="px-2 py-1 text-gray-500 flex items-center">
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z"></path>
+                      <svg
+                        className="w-5 h-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z"
+                        ></path>
                       </svg>
                     </span>
                   )}
@@ -2017,7 +2230,11 @@ const BorrowHistory = () => {
                         currentPage === pageNum
                           ? "bg-gradient-to-r from-amber-500 to-amber-600 text-white shadow-md border border-amber-400"
                           : "bg-white text-gray-700 hover:bg-amber-50 border border-gray-200 hover:border-amber-200 shadow-sm"
-                      } transition-all duration-300 transform ${currentPage === pageNum ? "scale-110" : "hover:scale-105"}`}
+                      } transition-all duration-300 transform ${
+                        currentPage === pageNum
+                          ? "scale-110"
+                          : "hover:scale-105"
+                      }`}
                     >
                       {pageNum}
                     </button>
@@ -2033,8 +2250,19 @@ const BorrowHistory = () => {
                 className="px-3 py-1 bg-white border border-gray-200 text-gray-700 rounded-md disabled:bg-gray-50 disabled:text-gray-400 hover:bg-amber-50 hover:border-amber-200 transition-colors shadow-sm disabled:shadow-none flex items-center gap-1"
               >
                 Next
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path>
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M9 5l7 7-7 7"
+                  ></path>
                 </svg>
               </button>
             </div>
@@ -2049,8 +2277,17 @@ const BorrowHistory = () => {
             {/* Modal Header with gradient */}
             <div className="p-5 border-b border-gray-200 bg-gradient-to-r from-amber-50 to-amber-100 rounded-t-lg">
               <h3 className="text-lg font-semibold text-gray-800 flex items-center">
-                <svg className="w-5 h-5 text-amber-600 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                <svg
+                  className="w-5 h-5 text-amber-600 mr-2"
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                    clipRule="evenodd"
+                  />
                 </svg>
                 Report Damage for Device
               </h3>
@@ -2082,34 +2319,54 @@ const BorrowHistory = () => {
                   <div className="mb-4 p-4 bg-gradient-to-r from-amber-50 to-amber-100 rounded-lg shadow-sm border border-amber-200">
                     <div className="flex items-center mb-2">
                       <div className="w-8 h-8 rounded-full bg-amber-200 flex items-center justify-center mr-2">
-                        <svg className="w-4 h-4 text-amber-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        <svg
+                          className="w-4 h-4 text-amber-700"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                          xmlns="http://www.w3.org/2000/svg"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                          ></path>
                         </svg>
                       </div>
-                      <h4 className="text-sm font-medium text-amber-800">Device Information</h4>
+                      <h4 className="text-sm font-medium text-amber-800">
+                        Device Information
+                      </h4>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <div className="flex flex-col">
                         <p className="text-xs text-gray-500">Device</p>
                         <p className="text-sm font-medium text-gray-800">
-                          {itemsMap[selectedItem.itemId]?.itemName || "Unknown Device"}
+                          {itemsMap[selectedItem.itemId]?.itemName ||
+                            "Unknown Device"}
                         </p>
                       </div>
                       <div className="flex flex-col">
                         <p className="text-xs text-gray-500">User</p>
                         <p className="text-sm font-medium text-gray-800">
-                          {userInfoMap[selectedItem.userId]?.fullName || "Unknown User"}
+                          {userInfoMap[selectedItem.userId]?.fullName ||
+                            "Unknown User"}
                         </p>
                       </div>
                       <div className="flex flex-col">
                         <p className="text-xs text-gray-500">Borrow Date</p>
                         <p className="text-sm font-medium text-gray-800">
-                          {format(new Date(selectedItem.borrowDate), "dd/MM/yyyy")}
+                          {format(
+                            new Date(selectedItem.borrowDate),
+                            "dd/MM/yyyy"
+                          )}
                         </p>
                       </div>
                       <div className="flex flex-col">
                         <p className="text-xs text-gray-500">ID</p>
-                        <p className="text-sm font-medium text-gray-800">#{selectedItem.borrowHistoryId}</p>
+                        <p className="text-sm font-medium text-gray-800">
+                          #{selectedItem.borrowHistoryId}
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -2129,7 +2386,9 @@ const BorrowHistory = () => {
                       className="w-full p-2 border border-gray-300 rounded-md focus:ring-amber-500 focus:border-amber-500 hover:border-amber-300 transition-colors bg-white file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-amber-50 file:text-amber-700 hover:file:bg-amber-100"
                     />
                   </div>
-                  <p className="mt-1 text-xs text-gray-500">Upload a clear image of the damage</p>
+                  <p className="mt-1 text-xs text-gray-500">
+                    Upload a clear image of the damage
+                  </p>
                 </div>
 
                 <div className="mb-4 group">
@@ -2213,21 +2472,48 @@ const BorrowHistory = () => {
                     type="submit"
                     disabled={isSubmitting}
                     className={`px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-amber-500 to-amber-600 rounded-md hover:from-amber-600 hover:to-amber-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 shadow-md transition-all duration-200 ${
-                      isSubmitting ? "opacity-75 cursor-not-allowed" : "transform hover:translate-y-[-2px]"
+                      isSubmitting
+                        ? "opacity-75 cursor-not-allowed"
+                        : "transform hover:translate-y-[-2px]"
                     }`}
                   >
                     {isSubmitting ? (
                       <div className="flex items-center">
-                        <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        <svg
+                          className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                        >
+                          <circle
+                            className="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                          ></circle>
+                          <path
+                            className="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                          ></path>
                         </svg>
                         Submitting...
                       </div>
                     ) : (
                       <div className="flex items-center">
-                        <svg className="w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                        <svg
+                          className="w-4 h-4 mr-2"
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 20 20"
+                          fill="currentColor"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                            clipRule="evenodd"
+                          />
                         </svg>
                         Submit Report
                       </div>

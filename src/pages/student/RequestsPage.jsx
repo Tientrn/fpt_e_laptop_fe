@@ -271,7 +271,7 @@ const RequestsPage = () => {
             You don&apos;t have any active borrow requests at the moment.
           </p>
           <a
-            href="#"
+            href="/laptopborrow"
             className="px-5 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition duration-200"
           >
             Browse Laptops
