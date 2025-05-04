@@ -68,11 +68,13 @@ function FooterHomePage() {
             <ul className="space-y-2">
               <li className="flex items-center">
                 <i className="fas fa-envelope mr-2"></i>
-                <span className="text-white/80">support@example.com</span>
+                <span className="text-white/80">
+                  trannhattien160802@gmail.com
+                </span>
               </li>
               <li className="flex items-center">
                 <i className="fas fa-phone-alt mr-2"></i>
-                <span className="text-white/80">+1 (555) 123-4567</span>
+                <span className="text-white/80">+84 33 749 6879</span>
               </li>
               <li className="flex items-center">
                 <i className="fas fa-map-marker-alt mr-2"></i>

@@ -591,17 +591,17 @@ const ProductDetailPage = () => {
   }
 
   return (
-    <div className="bg-white min-h-screen">
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex flex-col md:flex-row gap-8">
+    <div className="bg-gradient-to-b from-amber-50 to-white min-h-screen animate-fade-in">
+      <div className="container mx-auto px-4 py-12">
+        <div className="flex flex-col md:flex-row gap-14">
           {/* Left Column - Product Main Image */}
           <div className="w-full md:w-1/2">
             <button
               onClick={() => navigate("/laptopshop")}
-              className="flex items-center text-black hover:text-amber-600 mb-4"
+              className="flex items-center text-gray-700 hover:text-amber-600 mb-8 font-semibold text-lg transition-all"
             >
               <svg
-                className="w-5 h-5 mr-1"
+                className="w-6 h-6 mr-2"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -615,60 +615,56 @@ const ProductDetailPage = () => {
               </svg>
               Back to Shop
             </button>
-            <div className="bg-white border border-gray-200 rounded overflow-hidden relative">
+            <div className="bg-white border border-gray-200 rounded-3xl overflow-hidden relative shadow-2xl animate-fade-in">
               {selectedImage ? (
                 <>
                   <img
                     src={selectedImage}
                     alt={product.productName}
-                    className="w-full h-full object-contain"
+                    className="w-full h-[440px] object-contain bg-gradient-to-br from-amber-50 to-white rounded-3xl shadow-xl transition-transform duration-500 ease-in-out animate-fade-in"
                   />
                   {/* Navigation Buttons */}
-                  <div className="absolute inset-y-0 left-0 flex items-center">
-                    <button
-                      onClick={handlePrevImage}
-                      className="bg-black bg-opacity-30 hover:bg-opacity-50 text-white p-2 rounded-r transform transition-transform hover:scale-105"
-                      aria-label="Previous image"
+                  <button
+                    onClick={handlePrevImage}
+                    className="absolute left-3 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-amber-100 text-amber-600 p-3 rounded-full shadow-lg border border-amber-200 transition-all scale-100 hover:scale-110"
+                    aria-label="Previous image"
+                  >
+                    <svg
+                      className="w-7 h-7"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
                     >
-                      <svg
-                        className="w-6 h-6"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
-                          d="M15 19l-7-7 7-7"
-                        />
-                      </svg>
-                    </button>
-                  </div>
-                  <div className="absolute inset-y-0 right-0 flex items-center">
-                    <button
-                      onClick={handleNextImage}
-                      className="bg-black bg-opacity-30 hover:bg-opacity-50 text-white p-2 rounded-l transform transition-transform hover:scale-105"
-                      aria-label="Next image"
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M15 19l-7-7 7-7"
+                      />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={handleNextImage}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-amber-100 text-amber-600 p-3 rounded-full shadow-lg border border-amber-200 transition-all scale-100 hover:scale-110"
+                    aria-label="Next image"
+                  >
+                    <svg
+                      className="w-7 h-7"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
                     >
-                      <svg
-                        className="w-6 h-6"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
-                          d="M9 5l7 7-7 7"
-                        />
-                      </svg>
-                    </button>
-                  </div>
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M9 5l7 7-7 7"
+                      />
+                    </svg>
+                  </button>
                   {/* Image Counter */}
-                  <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2">
-                    <div className="bg-black bg-opacity-50 text-white px-3 py-1 rounded-full text-sm">
+                  <div className="absolute bottom-5 left-1/2 transform -translate-x-1/2">
+                    <div className="bg-black bg-opacity-70 text-white px-5 py-1.5 rounded-full text-lg font-bold shadow-lg">
                       {currentImageIndex + 1} /{" "}
                       {
                         [
@@ -680,21 +676,20 @@ const ProductDetailPage = () => {
                   </div>
                 </>
               ) : (
-                <div className="w-full h-96 flex items-center justify-center bg-gray-100">
+                <div className="w-full h-96 flex items-center justify-center bg-gray-100 rounded-3xl">
                   <span className="text-gray-400">No image available</span>
                 </div>
               )}
             </div>
-            <div className="flex space-x-2 mt-4 overflow-x-auto">
+            <div className="flex space-x-4 mt-8 overflow-x-auto pb-2">
               {product.imageProduct && (
                 <button
                   onClick={() => setSelectedImage(product.imageProduct)}
-                  className={`w-16 h-16 rounded overflow-hidden border-2 
-                    ${
-                      selectedImage === product.imageProduct
-                        ? "border-amber-600"
-                        : "border-gray-200"
-                    }`}
+                  className={`w-24 h-24 rounded-2xl overflow-hidden border-2 shadow-md transition-all duration-200 hover:scale-110 ${
+                    selectedImage === product.imageProduct
+                      ? "border-amber-600"
+                      : "border-gray-200"
+                  }`}
                 >
                   <img
                     src={product.imageProduct}
@@ -707,12 +702,11 @@ const ProductDetailPage = () => {
                 <button
                   key={image.productImageId || index}
                   onClick={() => setSelectedImage(image.imageUrl)}
-                  className={`w-16 h-16 rounded overflow-hidden border-2 
-                    ${
-                      selectedImage === image.imageUrl
-                        ? "border-amber-600"
-                        : "border-gray-200"
-                    }`}
+                  className={`w-24 h-24 rounded-2xl overflow-hidden border-2 shadow-md transition-all duration-200 hover:scale-110 ${
+                    selectedImage === image.imageUrl
+                      ? "border-amber-600"
+                      : "border-gray-200"
+                  }`}
                 >
                   <img
                     src={image.imageUrl}
@@ -725,133 +719,155 @@ const ProductDetailPage = () => {
           </div>
 
           {/* Right Column - Product Info */}
-          <div className="w-full md:w-1/2 flex flex-col">
-            <h1 className="text-3xl font-bold text-black mb-4">
-              {product.productName}
-            </h1>
+          <div className="w-full md:w-1/2 flex flex-col animate-fade-in">
+            <div className="bg-white rounded-3xl shadow-2xl p-8 border border-amber-100 mb-8">
+              <h1 className="text-5xl font-extrabold text-amber-700 mb-6 drop-shadow-xl tracking-tight animate-fade-in">
+                {product.productName}
+              </h1>
 
-            <div className="flex items-center mb-4 space-x-4">
-              <span
-                className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${
-                  isAvailable
-                    ? "bg-amber-100 text-amber-800"
-                    : "bg-gray-100 text-gray-800"
-                }`}
-              >
-                {isAvailable ? "In Stock" : "Out of Stock"}
-              </span>
-              {product.quantity > 0 && (
-                <span className="text-sm text-gray-500">
-                  {product.quantity} available
-                </span>
-              )}
-              {feedbacks.length > 0 && (
-                <div className="flex items-center">
-                  <FaStar className="text-amber-600 mr-1" />
-                  <span className="text-sm text-black font-medium">
-                    {averageRating} ({feedbacks.length} reviews)
-                  </span>
-                </div>
-              )}
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-6">
-              <DetailItem icon="cpu" label="CPU" value={product.cpu} />
-              <DetailItem icon="ram" label="RAM" value={product.ram} />
-              <DetailItem
-                icon="storage"
-                label="Storage"
-                value={product.storage}
-              />
-              <DetailItem
-                icon="screen"
-                label="Screen Size"
-                value={`${product.screenSize}"`}
-              />
-              <DetailItem
-                icon="category"
-                label="Category"
-                value={product.categoryName}
-              />
-              <DetailItem
-                icon="price"
-                label="Price"
-                value={formatPrice(product.price)}
-                valueClassName="text-amber-600 font-semibold"
-              />
-              <DetailItem icon="model" label="Model" value={product.model} />
-              <DetailItem icon="color" label="Color" value={product.color} />
-              <DetailItem
-                icon="graphicsCard"
-                label="Graphics Card"
-                value={product.graphicsCard}
-              />
-              <DetailItem
-                icon="battery"
-                label="Battery"
-                value={product.battery}
-              />
-              <DetailItem icon="ports" label="Ports" value={product.ports} />
-              <DetailItem
-                icon="operatingSystem"
-                label="OS"
-                value={product.operatingSystem}
-              />
-              <DetailItem
-                icon="productionYear"
-                label="Year"
-                value={product.productionYear}
-              />
-              <DetailItem icon="shop" label="Shop" value={shopName} />
-            </div>
-
-            <div className="mb-6">
-              <h2 className="text-lg font-semibold text-black mb-2">
-                Description
-              </h2>
-              <p className="text-black text-sm whitespace-pre-line">
-                {`This ${product.productName} by ${
-                  product.shopName || "Unknown Shop"
-                } features:
-
-Features:
-• CPU: ${product.cpu || "N/A"} – for smooth performance
-• RAM: ${product.ram || "N/A"} – handles multitasking easily
-• Storage: ${product.storage || "N/A"} – enough space for your files
-• Screen Size: ${product.screenSize || "N/A"}" – crisp, clear display
-• Graphics Card: ${product.graphicsCard || "N/A"} – for better visual experience
-• Battery: ${product.battery || "N/A"} – long-lasting usage
-• Ports: ${product.ports || "N/A"} – connect all your devices
-• OS: ${product.operatingSystem || "N/A"} – optimized for productivity
-• Color: ${product.color || "N/A"} – stylish and sleek
-• Model: ${product.model || "N/A"}
-• Year: ${product.productionYear || "N/A"}
-
-Perfect for students, professionals, or anyone needing reliable performance.`}
-              </p>
-            </div>
-
-            <div className="mt-auto">
-              <button
-                onClick={handleAddToCart}
-                disabled={!isAvailable}
-                className={`w-full px-6 py-3 rounded text-white font-medium
-                  ${
+              <div className="flex items-center mb-8 space-x-5">
+                <span
+                  className={`inline-flex items-center px-4 py-1.5 rounded-full text-lg font-bold shadow-lg border border-amber-300 transition-all duration-200 ${
                     isAvailable
-                      ? "bg-slate-600 hover:bg-amber-600"
-                      : "bg-gray-300 cursor-not-allowed"
-                  }
-                  transition-colors duration-200 flex items-center justify-center space-x-2`}
-              >
-                <FaShoppingCart />
-                <span>{isAvailable ? "Add to Cart" : "Out of Stock"}</span>
-              </button>
+                      ? "bg-gradient-to-r from-amber-300 to-amber-500 text-amber-900 animate-fade-in"
+                      : "bg-gray-100 text-gray-800"
+                  }`}
+                >
+                  {isAvailable ? "In Stock" : "Out of Stock"}
+                </span>
+                {product.quantity > 0 && (
+                  <span className="text-lg text-gray-500 font-semibold animate-fade-in">
+                    {product.quantity} available
+                  </span>
+                )}
+                {feedbacks.length > 0 && (
+                  <div className="flex items-center animate-fade-in">
+                    <FaStar className="text-amber-500 mr-2 text-xl" />
+                    <span className="text-lg text-black font-bold">
+                      {averageRating} ({feedbacks.length} reviews)
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-10">
+                <DetailItem icon="cpu" label="CPU" value={product.cpu} />
+                <DetailItem icon="ram" label="RAM" value={product.ram} />
+                <DetailItem
+                  icon="storage"
+                  label="Storage"
+                  value={product.storage}
+                />
+                <DetailItem
+                  icon="screen"
+                  label="Screen Size"
+                  value={`${product.screenSize}"`}
+                />
+                <DetailItem
+                  icon="category"
+                  label="Category"
+                  value={product.categoryName}
+                />
+                <DetailItem
+                  icon="price"
+                  label="Price"
+                  value={formatPrice(product.price)}
+                  valueClassName="text-amber-600 font-extrabold text-2xl animate-fade-in"
+                />
+                <DetailItem icon="model" label="Model" value={product.model} />
+                <DetailItem icon="color" label="Color" value={product.color} />
+                <DetailItem
+                  icon="graphicsCard"
+                  label="Graphics Card"
+                  value={product.graphicsCard}
+                />
+                <DetailItem
+                  icon="battery"
+                  label="Battery"
+                  value={product.battery}
+                />
+                <DetailItem icon="ports" label="Ports" value={product.ports} />
+                <DetailItem
+                  icon="operatingSystem"
+                  label="OS"
+                  value={product.operatingSystem}
+                />
+                <DetailItem
+                  icon="productionYear"
+                  label="Year"
+                  value={product.productionYear}
+                />
+                <DetailItem icon="shop" label="Shop" value={shopName} />
+              </div>
+
+              <div className="mb-10 bg-white border-l-8 border-amber-400 p-7 rounded-2xl shadow-lg animate-fade-in">
+                <h2 className="text-2xl font-bold text-amber-700 mb-4 flex items-center gap-3">
+                  <svg
+                    className="w-7 h-7 text-amber-500"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                  Product Description
+                </h2>
+                <p className="text-gray-800 text-lg whitespace-pre-line leading-relaxed">
+                  {`This ${product.productName} by ${
+                    product.shopName || "Unknown Shop"
+                  } features:\n\nFeatures:\n• CPU: ${
+                    product.cpu || "N/A"
+                  } – for smooth performance\n• RAM: ${
+                    product.ram || "N/A"
+                  } – handles multitasking easily\n• Storage: ${
+                    product.storage || "N/A"
+                  } – enough space for your files\n• Screen Size: ${
+                    product.screenSize || "N/A"
+                  }" – crisp, clear display\n• Graphics Card: ${
+                    product.graphicsCard || "N/A"
+                  } – for better visual experience\n• Battery: ${
+                    product.battery || "N/A"
+                  } – long-lasting usage\n• Ports: ${
+                    product.ports || "N/A"
+                  } – connect all your devices\n• OS: ${
+                    product.operatingSystem || "N/A"
+                  } – optimized for productivity\n• Color: ${
+                    product.color || "N/A"
+                  } – stylish and sleek\n• Model: ${
+                    product.model || "N/A"
+                  }\n• Year: ${
+                    product.productionYear || "N/A"
+                  }\n\nPerfect for students, professionals, or anyone needing reliable performance.`}
+                </p>
+              </div>
+
+              <div className="mt-auto animate-fade-in">
+                <button
+                  onClick={handleAddToCart}
+                  disabled={!isAvailable}
+                  className={`w-full px-10 py-5 rounded-2xl text-white font-extrabold text-2xl shadow-2xl transition-all duration-200 flex items-center justify-center space-x-4
+                    ${
+                      isAvailable
+                        ? "bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 hover:scale-105"
+                        : "bg-gray-300 cursor-not-allowed"
+                    }
+                  `}
+                >
+                  <FaShoppingCart className="text-2xl" />
+                  <span>{isAvailable ? "Add to Cart" : "Out of Stock"}</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>
 
         {/* Feedback Section */}
-        <div className="mt-8 border-t border-gray-200 pt-6">
+        <div className="mt-16 border-t border-gray-200 pt-12 animate-fade-in">
           <ProductFeedback
             productId={id}
             onFeedbacksLoaded={handleFeedbacksLoaded}
@@ -860,19 +876,21 @@ Perfect for students, professionals, or anyone needing reliable performance.`}
 
         {/* Related Products Section */}
         {relatedProducts.length > 0 && (
-          <div className="mt-8 border-t border-gray-200 pt-6">
-            <h2 className="text-lg font-semibold text-black mb-4">
+          <div className="mt-16 border-t border-gray-200 pt-12 animate-fade-in">
+            <h2 className="text-3xl font-extrabold text-amber-700 mb-8 tracking-tight">
               Related Products
             </h2>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-8">
               {sameCategoryProducts.slice(0, 4).map((relatedProduct) => (
-                <RelatedProductCard
-                  key={relatedProduct.productId}
-                  product={relatedProduct}
-                  onClick={() =>
-                    navigate(`/laptopshop/${relatedProduct.productId}`)
-                  }
-                />
+                <div className="transition-all duration-300 hover:scale-105 hover:shadow-2xl rounded-2xl bg-gradient-to-br from-white to-amber-50">
+                  <RelatedProductCard
+                    key={relatedProduct.productId}
+                    product={relatedProduct}
+                    onClick={() =>
+                      navigate(`/laptopshop/${relatedProduct.productId}`)
+                    }
+                  />
+                </div>
               ))}
             </div>
           </div>

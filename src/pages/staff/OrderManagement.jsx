@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import orderApis from "../../api/orderApi";
 import { toast } from "react-toastify"; // Đảm bảo bạn đã cài đặt và import react-toastify
+import { FaBoxOpen, FaTrash } from "react-icons/fa";
 
 const OrderManagement = () => {
   const [orders, setOrders] = useState([]);
@@ -82,153 +83,175 @@ const OrderManagement = () => {
   const totalPages = Math.ceil(orders.length / itemsPerPage);
 
   return (
-    <div className="p-6">
-      <h2 className="text-2xl font-bold mb-6 text-center">Existing Orders</h2>
-      {isLoading && (
-        <div className="flex justify-center mb-4">
-          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
-        </div>
-      )}
-      <div className="overflow-auto shadow-md rounded-lg">
-        <table className="min-w-full bg-white border border-gray-200 rounded-lg shadow-sm">
-          <thead>
-            <tr className="bg-gradient-to-r from-gray-500 to-green-500 text-white">
-              <th className="px-6 py-3 text-left text-sm font-medium text-white">
-                CREATED DATE
-              </th>
-              <th className="px-6 py-3 text-left text-sm font-medium text-white">
-                TOTAL PRICE
-              </th>
-              <th className="px-6 py-3 text-left text-sm font-medium text-white">
-                ORDER ADDRESS
-              </th>
-              <th className="px-6 py-3 text-left text-sm font-medium text-white">
-                STATUS
-              </th>
-              <th className="px-6 py-3 text-left text-sm font-medium text-white">
-                ACTIONS
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {currentOrders.map((order) => (
-              <tr key={order.orderId} className="border-t">
-                <td className="px-6 py-3 text-sm text-gray-800">
-                  {new Date(order.createdDate).toLocaleDateString()}
-                </td>
-                <td className="px-6 py-3 text-sm text-gray-800">
-                  {order.totalPrice.toLocaleString()}
-                </td>
-                <td className="px-6 py-3 text-sm text-gray-800">
-                  {order.orderAddress}
-                </td>
-                <td className="px-6 py-3 text-sm text-gray-800">
-                  <span
-                    className={`px-2 py-1 rounded-full text-xs font-semibold
-          ${
-            order.status === "Pending"
-              ? "bg-yellow-100 text-yellow-800"
-              : order.status === "Paid"
-              ? "bg-green-100 text-green-800"
-              : order.status === "Cancelled"
-              ? "bg-red-100 text-red-800"
-              : "bg-gray-100 text-gray-700"
-          }`}
-                  >
-                    {order.status}
-                  </span>
-                </td>
-                <td className="px-6 py-3 text-sm">
-                  <button
-                    onClick={() => handleDeleteClick(order)}
-                    className=" px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-700 transition-colors"
-                  >
-                    Delete
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Pagination */}
-      <div className="flex items-center justify-between mt-6 bg-gray-50 p-4 rounded-lg shadow-sm">
-        <div className="text-sm text-gray-600">
-          Page {currentPage} of {totalPages}
-        </div>
-
-        <div className="flex items-center space-x-2">
-          <button
-            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-            disabled={currentPage === 1}
-            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-              currentPage === 1
-                ? "bg-gray-200 text-gray-500 cursor-not-allowed"
-                : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-            }`}
-          >
-            Previous
-          </button>
-
-          {/* Hiển thị số trang */}
-          <div className="flex items-center space-x-1">
-            {[...Array(totalPages)].map((_, index) => (
-              <button
-                key={index}
-                onClick={() => setCurrentPage(index + 1)}
-                className={`w-8 h-8 flex items-center justify-center rounded-md text-sm font-medium transition-colors ${
-                  currentPage === index + 1
-                    ? "bg-blue-500 text-white"
-                    : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-                }`}
-              >
-                {index + 1}
-              </button>
-            ))}
+    <div className="min-h-screen bg-gradient-to-b from-green-50 to-white p-6">
+      <div className="max-w-6xl mx-auto">
+        <div className="flex items-center gap-4 mb-10">
+          <div className="w-14 h-14 rounded-full bg-green-200 flex items-center justify-center shadow">
+            <FaBoxOpen className="w-8 h-8 text-green-600" />
           </div>
-
-          <button
-            onClick={() =>
-              setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-            }
-            disabled={currentPage === totalPages}
-            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-              currentPage === totalPages
-                ? "bg-gray-200 text-gray-500 cursor-not-allowed"
-                : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-            }`}
-          >
-            Next
-          </button>
+          <h2 className="text-3xl md:text-4xl font-extrabold text-green-700 tracking-tight">
+            Order Management
+          </h2>
         </div>
-      </div>
-      {/* Delete Confirmation Modal */}
-      {isDeleteModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg max-w-md w-full">
-            <h3 className="text-lg font-bold mb-4">Confirm Delete</h3>
-            <p className="mb-6">
-              Are you sure you want to delete order {orderToDelete?.orderId}?
-              This action cannot be undone.
-            </p>
-            <div className="flex justify-end space-x-3">
-              <button
-                onClick={() => setIsDeleteModalOpen(false)}
-                className="px-4 py-2 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleConfirmDelete}
-                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
-              >
-                Delete
-              </button>
+        {isLoading && (
+          <div className="flex justify-center mb-8">
+            <div className="animate-spin rounded-full h-16 w-16 border-4 border-green-500 border-t-transparent"></div>
+          </div>
+        )}
+        <div className="overflow-auto shadow-xl rounded-2xl border border-green-100 bg-white">
+          <table className="min-w-full bg-white rounded-2xl">
+            <thead>
+              <tr className="bg-gradient-to-r from-green-400 to-green-600 text-white">
+                <th className="px-6 py-4 text-left text-base font-bold rounded-tl-2xl">
+                  CREATED DATE
+                </th>
+                <th className="px-6 py-4 text-left text-base font-bold">
+                  TOTAL PRICE
+                </th>
+                <th className="px-6 py-4 text-left text-base font-bold">
+                  ORDER ADDRESS
+                </th>
+                <th className="px-6 py-4 text-left text-base font-bold">
+                  STATUS
+                </th>
+                <th className="px-6 py-4 text-left text-base font-bold rounded-tr-2xl">
+                  ACTIONS
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {currentOrders.map((order) => (
+                <tr
+                  key={order.orderId}
+                  className="border-t hover:bg-green-50 transition-all"
+                >
+                  <td className="px-6 py-4 text-base text-gray-800 font-medium">
+                    {new Date(order.createdDate).toLocaleDateString()}
+                  </td>
+                  <td className="px-6 py-4 text-base text-green-700 font-bold">
+                    {order.totalPrice.toLocaleString()}
+                  </td>
+                  <td className="px-6 py-4 text-base text-gray-700">
+                    {order.orderAddress}
+                  </td>
+                  <td className="px-6 py-4 text-base">
+                    <span
+                      className={`px-3 py-1.5 rounded-full text-sm font-bold shadow border transition-all duration-200
+                        ${
+                          order.status === "Pending"
+                            ? "bg-yellow-100 text-yellow-800 border-yellow-200"
+                            : order.status === "Success"
+                            ? "bg-blue-100 text-blue-800 border-blue-200"
+                            : order.status === "Cancelled"
+                            ? "bg-red-100 text-red-700 border-red-200"
+                            : "bg-gray-100 text-gray-700 border-gray-200"
+                        }
+                      `}
+                    >
+                      {order.status}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-base">
+                    <button
+                      onClick={() => handleDeleteClick(order)}
+                      className="flex items-center gap-2 px-5 py-2 bg-red-500 hover:bg-red-600 text-white rounded-xl font-semibold shadow transition-all duration-200"
+                    >
+                      <FaTrash className="w-4 h-4" /> Delete
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        {/* Pagination */}
+        <div className="flex flex-col md:flex-row items-center justify-between mt-8 bg-green-50 p-4 rounded-2xl shadow border border-green-100 gap-4">
+          <div className="text-base text-green-700 font-medium">
+            Page {currentPage} of {totalPages}
+          </div>
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+              className={`w-10 h-10 flex items-center justify-center rounded-full text-base font-bold transition-all duration-200
+                ${
+                  currentPage === 1
+                    ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                    : "bg-white text-green-700 border border-green-200 hover:bg-green-100"
+                }
+              `}
+            >
+              &lt;
+            </button>
+            {/* Hiển thị số trang */}
+            <div className="flex items-center space-x-1">
+              {[...Array(totalPages)].map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() => setCurrentPage(index + 1)}
+                  className={`w-10 h-10 flex items-center justify-center rounded-full text-base font-bold transition-all duration-200
+                    ${
+                      currentPage === index + 1
+                        ? "bg-green-500 text-white shadow-lg"
+                        : "bg-white text-green-700 border border-green-200 hover:bg-green-100"
+                    }
+                  `}
+                >
+                  {index + 1}
+                </button>
+              ))}
+            </div>
+            <button
+              onClick={() =>
+                setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+              }
+              disabled={currentPage === totalPages}
+              className={`w-10 h-10 flex items-center justify-center rounded-full text-base font-bold transition-all duration-200
+                ${
+                  currentPage === totalPages
+                    ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                    : "bg-white text-green-700 border border-green-200 hover:bg-green-100"
+                }
+              `}
+            >
+              &gt;
+            </button>
+          </div>
+        </div>
+        {/* Delete Confirmation Modal */}
+        {isDeleteModalOpen && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white p-8 rounded-2xl max-w-md w-full shadow-2xl border-t-4 border-red-400">
+              <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <FaTrash className="w-8 h-8 text-red-500" />
+              </div>
+              <h3 className="text-2xl font-bold text-center mb-4 text-red-600">
+                Confirm Delete
+              </h3>
+              <p className="text-gray-600 text-center mb-8">
+                Are you sure you want to delete order{" "}
+                <span className="font-bold">{orderToDelete?.orderId}</span>?
+                <br />
+                This action cannot be undone.
+              </p>
+              <div className="flex justify-center gap-4">
+                <button
+                  onClick={() => setIsDeleteModalOpen(false)}
+                  className="px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-xl transition-all duration-300 font-medium"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleConfirmDelete}
+                  className="px-6 py-3 bg-red-500 hover:bg-red-600 text-white rounded-xl transition-all duration-300 font-medium"
+                >
+                  Delete
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 };

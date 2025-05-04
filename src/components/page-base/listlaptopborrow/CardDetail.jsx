@@ -173,14 +173,14 @@ const CardDetail = () => {
   }
 
   return (
-    <div className="min-h-screen bg-white p-4 flex flex-col">
+    <div className="min-h-screen bg-gradient-to-b from-amber-50 to-white p-4 flex flex-col animate-fade-in">
       <div className="flex-1 max-w-6xl mx-auto w-full">
         <button
           onClick={() => navigate(-1)}
-          className="flex items-center text-black hover:text-amber-600 mb-4"
+          className="flex items-center text-gray-700 hover:text-amber-600 mb-6 font-semibold text-lg transition-all"
         >
           <svg
-            className="w-5 h-5 mr-1"
+            className="w-6 h-6 mr-2"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -195,25 +195,25 @@ const CardDetail = () => {
           Back to Listing
         </button>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
           {/* Image Section with Thumbnails Below */}
           <div className="flex flex-col">
-            <div className="border border-gray-200 rounded-lg overflow-hidden mb-4 relative shadow-md">
+            <div className="border border-gray-200 rounded-3xl overflow-hidden mb-6 relative shadow-2xl bg-white">
               <img
                 src={selectedImage}
                 alt={laptop.itemName}
-                className="w-full h-96 object-contain bg-white"
+                className="w-full h-[440px] object-contain bg-gradient-to-br from-amber-50 to-white"
               />
 
               {/* Navigation Buttons */}
               <div className="absolute inset-y-0 left-0 flex items-center">
                 <button
                   onClick={handlePrevImage}
-                  className="bg-black bg-opacity-30 hover:bg-opacity-50 text-white p-2 rounded-r transform transition-transform hover:scale-105 focus:outline-none"
+                  className="bg-white/90 hover:bg-amber-100 text-amber-600 p-3 rounded-r-full shadow-lg border border-amber-200 transition-all scale-100 hover:scale-110"
                   aria-label="Previous image"
                 >
                   <svg
-                    className="w-6 h-6"
+                    className="w-7 h-7"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -231,11 +231,11 @@ const CardDetail = () => {
               <div className="absolute inset-y-0 right-0 flex items-center">
                 <button
                   onClick={handleNextImage}
-                  className="bg-black bg-opacity-30 hover:bg-opacity-50 text-white p-2 rounded-l transform transition-transform hover:scale-105 focus:outline-none"
+                  className="bg-white/90 hover:bg-amber-100 text-amber-600 p-3 rounded-l-full shadow-lg border border-amber-200 transition-all scale-100 hover:scale-110"
                   aria-label="Next image"
                 >
                   <svg
-                    className="w-6 h-6"
+                    className="w-7 h-7"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -251,8 +251,8 @@ const CardDetail = () => {
               </div>
 
               {/* Image Counter */}
-              <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2">
-                <div className="bg-black bg-opacity-50 text-white px-3 py-1 rounded-full text-sm">
+              <div className="absolute bottom-5 left-1/2 transform -translate-x-1/2">
+                <div className="bg-black bg-opacity-70 text-white px-5 py-1.5 rounded-full text-lg font-bold shadow-lg">
                   {currentImageIndex + 1} /{" "}
                   {
                     [laptop.itemImage, ...images.map((img) => img.imageUrl)]
@@ -261,13 +261,14 @@ const CardDetail = () => {
                 </div>
               </div>
             </div>
-            <div className="flex space-x-2 overflow-x-auto pb-2">
+
+            <div className="flex space-x-4 overflow-x-auto pb-2">
               <button
                 onClick={() => {
                   setSelectedImage(laptop.itemImage);
                   setCurrentImageIndex(0);
                 }}
-                className={`w-16 h-16 rounded overflow-hidden border-2 flex-shrink-0 ${
+                className={`w-24 h-24 rounded-2xl overflow-hidden border-2 shadow-md transition-all duration-200 hover:scale-110 ${
                   selectedImage === laptop.itemImage
                     ? "border-amber-600"
                     : "border-gray-200"
@@ -286,7 +287,7 @@ const CardDetail = () => {
                     setSelectedImage(image.imageUrl);
                     setCurrentImageIndex(index + 1);
                   }}
-                  className={`w-16 h-16 rounded overflow-hidden border-2 flex-shrink-0 ${
+                  className={`w-24 h-24 rounded-2xl overflow-hidden border-2 shadow-md transition-all duration-200 hover:scale-110 ${
                     selectedImage === image.imageUrl
                       ? "border-amber-600"
                       : "border-gray-200"
@@ -302,10 +303,10 @@ const CardDetail = () => {
             </div>
 
             {/* Device Information Card */}
-            <div className="mt-6 border border-gray-200 rounded-lg p-4 shadow-sm">
-              <h2 className="text-lg font-semibold text-black mb-3 flex items-center">
+            <div className="mt-8 bg-white border border-gray-200 rounded-3xl p-6 shadow-xl">
+              <h2 className="text-2xl font-bold text-amber-700 mb-4 flex items-center gap-3">
                 <svg
-                  className="w-5 h-5 text-amber-600 mr-2"
+                  className="w-7 h-7 text-amber-500"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -319,7 +320,7 @@ const CardDetail = () => {
                 </svg>
                 Device Information
               </h2>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-4">
                 <InfoItem label="Model" value={laptop.model} />
                 <InfoItem label="Serial Number" value={laptop.serialNumber} />
                 <InfoItem label="Color" value={laptop.color} />
@@ -331,7 +332,6 @@ const CardDetail = () => {
                   label="Operating System"
                   value={laptop.operatingSystem}
                 />
-
                 <InfoItem
                   label="Added"
                   value={formatDate(laptop.createdDate)}
@@ -344,10 +344,10 @@ const CardDetail = () => {
             </div>
 
             {/* Usage Statistics Card */}
-            <div className="mt-4 border border-gray-200 rounded-lg p-4 shadow-sm">
-              <h2 className="text-lg font-semibold text-black mb-3 flex items-center">
+            <div className="mt-6 bg-white border border-gray-200 rounded-3xl p-6 shadow-xl">
+              <h2 className="text-2xl font-bold text-amber-700 mb-4 flex items-center gap-3">
                 <svg
-                  className="w-5 h-5 text-amber-600 mr-2"
+                  className="w-7 h-7 text-amber-500"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -361,10 +361,12 @@ const CardDetail = () => {
                 </svg>
                 Usage Statistics
               </h2>
-              <div className="flex items-center justify-center p-2">
+              <div className="flex items-center justify-center p-4 bg-gradient-to-r from-amber-50 to-white rounded-2xl">
                 <div className="text-center">
-                  <p className="text-xs text-gray-500">Total Times Borrowed</p>
-                  <p className="text-lg font-semibold text-amber-600">
+                  <p className="text-sm text-gray-600 mb-2">
+                    Total Times Borrowed
+                  </p>
+                  <p className="text-3xl font-bold text-amber-600">
                     {laptop.totalBorrowedCount || 0}
                   </p>
                 </div>
@@ -374,14 +376,14 @@ const CardDetail = () => {
 
           {/* Details Section */}
           <div className="flex flex-col">
-            <div className="flex justify-between items-center mb-4">
-              <h1 className="text-3xl font-bold text-black">
+            <div className="flex justify-between items-center mb-6">
+              <h1 className="text-4xl font-extrabold text-amber-700 tracking-tight">
                 {laptop.itemName}
               </h1>
               <span
-                className={`px-3 py-1 rounded-full text-sm font-medium ${
+                className={`px-4 py-1.5 rounded-full text-lg font-bold shadow-lg border border-amber-300 transition-all duration-200 ${
                   laptop.status === "Available"
-                    ? "bg-amber-100 text-amber-800"
+                    ? "bg-gradient-to-r from-amber-300 to-amber-500 text-amber-900"
                     : "bg-gray-100 text-gray-800"
                 }`}
               >
@@ -390,10 +392,10 @@ const CardDetail = () => {
             </div>
 
             {/* Main Specifications Card */}
-            <div className="border border-gray-200 rounded-lg p-4 mb-4 shadow-sm">
-              <h2 className="text-lg font-semibold text-black mb-3 flex items-center">
+            <div className="bg-white border border-gray-200 rounded-3xl p-6 mb-6 shadow-xl">
+              <h2 className="text-2xl font-bold text-amber-700 mb-4 flex items-center gap-3">
                 <svg
-                  className="w-5 h-5 text-amber-600 mr-2"
+                  className="w-7 h-7 text-amber-500"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -407,7 +409,7 @@ const CardDetail = () => {
                 </svg>
                 Main Specifications
               </h2>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-4">
                 <DetailItem icon="cpu" label="CPU" value={laptop.cpu} />
                 <DetailItem icon="ram" label="RAM" value={laptop.ram} />
                 <DetailItem
@@ -434,10 +436,10 @@ const CardDetail = () => {
             </div>
 
             {/* Connectivity Card */}
-            <div className="border border-gray-200 rounded-lg p-4 mb-4 shadow-sm">
-              <h2 className="text-lg font-semibold text-black mb-3 flex items-center">
+            <div className="bg-white border border-gray-200 rounded-3xl p-6 mb-6 shadow-xl">
+              <h2 className="text-2xl font-bold text-amber-700 mb-4 flex items-center gap-3">
                 <svg
-                  className="w-5 h-5 text-amber-600 mr-2"
+                  className="w-7 h-7 text-amber-500"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -451,7 +453,7 @@ const CardDetail = () => {
                 </svg>
                 Connectivity
               </h2>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-4">
                 <DetailItem icon="ports" label="Ports" value={laptop.ports} />
                 <DetailItem
                   icon="battery"
@@ -462,10 +464,10 @@ const CardDetail = () => {
             </div>
 
             {/* Description */}
-            <div className="border border-gray-200 rounded-lg p-4 mb-6 shadow-sm">
-              <h2 className="text-lg font-semibold text-black mb-3 flex items-center">
+            <div className="bg-white border border-gray-200 rounded-3xl p-6 mb-8 shadow-xl">
+              <h2 className="text-2xl font-bold text-amber-700 mb-4 flex items-center gap-3">
                 <svg
-                  className="w-5 h-5 text-amber-600 mr-2"
+                  className="w-7 h-7 text-amber-500"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -479,7 +481,7 @@ const CardDetail = () => {
                 </svg>
                 Description
               </h2>
-              <p className="text-black text-sm whitespace-pre-line">
+              <p className="text-gray-800 text-lg whitespace-pre-line leading-relaxed">
                 {laptop.description ||
                   `This ${laptop.itemName} is in ${
                     laptop.conditionItem
@@ -508,14 +510,16 @@ Perfect for students and professionals alike.`}
               <button
                 onClick={handleBorrowClick}
                 disabled={laptop.status !== "Available"}
-                className={`w-full px-6 py-3 rounded-lg text-white font-medium flex items-center justify-center ${
-                  laptop.status === "Available"
-                    ? "bg-slate-600 hover:bg-amber-600"
-                    : "bg-gray-300 cursor-not-allowed"
-                } transition-colors duration-200 shadow-sm`}
+                className={`w-full px-10 py-5 rounded-2xl text-white font-extrabold text-2xl shadow-2xl transition-all duration-200 flex items-center justify-center space-x-4
+                  ${
+                    laptop.status === "Available"
+                      ? "bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 hover:scale-105"
+                      : "bg-gray-300 cursor-not-allowed"
+                  }
+                `}
               >
                 <svg
-                  className="w-5 h-5 mr-2"
+                  className="w-7 h-7"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -527,17 +531,21 @@ Perfect for students and professionals alike.`}
                     d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"
                   />
                 </svg>
-                {laptop.status === "Available" ? "Borrow Now" : "Not Available"}
+                <span>
+                  {laptop.status === "Available"
+                    ? "Borrow Now"
+                    : "Not Available"}
+                </span>
               </button>
             </div>
           </div>
         </div>
 
-        {/* Feedback */}
-        <div className="mt-12 border-t pt-10 w-full">
-          <h2 className="text-2xl font-bold text-black mb-6 flex items-center">
+        {/* Feedback Section */}
+        <div className="mt-16 border-t border-gray-200 pt-12">
+          <h2 className="text-3xl font-extrabold text-amber-700 mb-8 tracking-tight flex items-center gap-3">
             <svg
-              className="w-6 h-6 text-amber-600 mr-2"
+              className="w-8 h-8 text-amber-500"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -553,9 +561,9 @@ Perfect for students and professionals alike.`}
           </h2>
 
           {feedbacks.length === 0 ? (
-            <div className="text-center p-8 border border-gray-200 rounded-lg bg-gray-50">
+            <div className="text-center p-12 border border-gray-200 rounded-3xl bg-gradient-to-br from-amber-50 to-white shadow-xl">
               <svg
-                className="w-12 h-12 text-gray-300 mx-auto mb-3"
+                className="w-16 h-16 text-amber-300 mx-auto mb-4"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -567,18 +575,18 @@ Perfect for students and professionals alike.`}
                   d="M8 12h.01M12 12h.01M16 12h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                 />
               </svg>
-              <p className="text-gray-500">
+              <p className="text-gray-600 text-lg">
                 No feedback available for this item.
               </p>
             </div>
           ) : (
             <>
-              <div className="mb-6 text-center p-4 bg-amber-50 rounded-lg border border-amber-100">
-                <div className="flex items-center justify-center mb-2">
+              <div className="mb-8 text-center p-8 bg-gradient-to-r from-amber-50 to-white rounded-3xl border border-amber-100 shadow-xl">
+                <div className="flex items-center justify-center mb-4">
                   {Array.from({ length: 5 }).map((_, index) => (
                     <svg
                       key={index}
-                      className={`w-5 h-5 ${
+                      className={`w-8 h-8 ${
                         index <
                         Math.round(
                           feedbacks.reduce((sum, fb) => sum + fb.rating, 0) /
@@ -594,9 +602,9 @@ Perfect for students and professionals alike.`}
                     </svg>
                   ))}
                 </div>
-                <p className="text-lg text-slate-800">
+                <p className="text-xl text-slate-800 mb-2">
                   Average Rating:{" "}
-                  <span className="text-amber-600 font-semibold text-xl">
+                  <span className="text-amber-600 font-bold text-2xl">
                     {(
                       feedbacks.reduce((sum, fb) => sum + fb.rating, 0) /
                       feedbacks.length
@@ -604,34 +612,34 @@ Perfect for students and professionals alike.`}
                     / 5
                   </span>
                 </p>
-                <p className="text-sm text-gray-500">
+                <p className="text-gray-500">
                   Based on {feedbacks.length} user reviews
                 </p>
               </div>
 
-              <div className="space-y-4">
+              <div className="space-y-6">
                 {(showAllFeedbacks ? feedbacks : feedbacks.slice(0, 2)).map(
                   (fb) => (
                     <div
                       key={fb.feedbackBorrowId}
-                      className="border border-gray-200 bg-white p-4 rounded-xl shadow-sm hover:shadow-md transition"
+                      className="bg-white border border-gray-200 p-6 rounded-3xl shadow-xl hover:shadow-2xl transition-all duration-300"
                     >
-                      <div className="flex items-center mb-2">
-                        <div className="w-8 h-8 bg-amber-100 rounded-full flex items-center justify-center text-amber-800 font-bold mr-2">
+                      <div className="flex items-center mb-4">
+                        <div className="w-10 h-10 bg-gradient-to-r from-amber-400 to-amber-500 rounded-full flex items-center justify-center text-white font-bold text-lg mr-3">
                           {fb.isAnonymous ? "A" : "U"}
                         </div>
-                        <p className="text-sm font-medium text-black">
+                        <p className="text-base font-semibold text-gray-800">
                           {fb.isAnonymous ? "Anonymous" : `User`}
                         </p>
-                        <p className="text-xs text-gray-400 ml-auto">
+                        <p className="text-sm text-gray-400 ml-auto">
                           {new Date(fb.feedbackDate).toLocaleDateString()}
                         </p>
                       </div>
-                      <div className="flex items-center mb-2">
+                      <div className="flex items-center mb-4">
                         {Array.from({ length: 5 }).map((_, index) => (
                           <svg
                             key={index}
-                            className={`w-4 h-4 ${
+                            className={`w-5 h-5 ${
                               index < fb.rating
                                 ? "text-amber-400"
                                 : "text-gray-300"
@@ -642,21 +650,21 @@ Perfect for students and professionals alike.`}
                             <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                           </svg>
                         ))}
-                        <span className="ml-2 text-sm text-amber-600 font-medium">
+                        <span className="ml-2 text-amber-600 font-semibold">
                           {fb.rating}/5
                         </span>
                       </div>
-                      <p className="text-sm text-gray-800 bg-gray-50 p-3 rounded-lg">
+                      <p className="text-gray-700 bg-gray-50 p-4 rounded-2xl text-base">
                         {fb.comments || "No additional comments provided."}
                       </p>
                     </div>
                   )
                 )}
                 {feedbacks.length > 2 && (
-                  <div className="text-center mt-4">
+                  <div className="text-center mt-6">
                     <button
                       onClick={() => setShowAllFeedbacks(!showAllFeedbacks)}
-                      className="text-sm text-amber-600 hover:underline"
+                      className="text-amber-600 hover:text-amber-700 font-semibold text-lg transition-colors"
                     >
                       {showAllFeedbacks ? "Hide" : "Show more"}
                     </button>
