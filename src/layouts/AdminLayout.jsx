@@ -176,12 +176,7 @@ const AdminLayout = ({ children }) => {
                 <span className="text-xs text-purple-700 font-medium">Admin Role</span>
               </div>
             </div>
-            <button 
-              className="p-1.5 rounded-full hover:bg-gray-100 text-gray-500 transition-colors flex items-center justify-center"
-              aria-label="Settings"
-            >
-              <FaCog className="w-4 h-4" />
-            </button>
+            
           </div>
         </div>
 

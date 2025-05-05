@@ -59,7 +59,7 @@ const InputField = memo(({
   prefix
 }) => (
   <div className="space-y-1">
-    <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center">
+    <label className="flex text-sm font-medium text-gray-700 mb-1 items-center">
       {icon && <span className="mr-2 text-indigo-500">{icon}</span>}
       {label}
     </label>
@@ -116,7 +116,7 @@ const TextAreaField = memo(({
   showCount = false
 }) => (
   <div className="space-y-1">
-    <label className="block text-sm font-medium text-gray-700 flex items-center justify-between">
+    <label className="flex text-sm font-medium text-gray-700 items-center justify-between">
       <span>{label}</span>
       {showCount && maxLength && (
         <span className="text-xs text-gray-500">{value?.length || 0}/{maxLength}</span>
@@ -482,7 +482,7 @@ const AddProduct = () => {
                     </div>
                     
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center">
+                      <label className="flex text-sm font-medium text-gray-700 mb-1 items-center">
                         <span className="mr-2 text-indigo-500"><MdCategory /></span>
                         Category
                       </label>
@@ -718,7 +718,7 @@ const AddProduct = () => {
                     </div>
 
                     <div className="space-y-3">
-                      <label className="block text-sm font-medium text-gray-700 flex justify-between items-center">
+                      <label className="flex text-sm font-medium text-gray-700 justify-between items-center">
                         <span>Additional Images</span>
                         <span className="text-xs bg-indigo-100 text-indigo-800 py-1 px-2 rounded-full">{extraImagesPreview.length} added</span>
                       </label>

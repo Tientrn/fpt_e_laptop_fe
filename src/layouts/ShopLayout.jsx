@@ -392,12 +392,7 @@ const ShopLayout = () => {
                 </span>
               </div>
             </div>
-            <button
-              className="p-1.5 rounded-full hover:bg-gray-100 text-gray-500 transition-colors flex items-center justify-center"
-              aria-label="Settings"
-            >
-              <FaCog className="w-4 h-4" />
-            </button>
+      
           </div>
         </div>
 
@@ -454,18 +449,6 @@ const ShopLayout = () => {
             );
           })}
 
-          <div className="pt-5 pb-2">
-            <p className="px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">
-              Support
-            </p>
-          </div>
-
-          <button className="w-full flex items-center px-4 py-3 text-gray-700 rounded-xl hover:bg-indigo-50 hover:text-indigo-600 transition-all duration-200">
-            <span className="mr-3 text-indigo-600">
-              <FaQuestion className="w-5 h-5" />
-            </span>
-            <span className="text-sm font-medium">Help & Resources</span>
-          </button>
         </nav>
 
         {/* Footer with version info */}
