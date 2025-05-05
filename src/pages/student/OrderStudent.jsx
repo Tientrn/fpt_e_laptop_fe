@@ -139,7 +139,7 @@ const OrderStudent = () => {
         return `${baseStyle} bg-yellow-500`;
       case "cancelled":
         return `${baseStyle} bg-red-500`;
-      case "paid":
+      case "success":
       case "delivered":
         return `${baseStyle} bg-green-500`;
       case "processing":

@@ -49,18 +49,12 @@ const CheckoutPage = () => {
     if (status === "CANCELLED" && orderCode) {
       (async () => {
         try {
-          // Use orderCode directly as the transactionCode
           const transactionCode = orderCode;
-
-          // Call API to update payment status
           await orderApis.updatePayment(transactionCode, {
             status: "CANCELLED",
           });
-
           toast.info("Payment has been cancelled");
           localStorage.removeItem("pending_order");
-
-          // Redirect after a delay
           setTimeout(() => {
             navigate("/cart");
           }, 2000);
@@ -75,16 +69,8 @@ const CheckoutPage = () => {
     if (status === "PAID" && orderCode && !paymentProcessed) {
       (async () => {
         try {
-          // Use orderCode directly as the transactionCode
-
-          // Call API to update payment status
-
           toast.success("Payment successful! Your order is being processed.");
-
-          // Clear checkout data
           handleClearCheckoutData();
-
-          // Remove items from the cart now that payment is successful
           const pendingRemovalItems = JSON.parse(
             localStorage.getItem("pending_cart_removal") || "[]"
           );
@@ -92,16 +78,10 @@ const CheckoutPage = () => {
             pendingRemovalItems.forEach((productId) => {
               removeFromCart(productId);
             });
-            // Clear the pending removal list
             localStorage.removeItem("pending_cart_removal");
-            // Clear the pending order since it's now complete
             localStorage.removeItem("pending_order");
-            toast.info("Your cart has been updated");
           }
-
           setPaymentProcessed(true);
-
-          // Redirect after a delay
           setTimeout(() => {
             navigate("/");
           }, 3000);
@@ -157,12 +137,6 @@ const CheckoutPage = () => {
             // If cart has changed, show notification but don't prevent checkout
             if (currentCartHash !== normalizedSavedHash) {
               setCartChanged(true);
-              toast.info(
-                "Your cart has changed since this order was created. You may want to create a new order.",
-                {
-                  autoClose: false,
-                }
-              );
             }
           }
         } else {

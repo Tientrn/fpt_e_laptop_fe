@@ -33,26 +33,28 @@ const CreateShopInfo = () => {
         setUserId(finalUserId);
 
         // Check if shop exists
-        shopApi.getAllShops().then((shopsResponse) => {
-          console.log("All shops response:", shopsResponse);
-          if (shopsResponse && shopsResponse.data) {
-            const existedShop = shopsResponse.data.find(
-              (shop) => shop.userId === finalUserId
-            );
-            console.log("Existed shop:", existedShop);
-            
-            if (existedShop) {
-              // If shop is found, save shopId and redirect
-              localStorage.setItem("shopId", existedShop.shopId);
-              toast.info("You have already created shop information.");
-              navigate("/shop/profile");
-            }
-          }
-        }).catch(error => {
-          console.error("Error checking existing shop:", error);
-          toast.error("Error checking shop information");
-        });
+        shopApi
+          .getAllShops()
+          .then((shopsResponse) => {
+            console.log("All shops response:", shopsResponse);
+            if (shopsResponse && shopsResponse.data) {
+              const existedShop = shopsResponse.data.find(
+                (shop) => shop.userId === finalUserId
+              );
+              console.log("Existed shop:", existedShop);
 
+              if (existedShop) {
+                // If shop is found, save shopId and redirect
+                localStorage.setItem("shopId", existedShop.shopId);
+                toast.info("You have already created shop information.");
+                navigate("/shop/profile");
+              }
+            }
+          })
+          .catch((error) => {
+            console.error("Error checking existing shop:", error);
+            toast.error("Error checking shop information");
+          });
       } catch (error) {
         console.error("Error decoding token:", error);
         toast.error("Error verifying user information");
@@ -162,7 +164,7 @@ const CreateShopInfo = () => {
 
         <div>
           <label className="block text-sm font-medium text-black">
-            Business License
+            Tax Code
           </label>
           <input
             type="text"

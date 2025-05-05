@@ -9,6 +9,7 @@ import {
   Gift,
 } from "lucide-react";
 import donateformApi from "../../api/donateformApi";
+import userApi from "../../api/userApi";
 import { useNavigate } from "react-router-dom";
 
 const DonateItem = () => {
@@ -18,16 +19,34 @@ const DonateItem = () => {
   const [statusFilter, setStatusFilter] = useState("All");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
+  const [sponsorInfoMap, setSponsorInfoMap] = useState({});
 
   useEffect(() => {
     const fetchDonations = async () => {
       try {
         const response = await donateformApi.getAllDonateForms();
-        // No filtering of Done status - we'll show all statuses and let user filter
         const sorted = response.data.sort(
           (a, b) => b.donationFormId - a.donationFormId
         );
         setDonations(sorted);
+        const sponsorIds = [
+          ...new Set(response.data.map((d) => d.sponsorId).filter(Boolean)),
+        ];
+        sponsorIds.forEach(async (sponsorId) => {
+          if (!sponsorInfoMap[sponsorId]) {
+            try {
+              const res = await userApi.getUserById(sponsorId);
+              if (res.data) {
+                setSponsorInfoMap((prev) => ({
+                  ...prev,
+                  [sponsorId]: res.data,
+                }));
+              }
+            } catch (err) {
+              // Không toast ở đây để tránh spam
+            }
+          }
+        });
         toast.success("Donations loaded successfully", {
           toastId: "donations-loaded",
         });
@@ -39,6 +58,7 @@ const DonateItem = () => {
       }
     };
     fetchDonations();
+    // eslint-disable-next-line
   }, []);
 
   const updateStatus = async (donationId, newStatus) => {
@@ -157,6 +177,7 @@ const DonateItem = () => {
                       "Description",
                       "Quantity",
                       "Image",
+                      "Sponsor",
                       "Created At",
                       "Status",
                       "Actions",
@@ -173,7 +194,7 @@ const DonateItem = () => {
                 <tbody className="divide-y divide-indigo-50">
                   {currentItems.length === 0 ? (
                     <tr>
-                      <td colSpan="7" className="px-6 py-12 text-center">
+                      <td colSpan="8" className="px-6 py-12 text-center">
                         <p className="text-gray-500 text-lg">
                           No donations found
                         </p>
@@ -205,6 +226,25 @@ const DonateItem = () => {
                           />
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-indigo-700">
+                          {sponsorInfoMap[donation.sponsorId] ? (
+                            <div>
+                              <div className="font-semibold">
+                                {sponsorInfoMap[donation.sponsorId].fullName}
+                              </div>
+                              <div className="text-xs text-gray-500">
+                                {sponsorInfoMap[donation.sponsorId].email}
+                              </div>
+                              <div className="text-xs text-gray-500">
+                                {sponsorInfoMap[donation.sponsorId].phoneNumber}
+                              </div>
+                            </div>
+                          ) : (
+                            <span className="text-xs text-gray-400 italic">
+                              Loading...
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-indigo-700">
                           {new Date(donation.createdAt).toLocaleDateString()}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -226,7 +266,8 @@ const DonateItem = () => {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center gap-3">
-                            {donation.status === "Pending" && (
+                            {(donation.status === "Pending" ||
+                              donation.status === "Approved") && (
                               <button
                                 onClick={() =>
                                   deleteDonation(donation.donationFormId)
@@ -258,7 +299,7 @@ const DonateItem = () => {
                                   navigate("/staff/create-itemdonate", {
                                     state: {
                                       donateFormId: donation.donationFormId,
-                                      sponsorId: donation.userId,
+                                      sponsorId: donation.sponsorId,
                                     },
                                   })
                                 }
