@@ -205,7 +205,7 @@ export default function ModernHome() {
               transition={{ duration: 0.6 }}
               viewport={{ once: true }}
             >
-              Our Champions
+              Our Donation
             </motion.span>
 
             <motion.h2
@@ -299,7 +299,7 @@ export default function ModernHome() {
                     </div>
                     <div className="md:w-3/5 p-6">
                       <h3 className="text-xl font-bold text-[#3d5a80] mb-3">
-                        Premium Laptops
+                        Laptop Shop
                       </h3>
                       <p className="text-[#293241]/70 mb-4">
                         Explore our selection of high-performance laptops
@@ -356,7 +356,7 @@ export default function ModernHome() {
                         to="/laptopborrow"
                         className="inline-flex items-center text-[#ee6c4d] font-medium transition-all hover:pl-2"
                       >
-                        Learn more
+                        See more
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
                           className="ml-2 h-5 w-5"

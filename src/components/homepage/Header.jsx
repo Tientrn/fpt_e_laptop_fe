@@ -303,10 +303,10 @@ function HeaderHomePage() {
           <div className="mx-auto max-w-screen-xl flex justify-end">
             <button
               onClick={() => navigate("/sponsor/register")}
-              className="font-medium text-sm hover:text-amber-300 transition-all flex items-center h-8 gap-1.5 hover:scale-105"
+              className="font-medium text-md hover:text-amber-300 transition-all flex items-center h-9 gap-1.5 hover:scale-105"
             >
-              <HandshakeIcon className="text-amber-300" fontSize="small" />
-              <span className="drop-shadow-sm">Become a Sponsor</span>
+              <HandshakeIcon className="text-amber-300" fontSize="medium" />
+              <span className="drop-shadow-md">Become a Sponsor</span>
             </button>
           </div>
         </div>
