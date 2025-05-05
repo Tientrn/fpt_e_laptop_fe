@@ -47,7 +47,7 @@ function FooterHomePage() {
         <div className="border-t border-purple-500/20 my-6"></div>
 
         {/* Bottom Section */}
-        <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-center">
+        <div className="flex flex-col md:flex-row justify-between items-center gap-4 ">
           <p className="text-white/80 text-sm ">
             © {new Date().getFullYear()} FPT Laptop Sharing. All rights
             reserved.
