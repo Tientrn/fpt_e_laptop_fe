@@ -1,9 +1,13 @@
-import axiosClient from './axiosClient';
+import axiosClient from "./axiosClient";
 
 const changepassApi = {
-    changePassword: (data) => {
-        return axiosClient.post('/Authentication/change-password', data);
-    }
+  changePassword: (data, token) => {
+    return axiosClient.post("/Authentication/change-password", data, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+  },
 };
 
-export default changepassApi; 
+export default changepassApi;

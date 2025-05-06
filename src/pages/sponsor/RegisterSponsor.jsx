@@ -23,7 +23,7 @@ export const RegisterSponsor = () => {
         ...prevState,
         imageDonateForm: file,
       }));
-      
+
       // Generate preview
       if (file) {
         const reader = new FileReader();
@@ -44,23 +44,23 @@ export const RegisterSponsor = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     // Validation
     if (!formData.itemName.trim()) {
       toast.error("Please enter an item name");
       return;
     }
-    
+
     if (!formData.itemDescription.trim()) {
       toast.error("Please enter an item description");
       return;
     }
-    
+
     if (formData.quantity < 1) {
       toast.error("Quantity must be at least 1");
       return;
     }
-    
+
     if (!formData.imageDonateForm) {
       toast.error("Please upload an image");
       return;
@@ -79,27 +79,31 @@ export const RegisterSponsor = () => {
       const sponsorId = Number(decoded.userId);
 
       const formPayload = new FormData();
-      
+
       // Add form data with proper type conversion
       formPayload.append("SponsorId", sponsorId.toString());
       formPayload.append("ItemName", formData.itemName);
       formPayload.append("ItemDescription", formData.itemDescription);
       formPayload.append("Quantity", formData.quantity.toString());
-      
+
       // Make sure the file is properly appended
       if (formData.imageDonateForm instanceof File) {
-        formPayload.append("ImageDonateForm", formData.imageDonateForm, formData.imageDonateForm.name);
+        formPayload.append(
+          "ImageDonateForm",
+          formData.imageDonateForm,
+          formData.imageDonateForm.name
+        );
       } else {
         toast.error("Invalid image file. Please try uploading again.");
         setIsSubmitting(false);
         return;
       }
-      
+
       // Send with proper content type header
       await donateformApi.createDonateForm(formPayload);
 
       toast.success("Sponsorship submission successful!");
-      
+
       // Reset form
       setFormData({
         itemName: "",
@@ -108,14 +112,15 @@ export const RegisterSponsor = () => {
         imageDonateForm: null,
       });
       setPreview(null);
-      
+
       // Reset file input
       const fileInput = document.querySelector('input[type="file"]');
-      if (fileInput) fileInput.value = '';
-      
+      if (fileInput) fileInput.value = "";
     } catch (error) {
       if (error.response?.data?.errors) {
-        toast.error("Invalid form data. Please check all fields and try again.");
+        toast.error(
+          "Invalid form data. Please check all fields and try again."
+        );
       } else {
         toast.error(error.message || "Submission failed. Please try again.");
       }
@@ -127,28 +132,63 @@ export const RegisterSponsor = () => {
   return (
     <div>
       <div className="mb-4">
-        <h1 className="text-xl font-bold text-gray-900 mb-1">Laptop Donation Request</h1>
-        <p className="text-sm text-gray-500">Support our students by donating laptops for educational purposes</p>
+        <h1 className="text-xl font-bold text-gray-900 mb-1">
+          Laptop Donation Request
+        </h1>
+        <p className="text-sm text-gray-500">
+          Support our students by donating laptops for educational purposes
+        </p>
       </div>
-      
+
       <form onSubmit={handleSubmit} className="space-y-5">
         {/* Image Upload Section */}
         <div className="bg-white rounded-lg shadow-sm p-4 border border-gray-100">
           <h2 className="text-base font-medium text-gray-800 mb-3 flex items-center">
-            <svg className="w-4 h-4 text-amber-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            <svg
+              className="w-4 h-4 text-amber-500 mr-2"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+              />
             </svg>
             Upload Item Image
           </h2>
-          
+
           <div className="flex flex-col md:flex-row gap-4">
-            <div className={`flex-1 border-2 border-dashed rounded-md ${preview ? 'border-amber-200 bg-amber-50' : 'border-gray-200 bg-gray-50'} flex items-center justify-center relative overflow-hidden`} style={{ height: "180px" }}>
+            <div
+              className={`flex-1 border-2 border-dashed rounded-md ${
+                preview
+                  ? "border-amber-200 bg-amber-50"
+                  : "border-gray-200 bg-gray-50"
+              } flex items-center justify-center relative overflow-hidden`}
+              style={{ height: "180px" }}
+            >
               {preview ? (
-                <img src={preview} alt="Preview" className="w-full h-full object-contain" />
+                <img
+                  src={preview}
+                  alt="Preview"
+                  className="w-full h-full object-contain"
+                />
               ) : (
                 <div className="text-center p-4">
-                  <svg className="mx-auto h-10 w-10 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  <svg
+                    className="mx-auto h-10 w-10 text-gray-400"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={1}
+                      d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                    />
                   </svg>
                   <p className="mt-1 text-xs text-gray-500">
                     Drag and drop an image, or click to browse
@@ -168,21 +208,36 @@ export const RegisterSponsor = () => {
                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
               />
             </div>
-            
+
             <div className="md:w-1/4 space-y-2">
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">
                   Quantity <span className="text-red-500">*</span>
                 </label>
                 <div className="flex items-center">
-                  <button 
+                  <button
                     type="button"
-                    onClick={() => setFormData(prev => ({ ...prev, quantity: Math.max(1, prev.quantity - 1) }))}
+                    onClick={() =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        quantity: Math.max(1, prev.quantity - 1),
+                      }))
+                    }
                     disabled={formData.quantity <= 1 || isSubmitting}
                     className="p-1.5 rounded-l-md bg-gray-100 border border-gray-300 text-gray-700 hover:bg-gray-200 disabled:opacity-50"
                   >
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M20 12H4"
+                      />
                     </svg>
                   </button>
                   <input
@@ -195,14 +250,29 @@ export const RegisterSponsor = () => {
                     onChange={handleChange}
                     disabled={isSubmitting}
                   />
-                  <button 
+                  <button
                     type="button"
-                    onClick={() => setFormData(prev => ({ ...prev, quantity: prev.quantity + 1 }))}
+                    onClick={() =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        quantity: prev.quantity + 1,
+                      }))
+                    }
                     disabled={isSubmitting}
                     className="p-1.5 rounded-r-md bg-gray-100 border border-gray-300 text-gray-700 hover:bg-gray-200 disabled:opacity-50"
                   >
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                      />
                     </svg>
                   </button>
                 </div>
@@ -210,16 +280,26 @@ export const RegisterSponsor = () => {
             </div>
           </div>
         </div>
-        
+
         {/* Item Information */}
         <div className="bg-white rounded-lg shadow-sm p-4 border border-gray-100">
           <h2 className="text-base font-medium text-gray-800 mb-3 flex items-center">
-            <svg className="w-4 h-4 text-amber-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            <svg
+              className="w-4 h-4 text-amber-500 mr-2"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+              />
             </svg>
             Item Information
           </h2>
-          
+
           <div className="space-y-4">
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-1">
@@ -248,16 +328,17 @@ export const RegisterSponsor = () => {
                 className="w-full px-3 py-2 rounded-md border border-gray-300 focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-colors resize-none text-sm"
                 value={formData.itemDescription}
                 onChange={handleChange}
-                placeholder="Describe the item in detail (specifications, condition, etc.)"
+                placeholder="Describe the item in detail (specifications, condition, serial number, etc.)"
                 disabled={isSubmitting}
               />
               <p className="mt-1 text-xs text-gray-500">
-                Please include important specifications like CPU, RAM, storage, and any notable features or issues.
+                Please include important specifications like CPU, RAM, storage,
+                and any notable features or issues.
               </p>
             </div>
           </div>
         </div>
-        
+
         {/* Terms & Conditions */}
         <div className="bg-white rounded-lg shadow-sm p-4 border border-gray-100">
           <div className="flex items-start space-x-2">
@@ -271,11 +352,17 @@ export const RegisterSponsor = () => {
               />
             </div>
             <div>
-              <label htmlFor="terms" className="text-xs font-medium text-gray-700">
+              <label
+                htmlFor="terms"
+                className="text-xs font-medium text-gray-700"
+              >
                 I agree to the terms and conditions
               </label>
               <p className="mt-0.5 text-xs text-gray-500">
-                By checking this box, you acknowledge that the donated items will be distributed to students in need and will not be returned. Your donation is subject to approval by our administrators.
+                By checking this box, you acknowledge that the donated items
+                will be distributed to students in need and will not be
+                returned. Your donation is subject to approval by our
+                administrators.
               </p>
             </div>
           </div>
@@ -287,9 +374,10 @@ export const RegisterSponsor = () => {
             type="submit"
             className={`
               px-6 py-2 rounded-md font-medium text-sm flex items-center justify-center min-w-[160px]
-              ${isSubmitting 
-                ? 'bg-gray-400 text-white cursor-not-allowed'
-                : 'bg-amber-600 text-white hover:bg-amber-700 hover:shadow-md active:transform active:scale-95'
+              ${
+                isSubmitting
+                  ? "bg-gray-400 text-white cursor-not-allowed"
+                  : "bg-amber-600 text-white hover:bg-amber-700 hover:shadow-md active:transform active:scale-95"
               }
               transition-all duration-200
             `}
@@ -297,17 +385,42 @@ export const RegisterSponsor = () => {
           >
             {isSubmitting ? (
               <>
-                <svg className="animate-spin -ml-1 mr-2 h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                <svg
+                  className="animate-spin -ml-1 mr-2 h-3.5 w-3.5 text-white"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  ></circle>
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  ></path>
                 </svg>
                 Processing...
               </>
             ) : (
               <>
                 Submit Donation Request
-                <svg className="w-4 h-4 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                <svg
+                  className="w-4 h-4 ml-2"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M13 7l5 5m0 0l-5 5m5-5H6"
+                  />
                 </svg>
               </>
             )}

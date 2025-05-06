@@ -43,6 +43,73 @@ const BorrowHistory = () => {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [depositTransactionsMap, setDepositTransactionsMap] = useState({});
+  // Add new state variables for security
+  const [showSensitiveInfo, setShowSensitiveInfo] = useState(() => {
+    // Read from localStorage on initial render
+    const saved = localStorage.getItem("showSensitiveInfo");
+    return saved === "true";
+  });
+  const [securityPassword, setSecurityPassword] = useState("");
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+
+  // Add security functions
+  const maskSensitiveInfo = (text) => {
+    if (!text) return "";
+    if (!showSensitiveInfo) {
+      return "•".repeat(text.length);
+    }
+    return text;
+  };
+
+  const maskEmail = (email) => {
+    if (!email) return "";
+    if (!showSensitiveInfo) {
+      const [username, domain] = email.split("@");
+      const maskedUsername =
+        username.charAt(0) +
+        "•".repeat(username.length - 2) +
+        username.charAt(username.length - 1);
+      return `${maskedUsername}@${domain}`;
+    }
+    return email;
+  };
+
+  const maskPhoneNumber = (phone) => {
+    if (!phone) return "";
+    if (!showSensitiveInfo) {
+      return phone.replace(/.(?=.{4})/g, "•");
+    }
+    return phone;
+  };
+
+  const maskValue = (value) => {
+    if (!value) return "";
+    if (!showSensitiveInfo) {
+      return "••••••••";
+    }
+    return value;
+  };
+
+  const handleShowSensitiveInfo = () => {
+    if (showSensitiveInfo) {
+      setShowSensitiveInfo(false);
+      localStorage.setItem("showSensitiveInfo", "false");
+    } else {
+      setIsPasswordModalOpen(true);
+    }
+  };
+
+  const handlePasswordSubmit = (e) => {
+    e.preventDefault();
+    if (securityPassword === "admin123") {
+      setShowSensitiveInfo(true);
+      localStorage.setItem("showSensitiveInfo", "true");
+      setIsPasswordModalOpen(false);
+      setSecurityPassword("");
+    } else {
+      toast.error("Incorrect password");
+    }
+  };
 
   useEffect(() => {
     fetchBorrowHistory();
@@ -517,6 +584,87 @@ const BorrowHistory = () => {
         </div>
       </div>
 
+      {/* Add Security Toggle Button */}
+      <div className="mb-4 flex justify-end">
+        <button
+          onClick={handleShowSensitiveInfo}
+          className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-all duration-300 ${
+            showSensitiveInfo
+              ? "bg-red-100 text-red-700 hover:bg-red-200"
+              : "bg-amber-100 text-amber-700 hover:bg-amber-200"
+          }`}
+        >
+          <svg
+            className="w-5 h-5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              d={
+                showSensitiveInfo
+                  ? "M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                  : "M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+              }
+            />
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              d={
+                showSensitiveInfo
+                  ? "M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                  : "M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+              }
+            />
+          </svg>
+          {showSensitiveInfo ? "Hide Information" : "Show Information"}
+        </button>
+      </div>
+
+      {/* Add Password Modal */}
+      {isPasswordModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-auto bg-black bg-opacity-60 backdrop-blur-sm">
+          <div className="bg-white rounded-lg shadow-2xl w-full max-w-md mx-4 p-6">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">
+              Enter Security Password
+            </h3>
+            <form onSubmit={handlePasswordSubmit}>
+              <input
+                type="password"
+                value={securityPassword}
+                onChange={(e) => setSecurityPassword(e.target.value)}
+                className="w-full p-3 border border-gray-300 rounded-md focus:ring-amber-500 focus:border-amber-500"
+                placeholder="Enter password"
+                required
+              />
+              <div className="flex justify-end gap-3 mt-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsPasswordModalOpen(false);
+                    setSecurityPassword("");
+                  }}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 text-sm font-medium text-white bg-amber-600 rounded-md hover:bg-amber-700"
+                >
+                  Submit
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* Enhanced Search and Filter Controls with improved visuals */}
       <div className="mb-8 animate-fadeIn">
         <div className="bg-white rounded-xl shadow-lg p-4 border border-gray-100 hover:shadow-xl transition-shadow duration-300">
@@ -883,8 +1031,9 @@ const BorrowHistory = () => {
                             <div className="flex flex-col">
                               <div className="flex items-center">
                                 <span className="text-sm font-medium text-gray-900 group-hover:text-amber-700 transition-colors">
-                                  {userInfoMap[item.userId]?.fullName ||
-                                    "Unknown User"}
+                                  {maskSensitiveInfo(
+                                    userInfoMap[item.userId]?.fullName
+                                  ) || "Unknown User"}
                                 </span>
                                 {userInfoMap[item.userId]?.roleName && (
                                   <span className="ml-2 text-xs px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded-md shadow-sm">
@@ -893,7 +1042,7 @@ const BorrowHistory = () => {
                                 )}
                               </div>
                               <span className="text-xs text-gray-500 mt-0.5">
-                                {userInfoMap[item.userId]?.email ||
+                                {maskEmail(userInfoMap[item.userId]?.email) ||
                                   "No email available"}
                               </span>
                               {userInfoMap[item.userId]?.studentCode && (
@@ -912,7 +1061,9 @@ const BorrowHistory = () => {
                                       d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2"
                                     ></path>
                                   </svg>
-                                  {userInfoMap[item.userId].studentCode}
+                                  {maskSensitiveInfo(
+                                    userInfoMap[item.userId].studentCode
+                                  )}
                                 </span>
                               )}
                             </div>
@@ -1007,7 +1158,10 @@ const BorrowHistory = () => {
                                         d="M15 12H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"
                                       />
                                     </svg>
-                                    Serial: {itemsMap[item.itemId].serialNumber}
+                                    Serial:{" "}
+                                    {maskSensitiveInfo(
+                                      itemsMap[item.itemId].serialNumber
+                                    )}
                                   </span>
                                 </div>
                               )}
@@ -1028,11 +1182,14 @@ const BorrowHistory = () => {
                                         d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                                       ></path>
                                     </svg>
-                                    {contractsMap[item.requestId]?.itemValue
-                                      ? formatCurrency(
-                                          contractsMap[item.requestId].itemValue
-                                        )
-                                      : "N/A"}
+                                    {maskValue(
+                                      contractsMap[item.requestId]?.itemValue
+                                        ? formatCurrency(
+                                            contractsMap[item.requestId]
+                                              .itemValue
+                                          )
+                                        : "N/A"
+                                    )}
                                   </span>
                                   {isExpiringSoon(
                                     contractsMap[item.requestId]
@@ -1450,8 +1607,10 @@ const BorrowHistory = () => {
                                               Phone
                                             </p>
                                             <p className="text-sm font-medium">
-                                              {userInfoMap[item.userId]
-                                                .phoneNumber || "N/A"}
+                                              {maskPhoneNumber(
+                                                userInfoMap[item.userId]
+                                                  ?.phoneNumber
+                                              ) || "N/A"}
                                             </p>
                                           </div>
                                         </div>
@@ -1608,7 +1767,9 @@ const BorrowHistory = () => {
                                             Serial Number
                                           </p>
                                           <p className="text-sm font-medium">
-                                            {itemsMap[item.itemId].serialNumber}
+                                            {maskSensitiveInfo(
+                                              itemsMap[item.itemId].serialNumber
+                                            )}
                                           </p>
                                         </div>
                                       </div>
@@ -1769,13 +1930,16 @@ const BorrowHistory = () => {
                                               Item Value
                                             </p>
                                             <p className="text-sm font-medium text-green-600">
-                                              {contractsMap[item.requestId]
-                                                ?.itemValue
-                                                ? formatCurrency(
-                                                    contractsMap[item.requestId]
-                                                      .itemValue
-                                                  )
-                                                : "N/A"}
+                                              {maskValue(
+                                                contractsMap[item.requestId]
+                                                  ?.itemValue
+                                                  ? formatCurrency(
+                                                      contractsMap[
+                                                        item.requestId
+                                                      ].itemValue
+                                                    )
+                                                  : "N/A"
+                                              )}
                                             </p>
                                           </div>
 
@@ -1846,28 +2010,56 @@ const BorrowHistory = () => {
                                                 item.requestId
                                               ].contractImages.map(
                                                 (image, index) => (
-                                                  <a
-                                                    href={image}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
+                                                  <div
                                                     key={index}
                                                     className="group relative block rounded-md overflow-hidden h-32 bg-gray-100"
                                                   >
-                                                    <img
-                                                      src={image}
-                                                      alt={`Contract ${
-                                                        contractsMap[
-                                                          item.requestId
-                                                        ].contractId
-                                                      } image ${index + 1}`}
-                                                      className="w-full h-full object-cover transition-transform group-hover:scale-110 duration-300"
-                                                    />
-                                                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center">
-                                                      <div className="p-2 text-white text-xs font-medium">
-                                                        View Page {index + 1}
+                                                    {showSensitiveInfo ? (
+                                                      <a
+                                                        href={image}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="block h-full"
+                                                      >
+                                                        <img
+                                                          src={image}
+                                                          alt={`Contract ${
+                                                            contractsMap[
+                                                              item.requestId
+                                                            ].contractId
+                                                          } image ${index + 1}`}
+                                                          className="w-full h-full object-cover transition-transform group-hover:scale-110 duration-300"
+                                                        />
+                                                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center">
+                                                          <div className="p-2 text-white text-xs font-medium">
+                                                            View Page{" "}
+                                                            {index + 1}
+                                                          </div>
+                                                        </div>
+                                                      </a>
+                                                    ) : (
+                                                      <div className="w-full h-full flex items-center justify-center bg-gray-200">
+                                                        <div className="text-center p-4">
+                                                          <svg
+                                                            className="w-12 h-12 mx-auto text-gray-400 mb-2"
+                                                            fill="none"
+                                                            stroke="currentColor"
+                                                            viewBox="0 0 24 24"
+                                                          >
+                                                            <path
+                                                              strokeLinecap="round"
+                                                              strokeLinejoin="round"
+                                                              strokeWidth={2}
+                                                              d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                                                            />
+                                                          </svg>
+                                                          <p className="text-sm text-gray-500">
+                                                            Image Hidden
+                                                          </p>
+                                                        </div>
                                                       </div>
-                                                    </div>
-                                                  </a>
+                                                    )}
+                                                  </div>
                                                 )
                                               )}
                                             </div>
@@ -1899,17 +2091,19 @@ const BorrowHistory = () => {
                                         Deposit Transaction Amount:
                                       </span>
                                       <span className="ml-2 text-base font-bold text-amber-600">
-                                        {depositTransactionsMap[
-                                          contractsMap[item.requestId]
-                                            ?.contractId
-                                        ]?.amount
-                                          ? formatCurrency(
-                                              depositTransactionsMap[
-                                                contractsMap[item.requestId]
-                                                  ?.contractId
-                                              ].amount
-                                            )
-                                          : "N/A"}
+                                        {showSensitiveInfo
+                                          ? depositTransactionsMap[
+                                              contractsMap[item.requestId]
+                                                ?.contractId
+                                            ]?.amount
+                                            ? formatCurrency(
+                                                depositTransactionsMap[
+                                                  contractsMap[item.requestId]
+                                                    ?.contractId
+                                                ].amount
+                                              )
+                                            : "N/A"
+                                          : "••••••••"}
                                       </span>
                                     </div>
                                   </div>

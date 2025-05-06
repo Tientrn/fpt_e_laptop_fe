@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -30,109 +30,174 @@ const RegisterPage = () => {
     studentCardImage: undefined,
   });
 
-  const validate = () => {
+  const [touched, setTouched] = useState({});
+
+  // Function to validate a single field
+  const validateField = (name, value) => {
+    let error = null;
+
+    switch (name) {
+      case "email":
+        if (value && !value.match(/^\S+@\S+\.\S+$/)) {
+          error = "Invalid email format";
+        }
+        break;
+      case "password":
+        if (value && value.length < 6) {
+          error = "Password must be at least 6 characters";
+        }
+        break;
+      case "confirmPassword":
+        if (value && value !== formData.password) {
+          error = "Passwords do not match";
+        }
+        break;
+      case "phoneNumber":
+        if (value && !value.match(/^\d{9,15}$/)) {
+          error = "Invalid phone number format (must be 9-15 digits)";
+        }
+        break;
+      case "dob":
+        if (
+          value &&
+          !value.match(/^\d{2}-\d{2}-\d{4}$/) &&
+          !value.match(/^\d{4}-\d{2}-\d{2}$/)
+        ) {
+          error = "Invalid date format";
+        }
+        break;
+      case "studentCode":
+        if (value && !value.match(/^[A-Za-z]{2}\d{6}$/)) {
+          error =
+            "Student code must consist of 2 letters followed by 6 digits (e.g., IT230001)";
+        }
+        break;
+      case "identityCard":
+        if (value && !value.match(/^\d{9,12}$/)) {
+          error = "Invalid ID card number (must be 9-12 digits)";
+        }
+        break;
+      case "avatarImage":
+        if (value) {
+          if (!["image/jpeg", "image/png", "image/jpg"].includes(value.type)) {
+            error = "Avatar must be in jpg/jpeg/png format";
+          } else if (value.size > 2 * 1024 * 1024) {
+            error = "Avatar must not exceed 2MB";
+          }
+        }
+        break;
+      case "studentCardImage":
+        if (value) {
+          if (!["image/jpeg", "image/png", "image/jpg"].includes(value.type)) {
+            error = "Student card image must be in jpg/jpeg/png format";
+          } else if (value.size > 2 * 1024 * 1024) {
+            error = "Student card image must not exceed 2MB";
+          }
+        }
+        break;
+      default:
+        break;
+    }
+
+    return error;
+  };
+
+  // Validate all fields for form submission
+  const validateAllFields = () => {
     const newErrors = {};
 
-    // Email
-    if (!formData.email.match(/^\S+@\S+\.\S+$/)) {
-      newErrors.email = "Invalid email";
-    }
+    // Validate all formData fields
+    Object.keys(formData).forEach((key) => {
+      const error = validateField(key, formData[key]);
+      if (error) newErrors[key] = error;
+    });
 
-    // Password
-    if (formData.password.length < 6) {
-      newErrors.password = "Password must be at least 6 characters";
-    }
-
-    // Confirm Password
-    if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = "Passwords do not match";
-    }
-
-    // Phone number
-    if (!formData.phoneNumber.match(/^\d{9,15}$/)) {
-      newErrors.phoneNumber = "Invalid phone number";
-    }
-
-    // DOB (use ISO format or check dd-mm-yyyy format)
-    if (
-      !formData.dob.match(/^\d{2}-\d{2}-\d{4}$/) &&
-      !formData.dob.match(/^\d{4}-\d{2}-\d{2}$/)
-    ) {
-      newErrors.dob = "Invalid date of birth format";
-    }
-
-    // Student fields if student
+    // Validate student fields if student role is selected
     if (parseInt(formData.roleId) === 2) {
-      if (!studentData.studentCode.match(/^[A-Za-z]{2}\d{6}$/)) {
-        newErrors.studentCode =
-          "Student code must consist of 2 letters followed by 6 digits (e.g., IT230001)";
-      }
-      if (!studentData.identityCard.match(/^\d{9,12}$/)) {
-        newErrors.identityCard = "Invalid ID card number";
-      }
-      if (!studentData.enrollmentDate) {
-        newErrors.enrollmentDate = "Please select enrollment date";
-      }
-      if (!studentData.studentCardImage) {
-        newErrors.studentCardImage = "Please upload student card image";
-      } else if (
-        !["image/jpeg", "image/png", "image/jpg"].includes(
-          studentData.studentCardImage.type
-        )
-      ) {
-        newErrors.studentCardImage = "Image must be in jpg/jpeg/png format";
-      } else if (studentData.studentCardImage.size > 2 * 1024 * 1024) {
-        newErrors.studentCardImage = "Image must not exceed 2MB";
-      }
-    }
+      Object.keys(studentData).forEach((key) => {
+        const error = validateField(key, studentData[key]);
+        if (error) newErrors[key] = error;
+      });
 
-    // Avatar validation
-    if (formData.avatarImage) {
-      if (
-        !["image/jpeg", "image/png", "image/jpg"].includes(
-          formData.avatarImage.type
-        )
-      ) {
-        newErrors.avatarImage = "Avatar must be in jpg/jpeg/png format";
-      } else if (formData.avatarImage.size > 2 * 1024 * 1024) {
-        newErrors.avatarImage = "Avatar must not exceed 2MB";
-      }
+      // Additional validation for required student fields
+      if (!studentData.studentCode)
+        newErrors.studentCode = "Student code is required";
+      if (!studentData.identityCard)
+        newErrors.identityCard = "Identity card number is required";
+      if (!studentData.enrollmentDate)
+        newErrors.enrollmentDate = "Enrollment date is required";
+      if (!studentData.studentCardImage)
+        newErrors.studentCardImage = "Student card image is required";
     }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  // Add new function for real-time password validation
-  const validateConfirmPassword = (password, confirmPassword) => {
-    if (confirmPassword && password !== confirmPassword) {
-      setErrors((prev) => ({
-        ...prev,
-        confirmPassword: "Passwords do not match",
-      }));
-    } else {
-      setErrors((prev) => ({
-        ...prev,
-        confirmPassword: undefined,
-      }));
-    }
+  const handleBlur = (e) => {
+    const { name } = e.target;
+    setTouched((prev) => ({ ...prev, [name]: true }));
+
+    // Validate the field on blur
+    const value = formData[name];
+    const error = validateField(name, value);
+
+    // Update errors state
+    setErrors((prev) => ({
+      ...prev,
+      [name]: error,
+    }));
+  };
+
+  const handleStudentBlur = (e) => {
+    const { name } = e.target;
+    setTouched((prev) => ({ ...prev, [name]: true }));
+
+    // Validate the field on blur
+    const value = studentData[name];
+    const error = validateField(name, value);
+
+    // Update errors state
+    setErrors((prev) => ({
+      ...prev,
+      [name]: error,
+    }));
   };
 
   const handleStudentChange = (e) => {
     const { name, value, files } = e.target;
+
     if (name === "studentCardImage" && files?.[0]) {
+      const file = files[0];
       setStudentData((prev) => ({
         ...prev,
-        studentCardImage: files[0],
+        studentCardImage: file,
       }));
+
       // Create preview URL for student card image
-      const previewUrl = URL.createObjectURL(files[0]);
+      const previewUrl = URL.createObjectURL(file);
       setStudentCardPreview(previewUrl);
+
+      // Validate file immediately
+      const error = validateField(name, file);
+      setErrors((prev) => ({
+        ...prev,
+        [name]: error,
+      }));
     } else {
       setStudentData((prev) => ({
         ...prev,
         [name]: value,
       }));
+
+      // Validate field immediately if it's been touched
+      if (touched[name]) {
+        const error = validateField(name, value);
+        setErrors((prev) => ({
+          ...prev,
+          [name]: error,
+        }));
+      }
     }
   };
 
@@ -143,34 +208,89 @@ const RegisterPage = () => {
         ...prev,
         avatarImage: file,
       }));
+
       // Create preview URL
       const previewUrl = URL.createObjectURL(file);
       setAvatarPreview(previewUrl);
+
+      // Validate file immediately
+      const error = validateField("avatarImage", file);
+      setErrors((prev) => ({
+        ...prev,
+        avatarImage: error,
+      }));
     }
   };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+
     setFormData((prev) => {
       const newData = {
         ...prev,
         [name]: value,
       };
 
-      // Check password match when either password or confirmPassword changes
-      if (name === "password" || name === "confirmPassword") {
-        validateConfirmPassword(
-          name === "password" ? value : newData.password,
-          name === "confirmPassword" ? value : newData.confirmPassword
+      // Special check for password and confirmPassword
+      if (name === "password" && touched.confirmPassword) {
+        // If password changes and confirmPassword has been touched, validate confirmPassword
+        const confirmError = validateField(
+          "confirmPassword",
+          prev.confirmPassword
         );
+        setErrors((prev) => ({
+          ...prev,
+          confirmPassword: confirmError,
+        }));
       }
 
       return newData;
     });
+
+    // Validate field immediately if it's been touched
+    if (touched[name]) {
+      const error = validateField(name, value);
+      setErrors((prev) => ({
+        ...prev,
+        [name]: error,
+      }));
+    }
   };
+
+  // Update confirmPassword validation when password changes
+  useEffect(() => {
+    if (touched.confirmPassword && formData.confirmPassword) {
+      const error = validateField("confirmPassword", formData.confirmPassword);
+      setErrors((prev) => ({
+        ...prev,
+        confirmPassword: error,
+      }));
+    }
+  }, [formData.password, touched.confirmPassword, formData.confirmPassword]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Touch all fields to show validation errors
+    const allFields = {
+      ...Object.keys(formData).reduce(
+        (acc, key) => ({ ...acc, [key]: true }),
+        {}
+      ),
+    };
+    if (parseInt(formData.roleId) === 2) {
+      Object.keys(studentData).forEach((key) => {
+        allFields[key] = true;
+      });
+    }
+    setTouched(allFields);
+
+    // Validate all fields
+    if (!validateAllFields()) {
+      toast.error("Please correct the errors in the form.");
+      return;
+    }
+
     try {
       const roleId = parseInt(formData.roleId);
 
@@ -297,7 +417,7 @@ const RegisterPage = () => {
             }}
           >
             <motion.img
-              src="https://cdn.pixabay.com/photo/2016/11/29/05/45/astronomy-1867616_1280.jpg"
+              src="https://img.freepik.com/free-vector/laptop-sharing-concept-illustration_114360-1000.jpg"
               alt="Join LaptopSharing"
               className="w-3/4 mb-6 rounded-lg shadow-md"
               initial={{ scale: 0.8 }}
@@ -307,6 +427,22 @@ const RegisterPage = () => {
             <p className="text-sm text-amber-600 text-center mt-2">
               Create an account to start sharing and borrowing laptops.
             </p>
+            <motion.button
+              onClick={() => navigate("/")}
+              className="mt-6 px-6 py-2 bg-amber-600 text-white rounded-full flex items-center gap-2 hover:bg-amber-700 transition-colors shadow-md"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-5 w-5"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
+              </svg>
+              Back to Home
+            </motion.button>
           </motion.div>
           <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
             <motion.div
@@ -357,6 +493,7 @@ const RegisterPage = () => {
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
+                onBlur={handleBlur}
                 required
                 className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 ${
                   errors.email
@@ -379,6 +516,7 @@ const RegisterPage = () => {
                 name="password"
                 value={formData.password}
                 onChange={handleChange}
+                onBlur={handleBlur}
                 required
                 className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 ${
                   errors.password
@@ -401,6 +539,7 @@ const RegisterPage = () => {
                 name="confirmPassword"
                 value={formData.confirmPassword}
                 onChange={handleChange}
+                onBlur={handleBlur}
                 onPaste={(e) => e.preventDefault()} // Prevent pasting for security
                 required
                 className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 ${
@@ -426,6 +565,7 @@ const RegisterPage = () => {
                 name="fullName"
                 value={formData.fullName}
                 onChange={handleChange}
+                onBlur={handleBlur}
                 required
                 className="w-full px-4 py-2 border border-slate-300 rounded-md text-black focus:outline-none focus:ring-2 focus:ring-amber-500"
                 placeholder="Your full name"
@@ -441,6 +581,7 @@ const RegisterPage = () => {
                 name="address"
                 value={formData.address}
                 onChange={handleChange}
+                onBlur={handleBlur}
                 required
                 className="w-full px-4 py-2 border border-slate-300 rounded-md text-black focus:outline-none focus:ring-2 focus:ring-amber-500"
                 placeholder="Your address"
@@ -456,6 +597,7 @@ const RegisterPage = () => {
                 name="phoneNumber"
                 value={formData.phoneNumber}
                 onChange={handleChange}
+                onBlur={handleBlur}
                 required
                 className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 ${
                   errors.phoneNumber
@@ -480,9 +622,17 @@ const RegisterPage = () => {
                 name="dob"
                 value={formData.dob}
                 onChange={handleChange}
+                onBlur={handleBlur}
                 required
-                className="w-full px-4 py-2 border border-slate-300 rounded-md text-black focus:outline-none focus:ring-2 focus:ring-amber-500"
+                className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 ${
+                  errors.dob
+                    ? "border-red-500 ring-red-500"
+                    : "border-slate-300 focus:ring-amber-500"
+                }`}
               />
+              {errors.dob && (
+                <p className="text-red-500 text-sm mt-1">{errors.dob}</p>
+              )}
             </div>
 
             <div>
@@ -493,6 +643,7 @@ const RegisterPage = () => {
                 name="gender"
                 value={formData.gender}
                 onChange={handleChange}
+                onBlur={handleBlur}
                 required
                 className="w-full px-4 py-2 border border-slate-300 rounded-md text-black focus:outline-none focus:ring-2 focus:ring-amber-500"
               >
@@ -509,9 +660,14 @@ const RegisterPage = () => {
               </label>
               <input
                 type="file"
+                name="avatarImage"
                 accept="image/*"
                 onChange={handleAvatarChange}
-                className="w-full px-4 py-2 border border-slate-300 rounded-md text-black focus:outline-none focus:ring-2 focus:ring-amber-500"
+                className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 ${
+                  errors.avatarImage
+                    ? "border-red-500 ring-red-500"
+                    : "border-slate-300 focus:ring-amber-500"
+                }`}
               />
               {errors.avatarImage && (
                 <p className="text-red-500 text-sm mt-1">
@@ -540,6 +696,7 @@ const RegisterPage = () => {
                 name="roleId"
                 value={formData.roleId}
                 onChange={handleChange}
+                onBlur={handleBlur}
                 required
                 className="w-full px-4 py-2 border border-slate-300 rounded-md text-black focus:outline-none focus:ring-2 focus:ring-amber-500"
               >
@@ -561,10 +718,20 @@ const RegisterPage = () => {
                     name="studentCode"
                     value={studentData.studentCode}
                     onChange={handleStudentChange}
+                    onBlur={handleStudentBlur}
                     required
-                    className="w-full px-4 py-2 border border-slate-300 rounded-md text-black focus:outline-none focus:ring-2 focus:ring-amber-500"
+                    className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 ${
+                      errors.studentCode
+                        ? "border-red-500 ring-red-500"
+                        : "border-slate-300 focus:ring-amber-500"
+                    }`}
                     placeholder="Your student code"
                   />
+                  {errors.studentCode && (
+                    <p className="text-red-500 text-sm mt-1">
+                      {errors.studentCode}
+                    </p>
+                  )}
                 </div>
 
                 <div>
@@ -576,10 +743,20 @@ const RegisterPage = () => {
                     name="identityCard"
                     value={studentData.identityCard}
                     onChange={handleStudentChange}
+                    onBlur={handleStudentBlur}
                     required
-                    className="w-full px-4 py-2 border border-slate-300 rounded-md text-black focus:outline-none focus:ring-2 focus:ring-amber-500"
+                    className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 ${
+                      errors.identityCard
+                        ? "border-red-500 ring-red-500"
+                        : "border-slate-300 focus:ring-amber-500"
+                    }`}
                     placeholder="Your identity card number"
                   />
+                  {errors.identityCard && (
+                    <p className="text-red-500 text-sm mt-1">
+                      {errors.identityCard}
+                    </p>
+                  )}
                 </div>
 
                 <div>
@@ -591,9 +768,19 @@ const RegisterPage = () => {
                     name="enrollmentDate"
                     value={studentData.enrollmentDate}
                     onChange={handleStudentChange}
+                    onBlur={handleStudentBlur}
                     required
-                    className="w-full px-4 py-2 border border-slate-300 rounded-md text-black focus:outline-none focus:ring-2 focus:ring-amber-500"
+                    className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 ${
+                      errors.enrollmentDate
+                        ? "border-red-500 ring-red-500"
+                        : "border-slate-300 focus:ring-amber-500"
+                    }`}
                   />
+                  {errors.enrollmentDate && (
+                    <p className="text-red-500 text-sm mt-1">
+                      {errors.enrollmentDate}
+                    </p>
+                  )}
                 </div>
 
                 <div>
@@ -606,7 +793,11 @@ const RegisterPage = () => {
                     accept="image/*"
                     onChange={handleStudentChange}
                     required
-                    className="w-full px-4 py-2 border border-slate-300 rounded-md text-black focus:outline-none focus:ring-2 focus:ring-amber-500"
+                    className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 ${
+                      errors.studentCardImage
+                        ? "border-red-500 ring-red-500"
+                        : "border-slate-300 focus:ring-amber-500"
+                    }`}
                   />
                   {errors.studentCardImage && (
                     <p className="text-red-500 text-sm mt-1">
@@ -631,12 +822,15 @@ const RegisterPage = () => {
             )}
 
             <div>
-              <button
+              <motion.button
                 type="submit"
                 className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-amber-600 hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500"
+                variants={buttonVariants}
+                whileHover="hover"
+                whileTap="tap"
               >
                 Register
-              </button>
+              </motion.button>
             </div>
           </form>
 

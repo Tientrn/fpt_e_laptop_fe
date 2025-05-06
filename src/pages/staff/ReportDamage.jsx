@@ -1769,20 +1769,24 @@ const ReportDamage = () => {
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Total Compensation Amount
                       </label>
-                      <div className="relative">
-                        <div className="absolute top-0 inset-y-0 left-0 pl-3 flex items-center h-full justify-center text-gray-500 pointer-events-none">
-                          <span className="text-base font-medium">₫</span>
-                        </div>
+                      <div className="relative flex items-center">
+                        <span
+                          className="absolute left-0 inset-y-0 flex items-center pl-3 text-gray-500"
+                          style={{ pointerEvents: "none", height: "100%" }}
+                        >
+                          ₫
+                        </span>
                         <input
                           type="number"
                           name="amount"
                           value={compensationData.amount}
-                          onChange={handleInputChange}
-                          className="w-full pl-8 pr-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 shadow-sm"
+                          className="w-full pl-8 pr-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 shadow-sm bg-gray-100 text-gray-700 align-middle"
                           placeholder="0"
                           min="0"
                           max={selectedReport.damageFee || 0}
                           required
+                          readOnly
+                          style={{ height: "44px", lineHeight: "44px" }}
                         />
                         <p className="mt-1.5 text-xs text-gray-500 flex items-center">
                           <svg
@@ -1798,9 +1802,7 @@ const ReportDamage = () => {
                               d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                             ></path>
                           </svg>
-                          Maximum:{" "}
                           {formatCurrency(selectedReport.damageFee || 0)}{" "}
-                          (Damage Fee)
                         </p>
                       </div>
                     </div>
@@ -1866,8 +1868,7 @@ const ReportDamage = () => {
                               type="number"
                               name="usedDepositAmount"
                               value={compensationData.usedDepositAmount}
-                              onChange={handleInputChange}
-                              className="w-full pl-8 pr-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 shadow-sm"
+                              className="w-full pl-8 pr-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 shadow-sm bg-gray-100 text-gray-700"
                               placeholder="0"
                               min="0"
                               max={(() => {
@@ -1884,6 +1885,7 @@ const ReportDamage = () => {
                                   compensationData.amount
                                 );
                               })()}
+                              readOnly
                             />
                           </div>
                           {compensationData.amount <
@@ -1952,10 +1954,10 @@ const ReportDamage = () => {
                               type="number"
                               name="extraPaymentRequired"
                               value={compensationData.extraPaymentRequired}
-                              onChange={handleInputChange}
-                              className="w-full pl-8 pr-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 shadow-sm"
+                              className="w-full pl-8 pr-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 shadow-sm bg-gray-100 text-gray-700"
                               placeholder="0"
                               min="0"
+                              readOnly
                             />
                           </div>
                         </div>

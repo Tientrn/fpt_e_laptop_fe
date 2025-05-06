@@ -97,15 +97,17 @@ const ShopLayout = () => {
 
       if (response && response.isSuccess) {
         setHasWallet(true);
-        toast.success("Ví đã được tạo thành công!");
+        toast.success("Wallet created successfully!");
       } else {
         toast.error(
-          response?.message || "Không thể tạo ví. Vui lòng thử lại sau."
+          response?.message || "Cannot create wallet. Please try again later."
         );
       }
     } catch (error) {
       console.error("Error creating wallet:", error);
-      toast.error("Đã xảy ra lỗi khi tạo ví. Vui lòng thử lại sau.");
+      toast.error(
+        "An error occurred while creating a wallet. Please try again later."
+      );
     } finally {
       setIsCreatingWallet(false);
     }
@@ -258,11 +260,11 @@ const ShopLayout = () => {
               <FaWallet className="w-10 h-10" />
             </div>
             <h2 className="text-2xl font-bold text-center text-gray-800 mb-4">
-              Cần tạo ví trước khi tiếp tục
+              Need to create a wallet before continuing
             </h2>
             <p className="text-gray-600 text-center mb-6">
-              Để sử dụng các tính năng của shop, bạn cần tạo ví trước. Ví sẽ
-              được sử dụng cho các giao dịch và thanh toán.
+              To use the shop's features, you need to create a wallet first. The
+              wallet will be used for transactions and payments.
             </p>
             <button
               onClick={handleCreateWallet}
@@ -296,11 +298,11 @@ const ShopLayout = () => {
                       d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                     ></path>
                   </svg>
-                  Đang tạo ví...
+                  Creating wallet...
                 </>
               ) : (
                 <>
-                  <FaWallet className="w-5 h-5 mr-2" /> Tạo ví ngay
+                  <FaWallet className="w-5 h-5 mr-2" /> Create wallet now
                 </>
               )}
             </button>
@@ -392,7 +394,6 @@ const ShopLayout = () => {
                 </span>
               </div>
             </div>
-      
           </div>
         </div>
 
@@ -411,9 +412,9 @@ const ShopLayout = () => {
                   if (isDisabled) {
                     e.preventDefault();
                     if (!hasWallet) {
-                      toast.warning("Vui lòng tạo ví trước!");
+                      toast.warning("Please create a wallet first!");
                     } else if (!hasShop) {
-                      toast.warning("Vui lòng tạo thông tin shop trước!");
+                      toast.warning("Please create shop info first!");
                     }
                   }
                 }}
@@ -448,7 +449,6 @@ const ShopLayout = () => {
               </Link>
             );
           })}
-
         </nav>
 
         {/* Footer with version info */}
@@ -530,11 +530,11 @@ const ShopLayout = () => {
                   <FaWallet className="w-10 h-10" />
                 </div>
                 <h2 className="text-xl font-bold text-gray-800 mb-4">
-                  Bạn cần tạo ví trước khi sử dụng các tính năng khác
+                  Need to create a wallet before using other features
                 </h2>
                 <p className="text-gray-600 mb-6 max-w-md mx-auto">
-                  Để quản lý sản phẩm và thực hiện các giao dịch, bạn cần tạo ví
-                  trước.
+                  To manage products and perform transactions, you need to
+                  create a wallet first.
                 </p>
                 <button
                   onClick={handleCreateWallet}
@@ -568,12 +568,12 @@ const ShopLayout = () => {
                           d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                         ></path>
                       </svg>
-                      Đang tạo ví...
+                      Creating wallet...
                     </>
                   ) : (
                     <>
                       <FaWallet className="w-4 h-4 mr-2" />
-                      Tạo ví
+                      Create wallet
                     </>
                   )}
                 </button>
@@ -584,19 +584,18 @@ const ShopLayout = () => {
                   <FaStore className="w-10 h-10" />
                 </div>
                 <h2 className="text-xl font-bold text-gray-800 mb-4">
-                  Bạn cần tạo thông tin shop trước khi sử dụng các tính năng
-                  khác
+                  Need to create shop info before using other features
                 </h2>
                 <p className="text-gray-600 mb-6 max-w-md mx-auto">
-                  Để quản lý sản phẩm và theo dõi phân tích, vui lòng tạo hồ sơ
-                  shop trước.
+                  To manage products and track analytics, please create shop
+                  info first.
                 </p>
                 <Link
                   to="/shop/create-profile"
                   className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-full hover:from-indigo-700 hover:to-purple-700 transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
                 >
                   <FaPlusCircle className="w-4 h-4 mr-2" />
-                  Tạo thông tin shop
+                  Create shop info
                 </Link>
               </div>
             ) : (

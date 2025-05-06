@@ -34,12 +34,11 @@ import { format, parseISO } from "date-fns";
 const OverviewPage = () => {
   const [walletInfo, setWalletInfo] = useState(null);
   const [transactions, setTransactions] = useState([]);
-  const [topSponsors, setTopSponsors] = useState([]);
   const [topDonors, setTopDonors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState("overview");
-  
+
   // Add pagination states
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
@@ -59,17 +58,12 @@ const OverviewPage = () => {
     const fetchAllData = async () => {
       try {
         setLoading(true);
-        const [
-          walletData,
-          transactionsResponse,
-          sponsorsResponse,
-          donorsResponse,
-        ] = await Promise.all([
-          getWalletByUserId(),
-          statisticSponerUserApi.getTransactionHistory(),
-          statisticSponerUserApi.getTopSponsor(),
-          statisticSponerUserApi.getTopDonor(),
-        ]);
+        const [walletData, transactionsResponse, donorsResponse] =
+          await Promise.all([
+            getWalletByUserId(),
+            statisticSponerUserApi.getTransactionHistory(),
+            statisticSponerUserApi.getTopDonor(),
+          ]);
 
         if (walletData) {
           setWalletInfo(walletData);
@@ -77,10 +71,6 @@ const OverviewPage = () => {
 
         if (transactionsResponse?.isSuccess) {
           setTransactions(transactionsResponse.data || []);
-        }
-
-        if (sponsorsResponse?.isSuccess) {
-          setTopSponsors(sponsorsResponse.data || []);
         }
 
         if (donorsResponse?.isSuccess) {
@@ -196,10 +186,14 @@ const OverviewPage = () => {
     acc[monthYear].totalAmount += transaction.amount;
     acc[monthYear][transaction.transactionType] =
       (acc[monthYear][transaction.transactionType] || 0) + transaction.amount;
-      
+
     // Track refunds from compensation transactions separately
-    if (transaction.transactionType === "Compensation" && transaction.refundAmount !== null && transaction.refundAmount > 0) {
-      acc[monthYear].RefundFromCompensation = 
+    if (
+      transaction.transactionType === "Compensation" &&
+      transaction.refundAmount !== null &&
+      transaction.refundAmount > 0
+    ) {
+      acc[monthYear].RefundFromCompensation =
         (acc[monthYear].RefundFromCompensation || 0) + transaction.refundAmount;
     }
 
@@ -215,7 +209,10 @@ const OverviewPage = () => {
   // Add pagination calculation functions
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentTransactions = transactions.slice(indexOfFirstItem, indexOfLastItem);
+  const currentTransactions = transactions.slice(
+    indexOfFirstItem,
+    indexOfLastItem
+  );
   const totalPages = Math.ceil(transactions.length / itemsPerPage);
 
   const paginate = (pageNumber) => {
@@ -261,16 +258,6 @@ const OverviewPage = () => {
           Transactions
         </button>
         <button
-          className={`mr-2 py-2 px-4 text-sm font-medium rounded-t-lg ${
-            activeTab === "sponsors"
-              ? "bg-amber-500 text-white"
-              : "bg-gray-100 text-gray-800 hover:bg-amber-100"
-          }`}
-          onClick={() => setActiveTab("sponsors")}
-        >
-          Sponsors
-        </button>
-        <button
           className={`py-2 px-4 text-sm font-medium rounded-t-lg ${
             activeTab === "donors"
               ? "bg-amber-500 text-white"
@@ -285,7 +272,7 @@ const OverviewPage = () => {
       {activeTab === "overview" && (
         <>
           {/* Overview Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
             {/* Wallet Card */}
             <div className="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl shadow-xl overflow-hidden">
               <div className="bg-white/10 backdrop-blur-sm p-6">
@@ -327,29 +314,6 @@ const OverviewPage = () => {
                       {transactions.length}
                     </span>
                     <span className="text-white/70 ml-1 text-xs">records</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Top Sponsors Card */}
-            <div className="bg-gradient-to-r from-green-500 to-teal-500 rounded-xl shadow-xl overflow-hidden">
-              <div className="bg-white/10 backdrop-blur-sm p-6">
-                <div className="flex items-center mb-3">
-                  <div className="bg-white/20 p-3 rounded-full">
-                    <FaUsers className="text-white text-xl" />
-                  </div>
-                  <h2 className="ml-3 text-lg font-medium text-white">
-                    Sponsors
-                  </h2>
-                </div>
-                <div className="mt-4">
-                  <p className="text-white/70 text-xs">Total Sponsors</p>
-                  <div className="flex items-baseline mt-1">
-                    <span className="text-2xl font-bold text-white">
-                      {topSponsors.length}
-                    </span>
-                    <span className="text-white/70 ml-1 text-xs">people</span>
                   </div>
                 </div>
               </div>
@@ -562,15 +526,23 @@ const OverviewPage = () => {
                       if (transaction.transactionType === "Deposit") {
                         cashFlow = transaction.amount;
                         flowType = "in";
-                      } else if (transaction.transactionType === "Compensation") {
+                      } else if (
+                        transaction.transactionType === "Compensation"
+                      ) {
                         if (transaction.extraPaymentRequired > 0) {
                           cashFlow = transaction.extraPaymentRequired;
                           flowType = "in";
-                        } else if (transaction.refundAmount !== null && transaction.refundAmount > 0) {
+                        } else if (
+                          transaction.refundAmount !== null &&
+                          transaction.refundAmount > 0
+                        ) {
                           cashFlow = transaction.refundAmount;
                           flowType = "out";
-                        } else if (transaction.usedDepositAmount < transaction.amount) {
-                          cashFlow = transaction.amount - transaction.usedDepositAmount;
+                        } else if (
+                          transaction.usedDepositAmount < transaction.amount
+                        ) {
+                          cashFlow =
+                            transaction.amount - transaction.usedDepositAmount;
                           flowType = "out";
                         }
                       } else if (transaction.transactionType === "Refund") {
@@ -579,7 +551,10 @@ const OverviewPage = () => {
                       }
 
                       return (
-                        <tr key={transaction.transactionId} className="hover:bg-gray-50">
+                        <tr
+                          key={transaction.transactionId}
+                          className="hover:bg-gray-50"
+                        >
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                             {encodeId(transaction.transactionId)}
                           </td>
@@ -589,7 +564,8 @@ const OverviewPage = () => {
                               ${
                                 transaction.transactionType === "Deposit"
                                   ? "bg-green-100 text-green-800"
-                                  : transaction.transactionType === "Compensation"
+                                  : transaction.transactionType ===
+                                    "Compensation"
                                   ? "bg-amber-100 text-amber-800"
                                   : "bg-blue-100 text-blue-800"
                               }`}
@@ -630,7 +606,10 @@ const OverviewPage = () => {
                             )}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {format(new Date(transaction.createdDate), "dd/MM/yyyy HH:mm")}
+                            {format(
+                              new Date(transaction.createdDate),
+                              "dd/MM/yyyy HH:mm"
+                            )}
                           </td>
                           <td className="px-6 py-4 text-sm text-gray-500 max-w-xs truncate">
                             {transaction.note}
@@ -872,7 +851,10 @@ const OverviewPage = () => {
                     if (transaction.extraPaymentRequired > 0) {
                       cashFlow = transaction.extraPaymentRequired;
                       flowType = "in";
-                    } else if (transaction.refundAmount !== null && transaction.refundAmount > 0) {
+                    } else if (
+                      transaction.refundAmount !== null &&
+                      transaction.refundAmount > 0
+                    ) {
                       cashFlow = transaction.refundAmount;
                       flowType = "out";
                     } else if (
@@ -964,9 +946,10 @@ const OverviewPage = () => {
                   onClick={() => paginate(currentPage - 1)}
                   disabled={currentPage === 1}
                   className={`relative inline-flex items-center px-4 py-2 text-sm font-medium rounded-md
-                    ${currentPage === 1
-                      ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                      : 'bg-white text-gray-700 hover:bg-gray-50'
+                    ${
+                      currentPage === 1
+                        ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                        : "bg-white text-gray-700 hover:bg-gray-50"
                     } border border-gray-300`}
                 >
                   Previous
@@ -975,9 +958,10 @@ const OverviewPage = () => {
                   onClick={() => paginate(currentPage + 1)}
                   disabled={currentPage === totalPages}
                   className={`relative inline-flex items-center px-4 py-2 ml-3 text-sm font-medium rounded-md
-                    ${currentPage === totalPages
-                      ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                      : 'bg-white text-gray-700 hover:bg-gray-50'
+                    ${
+                      currentPage === totalPages
+                        ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                        : "bg-white text-gray-700 hover:bg-gray-50"
                     } border border-gray-300`}
                 >
                   Next
@@ -986,32 +970,36 @@ const OverviewPage = () => {
               <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
                 <div>
                   <p className="text-sm text-gray-700">
-                    Showing{' '}
-                    <span className="font-medium">{indexOfFirstItem + 1}</span>
-                    {' '}-{' '}
+                    Showing{" "}
+                    <span className="font-medium">{indexOfFirstItem + 1}</span>{" "}
+                    -{" "}
                     <span className="font-medium">
                       {Math.min(indexOfLastItem, transactions.length)}
-                    </span>
-                    {' '}of{' '}
-                    <span className="font-medium">{transactions.length}</span>
-                    {' '}results
+                    </span>{" "}
+                    of{" "}
+                    <span className="font-medium">{transactions.length}</span>{" "}
+                    results
                   </p>
                 </div>
                 <div>
-                  <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                  <nav
+                    className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px"
+                    aria-label="Pagination"
+                  >
                     <button
                       onClick={() => paginate(currentPage - 1)}
                       disabled={currentPage === 1}
                       className={`relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium
-                        ${currentPage === 1
-                          ? 'text-gray-300 cursor-not-allowed'
-                          : 'text-gray-500 hover:bg-gray-50'
+                        ${
+                          currentPage === 1
+                            ? "text-gray-300 cursor-not-allowed"
+                            : "text-gray-500 hover:bg-gray-50"
                         }`}
                     >
                       <span className="sr-only">Previous</span>
                       <FaChevronLeft className="h-4 w-4" />
                     </button>
-                    
+
                     {/* Page Numbers */}
                     {[...Array(totalPages)].map((_, index) => {
                       const pageNumber = index + 1;
@@ -1019,16 +1007,18 @@ const OverviewPage = () => {
                       if (
                         pageNumber === 1 ||
                         pageNumber === totalPages ||
-                        (pageNumber >= currentPage - 1 && pageNumber <= currentPage + 1)
+                        (pageNumber >= currentPage - 1 &&
+                          pageNumber <= currentPage + 1)
                       ) {
                         return (
                           <button
                             key={pageNumber}
                             onClick={() => paginate(pageNumber)}
                             className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium
-                              ${pageNumber === currentPage
-                                ? 'z-10 bg-amber-50 border-amber-500 text-amber-600'
-                                : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
+                              ${
+                                pageNumber === currentPage
+                                  ? "z-10 bg-amber-50 border-amber-500 text-amber-600"
+                                  : "bg-white border-gray-300 text-gray-500 hover:bg-gray-50"
                               }`}
                           >
                             {pageNumber}
@@ -1054,9 +1044,10 @@ const OverviewPage = () => {
                       onClick={() => paginate(currentPage + 1)}
                       disabled={currentPage === totalPages}
                       className={`relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium
-                        ${currentPage === totalPages
-                          ? 'text-gray-300 cursor-not-allowed'
-                          : 'text-gray-500 hover:bg-gray-50'
+                        ${
+                          currentPage === totalPages
+                            ? "text-gray-300 cursor-not-allowed"
+                            : "text-gray-500 hover:bg-gray-50"
                         }`}
                     >
                       <span className="sr-only">Next</span>
@@ -1066,98 +1057,6 @@ const OverviewPage = () => {
                 </div>
               </div>
             </div>
-          </div>
-        </div>
-      )}
-
-      {activeTab === "sponsors" && (
-        <div className="bg-white rounded-xl shadow-md p-6 border border-slate-100">
-          <div className="flex items-center mb-6">
-            <FaUsers className="text-amber-500 text-xl mr-2" />
-            <h2 className="text-xl font-medium text-gray-800">Top Sponsors</h2>
-          </div>
-
-          {/* Sponsors Chart */}
-          <div className="bg-gray-50 p-4 rounded-lg mb-8">
-            <h3 className="text-md font-medium text-gray-700 mb-4">
-              Sponsor Contribution Distribution
-            </h3>
-            <div className="h-96">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart
-                  data={topSponsors}
-                  layout="vertical"
-                  margin={{ top: 20, right: 30, left: 100, bottom: 5 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis type="number" />
-                  <YAxis type="category" dataKey="sponsorName" width={100} />
-                  <Tooltip formatter={(value) => formatCurrency(value)} />
-                  <Legend />
-                  <Bar
-                    dataKey="totalAmount"
-                    name="Total Donation"
-                    fill="#8884d8"
-                  >
-                    {topSponsors.map((entry, index) => (
-                      <Cell
-                        key={`cell-${index}`}
-                        fill={COLORS[index % COLORS.length]}
-                      />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-
-          {/* Sponsors Table */}
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Rank
-                  </th>
-
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Name
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Total Contribution
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {topSponsors.map((sponsor, index) => (
-                  <tr key={sponsor.sponsorId} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span
-                        className={`px-2 py-1 text-xs font-semibold rounded-full 
-                        ${
-                          index === 0
-                            ? "bg-amber-100 text-amber-800"
-                            : index === 1
-                            ? "bg-gray-100 text-gray-800"
-                            : index === 2
-                            ? "bg-orange-100 text-orange-800"
-                            : "bg-blue-100 text-blue-800"
-                        }`}
-                      >
-                        {index + 1}
-                      </span>
-                    </td>
-
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      {sponsor.sponsorName}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {formatCurrency(sponsor.totalAmount)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
           </div>
         </div>
       )}

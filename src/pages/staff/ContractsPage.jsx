@@ -53,6 +53,14 @@ const ContractsPage = () => {
   const [selectedImages, setSelectedImages] = useState([]);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
+  // Add new state for security
+  const [showSensitiveInfo, setShowSensitiveInfo] = useState(() => {
+    // Read from localStorage on initial render
+    const saved = localStorage.getItem("showSensitiveInfo");
+    return saved === "true";
+  });
+  const [securityPassword, setSecurityPassword] = useState("");
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -285,7 +293,9 @@ const ContractsPage = () => {
 
       if (!isValidType || !isValidSize) {
         toast.error(
-          `${file.name}: ${!isValidType ? "Invalid format" : "Exceeds 5MB limit"}`
+          `${file.name}: ${
+            !isValidType ? "Invalid format" : "Exceeds 5MB limit"
+          }`
         );
       }
 
@@ -903,8 +913,137 @@ const ContractsPage = () => {
     }
   };
 
+  // Add security functions
+  const maskSensitiveInfo = (text) => {
+    if (!text) return "N/A";
+    if (!showSensitiveInfo) {
+      return "••••••••";
+    }
+    return text;
+  };
+
+  const maskEmail = (email) => {
+    if (!email) return "N/A";
+    if (!showSensitiveInfo) {
+      const [username, domain] = email.split("@");
+      const maskedUsername =
+        username.charAt(0) +
+        "•".repeat(username.length - 2) +
+        username.charAt(username.length - 1);
+      return `${maskedUsername}@${domain}`;
+    }
+    return email;
+  };
+
+  const maskPhoneNumber = (phone) => {
+    if (!phone) return "N/A";
+    if (!showSensitiveInfo) {
+      return phone.replace(/\d(?=\d{4})/g, "•");
+    }
+    return phone;
+  };
+
+  const maskValue = (value) => {
+    if (!value) return "N/A";
+    if (!showSensitiveInfo) {
+      return "••••••••";
+    }
+    return formatCurrency(value);
+  };
+
+  const handleShowSensitiveInfo = () => {
+    if (showSensitiveInfo) {
+      setShowSensitiveInfo(false);
+      localStorage.setItem("showSensitiveInfo", "false");
+    } else {
+      setIsPasswordModalOpen(true);
+    }
+  };
+
+  const handlePasswordSubmit = (e) => {
+    e.preventDefault();
+    if (securityPassword === "admin123") {
+      setShowSensitiveInfo(true);
+      localStorage.setItem("showSensitiveInfo", "true");
+      setIsPasswordModalOpen(false);
+      setSecurityPassword("");
+    } else {
+      toast.error("Invalid password");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 p-6">
+      {/* Add security toggle button */}
+      <div className="mb-4 flex justify-end">
+        <button
+          onClick={handleShowSensitiveInfo}
+          className="px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-700 transition-colors flex items-center gap-2"
+        >
+          <svg
+            className="w-5 h-5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d={
+                showSensitiveInfo
+                  ? "M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                  : "M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"
+              }
+            />
+          </svg>
+          {showSensitiveInfo ? "Hide Information" : "Show Information"}
+        </button>
+      </div>
+
+      {/* Password Modal */}
+      {isPasswordModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg max-w-md w-full">
+            <h2 className="text-xl font-bold text-gray-800 mb-4">
+              Security Check
+            </h2>
+            <form onSubmit={handlePasswordSubmit}>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Enter Password
+                </label>
+                <input
+                  type="password"
+                  value={securityPassword}
+                  onChange={(e) => setSecurityPassword(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500"
+                  required
+                />
+              </div>
+              <div className="flex justify-end space-x-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsPasswordModalOpen(false);
+                    setSecurityPassword("");
+                  }}
+                  className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-amber-600 text-white rounded-md hover:bg-amber-700 transition-colors"
+                >
+                  Submit
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* Header with Staff Role Indicator */}
       <div className="mb-8">
         <h1 className="text-3xl text-center font-bold text-gray-800">
@@ -1034,17 +1173,18 @@ const ContractsPage = () => {
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex flex-col">
                           <span className="text-sm font-medium text-gray-900">
-                            {item.isRequest
-                              ? userInfoMap[item.userId]?.fullName ||
-                                "Loading..."
-                              : userInfoMap[item.contractId]?.fullName ||
-                                "Loading..."}
+                            {maskSensitiveInfo(
+                              item.isRequest
+                                ? userInfoMap[item.userId]?.fullName
+                                : userInfoMap[item.contractId]?.fullName
+                            )}
                           </span>
                           <span className="text-sm text-gray-500">
-                            {item.isRequest
-                              ? userInfoMap[item.userId]?.email || "Loading..."
-                              : userInfoMap[item.contractId]?.email ||
-                                "Loading..."}
+                            {maskEmail(
+                              item.isRequest
+                                ? userInfoMap[item.userId]?.email
+                                : userInfoMap[item.contractId]?.email
+                            )}
                           </span>
                         </div>
                       </td>
@@ -1052,7 +1192,7 @@ const ContractsPage = () => {
                         {item.isRequest ? (
                           <div className="flex flex-col">
                             <span className="text-sm font-medium text-gray-900">
-                              {item.itemName}
+                              {maskSensitiveInfo(item.itemName)}
                             </span>
                             <span className="text-xs text-gray-500">
                               {format(new Date(item.startDate), "dd/MM/yyyy")}{" "}
@@ -1063,7 +1203,7 @@ const ContractsPage = () => {
                           <div className="flex flex-col">
                             <div className="flex items-center">
                               <span className="text-sm font-medium text-gray-900">
-                                Value: {formatCurrency(item.itemValue || 0)}
+                                Value: {maskValue(item.itemValue || 0)}
                               </span>
                               {isExpiringSoon(item.expectedReturnDate) && (
                                 <span className="ml-2 px-2 py-0.5 text-xs font-medium bg-red-100 text-red-800 rounded-full">
@@ -1073,7 +1213,7 @@ const ContractsPage = () => {
                             </div>
                             {item.itemName && (
                               <span className="text-xs text-gray-500">
-                                {item.itemName}
+                                {maskSensitiveInfo(item.itemName)}
                               </span>
                             )}
                             <span className="text-xs text-gray-500">
@@ -1532,7 +1672,7 @@ const ContractsPage = () => {
                       Item Value:{" "}
                     </span>
                     <span className="text-gray-600">
-                      {formatCurrency(selectedContract.itemValue || 0)}
+                      {maskValue(selectedContract.itemValue || 0)}
                     </span>
                   </div>
                   <div>
@@ -1551,13 +1691,13 @@ const ContractsPage = () => {
                       Condition:{" "}
                     </span>
                     <span className="text-gray-600">
-                      {selectedContract.conditionBorrow}
+                      {maskSensitiveInfo(selectedContract.conditionBorrow)}
                     </span>
                   </div>
                   <div>
                     <span className="font-semibold text-gray-700">Terms: </span>
                     <span className="text-gray-600">
-                      {selectedContract.terms}
+                      {maskSensitiveInfo(selectedContract.terms)}
                     </span>
                   </div>
                   <div>
@@ -1565,7 +1705,9 @@ const ContractsPage = () => {
                       Serial Number:{" "}
                     </span>
                     <span className="text-gray-600">
-                      {selectedContract.serialNumber || "N/A"}
+                      {maskSensitiveInfo(
+                        selectedContract.serialNumber || "N/A"
+                      )}
                     </span>
                   </div>
                 </div>
@@ -1582,13 +1724,15 @@ const ContractsPage = () => {
                       Full Name:{" "}
                     </span>
                     <span className="text-gray-600">
-                      {selectedContract.requestDetails?.fullName}
+                      {maskSensitiveInfo(
+                        selectedContract.requestDetails?.fullName
+                      )}
                     </span>
                   </div>
                   <div>
                     <span className="font-semibold text-gray-700">Email: </span>
                     <span className="text-gray-600">
-                      {selectedContract.requestDetails?.email}
+                      {maskEmail(selectedContract.requestDetails?.email)}
                     </span>
                   </div>
                   <div>
@@ -1596,7 +1740,9 @@ const ContractsPage = () => {
                       Phone Number:{" "}
                     </span>
                     <span className="text-gray-600">
-                      {selectedContract.requestDetails?.phoneNumber}
+                      {maskPhoneNumber(
+                        selectedContract.requestDetails?.phoneNumber
+                      )}
                     </span>
                   </div>
                   <div>
@@ -1604,7 +1750,9 @@ const ContractsPage = () => {
                       Item Name:{" "}
                     </span>
                     <span className="text-gray-600">
-                      {selectedContract.requestDetails?.itemName}
+                      {maskSensitiveInfo(
+                        selectedContract.requestDetails?.itemName
+                      )}
                     </span>
                   </div>
                   <div>
@@ -1674,83 +1822,112 @@ const ContractsPage = () => {
                         className="group overflow-hidden rounded-lg shadow-md transform hover:scale-[1.02] transition-all duration-300"
                       >
                         <div className="relative h-52 overflow-hidden bg-gray-100">
-                          <a
-                            href={image}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="block h-full"
-                          >
-                            <img
-                              src={image}
-                              alt={`Contract ${
-                                selectedContract.contractId
-                              } - Page ${index + 1}`}
-                              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                              onError={() =>
-                                toast.error(`Failed to load image ${index + 1}`)
-                              }
-                            />
-                          </a>
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                          <div className="absolute bottom-0 left-0 right-0 p-3 text-white transform translate-y-full group-hover:translate-y-0 transition-transform duration-300">
-                            <p className="text-sm font-medium">
-                              Page {index + 1}
-                            </p>
-                            <div className="flex gap-2 mt-2">
-                              <a
-                                href={image}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="p-1.5 bg-amber-600 rounded-full hover:bg-amber-700 transition-colors"
-                              >
-                                <svg
-                                  className="w-4 h-4"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  viewBox="0 0 24 24"
-                                  xmlns="http://www.w3.org/2000/svg"
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                                  />
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                                  />
-                                </svg>
-                              </a>
-                              <a
-                                href={image}
-                                download={`contract-${
+                          {showSensitiveInfo ? (
+                            <a
+                              href={image}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="block h-full"
+                            >
+                              <img
+                                src={image}
+                                alt={`Contract ${
                                   selectedContract.contractId
-                                }-page-${index + 1}`}
-                                className="p-1.5 bg-green-600 rounded-full hover:bg-green-700 transition-colors"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                }}
-                              >
+                                } - Page ${index + 1}`}
+                                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                                onError={() =>
+                                  toast.error(
+                                    `Failed to load image ${index + 1}`
+                                  )
+                                }
+                              />
+                            </a>
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center bg-gray-200">
+                              <div className="text-center p-4">
                                 <svg
-                                  className="w-4 h-4"
+                                  className="w-12 h-12 mx-auto text-gray-400 mb-2"
                                   fill="none"
                                   stroke="currentColor"
                                   viewBox="0 0 24 24"
-                                  xmlns="http://www.w3.org/2000/svg"
                                 >
                                   <path
                                     strokeLinecap="round"
                                     strokeLinejoin="round"
                                     strokeWidth={2}
-                                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0l-4 4m4-4v12"
+                                    d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
                                   />
                                 </svg>
-                              </a>
+                                <p className="text-sm text-gray-500">
+                                  Image Hidden
+                                </p>
+                              </div>
                             </div>
-                          </div>
+                          )}
+                          {showSensitiveInfo && (
+                            <>
+                              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                              <div className="absolute bottom-0 left-0 right-0 p-3 text-white transform translate-y-full group-hover:translate-y-0 transition-transform duration-300">
+                                <p className="text-sm font-medium">
+                                  Page {index + 1}
+                                </p>
+                                <div className="flex gap-2 mt-2">
+                                  <a
+                                    href={image}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="p-1.5 bg-amber-600 rounded-full hover:bg-amber-700 transition-colors"
+                                  >
+                                    <svg
+                                      className="w-4 h-4"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      viewBox="0 0 24 24"
+                                      xmlns="http://www.w3.org/2000/svg"
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                                      />
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                                      />
+                                    </svg>
+                                  </a>
+                                  <a
+                                    href={image}
+                                    download={`contract-${
+                                      selectedContract.contractId
+                                    }-page-${index + 1}`}
+                                    className="p-1.5 bg-green-600 rounded-full hover:bg-green-700 transition-colors"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                    }}
+                                  >
+                                    <svg
+                                      className="w-4 h-4"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      viewBox="0 0 24 24"
+                                      xmlns="http://www.w3.org/2000/svg"
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0l-4 4m4-4v12"
+                                      />
+                                    </svg>
+                                  </a>
+                                </div>
+                              </div>
+                            </>
+                          )}
                         </div>
                       </div>
                     ))}

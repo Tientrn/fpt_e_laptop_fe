@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { toast } from "react-toastify";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import {
   FaUser,
   FaEnvelope,
@@ -15,9 +16,13 @@ import {
   FaChevronRight,
   FaCheck,
   FaShieldAlt,
+  FaLock,
+  FaEye,
+  FaEyeSlash,
 } from "react-icons/fa";
 import userinfoApi from "../../api/userinfoApi";
 import updateProfileApi from "../../api/updateprofileApi";
+import changepassApi from "../../api/changepassApi";
 
 const ProfilePage = () => {
   const [formErrors, setFormErrors] = useState({});
@@ -36,6 +41,18 @@ const ProfilePage = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [editedProfile, setEditedProfile] = useState({});
   const [activeTab, setActiveTab] = useState("info");
+  const [passwordForm, setPasswordForm] = useState({
+    oldPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  });
+  const [showPasswords, setShowPasswords] = useState({
+    current: false,
+    new: false,
+    confirm: false,
+  });
+  const [passwordErrors, setPasswordErrors] = useState({});
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
 
   useEffect(() => {
     fetchProfile();
@@ -71,15 +88,40 @@ const ProfilePage = () => {
 
   const validateForm = () => {
     const errors = [];
-    
-    if (editedProfile.phoneNumber && !/^0\d{9}$/.test(editedProfile.phoneNumber)) {
+
+    if (
+      editedProfile.phoneNumber &&
+      !/^0\d{9}$/.test(editedProfile.phoneNumber)
+    ) {
       errors.push("Phone number must start with 0 and have 10 digits.");
     }
-    
+
     if (!editedProfile.address || editedProfile.address.trim() === "") {
       errors.push("Address cannot be empty.");
     }
-    
+
+    return errors;
+  };
+
+  const validatePasswordForm = () => {
+    const errors = {};
+
+    if (!passwordForm.oldPassword) {
+      errors.oldPassword = "Current password is required";
+    }
+
+    if (!passwordForm.newPassword) {
+      errors.newPassword = "New password is required";
+    } else if (passwordForm.newPassword.length < 6) {
+      errors.newPassword = "Password must be at least 6 characters";
+    }
+
+    if (!passwordForm.confirmPassword) {
+      errors.confirmPassword = "Please confirm your new password";
+    } else if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      errors.confirmPassword = "Passwords do not match";
+    }
+
     return errors;
   };
 
@@ -151,6 +193,79 @@ const ProfilePage = () => {
     }
   };
 
+  const handlePasswordChange = (e) => {
+    const { name, value } = e.target;
+    setPasswordForm((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const togglePasswordVisibility = (field) => {
+    setShowPasswords((prev) => ({
+      ...prev,
+      [field]: !prev[field],
+    }));
+  };
+
+  const handlePasswordSubmit = async (e) => {
+    e.preventDefault();
+
+    const errors = validatePasswordForm();
+    if (Object.keys(errors).length > 0) {
+      setPasswordErrors(errors);
+      return;
+    }
+
+    // Get token from localStorage
+    const token = localStorage.getItem("token");
+    if (!token) {
+      toast.error("Authentication token not found. Please login again.");
+      return;
+    }
+
+    try {
+      setIsChangingPassword(true);
+      const response = await changepassApi.changePassword(
+        {
+          oldPassword: passwordForm.oldPassword,
+          newPassword: passwordForm.newPassword,
+        },
+        token
+      );
+
+      if (response && response.isSuccess) {
+        toast.success(
+          "Password changed successfully! Please use your new password for your next login.",
+          {
+            position: "top-right",
+            autoClose: 3000,
+            hideProgressBar: false,
+            newestOnTop: true,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+          }
+        );
+        setPasswordForm({
+          oldPassword: "",
+          newPassword: "",
+          confirmPassword: "",
+        });
+        setPasswordErrors({});
+      } else {
+        throw new Error(response?.message || "Failed to change password");
+      }
+    } catch (error) {
+      console.error("Error changing password:", error);
+      toast.error(
+        error.message || "Failed to change password. Please try again."
+      );
+    } finally {
+      setIsChangingPassword(false);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -200,6 +315,19 @@ const ProfilePage = () => {
 
   return (
     <div className="w-full bg-white rounded-xl shadow-md overflow-hidden">
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
+        style={{ zIndex: 9999 }}
+      />
       <div className="flex flex-col md:flex-row">
         {/* Sidebar */}
         <div className="w-full md:w-72 bg-gradient-to-b from-indigo-50 to-purple-50 border-r border-gray-200">
@@ -207,7 +335,11 @@ const ProfilePage = () => {
             <div className="relative">
               <div className="w-28 h-28 rounded-full border-4 border-white shadow-lg overflow-hidden bg-white">
                 <img
-                  src={isEditing ? editedProfile.avatar : profile.avatar || "https://via.placeholder.com/150"}
+                  src={
+                    isEditing
+                      ? editedProfile.avatar
+                      : profile.avatar || "https://via.placeholder.com/150"
+                  }
                   alt="Profile"
                   className="w-full h-full object-cover"
                 />
@@ -227,7 +359,9 @@ const ProfilePage = () => {
             <h2 className="mt-4 text-xl font-bold text-gray-800">
               {profile.fullName || "Student"}
             </h2>
-            <p className="text-indigo-600 text-sm">{profile.roleName || "Student"}</p>
+            <p className="text-indigo-600 text-sm">
+              {profile.roleName || "Student"}
+            </p>
             <div className="mt-2 flex items-center bg-indigo-100 text-indigo-800 text-xs px-3 py-1 rounded-full">
               <div className="h-1.5 w-1.5 rounded-full bg-green-500 mr-1.5"></div>
               <span>Active Student</span>
@@ -333,7 +467,9 @@ const ProfilePage = () => {
                             className="w-full p-2.5 bg-gray-100 border border-gray-300 rounded-lg cursor-not-allowed text-gray-500"
                             readOnly
                           />
-                          <p className="text-xs text-gray-500 mt-1">Name cannot be changed</p>
+                          <p className="text-xs text-gray-500 mt-1">
+                            Name cannot be changed
+                          </p>
                         </div>
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -346,7 +482,9 @@ const ProfilePage = () => {
                             className="w-full p-2.5 bg-gray-100 border border-gray-300 rounded-lg cursor-not-allowed text-gray-500"
                             readOnly
                           />
-                          <p className="text-xs text-gray-500 mt-1">Email cannot be changed</p>
+                          <p className="text-xs text-gray-500 mt-1">
+                            Email cannot be changed
+                          </p>
                         </div>
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -357,7 +495,9 @@ const ProfilePage = () => {
                             value={editedProfile.gender || ""}
                             onChange={handleInputChange}
                             className={`w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 ${
-                              formErrors.gender ? "border-red-500 bg-red-50" : "border-gray-300"
+                              formErrors.gender
+                                ? "border-red-500 bg-red-50"
+                                : "border-gray-300"
                             }`}
                           >
                             <option value="">Select Gender</option>
@@ -366,7 +506,9 @@ const ProfilePage = () => {
                             <option value="Other">Other</option>
                           </select>
                           {formErrors.gender && (
-                            <p className="text-sm text-red-600 mt-1">{formErrors.gender}</p>
+                            <p className="text-sm text-red-600 mt-1">
+                              {formErrors.gender}
+                            </p>
                           )}
                         </div>
                         <div>
@@ -379,11 +521,15 @@ const ProfilePage = () => {
                             value={editedProfile.dob || ""}
                             onChange={handleInputChange}
                             className={`w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 ${
-                              formErrors.dob ? "border-red-500 bg-red-50" : "border-gray-300"
+                              formErrors.dob
+                                ? "border-red-500 bg-red-50"
+                                : "border-gray-300"
                             }`}
                           />
                           {formErrors.dob && (
-                            <p className="text-sm text-red-600 mt-1">{formErrors.dob}</p>
+                            <p className="text-sm text-red-600 mt-1">
+                              {formErrors.dob}
+                            </p>
                           )}
                         </div>
                       </div>
@@ -404,12 +550,16 @@ const ProfilePage = () => {
                             value={editedProfile.phoneNumber || ""}
                             onChange={handleInputChange}
                             className={`w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 ${
-                              formErrors.phoneNumber ? "border-red-500 bg-red-50" : "border-gray-300"
+                              formErrors.phoneNumber
+                                ? "border-red-500 bg-red-50"
+                                : "border-gray-300"
                             }`}
                             placeholder="Enter your phone number"
                           />
                           {formErrors.phoneNumber && (
-                            <p className="text-sm text-red-600 mt-1">{formErrors.phoneNumber}</p>
+                            <p className="text-sm text-red-600 mt-1">
+                              {formErrors.phoneNumber}
+                            </p>
                           )}
                         </div>
                         <div>
@@ -422,12 +572,16 @@ const ProfilePage = () => {
                             value={editedProfile.address || ""}
                             onChange={handleInputChange}
                             className={`w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 ${
-                              formErrors.address ? "border-red-500 bg-red-50" : "border-gray-300"
+                              formErrors.address
+                                ? "border-red-500 bg-red-50"
+                                : "border-gray-300"
                             }`}
                             placeholder="Enter your address"
                           />
                           {formErrors.address && (
-                            <p className="text-sm text-red-600 mt-1">{formErrors.address}</p>
+                            <p className="text-sm text-red-600 mt-1">
+                              {formErrors.address}
+                            </p>
                           )}
                         </div>
                         <div>
@@ -485,7 +639,9 @@ const ProfilePage = () => {
                           <FaUser className="w-3.5 h-3.5 text-indigo-600" />
                         </div>
                         <div className="ml-3">
-                          <p className="text-xs font-medium text-gray-500">Full Name</p>
+                          <p className="text-xs font-medium text-gray-500">
+                            Full Name
+                          </p>
                           <p className="text-sm text-gray-800 font-semibold mt-0.5">
                             {profile.fullName || "Not provided"}
                           </p>
@@ -496,7 +652,9 @@ const ProfilePage = () => {
                           <FaEnvelope className="w-3.5 h-3.5 text-indigo-600" />
                         </div>
                         <div className="ml-3">
-                          <p className="text-xs font-medium text-gray-500">Email</p>
+                          <p className="text-xs font-medium text-gray-500">
+                            Email
+                          </p>
                           <p className="text-sm text-gray-800 font-semibold mt-0.5 break-all">
                             {profile.email || "Not provided"}
                           </p>
@@ -507,7 +665,9 @@ const ProfilePage = () => {
                           <FaVenusMars className="w-3.5 h-3.5 text-indigo-600" />
                         </div>
                         <div className="ml-3">
-                          <p className="text-xs font-medium text-gray-500">Gender</p>
+                          <p className="text-xs font-medium text-gray-500">
+                            Gender
+                          </p>
                           <p className="text-sm text-gray-800 font-semibold mt-0.5">
                             {profile.gender || "Not provided"}
                           </p>
@@ -518,7 +678,9 @@ const ProfilePage = () => {
                           <FaBirthdayCake className="w-3.5 h-3.5 text-indigo-600" />
                         </div>
                         <div className="ml-3">
-                          <p className="text-xs font-medium text-gray-500">Date of Birth</p>
+                          <p className="text-xs font-medium text-gray-500">
+                            Date of Birth
+                          </p>
                           <p className="text-sm text-gray-800 font-semibold mt-0.5">
                             {profile.dob || "Not provided"}
                           </p>
@@ -537,7 +699,9 @@ const ProfilePage = () => {
                           <FaPhone className="w-3.5 h-3.5 text-purple-600" />
                         </div>
                         <div className="ml-3">
-                          <p className="text-xs font-medium text-gray-500">Phone Number</p>
+                          <p className="text-xs font-medium text-gray-500">
+                            Phone Number
+                          </p>
                           <p className="text-sm text-gray-800 font-semibold mt-0.5">
                             {profile.phoneNumber || "Not provided"}
                           </p>
@@ -548,7 +712,9 @@ const ProfilePage = () => {
                           <FaMapMarkerAlt className="w-3.5 h-3.5 text-purple-600" />
                         </div>
                         <div className="ml-3">
-                          <p className="text-xs font-medium text-gray-500">Address</p>
+                          <p className="text-xs font-medium text-gray-500">
+                            Address
+                          </p>
                           <p className="text-sm text-gray-800 font-semibold mt-0.5">
                             {profile.address || "Not provided"}
                           </p>
@@ -559,7 +725,9 @@ const ProfilePage = () => {
                           <FaIdCard className="w-3.5 h-3.5 text-purple-600" />
                         </div>
                         <div className="ml-3">
-                          <p className="text-xs font-medium text-gray-500">Role</p>
+                          <p className="text-xs font-medium text-gray-500">
+                            Role
+                          </p>
                           <p className="text-sm text-gray-800 font-semibold mt-0.5">
                             {profile.roleName || "Not provided"}
                           </p>
@@ -580,7 +748,9 @@ const ProfilePage = () => {
                     <FaIdCard className="w-3.5 h-3.5 text-indigo-600" />
                   </div>
                   <div className="ml-3">
-                    <p className="text-xs font-medium text-gray-500">Student Code</p>
+                    <p className="text-xs font-medium text-gray-500">
+                      Student Code
+                    </p>
                     <p className="text-sm text-gray-800 font-semibold mt-0.5">
                       {profile.studentCode || "Not provided"}
                     </p>
@@ -603,13 +773,15 @@ const ProfilePage = () => {
 
           {activeTab === "security" && (
             <div className="bg-white p-5 rounded-lg border border-gray-200 shadow-sm">
-              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg mb-4">
+              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg mb-6">
                 <div className="flex items-start">
                   <div className="flex-shrink-0 w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
                     <FaShieldAlt className="w-3.5 h-3.5 text-green-600" />
                   </div>
                   <div className="ml-3">
-                    <p className="text-sm font-medium text-gray-800">Account Security Status</p>
+                    <p className="text-sm font-medium text-gray-800">
+                      Account Security Status
+                    </p>
                     <p className="text-xs text-gray-500 mt-0.5">
                       Your account is secure and up to date
                     </p>
@@ -619,11 +791,130 @@ const ProfilePage = () => {
                   Secure
                 </span>
               </div>
-              <p className="text-sm text-gray-600">
-                For security reasons, password changes are managed through the main login page.
-                If you need to change your password, please use the &quot;Forgot Password&quot; option on
-                the login screen.
-              </p>
+
+              <form onSubmit={handlePasswordSubmit} className="max-w-lg">
+                <h3 className="text-lg font-medium text-gray-800 mb-4">
+                  Change Password
+                </h3>
+
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Current Password
+                    </label>
+                    <div className="relative">
+                      <input
+                        type={showPasswords.current ? "text" : "password"}
+                        name="oldPassword"
+                        value={passwordForm.oldPassword}
+                        onChange={handlePasswordChange}
+                        className={`w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 ${
+                          passwordErrors.oldPassword
+                            ? "border-red-500 bg-red-50"
+                            : "border-gray-300"
+                        }`}
+                        placeholder="Enter current password"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => togglePasswordVisibility("current")}
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                      >
+                        {showPasswords.current ? <FaEyeSlash /> : <FaEye />}
+                      </button>
+                    </div>
+                    {passwordErrors.oldPassword && (
+                      <p className="text-sm text-red-600 mt-1">
+                        {passwordErrors.oldPassword}
+                      </p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      New Password
+                    </label>
+                    <div className="relative">
+                      <input
+                        type={showPasswords.new ? "text" : "password"}
+                        name="newPassword"
+                        value={passwordForm.newPassword}
+                        onChange={handlePasswordChange}
+                        className={`w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 ${
+                          passwordErrors.newPassword
+                            ? "border-red-500 bg-red-50"
+                            : "border-gray-300"
+                        }`}
+                        placeholder="Enter new password"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => togglePasswordVisibility("new")}
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                      >
+                        {showPasswords.new ? <FaEyeSlash /> : <FaEye />}
+                      </button>
+                    </div>
+                    {passwordErrors.newPassword && (
+                      <p className="text-sm text-red-600 mt-1">
+                        {passwordErrors.newPassword}
+                      </p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Confirm New Password
+                    </label>
+                    <div className="relative">
+                      <input
+                        type={showPasswords.confirm ? "text" : "password"}
+                        name="confirmPassword"
+                        value={passwordForm.confirmPassword}
+                        onChange={handlePasswordChange}
+                        className={`w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 ${
+                          passwordErrors.confirmPassword
+                            ? "border-red-500 bg-red-50"
+                            : "border-gray-300"
+                        }`}
+                        placeholder="Confirm new password"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => togglePasswordVisibility("confirm")}
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                      >
+                        {showPasswords.confirm ? <FaEyeSlash /> : <FaEye />}
+                      </button>
+                    </div>
+                    {passwordErrors.confirmPassword && (
+                      <p className="text-sm text-red-600 mt-1">
+                        {passwordErrors.confirmPassword}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="mt-6">
+                  <button
+                    type="submit"
+                    className="w-full px-5 py-2.5 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition-all duration-200 shadow-sm flex items-center justify-center"
+                    disabled={isChangingPassword}
+                  >
+                    {isChangingPassword ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white mr-2"></div>
+                        <span>Changing Password...</span>
+                      </>
+                    ) : (
+                      <>
+                        <FaLock className="mr-2" />
+                        <span>Change Password</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </form>
             </div>
           )}
         </div>
