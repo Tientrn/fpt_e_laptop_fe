@@ -3,8 +3,7 @@ import React from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { PrivateRoute } from "./components/routes/PrivateRoute";
 import ScrollToTop from "./components/routes/ScrollToTop";
-import { ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+
 {
   /* Layout */
 }
@@ -65,6 +64,7 @@ import ReportDamage from "./pages/staff/ReportDamage";
 }
 import BorrowRequest from "./pages/manager/BorrowRequest";
 import OverviewPage from "./pages/manager/OverviewPage";
+import OrdersPage from "./pages/manager/OrdersPage";
 {
   /* Sponsor */
 }
@@ -87,7 +87,7 @@ const App = () => {
   return (
     <BrowserRouter>
       <ScrollToTop />
-      <ToastContainer position="top-right" autoClose={3000} />
+
       <Routes>
         {/* Public Routes */}
         <Route
@@ -191,14 +191,12 @@ const App = () => {
           <Route index element={<OverviewPage />} />
           <Route path="overview" element={<OverviewPage />} />
           <Route path="borrow-requests" element={<BorrowRequest />} />
+          <Route path="order-management" element={<OrdersPage />} />
         </Route>
 
         {/* Staff Routes */}
         <Route path="/staff" element={<StaffLayout />}>
-          <Route
-            index
-            element={<Navigate to="/staff" replace />}
-          />
+          <Route index element={<Navigate to="/staff" replace />} />
           <Route path="donate-items" element={<DonateItem />} />
           <Route path="edit-item/:itemId" element={<EditDonateItem />} />
           <Route path="borrow-history" element={<BorrowHistory />} />
@@ -258,7 +256,7 @@ const App = () => {
         <Route
           path="/admin/analytics"
           element={
-            <PrivateRoute restrictedTo={['Manager']} redirectTo="/login">
+            <PrivateRoute restrictedTo={["Manager"]} redirectTo="/login">
               <AdminLayout>
                 <AnalyticPage />
               </AdminLayout>

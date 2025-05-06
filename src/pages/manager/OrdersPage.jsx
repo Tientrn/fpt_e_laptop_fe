@@ -7,14 +7,13 @@ import {
   FaChevronUp,
   FaCheckCircle,
   FaTimesCircle,
-  FaBoxOpen,
 } from "react-icons/fa";
 import { toast } from "react-toastify";
 import orderApi from "../../api/orderApi";
 import productApi from "../../api/productApi";
 import shopApi from "../../api/shopApi";
 
-const OrderManagement = () => {
+const OrdersPage = () => {
   const [orders, setOrders] = useState([]);
   const [orderDetails, setOrderDetails] = useState([]);
   const [products, setProducts] = useState({});
@@ -161,27 +160,20 @@ const OrderManagement = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6 p-6 bg-gradient-to-b from-green-50 to-white min-h-screen">
+    <div className="space-y-6 p-6 bg-gray-50 min-h-screen">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-white p-6 rounded-xl shadow-md border border-green-100">
-        <div className="flex items-center gap-4">
-          <div className="w-14 h-14 rounded-full bg-green-200 flex items-center justify-center shadow">
-            <FaBoxOpen className="w-8 h-8 text-green-600" />
-          </div>
-          <div>
-            <h2 className="text-2xl font-bold text-green-700">
-              Order Management
-            </h2>
-            <p className="text-sm text-gray-500 mt-1">
-              Manage and track all orders
-            </p>
-          </div>
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-white p-6 rounded-xl shadow-md border border-gray-100">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-800">Order Management</h2>
+          <p className="text-sm text-gray-500 mt-1">
+            Manage and track all orders
+          </p>
         </div>
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="relative group">
@@ -190,15 +182,15 @@ const OrderManagement = () => {
               placeholder="Search orders..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 w-full bg-gray-50 transition-all duration-200 hover:bg-white group-hover:border-green-300"
+              className="pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 w-full bg-gray-50 transition-all duration-200 hover:bg-white group-hover:border-indigo-300"
             />
-            <FaSearch className="absolute left-3 top-3.5 text-gray-400 group-hover:text-green-500 transition-colors duration-200" />
+            <FaSearch className="absolute left-3 top-3.5 text-gray-400 group-hover:text-indigo-500 transition-colors duration-200" />
           </div>
           <div className="relative">
             <select
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
-              className="pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 bg-gray-50 transition-all duration-200 hover:bg-white appearance-none"
+              className="pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-gray-50 transition-all duration-200 hover:bg-white appearance-none"
             >
               <option value="all">All Status</option>
               <option value="Success">Success</option>
@@ -211,23 +203,23 @@ const OrderManagement = () => {
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
-              className="pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 bg-gray-50 transition-all duration-200 hover:bg-white group-hover:border-green-300 appearance-none cursor-pointer"
+              className="pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-gray-50 transition-all duration-200 hover:bg-white group-hover:border-indigo-300 appearance-none cursor-pointer"
             >
               <option value="newest">Newest First</option>
               <option value="oldest">Oldest First</option>
               <option value="highest">Highest Amount</option>
               <option value="lowest">Lowest Amount</option>
             </select>
-            <FaSort className="absolute left-3 top-3.5 text-gray-400 group-hover:text-green-500 transition-colors duration-200" />
+            <FaSort className="absolute left-3 top-3.5 text-gray-400 group-hover:text-indigo-500 transition-colors duration-200" />
             <div className="absolute right-3 top-3.5 pointer-events-none">
-              <FaChevronDown className="w-3 h-3 text-gray-400 group-hover:text-green-500 transition-colors duration-200" />
+              <FaChevronDown className="w-3 h-3 text-gray-400 group-hover:text-indigo-500 transition-colors duration-200" />
             </div>
           </div>
         </div>
       </div>
 
       {/* Orders Table */}
-      <div className="bg-white rounded-xl shadow-md overflow-hidden border border-green-100 transition-all duration-200 hover:shadow-lg">
+      <div className="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100 transition-all duration-200 hover:shadow-lg">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
@@ -257,7 +249,7 @@ const OrderManagement = () => {
                 <React.Fragment key={order.orderId}>
                   <tr className="hover:bg-gray-50 transition-colors duration-150 group">
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 group-hover:bg-green-200 transition-colors duration-150">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800 group-hover:bg-indigo-200 transition-colors duration-150">
                         #{order.orderId}
                       </span>
                     </td>
@@ -282,13 +274,13 @@ const OrderManagement = () => {
                         </span>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 group-hover:text-green-600 transition-colors duration-150">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 group-hover:text-indigo-600 transition-colors duration-150">
                       {order.totalPrice.toLocaleString("vi-VN")} VNĐ
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       <button
                         onClick={() => toggleOrderDetails(order.orderId)}
-                        className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-green-600 bg-green-50 rounded-lg hover:bg-green-100 hover:text-green-700 transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+                        className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-indigo-600 bg-indigo-50 rounded-lg hover:bg-indigo-100 hover:text-indigo-700 transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                       >
                         {expandedOrders[order.orderId] ? (
                           <>
@@ -309,7 +301,7 @@ const OrderManagement = () => {
                       <td colSpan="6" className="px-6 py-4 bg-gray-50">
                         <div className="space-y-4 animate-fadeIn">
                           <h4 className="font-medium text-gray-900 flex items-center">
-                            <span className="w-1 h-4 bg-green-500 rounded-full mr-2"></span>
+                            <span className="w-1 h-4 bg-indigo-500 rounded-full mr-2"></span>
                             Order Items
                           </h4>
                           <div className="space-y-3">
@@ -426,8 +418,42 @@ const OrderManagement = () => {
           </table>
         </div>
       </div>
+
+      {/* Pagination */}
+      <div className="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6 rounded-xl shadow-md">
+        <div className="flex flex-1 justify-between sm:hidden">
+          <button className="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors duration-150">
+            Previous
+          </button>
+          <button className="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors duration-150">
+            Next
+          </button>
+        </div>
+        <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+          <div>
+            <p className="text-sm text-gray-700">
+              Showing <span className="font-medium">1</span> to{" "}
+              <span className="font-medium">{sortedOrders.length}</span> of{" "}
+              <span className="font-medium">{sortedOrders.length}</span> results
+            </p>
+          </div>
+          <div>
+            <nav
+              className="isolate inline-flex -space-x-px rounded-md shadow-sm"
+              aria-label="Pagination"
+            >
+              <button className="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 transition-colors duration-150">
+                Previous
+              </button>
+              <button className="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 transition-colors duration-150">
+                Next
+              </button>
+            </nav>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
 
-export default OrderManagement;
+export default OrdersPage;

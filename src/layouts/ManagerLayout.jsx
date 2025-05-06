@@ -30,9 +30,9 @@ const ManagerLayout = () => {
     const handleScroll = () => {
       setScrolled(window.scrollY > 10);
     };
-    
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   // Load user data
@@ -50,13 +50,13 @@ const ManagerLayout = () => {
   // Get user's first name initial or first two letters of email
   const getUserInitial = () => {
     if (!userData) return "M";
-    
+
     if (userData.fullName) {
       return userData.fullName.charAt(0).toUpperCase();
     } else if (userData.email) {
       return userData.email.substring(0, 2).toUpperCase();
     }
-    
+
     return "M";
   };
 
@@ -71,32 +71,11 @@ const ManagerLayout = () => {
       name: "Borrow Requests",
       icon: <FaClipboardList className="w-4 h-4" />,
     },
-    // Uncomment these if needed in the future
-    // {
-    //   path: "/manager/staff-management",
-    //   name: "Staff Management",
-    //   icon: <FaUsersCog className="w-5 h-5" />,
-    // },
-    // {
-    //   path: "/manager/organization",
-    //   name: "Organization",
-    //   icon: <FaBuilding className="w-5 h-5" />,
-    // },
-    // {
-    //   path: "/manager/approvals",
-    //   name: "Approvals",
-    //   icon: <FaClipboardCheck className="w-5 h-5" />,
-    // },
-    // {
-    //   path: "/manager/create-user",
-    //   name: "Create User",
-    //   icon: <FaPlus className="w-5 h-5" />,
-    // },
-    // {
-    //   path: "/manager/roles",
-    //   name: "Roles & Access",
-    //   icon: <FaUserShield className="w-5 h-5" />,
-    // },
+    {
+      path: "/manager/order-management",
+      name: "Orders",
+      icon: <FaClipboardCheck className="w-4 h-4" />,
+    },
   ];
 
   const handleLogout = () => {
@@ -117,26 +96,30 @@ const ManagerLayout = () => {
 
   // Get page title based on current route
   const getPageTitle = () => {
-    if (location.pathname.includes('overview')) return 'Dashboard Overview';
-    if (location.pathname.includes('borrow-requests')) return 'Borrow Requests';
-    if (location.pathname.includes('staff-management')) return 'Staff Management';
-    if (location.pathname.includes('organization')) return 'Organization';
-    if (location.pathname.includes('approvals')) return 'Approvals';
-    if (location.pathname.includes('create-user')) return 'Create User';
-    if (location.pathname.includes('roles')) return 'Roles & Access';
-    return 'Manager Dashboard';
+    if (location.pathname.includes("overview")) return "Dashboard Overview";
+    if (location.pathname.includes("borrow-requests")) return "Borrow Requests";
+    if (location.pathname.includes("orders")) return "Order Management";
+    if (location.pathname.includes("staff-management"))
+      return "Staff Management";
+    if (location.pathname.includes("organization")) return "Organization";
+    if (location.pathname.includes("approvals")) return "Approvals";
+    if (location.pathname.includes("create-user")) return "Create User";
+    if (location.pathname.includes("roles")) return "Roles & Access";
+    return "Manager Dashboard";
   };
 
   // Function to check if a path is active
   const isPathActive = (path) => {
-    return location.pathname === path || location.pathname.startsWith(path + '/');
+    return (
+      location.pathname === path || location.pathname.startsWith(path + "/")
+    );
   };
 
   return (
     <div className="flex h-screen bg-gray-50">
       {/* Overlay for mobile when sidebar is open */}
       {isSidebarOpen && window.innerWidth < 1024 && (
-        <div 
+        <div
           className="lg:hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-10 transition-all duration-300"
           onClick={() => setIsSidebarOpen(false)}
         />
@@ -148,7 +131,11 @@ const ManagerLayout = () => {
         onClick={() => setIsSidebarOpen(!isSidebarOpen)}
         aria-label="Toggle sidebar"
       >
-        {isSidebarOpen ? <FaArrowLeft className="w-4 h-4" /> : <FaBars className="w-4 h-4" />}
+        {isSidebarOpen ? (
+          <FaArrowLeft className="w-4 h-4" />
+        ) : (
+          <FaBars className="w-4 h-4" />
+        )}
       </button>
 
       {/* Sidebar */}
@@ -174,7 +161,9 @@ const ManagerLayout = () => {
               <FaUsersCog className="text-white w-4 h-4" />
             </div>
             <div className="ml-3">
-              <h2 className="text-xl font-bold text-white leading-tight">Manager</h2>
+              <h2 className="text-xl font-bold text-white leading-tight">
+                Manager
+              </h2>
               <p className="text-xs text-white/80">Admin Portal</p>
             </div>
           </div>
@@ -190,13 +179,16 @@ const ManagerLayout = () => {
               <p className="text-sm font-medium text-gray-800 truncate">
                 {userData?.fullName || "Manager Account"}
               </p>
-              <p className="text-xs text-gray-500 truncate">{userData?.email || "manager@fpt.edu.vn"}</p>
+              <p className="text-xs text-gray-500 truncate">
+                {userData?.email || "manager@fpt.edu.vn"}
+              </p>
               <div className="mt-1 flex items-center">
                 <div className="h-1.5 w-1.5 rounded-full bg-green-500 mr-1.5"></div>
-                <span className="text-xs text-green-700 font-medium">Active Admin</span>
+                <span className="text-xs text-green-700 font-medium">
+                  Active Admin
+                </span>
               </div>
             </div>
-            
           </div>
         </div>
 
@@ -210,29 +202,33 @@ const ManagerLayout = () => {
               className={`
                 flex items-center px-4 py-3 rounded-xl
                 transition-all duration-200 group
-                ${isPathActive(item.path) 
-                  ? "bg-gradient-to-r from-indigo-700 to-purple-700 text-white shadow-md" 
-                  : "text-gray-700 hover:bg-indigo-50 hover:text-indigo-600"
+                ${
+                  isPathActive(item.path)
+                    ? "bg-gradient-to-r from-indigo-700 to-purple-700 text-white shadow-md"
+                    : "text-gray-700 hover:bg-indigo-50 hover:text-indigo-600"
                 }
               `}
             >
-              <span className={`w-5 h-5 mr-3 group-hover:scale-110 transition-transform ${!isPathActive(item.path) && "text-indigo-600"}`}>
+              <span
+                className={`w-5 h-5 mr-3 group-hover:scale-110 transition-transform ${
+                  !isPathActive(item.path) && "text-indigo-600"
+                }`}
+              >
                 {item.icon}
               </span>
               <span className="text-sm font-medium">{item.name}</span>
             </Link>
           ))}
-          
-          
         </nav>
 
         {/* Footer with version info */}
         <div className="p-4 border-t border-gray-100 bg-white">
           <div className="flex justify-between items-center">
             <div className="text-xs text-gray-500">
-              FPT e-Laptop Program <span className="text-xs opacity-60">v1.2</span>
+              FPT e-Laptop Program{" "}
+              <span className="text-xs opacity-60">v1.2</span>
             </div>
-            <button 
+            <button
               onClick={handleLogout}
               className="flex items-center text-xs text-red-600 hover:text-red-700 font-medium py-1 px-2 rounded hover:bg-red-50 transition-colors"
             >
@@ -245,17 +241,23 @@ const ManagerLayout = () => {
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Header */}
-        <header className={`bg-white shadow-sm border-b border-gray-100 sticky top-0 z-10 transition-all duration-300 ${scrolled ? 'shadow-xl' : 'shadow-md'}`}>
+        <header
+          className={`bg-white shadow-sm border-b border-gray-100 sticky top-0 z-10 transition-all duration-300 ${
+            scrolled ? "shadow-xl" : "shadow-md"
+          }`}
+        >
           <div className="flex justify-between items-center h-16 px-4 md:px-6">
             <div className="flex items-center">
-              <h1 className="text-lg font-semibold text-gray-800">{getPageTitle()}</h1>
+              <h1 className="text-lg font-semibold text-gray-800">
+                {getPageTitle()}
+              </h1>
               <div className="ml-3 hidden md:block">
                 <span className="bg-indigo-100 text-indigo-800 text-xs px-2.5 py-1 rounded-full font-medium">
                   Manager Portal
                 </span>
               </div>
             </div>
-            
+
             <div className="flex items-center space-x-3">
               <button
                 onClick={handleGoHome}

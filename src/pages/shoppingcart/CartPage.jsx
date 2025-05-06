@@ -10,14 +10,37 @@ import {
 import useCartStore from "../../store/useCartStore";
 import { toast, ToastContainer } from "react-toastify";
 import orderApis from "../../api/orderApi";
+import userApi from "../../api/userApi";
+import { jwtDecode } from "jwt-decode";
 
 const CartPage = () => {
   const [quantityErrors, setQuantityErrors] = useState({});
+  const [userInfo, setUserInfo] = useState(null);
   const { getCurrentCart, removeFromCart, addToCart, decreaseQuantity } =
     useCartStore();
 
   const items = getCurrentCart();
-  const userData = localStorage.getItem("user");
+
+  useEffect(() => {
+    const fetchUserInfo = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        if (token) {
+          const decoded = jwtDecode(token);
+          const userId = decoded.userId;
+
+          const response = await userApi.getUserById(userId);
+          if (response.isSuccess) {
+            setUserInfo(response.data);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching user info:", error);
+      }
+    };
+
+    fetchUserInfo();
+  }, []);
 
   const [selectedItems, setSelectedItems] = useState(
     items.map((item) => item.productId)
@@ -131,6 +154,11 @@ const CartPage = () => {
       return;
     }
 
+    if (!userInfo?.address) {
+      toast.error("Please update your address in profile before checkout");
+      return;
+    }
+
     // Check if there's an existing pending order
     const pendingOrderData = localStorage.getItem("pending_order");
     let shouldCreateNewOrder = true;
@@ -142,29 +170,24 @@ const CartPage = () => {
         const now = new Date();
         const hoursSinceCreation = (now - creationTime) / (1000 * 60 * 60);
 
-        // Always create a new order if the cart has changed
-        // We just need to clean up old orders if they're expired (older than 2 hours)
         if (hoursSinceCreation >= 2) {
           localStorage.removeItem("pending_order");
         }
       } catch (error) {
-        // If there's an error parsing the pending order, clear it
         localStorage.removeItem("pending_order");
       }
     }
 
-    // Always create a new order regardless of pending orders (user wants each cart change to create a new order)
     const sum = selectedCartItems.reduce(
       (acc, curr) => acc + curr.totalPrice,
       0
     );
 
-    const user = JSON.parse(userData);
     const order = {
-      userId: user?.userId ?? 1,
+      userId: userInfo?.userId,
       totalPrice: sum,
       field: "string",
-      orderAddress: "string",
+      orderAddress: userInfo?.address || "",
       status: "Active",
     };
 
@@ -173,7 +196,6 @@ const CartPage = () => {
     orderApis
       .createOrder(order)
       .then((data) => {
-        // Save this order as pending
         localStorage.setItem(
           "pending_order",
           JSON.stringify({
@@ -206,13 +228,11 @@ const CartPage = () => {
           autoClose: 1500,
         });
 
-        // Store the selected products for the checkout page
         localStorage.setItem(
           "checkout_products",
           JSON.stringify(selectedCartItems)
         );
 
-        // Store selected item IDs in local storage to be removed after successful payment
         localStorage.setItem(
           "pending_cart_removal",
           JSON.stringify(selectedItems)

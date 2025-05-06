@@ -16,6 +16,7 @@ import {
 } from "react-icons/fa";
 import useCartStore from "../../store/useCartStore";
 import orderApis from "../../api/orderApi";
+import productApi from "../../api/productApi";
 
 const CheckoutPage = () => {
   const { orderId } = useParams();
@@ -26,10 +27,10 @@ const CheckoutPage = () => {
   const { removeFromCart, getCurrentCart } = useCartStore();
 
   const [cartItems, setCartItems] = useState([]);
-  const [shippingCost] = useState(5.0);
   const [paymentProcessed, setPaymentProcessed] = useState(false);
   const [orderExpired, setOrderExpired] = useState(false);
   const [cartChanged, setCartChanged] = useState(false);
+  const [paymentSuccessItems, setPaymentSuccessItems] = useState([]);
 
   // Helper: sync localStorage
   const syncLocalStorage = (items) => {
@@ -53,14 +54,12 @@ const CheckoutPage = () => {
           await orderApis.updatePayment(transactionCode, {
             status: "CANCELLED",
           });
-          toast.info("Payment has been cancelled");
           localStorage.removeItem("pending_order");
           setTimeout(() => {
             navigate("/cart");
           }, 2000);
         } catch (error) {
           console.error("Error handling payment cancellation:", error);
-          toast.error("Failed to process payment cancellation");
         }
       })();
     }
@@ -69,6 +68,92 @@ const CheckoutPage = () => {
     if (status === "PAID" && orderCode && !paymentProcessed) {
       (async () => {
         try {
+          // Store cart items before clearing
+          const storedItems = JSON.parse(
+            localStorage.getItem("checkout_products") || "[]"
+          );
+          setPaymentSuccessItems(storedItems);
+
+          console.log("Starting payment success process...");
+          console.log("Cart Items:", storedItems);
+
+          // Update product quantities
+          const updatePromises = storedItems.map(async (item) => {
+            try {
+              console.log(`Processing product ${item.productId}:`, item);
+
+              // Get current product data first
+              const productResponse = await productApi.getProductById(
+                item.productId
+              );
+              console.log(
+                `Product ${item.productId} current data:`,
+                productResponse.data
+              );
+
+              if (!productResponse.isSuccess) {
+                throw new Error(`Failed to get product ${item.productId}`);
+              }
+
+              const currentProduct = productResponse.data;
+              const updatedQuantity = currentProduct.quantity - item.quantity;
+              console.log(`Product ${item.productId} quantity update:`, {
+                currentQuantity: currentProduct.quantity,
+                orderedQuantity: item.quantity,
+                newQuantity: updatedQuantity,
+              });
+
+              const updateData = {
+                ProductId: currentProduct.productId,
+                ProductName: currentProduct.productName,
+                Quantity: updatedQuantity,
+                Price: currentProduct.price,
+                ScreenSize: currentProduct.screenSize,
+                Storage: currentProduct.storage,
+                Ram: currentProduct.ram,
+                Cpu: currentProduct.cpu,
+                Model: currentProduct.model,
+                Color: currentProduct.color,
+                GraphicsCard: currentProduct.graphicsCard,
+                Battery: currentProduct.battery,
+                Ports: currentProduct.ports,
+                ProductionYear: currentProduct.productionYear,
+                OperatingSystem: currentProduct.operatingSystem,
+                Description: currentProduct.description,
+                CategoryId: currentProduct.categoryId,
+                ShopId: currentProduct.shopId,
+                ImageProduct: currentProduct.imageProduct,
+              };
+
+              // Log the current product data to verify all required fields
+              console.log("Current product data:", currentProduct);
+
+              console.log(
+                `Sending update request for product ${item.productId}:`,
+                updateData
+              );
+
+              const updateResponse = await productApi.updateProduct(
+                item.productId,
+                updateData
+              );
+              console.log(
+                `Update response for product ${item.productId}:`,
+                updateResponse
+              );
+
+              if (!updateResponse.isSuccess) {
+                throw new Error(`Failed to update product ${item.productId}`);
+              }
+            } catch (error) {
+              console.error(`Error updating product ${item.productId}:`, error);
+            }
+          });
+
+          console.log("Waiting for all product updates to complete...");
+          await Promise.all(updatePromises);
+          console.log("All product updates completed");
+
           toast.success("Payment successful! Your order is being processed.");
           handleClearCheckoutData();
           const pendingRemovalItems = JSON.parse(
@@ -87,11 +172,10 @@ const CheckoutPage = () => {
           }, 3000);
         } catch (error) {
           console.error("Error handling payment success:", error);
-          toast.error("Failed to process successful payment");
         }
       })();
     }
-  }, [searchParams, paymentProcessed, navigate, removeFromCart]);
+  }, [searchParams, paymentProcessed, navigate, removeFromCart, cartItems]);
 
   // Check if order is expired (older than 2 hours) or cart state has changed
   useEffect(() => {
@@ -109,40 +193,30 @@ const CheckoutPage = () => {
           // If order is older than 2 hours, mark as expired
           if (hoursSinceCreation >= 2) {
             setOrderExpired(true);
-            toast.error("This order has expired. Please create a new order.", {
-              autoClose: false,
-            });
           }
 
           // Check if cart state has changed since order creation
           if (pendingOrder.cartHash) {
             const currentCart = getCurrentCart();
-            // Create a comparable hash of current cart
             const currentCartHash = JSON.stringify(
               currentCart
-                .filter((item) => item.productId) // Make sure we have valid items
+                .filter((item) => item.productId)
                 .map((item) => ({
                   id: item.productId,
                   quantity: item.quantity,
                 }))
-                .sort((a, b) => a.id - b.id) // Sort for consistent comparison
+                .sort((a, b) => a.id - b.id)
             );
 
-            // Normalize the saved hash for comparison
             const savedCartItems = JSON.parse(pendingOrder.cartHash);
             const normalizedSavedHash = JSON.stringify(
               savedCartItems.sort((a, b) => a.id - b.id)
             );
 
-            // If cart has changed, show notification but don't prevent checkout
             if (currentCartHash !== normalizedSavedHash) {
               setCartChanged(true);
             }
           }
-        } else {
-          // This is a different order than the one currently pending
-          // We'll keep both (the user wants new orders for any cart change)
-          console.log("Viewing order different from pending order");
         }
       } catch (error) {
         console.error("Error checking order expiration:", error);
@@ -189,7 +263,6 @@ const CheckoutPage = () => {
 
   const handleBackToCart = async () => {
     try {
-      // Get all payments and find matching order ID
       const paymentsResponse = await orderApis.getAllPayments();
 
       if (paymentsResponse?.data?.data) {
@@ -198,18 +271,15 @@ const CheckoutPage = () => {
         );
 
         if (payment && payment.transactionCode) {
-          // Call API to update payment status
           await orderApis.updatePayment(payment.transactionCode, {
             status: "CANCELLED",
           });
-          toast.info("Payment has been cancelled");
         }
       }
     } catch (error) {
       console.error("Error cancelling payment:", error);
     } finally {
       if (orderExpired) {
-        // Clear expired order
         localStorage.removeItem("pending_order");
       }
       navigate("/cart");
@@ -322,7 +392,6 @@ const CheckoutPage = () => {
                     cartItems={cartItems}
                     onUpdateQuantity={handleUpdateQuantity}
                     onRemove={handleRemoveItem}
-                    shippingCost={shippingCost}
                     onSuccess={handleClearCheckoutData}
                     defaultPaymentMethod="payos"
                     hidePaymentMethods={true}
@@ -392,30 +461,6 @@ const CheckoutPage = () => {
                     )}
                   </span>
                 </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Subtotal</span>
-                  <span className="font-medium">
-                    {new Intl.NumberFormat("vi-VN", {
-                      style: "currency",
-                      currency: "VND",
-                    }).format(
-                      cartItems.reduce(
-                        (total, item) =>
-                          total + item.totalPrice * item.quantity,
-                        0
-                      )
-                    )}
-                  </span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Shipping Fee</span>
-                  <span className="font-medium">
-                    {new Intl.NumberFormat("vi-VN", {
-                      style: "currency",
-                      currency: "VND",
-                    }).format(shippingCost)}
-                  </span>
-                </div>
                 <div className="flex justify-between text-base font-medium pt-2 border-t border-gray-200 mt-2">
                   <span className="text-gray-900">Total</span>
                   <span className="text-indigo-600">
@@ -427,7 +472,7 @@ const CheckoutPage = () => {
                         (total, item) =>
                           total + item.totalPrice * item.quantity,
                         0
-                      ) + shippingCost
+                      )
                     )}
                   </span>
                 </div>

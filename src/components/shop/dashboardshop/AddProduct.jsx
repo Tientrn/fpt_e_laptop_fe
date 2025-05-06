@@ -5,34 +5,64 @@ import categoryApi from "../../../api/categoryApi";
 import shopApi from "../../../api/shopApi";
 import { jwtDecode } from "jwt-decode";
 import productimageApi from "../../../api/productimageApi";
-import { FaUpload, FaPlus, FaTrash, FaLaptop, FaMemory, FaMicrochip, FaRuler } from "react-icons/fa";
-import { MdStorage, MdCategory, MdPriceCheck, MdDescription, MdColorLens } from "react-icons/md";
+import {
+  FaUpload,
+  FaPlus,
+  FaTrash,
+  FaLaptop,
+  FaMemory,
+  FaMicrochip,
+  FaRuler,
+} from "react-icons/fa";
+import {
+  MdStorage,
+  MdCategory,
+  MdPriceCheck,
+  MdDescription,
+  MdColorLens,
+} from "react-icons/md";
 import { BsImages, BsBatteryFull, BsUsbDrive } from "react-icons/bs";
 import { GiProcessor } from "react-icons/gi";
 import { TbBrandWindows } from "react-icons/tb";
 import { AiOutlineFieldTime } from "react-icons/ai";
-import PropTypes from 'prop-types';
+import PropTypes from "prop-types";
 
 // Move the FormSection component outside of the main component
 const FormSection = memo(({ title, active, icon, onClick, children }) => (
-  <div className={`mb-8 transition-all duration-300 ${active ? 'opacity-100' : 'opacity-60'}`}>
-    <div 
-      className={`flex items-center space-x-2 cursor-pointer py-3 px-4 mb-6 rounded-lg hover:bg-indigo-50 transition-all ${active ? 'bg-indigo-100/70 text-indigo-700 shadow-sm' : 'border-l-4 border-transparent'}`}
+  <div
+    className={`mb-8 transition-all duration-300 ${
+      active ? "opacity-100" : "opacity-60"
+    }`}
+  >
+    <div
+      className={`flex items-center space-x-2 cursor-pointer py-3 px-4 mb-6 rounded-lg hover:bg-indigo-50 transition-all ${
+        active
+          ? "bg-indigo-100/70 text-indigo-700 shadow-sm"
+          : "border-l-4 border-transparent"
+      }`}
       onClick={onClick}
     >
-      <div className={`p-2 rounded-md ${active ? 'bg-indigo-200/70 text-indigo-600' : 'bg-gray-100 text-gray-500'}`}>
+      <div
+        className={`p-2 rounded-md ${
+          active
+            ? "bg-indigo-200/70 text-indigo-600"
+            : "bg-gray-100 text-gray-500"
+        }`}
+      >
         {icon}
       </div>
       <h2 className="text-xl font-bold">{title}</h2>
     </div>
-    <div className={`transition-all duration-500 ${active ? 'block' : 'hidden'}`}>
+    <div
+      className={`transition-all duration-500 ${active ? "block" : "hidden"}`}
+    >
       {children}
     </div>
   </div>
 ));
 
 // Fix linter error by setting display name
-FormSection.displayName = 'FormSection';
+FormSection.displayName = "FormSection";
 
 FormSection.propTypes = {
   title: PropTypes.string.isRequired,
@@ -43,49 +73,57 @@ FormSection.propTypes = {
 };
 
 // Create a memo'd text input component to prevent unnecessary rerenders
-const InputField = memo(({ 
-  label, 
-  name, 
-  value, 
-  onChange, 
-  placeholder, 
-  required = true, 
-  type = "text", 
-  icon,
-  maxLength,
-  showCount = false,
-  min,
-  className = "",
-  prefix
-}) => (
-  <div className="space-y-1">
-    <label className="flex text-sm font-medium text-gray-700 mb-1 items-center">
-      {icon && <span className="mr-2 text-indigo-500">{icon}</span>}
-      {label}
-    </label>
-    <div className={`relative ${className}`}>
-      {prefix && (
-        <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">{prefix}</span>
+const InputField = memo(
+  ({
+    label,
+    name,
+    value,
+    onChange,
+    placeholder,
+    required = true,
+    type = "text",
+    icon,
+    maxLength,
+    showCount = false,
+    min,
+    className = "",
+    prefix,
+  }) => (
+    <div className="space-y-1">
+      <label className="flex text-sm font-medium text-gray-700 mb-1 items-center">
+        {icon && <span className="mr-2 text-indigo-500">{icon}</span>}
+        {label}
+      </label>
+      <div className={`relative ${className}`}>
+        {prefix && (
+          <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">
+            {prefix}
+          </span>
+        )}
+        <input
+          type={type}
+          name={name}
+          value={value}
+          onChange={onChange}
+          required={required}
+          maxLength={maxLength}
+          min={min}
+          className={`w-full ${
+            prefix ? "pl-10" : "px-4"
+          } py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all hover:border-indigo-300 shadow-sm bg-white bg-opacity-80 backdrop-blur-sm`}
+          placeholder={placeholder}
+        />
+      </div>
+      {showCount && maxLength && (
+        <p className="text-xs text-gray-500 mt-1">
+          {value?.length || 0}/{maxLength} characters
+        </p>
       )}
-      <input
-        type={type}
-        name={name}
-        value={value}
-        onChange={onChange}
-        required={required}
-        maxLength={maxLength}
-        min={min}
-        className={`w-full ${prefix ? 'pl-10' : 'px-4'} py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all hover:border-indigo-300 shadow-sm bg-white bg-opacity-80 backdrop-blur-sm`}
-        placeholder={placeholder}
-      />
     </div>
-    {showCount && maxLength && (
-      <p className="text-xs text-gray-500 mt-1">{value?.length || 0}/{maxLength} characters</p>
-    )}
-  </div>
-));
+  )
+);
 
-InputField.displayName = 'InputField';
+InputField.displayName = "InputField";
 
 InputField.propTypes = {
   label: PropTypes.string.isRequired,
@@ -100,42 +138,46 @@ InputField.propTypes = {
   showCount: PropTypes.bool,
   min: PropTypes.string,
   className: PropTypes.string,
-  prefix: PropTypes.node
+  prefix: PropTypes.node,
 };
 
-// Create a textarea component 
-const TextAreaField = memo(({ 
-  label, 
-  name, 
-  value, 
-  onChange, 
-  placeholder, 
-  required = true,
-  rows = 6,
-  maxLength,
-  showCount = false
-}) => (
-  <div className="space-y-1">
-    <label className="flex text-sm font-medium text-gray-700 items-center justify-between">
-      <span>{label}</span>
-      {showCount && maxLength && (
-        <span className="text-xs text-gray-500">{value?.length || 0}/{maxLength}</span>
-      )}
-    </label>
-    <textarea
-      name={name}
-      value={value}
-      onChange={onChange}
-      required={required}
-      rows={rows}
-      maxLength={maxLength}
-      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all hover:border-indigo-300 shadow-sm bg-white bg-opacity-80 backdrop-blur-sm"
-      placeholder={placeholder}
-    ></textarea>
-  </div>
-));
+// Create a textarea component
+const TextAreaField = memo(
+  ({
+    label,
+    name,
+    value,
+    onChange,
+    placeholder,
+    required = true,
+    rows = 6,
+    maxLength,
+    showCount = false,
+  }) => (
+    <div className="space-y-1">
+      <label className="flex text-sm font-medium text-gray-700 items-center justify-between">
+        <span>{label}</span>
+        {showCount && maxLength && (
+          <span className="text-xs text-gray-500">
+            {value?.length || 0}/{maxLength}
+          </span>
+        )}
+      </label>
+      <textarea
+        name={name}
+        value={value}
+        onChange={onChange}
+        required={required}
+        rows={rows}
+        maxLength={maxLength}
+        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all hover:border-indigo-300 shadow-sm bg-white bg-opacity-80 backdrop-blur-sm"
+        placeholder={placeholder}
+      ></textarea>
+    </div>
+  )
+);
 
-TextAreaField.displayName = 'TextAreaField';
+TextAreaField.displayName = "TextAreaField";
 
 TextAreaField.propTypes = {
   label: PropTypes.string.isRequired,
@@ -146,7 +188,7 @@ TextAreaField.propTypes = {
   required: PropTypes.bool,
   rows: PropTypes.number,
   maxLength: PropTypes.string,
-  showCount: PropTypes.bool
+  showCount: PropTypes.bool,
 };
 
 const AddProduct = () => {
@@ -172,11 +214,9 @@ const AddProduct = () => {
   });
   const [mainImage, setMainImage] = useState(null);
   const [mainImagePreview, setMainImagePreview] = useState(null);
-  const [extraImages, setExtraImages] = useState([]);
-  const [extraImagesPreview, setExtraImagesPreview] = useState([]);
   const [categories, setCategories] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [activeSection, setActiveSection] = useState('basic');
+  const [activeSection, setActiveSection] = useState("basic");
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -197,9 +237,7 @@ const AddProduct = () => {
           throw new Error("Failed to fetch shops");
         }
 
-        const userShop = shopsRes.data.find(
-          (shop) => shop.userId === id
-        );
+        const userShop = shopsRes.data.find((shop) => shop.userId === id);
         if (!userShop) {
           throw new Error("Shop not found for this user");
         }
@@ -229,19 +267,19 @@ const AddProduct = () => {
   // Further prevent unnecessary renders by using stable functions
   const handleInputChange = useCallback((e) => {
     const { name, value, type } = e.target;
-    
+
     // Add validation for productName - max length 100 characters
-    if (name === 'productName' && value.length > 100) {
+    if (name === "productName" && value.length > 100) {
       return;
     }
-    
+
     // Add validation for description - max length 1000 characters
-    if (name === 'description' && value.length > 1000) {
+    if (name === "description" && value.length > 1000) {
       return;
     }
-    
+
     // Use functional state update to prevent unnecessary re-renders
-    setFormData(prevData => ({
+    setFormData((prevData) => ({
       ...prevData,
       [name]: value,
     }));
@@ -250,9 +288,9 @@ const AddProduct = () => {
   const handleNumberInputChange = useCallback((e) => {
     const { name, value } = e.target;
     // Only allow positive numbers
-    if (value === '' || Number(value) >= 0) {
+    if (value === "" || Number(value) >= 0) {
       // Use functional state update to prevent unnecessary re-renders
-      setFormData(prevData => ({
+      setFormData((prevData) => ({
         ...prevData,
         [name]: value,
       }));
@@ -260,14 +298,14 @@ const AddProduct = () => {
   }, []);
 
   const handlePriceInputChange = useCallback((e) => {
-    const value = e.target.value.replace(/,/g, '');
-    
+    const value = e.target.value.replace(/,/g, "");
+
     // Only allow positive numbers
-    if (value === '' || (Number(value) >= 0 && /^\d*$/.test(value))) {
+    if (value === "" || (Number(value) >= 0 && /^\d*$/.test(value))) {
       // Use functional state update to prevent unnecessary re-renders
-      setFormData(prevData => ({
+      setFormData((prevData) => ({
         ...prevData,
-        price: value
+        price: value,
       }));
     }
   }, []);
@@ -284,74 +322,69 @@ const AddProduct = () => {
     }
   };
 
-  const handleExtraImagesChange = (e) => {
-    const files = Array.from(e.target.files);
-    setExtraImages([...extraImages, ...files]);
-    
-    const previews = files.map(file => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      return new Promise((resolve) => {
-        reader.onloadend = () => {
-          resolve(reader.result);
-        };
-      });
-    });
-
-    Promise.all(previews).then(results => {
-      setExtraImagesPreview([...extraImagesPreview, ...results]);
-    });
-  };
-
-  const removeExtraImage = (index) => {
-    const newImages = [...extraImages];
-    const newPreviews = [...extraImagesPreview];
-    newImages.splice(index, 1);
-    newPreviews.splice(index, 1);
-    setExtraImages(newImages);
-    setExtraImagesPreview(newPreviews);
-  };
-
   const isFormValid = () => {
     const requiredFields = [
-      'productName', 'quantity', 'price', 'screenSize', 'storage', 
-      'ram', 'cpu', 'categoryId', 'color', 'model', 'battery', 
-      'operatingSystem', 'ports', 'productionYear', 'graphicsCard', 'description'
+      "productName",
+      "quantity",
+      "price",
+      "screenSize",
+      "storage",
+      "ram",
+      "cpu",
+      "categoryId",
+      "color",
+      "model",
+      "battery",
+      "operatingSystem",
+      "ports",
+      "productionYear",
+      "graphicsCard",
+      "description",
     ];
-    
+
     for (const field of requiredFields) {
-      if (!formData[field] || (typeof formData[field] === 'string' && !formData[field].trim())) {
-        toast.error(`${field.charAt(0).toUpperCase() + field.slice(1).replace(/([A-Z])/g, ' $1')} is required`);
+      if (
+        !formData[field] ||
+        (typeof formData[field] === "string" && !formData[field].trim())
+      ) {
+        toast.error(
+          `${
+            field.charAt(0).toUpperCase() +
+            field.slice(1).replace(/([A-Z])/g, " $1")
+          } is required`
+        );
         return false;
       }
     }
-    
+
     if (!mainImage) {
       toast.error("Main product image is required");
       return false;
     }
-    
+
     return true;
   };
 
   const formatPrice = (price) => {
-    if (!price) return '';
-    return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    if (!price) return "";
+    return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!shopId) {
-      toast.error("Shop information not found. Please try again or contact support.");
+      toast.error(
+        "Shop information not found. Please try again or contact support."
+      );
       return;
     }
-    
+
     // Validate all required fields
     if (!isFormValid()) {
       return;
     }
-    
+
     setIsSubmitting(true);
 
     const form = new FormData();
@@ -359,14 +392,17 @@ const AddProduct = () => {
     form.append("ProductName", formData.productName.trim());
     form.append("Quantity", parseInt(formData.quantity) || 1);
     // Remove commas from price before parsing
-    form.append("Price", parseFloat(formData.price.toString().replace(/,/g, '')) || 0);
+    form.append(
+      "Price",
+      parseFloat(formData.price.toString().replace(/,/g, "")) || 0
+    );
     form.append("ScreenSize", formData.screenSize.trim());
     form.append("Storage", formData.storage.trim());
     form.append("Ram", formData.ram.trim());
     form.append("Cpu", formData.cpu.trim());
     form.append("CategoryId", parseInt(formData.categoryId));
     form.append("ShopId", shopId);
-    
+
     // Required API fields
     form.append("Color", formData.color.trim());
     form.append("Model", formData.model.trim());
@@ -376,7 +412,7 @@ const AddProduct = () => {
     form.append("ProductionYear", formData.productionYear.trim());
     form.append("GraphicsCard", formData.graphicsCard.trim());
     form.append("Description", formData.description.trim());
-    
+
     if (mainImage) {
       form.append("ImageFile", mainImage);
     }
@@ -384,17 +420,7 @@ const AddProduct = () => {
     try {
       console.log("Creating product with ShopId:", shopId);
       const response = await productApi.createProduct(form);
-      const newProductId = response?.data?.data?.productId;
       toast.success("Product created successfully!");
-
-      if (newProductId && extraImages.length > 0) {
-        for (const file of extraImages) {
-          const imgForm = new FormData();
-          imgForm.append("ImageFile", file);
-          await productimageApi.createProductImage(newProductId, imgForm);
-        }
-        toast.success("Extra images uploaded!");
-      }
 
       // Reset form
       setFormData({
@@ -417,9 +443,7 @@ const AddProduct = () => {
       });
       setMainImage(null);
       setMainImagePreview(null);
-      setExtraImages([]);
-      setExtraImagesPreview([]);
-      setActiveSection('basic');
+      setActiveSection("basic");
     } catch (err) {
       console.error("❌ Create Product Error:", err);
       if (err.response?.data?.errors) {
@@ -455,18 +479,20 @@ const AddProduct = () => {
                 </div>
                 Add New Product
               </h1>
-              <p className="text-indigo-100 mt-2 ml-12">Fill out the form below to add a new laptop to your inventory</p>
+              <p className="text-indigo-100 mt-2 ml-12">
+                Fill out the form below to add a new laptop to your inventory
+              </p>
             </div>
           </div>
-          
+
           <form onSubmit={handleSubmit} className="p-6 md:p-8">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               <div className="md:col-span-2 space-y-8">
-                <FormSection 
-                  title="Basic Information" 
-                  active={activeSection === 'basic'} 
+                <FormSection
+                  title="Basic Information"
+                  active={activeSection === "basic"}
                   icon={<MdCategory className="text-xl" />}
-                  onClick={() => handleSectionToggle('basic')}
+                  onClick={() => handleSectionToggle("basic")}
                 >
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-2">
                     <div className="col-span-2">
@@ -480,10 +506,12 @@ const AddProduct = () => {
                         showCount={true}
                       />
                     </div>
-                    
+
                     <div>
                       <label className="flex text-sm font-medium text-gray-700 mb-1 items-center">
-                        <span className="mr-2 text-indigo-500"><MdCategory /></span>
+                        <span className="mr-2 text-indigo-500">
+                          <MdCategory />
+                        </span>
                         Category
                       </label>
                       <select
@@ -492,7 +520,14 @@ const AddProduct = () => {
                         onChange={handleInputChange}
                         required
                         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all hover:border-indigo-300 shadow-sm bg-white bg-opacity-80 backdrop-blur-sm appearance-none"
-                        style={{ backgroundImage: "url(\"data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e\")", backgroundPosition: "right 0.5rem center", backgroundRepeat: "no-repeat", backgroundSize: "1.5em 1.5em", paddingRight: "2.5rem" }}
+                        style={{
+                          backgroundImage:
+                            "url(\"data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e\")",
+                          backgroundPosition: "right 0.5rem center",
+                          backgroundRepeat: "no-repeat",
+                          backgroundSize: "1.5em 1.5em",
+                          paddingRight: "2.5rem",
+                        }}
                       >
                         <option value="">-- Select Category --</option>
                         {Array.isArray(categories) &&
@@ -503,7 +538,7 @@ const AddProduct = () => {
                           ))}
                       </select>
                     </div>
-                    
+
                     <InputField
                       label="Model"
                       name="model"
@@ -511,7 +546,7 @@ const AddProduct = () => {
                       onChange={handleInputChange}
                       placeholder="e.g. MacBook Pro, ThinkPad X1"
                     />
-                    
+
                     <div className="flex space-x-4">
                       <div className="flex-1">
                         <InputField
@@ -524,7 +559,7 @@ const AddProduct = () => {
                           icon={<MdPriceCheck />}
                         />
                       </div>
-                      
+
                       <div className="flex-1">
                         <InputField
                           label="Quantity"
@@ -537,7 +572,7 @@ const AddProduct = () => {
                         />
                       </div>
                     </div>
-                    
+
                     <InputField
                       label="Color"
                       name="color"
@@ -546,7 +581,7 @@ const AddProduct = () => {
                       placeholder="e.g. Black, Silver, Space Gray"
                       icon={<MdColorLens />}
                     />
-                    
+
                     <InputField
                       label="Production Year"
                       name="productionYear"
@@ -558,11 +593,11 @@ const AddProduct = () => {
                   </div>
                 </FormSection>
 
-                <FormSection 
-                  title="Technical Specifications" 
-                  active={activeSection === 'specs'} 
+                <FormSection
+                  title="Technical Specifications"
+                  active={activeSection === "specs"}
                   icon={<FaMicrochip className="text-xl" />}
-                  onClick={() => handleSectionToggle('specs')}
+                  onClick={() => handleSectionToggle("specs")}
                 >
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-2">
                     <InputField
@@ -600,7 +635,7 @@ const AddProduct = () => {
                       placeholder="e.g. Intel Core i7"
                       icon={<FaMicrochip />}
                     />
-                    
+
                     <InputField
                       label="Graphics Card"
                       name="graphicsCard"
@@ -609,7 +644,7 @@ const AddProduct = () => {
                       placeholder="e.g. NVIDIA GeForce RTX 3050"
                       icon={<GiProcessor />}
                     />
-                    
+
                     <InputField
                       label="Battery"
                       name="battery"
@@ -618,7 +653,7 @@ const AddProduct = () => {
                       placeholder="e.g. 4-cell, 54Wh"
                       icon={<BsBatteryFull />}
                     />
-                    
+
                     <InputField
                       label="Operating System"
                       name="operatingSystem"
@@ -627,7 +662,7 @@ const AddProduct = () => {
                       placeholder="e.g. Windows 11 Home"
                       icon={<TbBrandWindows />}
                     />
-                    
+
                     <InputField
                       label="Ports"
                       name="ports"
@@ -638,12 +673,12 @@ const AddProduct = () => {
                     />
                   </div>
                 </FormSection>
-                
-                <FormSection 
-                  title="Product Description" 
-                  active={activeSection === 'description'} 
+
+                <FormSection
+                  title="Product Description"
+                  active={activeSection === "description"}
                   icon={<MdDescription className="text-xl" />}
-                  onClick={() => handleSectionToggle('description')}
+                  onClick={() => handleSectionToggle("description")}
                 >
                   <div className="p-2">
                     <TextAreaField
@@ -661,11 +696,13 @@ const AddProduct = () => {
               </div>
 
               <div className="md:col-span-1">
-                <FormSection 
-                  title="Product Images" 
-                  active={activeSection === 'images' || activeSection === 'basic'} 
+                <FormSection
+                  title="Product Images"
+                  active={
+                    activeSection === "images" || activeSection === "basic"
+                  }
                   icon={<BsImages className="text-xl" />}
-                  onClick={() => handleSectionToggle('images')}
+                  onClick={() => handleSectionToggle("images")}
                 >
                   <div className="space-y-6 p-2">
                     <div className="space-y-3">
@@ -708,81 +745,57 @@ const AddProduct = () => {
                               <div className="p-3 rounded-full bg-indigo-100 group-hover:bg-indigo-200 transition-all mb-2">
                                 <FaUpload className="text-2xl text-indigo-500 group-hover:text-indigo-600" />
                               </div>
-                              <span className="text-sm text-gray-700 font-medium group-hover:text-indigo-700">Upload main image</span>
-                              <span className="text-xs text-gray-500 mt-1">Click or drag & drop</span>
+                              <span className="text-sm text-gray-700 font-medium group-hover:text-indigo-700">
+                                Upload main image
+                              </span>
+                              <span className="text-xs text-gray-500 mt-1">
+                                Click or drag & drop
+                              </span>
                             </label>
-                            {!mainImage && <p className="text-xs text-red-500 mt-1">Main image is required</p>}
+                            {!mainImage && (
+                              <p className="text-xs text-red-500 mt-1">
+                                Main image is required
+                              </p>
+                            )}
                           </div>
                         )}
                       </div>
                     </div>
-
-                    <div className="space-y-3">
-                      <label className="flex text-sm font-medium text-gray-700 justify-between items-center">
-                        <span>Additional Images</span>
-                        <span className="text-xs bg-indigo-100 text-indigo-800 py-1 px-2 rounded-full">{extraImagesPreview.length} added</span>
-                      </label>
-                      
-                      <div className="w-full">
-                        <input
-                          type="file"
-                          accept="image/*"
-                          multiple
-                          onChange={handleExtraImagesChange}
-                          className="hidden"
-                          id="extraImages"
-                        />
-                        <label
-                          htmlFor="extraImages"
-                          className="flex items-center justify-center w-full py-3 border-2 border-dashed border-indigo-300 rounded-lg cursor-pointer hover:bg-indigo-50 transition bg-gray-50 group"
-                        >
-                          <div className="p-1 rounded-full bg-indigo-100 mr-2 group-hover:bg-indigo-200 transition-all">
-                            <FaPlus className="text-indigo-500 group-hover:text-indigo-600" />
-                          </div>
-                          <span className="text-sm text-gray-600 group-hover:text-indigo-700">Add more images</span>
-                        </label>
-                      </div>
-                      
-                      {extraImagesPreview.length > 0 && (
-                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-2 gap-3 mt-3">
-                          {extraImagesPreview.map((preview, index) => (
-                            <div key={index} className="relative group">
-                              <div className="h-20 w-full overflow-hidden rounded-lg border border-gray-200 shadow-sm transition-all hover:shadow-md hover:border-indigo-300 hover:scale-[1.03]">
-                                <img
-                                  src={preview}
-                                  alt={`Extra image ${index + 1}`}
-                                  className="w-full h-full object-cover"
-                                />
-                              </div>
-                              <button
-                                type="button"
-                                onClick={() => removeExtraImage(index)}
-                                className="absolute -top-2 -right-2 p-1.5 bg-red-500 text-white rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-all transform hover:scale-110"
-                              >
-                                <FaTrash className="text-xs" />
-                              </button>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
                   </div>
                 </FormSection>
-                
+
                 <div className="mt-8">
                   <button
                     type="submit"
                     disabled={isSubmitting}
                     className={`w-full py-4 px-6 rounded-xl font-semibold text-white transition-all transform hover:translate-y-[-2px] shadow-lg relative overflow-hidden ${
-                      isSubmitting ? "bg-gray-500 cursor-not-allowed" : "bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
+                      isSubmitting
+                        ? "bg-gray-500 cursor-not-allowed"
+                        : "bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
                     }`}
                   >
                     <span className="relative z-10">
                       {isSubmitting ? (
                         <span className="flex items-center justify-center">
-                          <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          <svg
+                            className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                          >
+                            <circle
+                              className="opacity-25"
+                              cx="12"
+                              cy="12"
+                              r="10"
+                              stroke="currentColor"
+                              strokeWidth="4"
+                            ></circle>
+                            <path
+                              className="opacity-75"
+                              fill="currentColor"
+                              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                            ></path>
                           </svg>
                           Creating Product...
                         </span>

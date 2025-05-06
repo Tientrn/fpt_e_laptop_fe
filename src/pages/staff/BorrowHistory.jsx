@@ -43,72 +43,26 @@ const BorrowHistory = () => {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [depositTransactionsMap, setDepositTransactionsMap] = useState({});
-  // Add new state variables for security
-  const [showSensitiveInfo, setShowSensitiveInfo] = useState(() => {
-    // Read from localStorage on initial render
-    const saved = localStorage.getItem("showSensitiveInfo");
-    return saved === "true";
-  });
-  const [securityPassword, setSecurityPassword] = useState("");
-  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
 
-  // Add security functions
+  // Simplified mask functions that always return true values
   const maskSensitiveInfo = (text) => {
     if (!text) return "";
-    if (!showSensitiveInfo) {
-      return "•".repeat(text.length);
-    }
     return text;
   };
 
   const maskEmail = (email) => {
     if (!email) return "";
-    if (!showSensitiveInfo) {
-      const [username, domain] = email.split("@");
-      const maskedUsername =
-        username.charAt(0) +
-        "•".repeat(username.length - 2) +
-        username.charAt(username.length - 1);
-      return `${maskedUsername}@${domain}`;
-    }
     return email;
   };
 
   const maskPhoneNumber = (phone) => {
     if (!phone) return "";
-    if (!showSensitiveInfo) {
-      return phone.replace(/.(?=.{4})/g, "•");
-    }
     return phone;
   };
 
   const maskValue = (value) => {
     if (!value) return "";
-    if (!showSensitiveInfo) {
-      return "••••••••";
-    }
     return value;
-  };
-
-  const handleShowSensitiveInfo = () => {
-    if (showSensitiveInfo) {
-      setShowSensitiveInfo(false);
-      localStorage.setItem("showSensitiveInfo", "false");
-    } else {
-      setIsPasswordModalOpen(true);
-    }
-  };
-
-  const handlePasswordSubmit = (e) => {
-    e.preventDefault();
-    if (securityPassword === "admin123") {
-      setShowSensitiveInfo(true);
-      localStorage.setItem("showSensitiveInfo", "true");
-      setIsPasswordModalOpen(false);
-      setSecurityPassword("");
-    } else {
-      toast.error("Incorrect password");
-    }
   };
 
   useEffect(() => {
@@ -583,87 +537,6 @@ const BorrowHistory = () => {
           </p>
         </div>
       </div>
-
-      {/* Add Security Toggle Button */}
-      <div className="mb-4 flex justify-end">
-        <button
-          onClick={handleShowSensitiveInfo}
-          className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-all duration-300 ${
-            showSensitiveInfo
-              ? "bg-red-100 text-red-700 hover:bg-red-200"
-              : "bg-amber-100 text-amber-700 hover:bg-amber-200"
-          }`}
-        >
-          <svg
-            className="w-5 h-5"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d={
-                showSensitiveInfo
-                  ? "M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-                  : "M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-              }
-            />
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d={
-                showSensitiveInfo
-                  ? "M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-                  : "M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-              }
-            />
-          </svg>
-          {showSensitiveInfo ? "Hide Information" : "Show Information"}
-        </button>
-      </div>
-
-      {/* Add Password Modal */}
-      {isPasswordModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-auto bg-black bg-opacity-60 backdrop-blur-sm">
-          <div className="bg-white rounded-lg shadow-2xl w-full max-w-md mx-4 p-6">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">
-              Enter Security Password
-            </h3>
-            <form onSubmit={handlePasswordSubmit}>
-              <input
-                type="password"
-                value={securityPassword}
-                onChange={(e) => setSecurityPassword(e.target.value)}
-                className="w-full p-3 border border-gray-300 rounded-md focus:ring-amber-500 focus:border-amber-500"
-                placeholder="Enter password"
-                required
-              />
-              <div className="flex justify-end gap-3 mt-4">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsPasswordModalOpen(false);
-                    setSecurityPassword("");
-                  }}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 text-sm font-medium text-white bg-amber-600 rounded-md hover:bg-amber-700"
-                >
-                  Submit
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
 
       {/* Enhanced Search and Filter Controls with improved visuals */}
       <div className="mb-8 animate-fadeIn">

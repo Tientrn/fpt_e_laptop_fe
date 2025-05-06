@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { toast } from "react-toastify";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import { jwtDecode } from "jwt-decode";
 import { useNavigate } from "react-router-dom";
 import shopApi from "../../../api/shopApi";
@@ -211,6 +212,15 @@ const CreateShopInfo = () => {
           Create Shop Info
         </button>
       </form>
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        pauseOnHover
+        draggable
+      />
     </div>
   );
 };

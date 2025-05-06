@@ -1,9 +1,18 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { toast } from "react-toastify";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import productApi from "../../../api/productApi";
 import productimageApi from "../../../api/productimageApi";
-import { FaLaptop, FaUpload, FaTrash, FaImage, FaCheck, FaChevronLeft, FaChevronRight } from "react-icons/fa";
+import {
+  FaLaptop,
+  FaUpload,
+  FaTrash,
+  FaImage,
+  FaCheck,
+  FaChevronLeft,
+  FaChevronRight,
+} from "react-icons/fa";
 
 const EditProduct = () => {
   const { productId } = useParams();
@@ -25,7 +34,15 @@ const EditProduct = () => {
     categoryId: "",
     shopId: "",
     imageProduct: "",
-    imageFile: null
+    imageFile: null,
+    model: "",
+    color: "",
+    graphicsCard: "",
+    battery: "",
+    ports: "",
+    productionYear: "",
+    operatingSystem: "",
+    description: "",
   });
 
   useEffect(() => {
@@ -34,13 +51,13 @@ const EditProduct = () => {
         setLoading(true);
         const [productResponse, imagesResponse] = await Promise.all([
           productApi.getProductById(productId),
-          productimageApi.getProductImagesById(productId)
+          productimageApi.getProductImagesById(productId),
         ]);
 
         if (productResponse && productResponse.isSuccess) {
           setProduct({
             ...productResponse.data,
-            productId: productResponse.data.productId || productId
+            productId: productResponse.data.productId || productId,
           });
           setImagePreview(productResponse.data.imageProduct);
         }
@@ -61,230 +78,256 @@ const EditProduct = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setProduct(prev => ({
+    setProduct((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
-  const handleImageChange = (e) => {
+  const handleImageChange = async (e) => {
     const file = e.target.files[0];
     if (file) {
-      setProduct(prev => ({
-        ...prev,
-        imageFile: file
-      }));
-      setImagePreview(URL.createObjectURL(file));
+      try {
+        // Kiểm tra kích thước file (giới hạn 5MB)
+        if (file.size > 5 * 1024 * 1024) {
+          toast.error("Image size should be less than 5MB");
+          return;
+        }
+
+        // Kiểm tra định dạng file
+        if (!file.type.startsWith("image/")) {
+          toast.error("Please upload image files only");
+          return;
+        }
+
+        const previewUrl = URL.createObjectURL(file);
+        setImagePreview(previewUrl);
+        setProduct((prev) => ({
+          ...prev,
+          imageFile: file,
+        }));
+      } catch (error) {
+        console.error("Error handling main image:", error);
+        toast.error("Failed to process image. Please try again.");
+      }
     }
   };
 
   const handleAdditionalImageUpload = async (e) => {
     const files = Array.from(e.target.files);
-    
+
     for (const file of files) {
+      let tempImage = null;
       try {
-        // Tạo preview URL ngay lập tức
+        // Kiểm tra kích thước file (giới hạn 5MB)
+        if (file.size > 5 * 1024 * 1024) {
+          toast.error("Image size should be less than 5MB");
+          continue;
+        }
+
+        // Kiểm tra định dạng file
+        if (!file.type.startsWith("image/")) {
+          toast.error("Please upload image files only");
+          continue;
+        }
+
         const previewUrl = URL.createObjectURL(file);
-        
-        // Thêm ảnh tạm thời vào state với trạng thái đang tải
-        const tempImage = {
+        tempImage = {
           productImageId: `temp_${Date.now()}`,
           imageUrl: previewUrl,
-          isUploading: true
+          isUploading: true,
         };
-        setAdditionalImages(prev => [...prev, tempImage]);
+
+        // Thêm ảnh tạm vào state ngay lập tức
+        setAdditionalImages((prev) => [...prev, tempImage]);
 
         const formData = new FormData();
-        formData.append('file', file);
-        
-        // Hiển thị toast loading
-        const toastId = toast.loading(
-          <div className="flex items-center">
-            <FaImage className="mr-2" />
-            <span>Uploading image...</span>
-          </div>
+        formData.append("file", file);
+
+        const response = await productimageApi.addProductImage(
+          productId,
+          formData
         );
 
-        const response = await productimageApi.addProductImage(productId, formData);
-        
-        if (response && response.isSuccess) {
-          // Xóa ảnh tạm và thêm ảnh mới từ response
-          setAdditionalImages(prev => {
-            const filtered = prev.filter(img => img.productImageId !== tempImage.productImageId);
-            return [...filtered, {
-              productImageId: response.data.productImageId,
-              imageUrl: response.data.imageUrl,
-              productId: response.data.productId,
-              createdDate: response.data.createdDate
-            }];
+        // Kiểm tra response và cập nhật state
+        if (response && response.data) {
+          // Cập nhật ảnh tạm với dữ liệu thật từ server
+          setAdditionalImages((prev) => {
+            return prev.map((img) => {
+              if (img.productImageId === tempImage.productImageId) {
+                return {
+                  productImageId: response.data.productImageId,
+                  imageUrl: response.data.imageUrl,
+                  productId: response.data.productId,
+                  createdDate: response.data.createdDate,
+                  isUploading: false,
+                };
+              }
+              return img;
+            });
           });
-
-          // Cập nhật toast thành công
-          toast.update(toastId, {
-            render: (
-              <div className="flex items-center">
-                <FaCheck className="mr-2 text-green-500" />
-                <span>Image uploaded successfully!</span>
-              </div>
-            ),
-            type: "success",
-            isLoading: false,
-            autoClose: 3000
-          });
-
-          // Giải phóng URL tạm thời
-          URL.revokeObjectURL(previewUrl);
+          toast.success("Image uploaded successfully");
         } else {
-          // Xóa ảnh tạm nếu upload thất bại
-          setAdditionalImages(prev => prev.filter(img => img.productImageId !== tempImage.productImageId));
-          
-          toast.update(toastId, {
-            render: (
-              <div className="flex items-center">
-                <FaImage className="mr-2 text-red-500" />
-                <span>Failed to upload image. Please try again.</span>
-              </div>
-            ),
-            type: "error",
-            isLoading: false,
-            autoClose: 3000
-          });
-
-          // Giải phóng URL tạm thời
-          URL.revokeObjectURL(previewUrl);
+          // Nếu không có response.data, thử lấy thông tin từ response trực tiếp
+          const imageData = response?.productImageId ? response : response.data;
+          if (imageData) {
+            setAdditionalImages((prev) => {
+              return prev.map((img) => {
+                if (img.productImageId === tempImage.productImageId) {
+                  return {
+                    productImageId: imageData.productImageId,
+                    imageUrl: imageData.imageUrl,
+                    productId: imageData.productId,
+                    createdDate: imageData.createdDate,
+                    isUploading: false,
+                  };
+                }
+                return img;
+              });
+            });
+            toast.success("Image uploaded successfully");
+          } else {
+            throw new Error("Invalid response from server");
+          }
         }
+
+        // Giải phóng URL tạm thời
+        URL.revokeObjectURL(previewUrl);
       } catch (error) {
         console.error("Error uploading additional image:", error);
-        toast.error(
-          <div className="flex items-center">
-            <FaImage className="mr-2 text-red-500" />
-            <span>Error uploading image. Please try again.</span>
-          </div>,
-          { autoClose: 3000 }
-        );
+        // Xóa ảnh tạm nếu có lỗi
+        if (tempImage) {
+          setAdditionalImages((prev) =>
+            prev.filter(
+              (img) => img.productImageId !== tempImage.productImageId
+            )
+          );
+          URL.revokeObjectURL(tempImage.imageUrl);
+        }
+
+        let errorMessage = "Failed to upload image. Please try again.";
+        if (error.response?.data?.message) {
+          errorMessage = error.response.data.message;
+        } else if (error.message) {
+          errorMessage = error.message;
+        }
+        toast.error(errorMessage);
       }
     }
   };
 
   const handleDeleteAdditionalImage = async (imageId) => {
     try {
-      // Lưu trữ ảnh cần xóa để có thể khôi phục nếu cần
-      const imageToDelete = additionalImages.find(img => img.productImageId === imageId);
-      
-      // Cập nhật UI ngay lập tức (optimistic update)
-      setAdditionalImages(prev => prev.filter(img => img.productImageId !== imageId));
-
-      // Hiển thị toast loading
-      const toastId = toast.loading(
-        <div className="flex items-center">
-          <FaTrash className="mr-2" />
-          <span>Deleting image...</span>
-        </div>
+      // Xóa ảnh khỏi UI ngay lập tức
+      setAdditionalImages((prev) =>
+        prev.filter((img) => img.productImageId !== imageId)
       );
 
       const response = await productimageApi.deleteProductImage(imageId);
-      
-      if (response.isSuccess) {
-        // Cập nhật toast thành công
-        toast.update(toastId, {
-          render: (
-            <div className="flex items-center">
-              <FaCheck className="mr-2 text-green-500" />
-              <span>Image deleted successfully!</span>
-            </div>
-          ),
-          type: "success",
-          isLoading: false,
-          autoClose: 3000
-        });
-      } else {
-        // Khôi phục lại ảnh nếu xóa thất bại
-        setAdditionalImages(prev => [...prev, imageToDelete]);
-        
-        toast.update(toastId, {
-          render: (
-            <div className="flex items-center">
-              <FaTrash className="mr-2 text-red-500" />
-              <span>{response.message || "Failed to delete image"}</span>
-            </div>
-          ),
-          type: "error",
-          isLoading: false,
-          autoClose: 3000
-        });
+
+      if (!response.isSuccess) {
+        // Nếu xóa thất bại, hiển thị thông báo lỗi
+        toast.error("Failed to delete image");
+        // Không cần khôi phục lại ảnh vì đã xóa thành công trên server
       }
     } catch (error) {
       console.error("Error deleting image:", error);
-      toast.error(
-        <div className="flex items-center">
-          <FaTrash className="mr-2 text-red-500" />
-          <span>{error.response?.data?.message || "Failed to delete image"}</span>
-        </div>,
-        { autoClose: 3000 }
-      );
+      toast.error("Failed to delete image");
     }
   };
 
   // Thêm hàm điều hướng
   const nextImages = () => {
-    setCurrentImageIndex(prevIndex => 
-      Math.min(prevIndex + imagesPerPage, additionalImages.length - imagesPerPage)
+    setCurrentImageIndex((prevIndex) =>
+      Math.min(
+        prevIndex + imagesPerPage,
+        additionalImages.length - imagesPerPage
+      )
     );
   };
 
   const previousImages = () => {
-    setCurrentImageIndex(prevIndex => 
-      Math.max(0, prevIndex - imagesPerPage)
-    );
+    setCurrentImageIndex((prevIndex) => Math.max(0, prevIndex - imagesPerPage));
   };
 
   // Thêm CSS cho ảnh đang tải
   const getImageStyles = (image) => {
     return {
-      opacity: image.isUploading ? '0.6' : '1',
-      filter: image.isUploading ? 'grayscale(50%)' : 'none'
+      opacity: image.isUploading ? "0.6" : "1",
+      filter: image.isUploading ? "grayscale(50%)" : "none",
+      transition: "all 0.3s ease-in-out",
     };
   };
+
+  // Thêm useEffect để reset currentImageIndex khi số lượng ảnh thay đổi
+  useEffect(() => {
+    if (
+      currentImageIndex > Math.max(0, additionalImages.length - imagesPerPage)
+    ) {
+      setCurrentImageIndex(
+        Math.max(0, additionalImages.length - imagesPerPage)
+      );
+    }
+  }, [additionalImages.length, currentImageIndex, imagesPerPage]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       const requiredFields = [
-        'productId',
-        'productName',
-        'price',
-        'quantity',
-        'cpu',
-        'ram',
-        'storage',
-        'screenSize',
-        'categoryId',
-        'shopId'
+        "productId",
+        "productName",
+        "price",
+        "quantity",
+        "cpu",
+        "ram",
+        "storage",
+        "screenSize",
+        "categoryId",
+        "shopId",
+        "model",
+        "color",
+        "graphicsCard",
+        "battery",
+        "ports",
+        "productionYear",
+        "operatingSystem",
+        "description",
       ];
-      
-      const emptyFields = requiredFields.filter(field => !product[field]);
+
+      const emptyFields = requiredFields.filter((field) => !product[field]);
       if (emptyFields.length > 0) {
         toast.error(`Please fill in all required fields`);
         return;
       }
 
       const formData = new FormData();
-      formData.append('ProductId', product.productId);
-      formData.append('ProductName', product.productName);
-      formData.append('Price', Number(product.price));
-      formData.append('Quantity', Number(product.quantity));
-      formData.append('Cpu', product.cpu);
-      formData.append('Ram', product.ram);
-      formData.append('Storage', product.storage);
-      formData.append('ScreenSize', product.screenSize);
-      formData.append('CategoryId', product.categoryId);
-      formData.append('ShopId', product.shopId);
-      
+      formData.append("ProductId", product.productId);
+      formData.append("ProductName", product.productName);
+      formData.append("Price", Number(product.price));
+      formData.append("Quantity", Number(product.quantity));
+      formData.append("Cpu", product.cpu);
+      formData.append("Ram", product.ram);
+      formData.append("Storage", product.storage);
+      formData.append("ScreenSize", product.screenSize);
+      formData.append("CategoryId", product.categoryId);
+      formData.append("ShopId", product.shopId);
+      formData.append("Model", product.model);
+      formData.append("Color", product.color);
+      formData.append("GraphicsCard", product.graphicsCard);
+      formData.append("Battery", product.battery);
+      formData.append("Ports", product.ports);
+      formData.append("ProductionYear", Number(product.productionYear));
+      formData.append("OperatingSystem", product.operatingSystem);
+      formData.append("Description", product.description);
+
       if (product.imageFile) {
-        formData.append('ImageFile', product.imageFile);
+        formData.append("ImageFile", product.imageFile);
       }
 
-      const response = await productApi.updateProduct(product.productId, formData);
+      const response = await productApi.updateProduct(
+        product.productId,
+        formData
+      );
       if (response && response.isSuccess) {
         toast.success("Product updated successfully!");
         navigate("/shop/products");
@@ -301,6 +344,27 @@ const EditProduct = () => {
     }
   };
 
+  const handleDeleteProduct = async () => {
+    if (window.confirm("Are you sure you want to delete this product?")) {
+      try {
+        const response = await productApi.deleteProduct(product.productId);
+        if (response && response.isSuccess) {
+          toast.success("Product deleted successfully!");
+          navigate("/shop/products");
+        } else {
+          toast.error(response?.message || "Failed to delete product");
+        }
+      } catch (error) {
+        console.error("Error deleting product:", error);
+        if (error.response?.data?.message) {
+          toast.error(error.response.data.message);
+        } else {
+          toast.error("Failed to delete product. Please try again.");
+        }
+      }
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-screen">
@@ -311,20 +375,48 @@ const EditProduct = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
+      />
       <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl font-bold text-amber-600 mb-8 flex items-center">
-          <FaLaptop className="mr-3" />
-          Edit Product
-        </h1>
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-3xl font-bold text-amber-600 flex items-center">
+            <FaLaptop className="mr-3" />
+            Edit Product
+          </h1>
+          <button
+            type="button"
+            onClick={handleDeleteProduct}
+            className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition duration-300 flex items-center"
+          >
+            <FaTrash className="mr-2" />
+            Delete Product
+          </button>
+        </div>
 
-        <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-md p-6">
+        <form
+          onSubmit={handleSubmit}
+          className="bg-white rounded-lg shadow-md p-6"
+        >
           {/* Combined Image Gallery Section */}
           <div className="mb-6">
             <div className="flex flex-col items-center space-y-4">
               {/* Main Image Container */}
               <div className="w-full max-w-3xl bg-gray-50 rounded-lg p-4">
                 <img
-                  src={imagePreview || "https://via.placeholder.com/160?text=No+Image"}
+                  src={
+                    imagePreview ||
+                    "https://via.placeholder.com/160?text=No+Image"
+                  }
                   alt="Main Preview"
                   className="w-full h-[400px] object-contain rounded-lg"
                 />
@@ -387,20 +479,25 @@ const EditProduct = () => {
                       {/* Images Container */}
                       <div className="flex gap-4 overflow-hidden px-12">
                         {additionalImages
-                          .slice(currentImageIndex, currentImageIndex + imagesPerPage)
+                          .slice(
+                            currentImageIndex,
+                            currentImageIndex + imagesPerPage
+                          )
                           .map((img, index) => (
-                            <div 
-                              key={img.productImageId || index} 
+                            <div
+                              key={img.productImageId || index}
                               className="relative group w-32 h-32 flex-shrink-0"
                             >
                               <img
                                 src={img.imageUrl}
-                                alt={`Additional ${currentImageIndex + index + 1}`}
+                                alt={`Additional ${
+                                  currentImageIndex + index + 1
+                                }`}
                                 className="w-full h-full object-cover rounded-lg border-2 border-gray-200 hover:border-amber-500 transition-all duration-200"
                                 style={getImageStyles(img)}
                               />
                               {img.isUploading && (
-                                <div className="absolute inset-0 flex items-center justify-center">
+                                <div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-50 rounded-lg">
                                   <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-amber-500" />
                                 </div>
                               )}
@@ -408,7 +505,11 @@ const EditProduct = () => {
                                 <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all duration-300 rounded-lg">
                                   <button
                                     type="button"
-                                    onClick={() => handleDeleteAdditionalImage(img.productImageId)}
+                                    onClick={() =>
+                                      handleDeleteAdditionalImage(
+                                        img.productImageId
+                                      )
+                                    }
                                     className="absolute top-2 right-2 bg-red-500 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-red-600"
                                   >
                                     <FaTrash size={12} />
@@ -416,11 +517,12 @@ const EditProduct = () => {
                                 </div>
                               )}
                             </div>
-                        ))}
+                          ))}
                       </div>
 
                       {/* Next Button */}
-                      {currentImageIndex + imagesPerPage < additionalImages.length && (
+                      {currentImageIndex + imagesPerPage <
+                        additionalImages.length && (
                         <button
                           type="button"
                           onClick={nextImages}
@@ -473,6 +575,34 @@ const EditProduct = () => {
                 type="number"
                 name="quantity"
                 value={product.quantity}
+                onChange={handleChange}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-gray-700 font-medium mb-2">
+                Model
+              </label>
+              <input
+                type="text"
+                name="model"
+                value={product.model}
+                onChange={handleChange}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-gray-700 font-medium mb-2">
+                Color
+              </label>
+              <input
+                type="text"
+                name="color"
+                value={product.color}
                 onChange={handleChange}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
                 required
@@ -534,6 +664,90 @@ const EditProduct = () => {
                 required
               />
             </div>
+
+            <div>
+              <label className="block text-gray-700 font-medium mb-2">
+                Graphics Card
+              </label>
+              <input
+                type="text"
+                name="graphicsCard"
+                value={product.graphicsCard}
+                onChange={handleChange}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-gray-700 font-medium mb-2">
+                Battery
+              </label>
+              <input
+                type="text"
+                name="battery"
+                value={product.battery}
+                onChange={handleChange}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-gray-700 font-medium mb-2">
+                Ports
+              </label>
+              <input
+                type="text"
+                name="ports"
+                value={product.ports}
+                onChange={handleChange}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-gray-700 font-medium mb-2">
+                Production Year
+              </label>
+              <input
+                type="number"
+                name="productionYear"
+                value={product.productionYear}
+                onChange={handleChange}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-gray-700 font-medium mb-2">
+                Operating System
+              </label>
+              <input
+                type="text"
+                name="operatingSystem"
+                value={product.operatingSystem}
+                onChange={handleChange}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
+                required
+              />
+            </div>
+
+            <div className="md:col-span-2">
+              <label className="block text-gray-700 font-medium mb-2">
+                Description
+              </label>
+              <textarea
+                name="description"
+                value={product.description}
+                onChange={handleChange}
+                rows="4"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
+                required
+              ></textarea>
+            </div>
           </div>
 
           <div className="flex justify-end space-x-4 mt-8">
@@ -557,4 +771,4 @@ const EditProduct = () => {
   );
 };
 
-export default EditProduct; 
+export default EditProduct;

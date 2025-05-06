@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { toast } from "react-toastify";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import { jwtDecode } from "jwt-decode";
 import productApi from "../../../api/productApi";
 import shopApi from "../../../api/shopApi";
@@ -87,27 +88,21 @@ const MyProductShop = () => {
     setShowDetailModal(true);
   };
 
+  const handleDelete = (productId) => {
+    if (window.confirm("Are you sure you want to delete this product?")) {
+      handleDeleteConfirm(productId);
+    }
+  };
+
   const handleDeleteConfirm = async (productId) => {
     try {
-      console.log("Deleting product with ID:", productId);
       const response = await productApi.deleteProduct(productId);
-      console.log("Delete response:", response);
-
       if (response && response.isSuccess) {
-        // Cập nhật state local trước
+        // Cập nhật state local
         setProducts((prevProducts) =>
           prevProducts.filter((product) => product.productId !== productId)
         );
         toast.success("Product deleted successfully!");
-
-        // Refresh lại danh sách từ server
-        const refreshResponse = await productApi.getAllProducts();
-        if (refreshResponse && refreshResponse.isSuccess) {
-          const filteredProducts = refreshResponse.data.filter(
-            (product) => product.shopId === shopId
-          );
-          setProducts(filteredProducts);
-        }
       } else {
         toast.error(response?.message || "Failed to delete product");
       }
@@ -115,35 +110,6 @@ const MyProductShop = () => {
       console.error("Error deleting product:", error);
       toast.error("Failed to delete product. Please try again.");
     }
-  };
-
-  const handleDelete = (productId) => {
-    console.log("Delete button clicked for product ID:", productId);
-
-    toast.info(
-      <div className="text-center">
-        <p className="mb-2">Are you sure you want to delete this product?</p>
-        <div className="flex justify-center">
-          <button
-            onClick={() => {
-              console.log("Confirm delete clicked for ID:", productId);
-              handleDeleteConfirm(productId);
-              toast.dismiss();
-            }}
-            className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md mr-2 transition duration-300"
-          >
-            Confirm
-          </button>
-          <button
-            onClick={() => toast.dismiss()}
-            className="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-md transition duration-300"
-          >
-            Cancel
-          </button>
-        </div>
-      </div>,
-      { autoClose: false, closeOnClick: false }
-    );
   };
 
   const filteredProducts = products.filter(
@@ -476,6 +442,15 @@ const MyProductShop = () => {
           </div>
         </div>
       )}
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        pauseOnHover
+        draggable
+      />
     </div>
   );
 };

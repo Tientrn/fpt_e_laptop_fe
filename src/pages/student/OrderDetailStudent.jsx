@@ -3,12 +3,14 @@ import { useParams } from "react-router-dom";
 import orderApis from "../../api/orderApi";
 import productApi from "../../api/productApi";
 import productFeedbackApi from "../../api/productFeedbackApi";
+import shopApi from "../../api/shopApi";
 import {
   FaInfoCircle,
   FaShoppingBag,
   FaStar,
   FaUserSecret,
   FaAngleRight,
+  FaStore,
 } from "react-icons/fa";
 import { toast, ToastContainer } from "react-toastify";
 import { jwtDecode } from "jwt-decode";
@@ -22,6 +24,7 @@ const OrderDetailStudent = () => {
   const [feedbacks, setFeedbacks] = useState({});
   const [orderInfo, setOrderInfo] = useState(null);
   const [userName, setUserName] = useState("");
+  const [shopsMap, setShopsMap] = useState({});
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -63,10 +66,29 @@ const OrderDetailStudent = () => {
                 const productRes = await productApi.getProductById(
                   item.productId
                 );
-                return { ...item, product: productRes.data };
+                const product = productRes.data;
+
+                // Fetch shop info if product has shopId
+                let shop = null;
+                if (product?.shopId) {
+                  try {
+                    const shopRes = await shopApi.getShopById(product.shopId);
+                    if (shopRes.isSuccess) {
+                      shop = shopRes.data;
+                      setShopsMap((prev) => ({
+                        ...prev,
+                        [product.shopId]: shop,
+                      }));
+                    }
+                  } catch (err) {
+                    console.error("❌ Error fetching shop info:", err);
+                  }
+                }
+
+                return { ...item, product, shop };
               } catch (err) {
                 console.error("❌ Lỗi getProductById:", err);
-                return { ...item, product: null };
+                return { ...item, product: null, shop: null };
               }
             })
           );
@@ -284,9 +306,16 @@ const OrderDetailStudent = () => {
                                 <div className="text-base font-medium text-gray-900 line-clamp-2">
                                   {item.product?.productName}
                                 </div>
-                                <div className="text-sm text-indigo-600 mt-1">
-                                  Product ID: {item.productId}
-                                </div>
+
+                                {item.product?.shopId &&
+                                  shopsMap[item.product.shopId] && (
+                                    <div className="flex items-center text-sm text-gray-500 mt-1">
+                                      <FaStore className="mr-1 text-indigo-500" />
+                                      <span>
+                                        {shopsMap[item.product.shopId].shopName}
+                                      </span>
+                                    </div>
+                                  )}
                               </div>
                             </div>
                           </td>
