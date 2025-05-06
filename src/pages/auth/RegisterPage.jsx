@@ -417,7 +417,7 @@ const RegisterPage = () => {
             }}
           >
             <motion.img
-              src="https://cdn.pixabay.com/photo/2016/11/29/05/45/astronomy-1867616_1280.jpg"
+              src="https://img.freepik.com/free-vector/laptop-sharing-concept-illustration_114360-1000.jpg"
               alt="Join LaptopSharing"
               className="w-3/4 mb-6 rounded-lg shadow-md"
               initial={{ scale: 0.8 }}

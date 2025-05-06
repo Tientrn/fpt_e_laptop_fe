@@ -1,9 +1,9 @@
-import axiosClient from './axiosClient';
+import axiosClient from "./axiosClient";
 
 const forgotpassApi = {
-    forgotPassword: (data) => {
-        return axiosClient.post('/Authentication/forgot-password', data);
-    }
+  forgotPassword: (email) => {
+    return axiosClient.post("/Authentication/forgot-password", { email });
+  },
 };
 
-export default forgotpassApi; 
+export default forgotpassApi;

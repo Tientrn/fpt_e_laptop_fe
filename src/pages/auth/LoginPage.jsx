@@ -9,6 +9,7 @@ import useCartStore from "../../store/useCartStore";
 import Modal from "../../components/common/Modal";
 import shopApi from "../../api/shopApi";
 import { Link } from "react-router-dom";
+import forgotpassApi from "../../api/forgotpassApi";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -27,6 +28,9 @@ export default function LoginPage() {
     bankNumber: "",
     status: "active",
   });
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [isSendingOTP, setIsSendingOTP] = useState(false);
 
   useEffect(() => {
     if (location.state?.showRegisterSuccess) {
@@ -201,6 +205,32 @@ export default function LoginPage() {
     }
   };
 
+  const handleForgotPassword = async (e) => {
+    e.preventDefault();
+    if (!forgotEmail) {
+      toast.error("Please enter your email address");
+      return;
+    }
+
+    try {
+      setIsSendingOTP(true);
+      const response = await forgotpassApi.forgotPassword(forgotEmail);
+
+      if (response && response.isSuccess) {
+        toast.success(response.message || "OTP has been sent to your email");
+        setShowForgotPassword(false);
+        setForgotEmail("");
+      } else {
+        throw new Error(response?.message || "Failed to send OTP");
+      }
+    } catch (error) {
+      console.error("Error sending OTP:", error);
+      toast.error(error.message || "Failed to send OTP. Please try again.");
+    } finally {
+      setIsSendingOTP(false);
+    }
+  };
+
   // Animation variants for components
   const containerVariants = {
     hidden: { opacity: 0, y: 50 },
@@ -227,6 +257,19 @@ export default function LoginPage() {
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-50">
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
+        style={{ zIndex: 9999 }}
+      />
       <motion.div
         className="flex w-full max-w-5xl bg-white rounded-2xl shadow-xl overflow-hidden"
         variants={containerVariants}
@@ -245,7 +288,7 @@ export default function LoginPage() {
             }}
           >
             <motion.img
-              src="https://cdn.pixabay.com/photo/2016/11/29/05/45/astronomy-1867616_1280.jpg"
+              src="https://img.freepik.com/free-vector/laptop-sharing-concept-illustration_114360-1000.jpg"
               alt="Laptop Sharing Illustration"
               className="w-3/4 mb-6 rounded-lg shadow-md"
               initial={{ scale: 0.8 }}
@@ -383,9 +426,12 @@ export default function LoginPage() {
           </form>
 
           <div className="text-center space-y-2">
-            <a href="#" className="text-sm text-amber-600 hover:underline">
+            <button
+              onClick={() => setShowForgotPassword(true)}
+              className="text-sm text-amber-600 hover:underline"
+            >
               Forgot Password?
-            </a>
+            </button>
             <div className="flex items-center justify-center">
               <hr className="flex-1 border-slate-300" />
               <span className="px-3 text-sm text-slate-600">or</span>
@@ -415,7 +461,6 @@ export default function LoginPage() {
           </p>
         </motion.div>
       </motion.div>
-      <ToastContainer />
 
       {/* Add Shop registration Modal */}
       <Modal
@@ -514,6 +559,46 @@ export default function LoginPage() {
               className="inline-flex justify-center w-full rounded-md border border-transparent shadow-sm px-4 py-2 bg-amber-600 text-base font-medium text-white hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 sm:text-sm"
             >
               Create Shop
+            </button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Forgot Password Modal */}
+      <Modal
+        isOpen={showForgotPassword}
+        onClose={() => setShowForgotPassword(false)}
+        title="Forgot Password"
+      >
+        <form onSubmit={handleForgotPassword} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Email Address
+            </label>
+            <input
+              type="email"
+              value={forgotEmail}
+              onChange={(e) => setForgotEmail(e.target.value)}
+              required
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500"
+              placeholder="Enter your email address"
+            />
+          </div>
+
+          <div className="mt-5 sm:mt-6">
+            <button
+              type="submit"
+              disabled={isSendingOTP}
+              className="inline-flex justify-center w-full rounded-md border border-transparent shadow-sm px-4 py-2 bg-amber-600 text-base font-medium text-white hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isSendingOTP ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white mr-2"></div>
+                  Sending OTP...
+                </>
+              ) : (
+                "Send OTP"
+              )}
             </button>
           </div>
         </form>
