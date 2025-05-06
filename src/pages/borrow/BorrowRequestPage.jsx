@@ -211,7 +211,7 @@ const BorrowRequestPage = () => {
       }
     } catch (err) {
       console.error("Error creating request:", err);
-      toast.error(
+      toast.warn(
         err?.response?.data?.message ||
           "You have another borrow laptop please complete contract and return it before borrowing again."
       );
