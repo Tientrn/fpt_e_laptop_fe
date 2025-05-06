@@ -10,6 +10,7 @@ import Modal from "../../components/common/Modal";
 import shopApi from "../../api/shopApi";
 import { Link } from "react-router-dom";
 import forgotpassApi from "../../api/forgotpassApi";
+import { FaTimes } from "react-icons/fa";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -568,7 +569,18 @@ export default function LoginPage() {
       <Modal
         isOpen={showForgotPassword}
         onClose={() => setShowForgotPassword(false)}
-        title="Forgot Password"
+        title={
+          <div className="flex items-center justify-between">
+            <span>Forgot Password</span>
+            <button
+              onClick={() => setShowForgotPassword(false)}
+              className="p-2 text-gray-400 hover:text-gray-600 focus:outline-none"
+              type="button"
+            >
+              <FaTimes className="w-5 h-5" />
+            </button>
+          </div>
+        }
       >
         <form onSubmit={handleForgotPassword} className="space-y-4">
           <div>
@@ -585,11 +597,18 @@ export default function LoginPage() {
             />
           </div>
 
-          <div className="mt-5 sm:mt-6">
+          <div className="mt-5 sm:mt-6 flex gap-3">
+            <button
+              type="button"
+              onClick={() => setShowForgotPassword(false)}
+              className="flex-1 inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 sm:text-sm"
+            >
+              Cancel
+            </button>
             <button
               type="submit"
               disabled={isSendingOTP}
-              className="inline-flex justify-center w-full rounded-md border border-transparent shadow-sm px-4 py-2 bg-amber-600 text-base font-medium text-white hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-amber-600 text-base font-medium text-white hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isSendingOTP ? (
                 <>
