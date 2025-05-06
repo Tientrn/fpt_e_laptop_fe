@@ -54,7 +54,11 @@ const ContractsPage = () => {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
   // Add new state for security
-  const [showSensitiveInfo, setShowSensitiveInfo] = useState(false);
+  const [showSensitiveInfo, setShowSensitiveInfo] = useState(() => {
+    // Read from localStorage on initial render
+    const saved = localStorage.getItem("showSensitiveInfo");
+    return saved === "true";
+  });
   const [securityPassword, setSecurityPassword] = useState("");
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
 
@@ -949,20 +953,18 @@ const ContractsPage = () => {
 
   const handleShowSensitiveInfo = () => {
     if (showSensitiveInfo) {
-      // If currently showing info, just hide it
       setShowSensitiveInfo(false);
+      localStorage.setItem("showSensitiveInfo", "false");
     } else {
-      // If currently hiding info, show password modal
       setIsPasswordModalOpen(true);
     }
   };
 
   const handlePasswordSubmit = (e) => {
     e.preventDefault();
-    // In a real application, you would validate against a secure password
-    // For demo purposes, we'll use a simple password
     if (securityPassword === "admin123") {
       setShowSensitiveInfo(true);
+      localStorage.setItem("showSensitiveInfo", "true");
       setIsPasswordModalOpen(false);
       setSecurityPassword("");
     } else {

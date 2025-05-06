@@ -44,7 +44,11 @@ const BorrowHistory = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [depositTransactionsMap, setDepositTransactionsMap] = useState({});
   // Add new state variables for security
-  const [showSensitiveInfo, setShowSensitiveInfo] = useState(false);
+  const [showSensitiveInfo, setShowSensitiveInfo] = useState(() => {
+    // Read from localStorage on initial render
+    const saved = localStorage.getItem("showSensitiveInfo");
+    return saved === "true";
+  });
   const [securityPassword, setSecurityPassword] = useState("");
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
 
@@ -89,6 +93,7 @@ const BorrowHistory = () => {
   const handleShowSensitiveInfo = () => {
     if (showSensitiveInfo) {
       setShowSensitiveInfo(false);
+      localStorage.setItem("showSensitiveInfo", "false");
     } else {
       setIsPasswordModalOpen(true);
     }
@@ -96,9 +101,9 @@ const BorrowHistory = () => {
 
   const handlePasswordSubmit = (e) => {
     e.preventDefault();
-    // Replace 'your-secure-password' with your actual secure password
     if (securityPassword === "admin123") {
       setShowSensitiveInfo(true);
+      localStorage.setItem("showSensitiveInfo", "true");
       setIsPasswordModalOpen(false);
       setSecurityPassword("");
     } else {

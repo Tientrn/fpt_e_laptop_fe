@@ -74,7 +74,7 @@ const OrderDetailStudent = () => {
           setOrderDetails(enrichedDetails);
         }
       } catch (error) {
-        console.error("Lỗi khi tải chi tiết đơn hàng:", error);
+        console.error("Error fetching order details:", error);
       } finally {
         setLoading(false);
       }
@@ -96,7 +96,7 @@ const OrderDetailStudent = () => {
   const handleSubmitFeedback = async (orderDetails) => {
     const fb = feedbacks[orderDetails.orderItemId];
     if (!fb || !fb.rating || !fb.comments) {
-      toast.warning("Vui lòng nhập đủ sao và bình luận.");
+      toast.warning("Please enter the rating and comments.");
       return;
     }
 
@@ -112,12 +112,12 @@ const OrderDetailStudent = () => {
     try {
       const res = await productFeedbackApi.createFeedbackProduct(body);
       if (res.isSuccess && (res.code === 200 || res.code === 201)) {
-        toast.success("🎉 Đánh giá đã được gửi!");
+        toast.success("🎉 Feedback has been sent!");
       } else {
-        toast.error("❌ Gửi đánh giá thất bại (dữ liệu không hợp lệ).");
+        toast.error("❌ Failed to send feedback (invalid data).");
       }
     } catch (error) {
-      toast.error("❌ Gửi đánh giá thất bại.");
+      toast.error("❌ Failed to send feedback.");
     }
   };
 

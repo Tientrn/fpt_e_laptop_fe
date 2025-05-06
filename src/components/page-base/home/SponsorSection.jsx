@@ -5,30 +5,30 @@ import statisticSponerUserApi from "../../../api/statisticSponerUser";
 import { motion } from "framer-motion";
 
 export default function SponsorSection() {
-  const [sponsors, setSponsors] = useState([]);
+  const [donors, setDonors] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const fetchSponsors = async () => {
+    const fetchDonors = async () => {
       try {
-        const response = await statisticSponerUserApi.getTopSponsor();
+        const response = await statisticSponerUserApi.getTopDonor();
         if (response && response.isSuccess && Array.isArray(response.data)) {
-          setSponsors(response.data);
+          setDonors(response.data);
         }
       } catch (error) {
-        console.error("Failed to fetch top sponsors:", error);
+        console.error("Failed to fetch top donors:", error);
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchSponsors();
+    fetchDonors();
   }, []);
 
   // For debug
   useEffect(() => {
-    console.log("Current sponsors state:", sponsors);
-  }, [sponsors]);
+    console.log("Current donors state:", donors);
+  }, [donors]);
 
   if (isLoading) {
     return (
@@ -129,17 +129,17 @@ export default function SponsorSection() {
 
   return (
     <div>
-      {/* Featured Top 3 Sponsors - Compact, horizontal layout */}
+      {/* Featured Top 3 Donors - Compact, horizontal layout */}
       <div className="mb-8">
         <div className="flex flex-col md:flex-row justify-center gap-3 md:gap-6">
-          {sponsors.slice(0, 3).map((sponsor, index) => {
+          {donors.slice(0, 3).map((donor, index) => {
             // Reorder to show 1st in the middle (larger), 2nd on left, 3rd on right
             const displayOrder = index === 0 ? 1 : index === 1 ? 0 : 2;
             const isFirst = displayOrder === 1;
 
             return (
               <motion.div
-                key={sponsor.sponsorId}
+                key={donor.donorId}
                 className={`relative ${
                   isFirst
                     ? "order-2 md:-mt-6 md:mb-0 mb-3"
@@ -181,7 +181,7 @@ export default function SponsorSection() {
                           )}`}
                         >
                           {index === 0
-                            ? "Top Sponsor"
+                            ? "Top Donor"
                             : index === 1
                             ? "2nd Place"
                             : "3rd Place"}
@@ -200,22 +200,22 @@ export default function SponsorSection() {
                       </div>
                     </div>
 
-                    {/* Sponsor Name */}
+                    {/* Donor Name */}
                     <h3
                       className={`font-bold mb-1 line-clamp-1 ${
                         isFirst ? "text-lg" : "text-base"
                       }`}
                     >
-                      {sponsor.sponsorName}
+                      {donor.donorName}
                     </h3>
 
-                    {/* Contribution Amount */}
+                    {/* Total Laptops */}
                     <div
                       className={`font-bold mb-1 ${getTextColor(index)} ${
                         isFirst ? "text-xl" : "text-lg"
                       }`}
                     >
-                      {formatCurrency(sponsor.totalAmount)}
+                      {donor.totalLaptops} Laptops
                     </div>
                   </div>
                 </div>
@@ -253,18 +253,18 @@ export default function SponsorSection() {
         </div>
       </div>
 
-      {/* Other Sponsors - More compact row layout */}
-      {sponsors.length > 3 && (
+      {/* Other Donors - More compact row layout */}
+      {donors.length > 3 && (
         <div className="mt-6">
           <h4 className="text-base font-medium text-[#293241] mb-3 px-2">
-            Other Supporters
+            Other Donors
           </h4>
           <div className="bg-white/70 backdrop-blur-sm rounded-lg shadow-sm">
-            {sponsors.slice(3).map((sponsor, index) => (
+            {donors.slice(3).map((donor, index) => (
               <motion.div
-                key={sponsor.sponsorId}
+                key={donor.donorId}
                 className={`flex items-center justify-between py-2.5 px-3 ${
-                  index < sponsors.slice(3).length - 1
+                  index < donors.slice(3).length - 1
                     ? "border-b border-gray-100"
                     : ""
                 }`}
@@ -278,13 +278,11 @@ export default function SponsorSection() {
                     {index + 4}
                   </span>
                   <div>
-                    <div className="font-medium text-sm">
-                      {sponsor.sponsorName}
-                    </div>
+                    <div className="font-medium text-sm">{donor.donorName}</div>
                   </div>
                 </div>
                 <div className="text-sm font-semibold text-[#3d5a80]">
-                  {formatCurrency(sponsor.totalAmount)}
+                  {donor.totalLaptops} Laptops
                 </div>
               </motion.div>
             ))}
