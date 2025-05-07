@@ -4,15 +4,30 @@ import { jwtDecode } from "jwt-decode";
 import shopApi from "../../../api/shopApi";
 import userApi from "../../../api/userApi";
 import walletApi from "../../../api/walletApi";
-import { FaStoreAlt, FaUserCircle, FaMapMarkerAlt, FaPhoneAlt, FaEnvelope, FaIdCard, FaUniversity, FaCreditCard, FaWallet, FaMoneyBillWave, FaCalendarAlt, FaTag } from "react-icons/fa";
+import {
+  FaStoreAlt,
+  FaUserCircle,
+  FaMapMarkerAlt,
+  FaPhoneAlt,
+  FaEnvelope,
+  FaIdCard,
+  FaUniversity,
+  FaCreditCard,
+  FaWallet,
+  FaMoneyBillWave,
+  FaCalendarAlt,
+  FaTag,
+} from "react-icons/fa";
 import { MdVerified, MdErrorOutline } from "react-icons/md";
 import PropTypes from "prop-types";
+import { useNavigate } from "react-router-dom";
 
 const ShopProfile = () => {
   const [shop, setShop] = useState(null);
   const [userInfo, setUserInfo] = useState(null);
   const [walletInfo, setWalletInfo] = useState(null);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -38,12 +53,13 @@ const ShopProfile = () => {
         try {
           const userRes = await userApi.getUserById(userId);
           console.log("User Response:", userRes);
-          if (userRes && userRes.isSuccess) { // Thay đổi điều kiện kiểm tra
+          if (userRes && userRes.isSuccess) {
+            // Thay đổi điều kiện kiểm tra
             setUserInfo({
               email: decodedToken.email,
               fullName: decodedToken.fullName,
               roleName: decodedToken.role,
-              avatar: userRes.data?.avatar || null
+              avatar: userRes.data?.avatar || null,
             });
           } else {
             // Nếu không lấy được từ API, dùng thông tin từ token
@@ -51,7 +67,7 @@ const ShopProfile = () => {
               email: decodedToken.email,
               fullName: decodedToken.fullName,
               roleName: decodedToken.role,
-              avatar: null
+              avatar: null,
             });
           }
         } catch (userError) {
@@ -61,7 +77,7 @@ const ShopProfile = () => {
             email: decodedToken.email,
             fullName: decodedToken.fullName,
             roleName: decodedToken.role,
-            avatar: null
+            avatar: null,
           });
         }
 
@@ -69,7 +85,7 @@ const ShopProfile = () => {
         try {
           const shopsRes = await shopApi.getAllShops();
           console.log("Shops Response:", shopsRes);
-          
+
           if (shopsRes && shopsRes.data) {
             const userShop = shopsRes.data.find(
               (s) => s.userId === Number(userId)
@@ -88,7 +104,7 @@ const ShopProfile = () => {
         try {
           const walletRes = await walletApi.getWallet();
           console.log("Wallet Response:", walletRes);
-          
+
           if (walletRes && walletRes.data) {
             const userWallet = walletRes.data.find(
               (w) => w.userId === Number(userId)
@@ -100,10 +116,11 @@ const ShopProfile = () => {
           console.error("Error fetching wallet:", walletError);
           toast.error("Unable to load wallet information");
         }
-
       } catch (error) {
         console.error("Main error:", error);
-        toast.error(error.message || "An error occurred while loading information");
+        toast.error(
+          error.message || "An error occurred while loading information"
+        );
       } finally {
         setLoading(false);
       }
@@ -113,18 +130,18 @@ const ShopProfile = () => {
   }, []);
 
   const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('vi-VN', {
-      style: 'currency',
-      currency: 'VND'
+    return new Intl.NumberFormat("vi-VN", {
+      style: "currency",
+      currency: "VND",
     }).format(amount);
   };
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('vi-VN', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
+    return date.toLocaleDateString("vi-VN", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
     });
   };
 
@@ -133,7 +150,9 @@ const ShopProfile = () => {
       <div className="flex justify-center items-center min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50">
         <div className="flex flex-col items-center">
           <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-indigo-600 mb-4"></div>
-          <p className="text-indigo-600 font-medium animate-pulse">Loading profile...</p>
+          <p className="text-indigo-600 font-medium animate-pulse">
+            Loading profile...
+          </p>
         </div>
       </div>
     );
@@ -148,12 +167,19 @@ const ShopProfile = () => {
               <div className="w-24 h-24 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center mx-auto mb-4">
                 <MdErrorOutline className="text-white text-5xl" />
               </div>
-              <h1 className="text-3xl font-bold text-white mb-2">Shop Profile</h1>
-              <p className="text-white/80">Your shop information could not be found</p>
+              <h1 className="text-3xl font-bold text-white mb-2">
+                Shop Profile
+              </h1>
+              <p className="text-white/80">
+                Your shop information could not be found
+              </p>
             </div>
-            
+
             <div className="p-8 text-center">
-              <p className="text-gray-600 mb-6">Please create a new shop profile to continue using our platform&apos;s seller features.</p>
+              <p className="text-gray-600 mb-6">
+                Please create a new shop profile to continue using our
+                platform&apos;s seller features.
+              </p>
               <button className="px-6 py-3 bg-gradient-to-r from-indigo-600 to-indigo-700 text-white font-medium rounded-lg shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5">
                 Create Shop Profile
               </button>
@@ -178,19 +204,21 @@ const ShopProfile = () => {
                   alt={`${shop.shopName} profile`}
                   className="w-full h-full object-cover"
                 />
-                <span 
+                <span
                   className={`absolute bottom-1 right-1 w-5 h-5 rounded-full ${
                     shop.status === "Active" ? "bg-green-500" : "bg-red-500"
                   } border-2 border-white flex items-center justify-center`}
                 >
-                  {shop.status === "Active" && <div className="w-2 h-2 bg-white rounded-full"></div>}
+                  {shop.status === "Active" && (
+                    <div className="w-2 h-2 bg-white rounded-full"></div>
+                  )}
                 </span>
               </div>
-              
+
               <div className="mt-4 md:mt-0 md:ml-6 flex flex-col md:flex-row items-center md:items-end justify-between w-full">
                 <div className="text-center md:text-left">
                   <h1 className="text-2xl md:text-3xl font-bold text-white flex items-center justify-center md:justify-start">
-                    <FaStoreAlt className="mr-2 text-white/80" /> 
+                    <FaStoreAlt className="mr-2 text-white/80" />
                     {shop.shopName}
                   </h1>
                   <div className="mt-2 inline-flex items-center px-3 py-1 rounded-full bg-white/20 backdrop-blur-sm text-white text-sm">
@@ -202,7 +230,7 @@ const ShopProfile = () => {
                     {shop.status}
                   </div>
                 </div>
-                
+
                 <div className="mt-4 md:mt-0">
                   <span className="inline-flex items-center px-4 py-1.5 rounded-full bg-indigo-100 text-indigo-800 font-medium text-sm shadow-sm">
                     {userInfo.roleName}
@@ -223,43 +251,54 @@ const ShopProfile = () => {
                       <FaWallet className="mr-2" />
                       Shop Wallet
                     </h3>
-                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                      walletInfo.status === "Active" 
-                        ? "bg-green-500/20 text-green-100" 
-                        : "bg-red-500/20 text-red-100"
-                    }`}>
+                    <span
+                      className={`px-3 py-1 rounded-full text-xs font-medium ${
+                        walletInfo.status === "Active"
+                          ? "bg-green-500/20 text-green-100"
+                          : "bg-red-500/20 text-red-100"
+                      }`}
+                    >
                       {walletInfo.status}
                     </span>
                   </div>
-                  
+
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
                       <div className="text-white/70 text-sm mb-1 flex items-center">
                         <FaMoneyBillWave className="mr-2" />
                         Current Balance
                       </div>
-                      <div className="text-2xl font-bold">{formatCurrency(walletInfo.balance)}</div>
+                      <div className="text-2xl font-bold">
+                        {formatCurrency(walletInfo.balance)}
+                      </div>
                     </div>
-                    
+
                     <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
                       <div className="text-white/70 text-sm mb-1 flex items-center">
                         <FaTag className="mr-2" />
                         Wallet Type
                       </div>
-                      <div className="text-2xl font-bold">{walletInfo.type}</div>
+                      <div className="text-2xl font-bold">
+                        {walletInfo.type}
+                      </div>
                     </div>
-                    
+
                     <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
                       <div className="text-white/70 text-sm mb-1 flex items-center">
                         <FaCalendarAlt className="mr-2" />
                         Created Date
                       </div>
-                      <div className="text-lg font-medium">{formatDate(walletInfo.createdDate)}</div>
+                      <div className="text-lg font-medium">
+                        {formatDate(walletInfo.createdDate)}
+                      </div>
                     </div>
                   </div>
-                  
+
                   <div className="mt-6 flex justify-end">
-                    <button className="px-4 py-2 bg-white text-indigo-700 rounded-lg font-medium transition-all hover:bg-indigo-50 flex items-center">
+                    <button
+                      className="px-4 py-2 bg-white text-indigo-700 rounded-lg font-medium transition-all hover:bg-indigo-50 flex items-center"
+                      onClick={() => navigate("/shop/wallet")}
+                    >
                       <FaWallet className="mr-2" />
                       Manage Wallet
                     </button>
@@ -277,28 +316,28 @@ const ShopProfile = () => {
                     Business Information
                   </h3>
                 </div>
-                
+
                 <div className="p-6 space-y-5">
-                  <InfoItem 
+                  <InfoItem
                     icon={<FaStoreAlt className="text-indigo-500" />}
                     label="Shop Name"
                     value={shop.shopName}
                   />
-                  
-                  <InfoItem 
+
+                  <InfoItem
                     icon={<FaUniversity className="text-indigo-500" />}
                     label="Bank Name"
                     value={shop.bankName}
                   />
-                  
-                  <InfoItem 
+
+                  <InfoItem
                     icon={<FaCreditCard className="text-indigo-500" />}
                     label="Account Number"
                     value={shop.bankNumber}
                     isSensitive
                   />
-                  
-                  <InfoItem 
+
+                  <InfoItem
                     icon={<FaPhoneAlt className="text-indigo-500" />}
                     label="Phone Number"
                     value={shop.shopPhone}
@@ -314,26 +353,26 @@ const ShopProfile = () => {
                     Additional Information
                   </h3>
                 </div>
-                
+
                 <div className="p-6 space-y-5">
-                  <InfoItem 
+                  <InfoItem
                     icon={<FaEnvelope className="text-indigo-500" />}
                     label="Email"
                     value={userInfo.email}
                   />
-                  
-                  <InfoItem 
+
+                  <InfoItem
                     icon={<FaMapMarkerAlt className="text-indigo-500" />}
                     label="Address"
                     value={shop.shopAddress}
                   />
-                  
-                  <InfoItem 
+
+                  <InfoItem
                     icon={<FaIdCard className="text-indigo-500" />}
                     label="Tax Code"
                     value={shop.businessLicense}
                   />
-                  
+
                   <div className="flex items-start">
                     <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0">
                       {shop.status === "Active" ? (
@@ -343,10 +382,16 @@ const ShopProfile = () => {
                       )}
                     </div>
                     <div className="ml-4 flex-1">
-                      <h4 className="text-gray-700 text-sm font-medium">Status</h4>
-                      <p className={`text-base ${
-                        shop.status === "Active" ? "text-green-600" : "text-red-600"
-                      }`}>
+                      <h4 className="text-gray-700 text-sm font-medium">
+                        Status
+                      </h4>
+                      <p
+                        className={`text-base ${
+                          shop.status === "Active"
+                            ? "text-green-600"
+                            : "text-red-600"
+                        }`}
+                      >
                         {shop.status}
                       </p>
                     </div>
@@ -366,8 +411,8 @@ const InfoItem = ({ icon, label, value, isSensitive = false }) => {
   // Mask sensitive information like account numbers
   const maskValue = (val) => {
     if (!val) return "N/A";
-    if (typeof val !== 'string') val = String(val);
-    
+    if (typeof val !== "string") val = String(val);
+
     // Mask all but last 4 characters
     const visible = val.slice(-4);
     const masked = "*".repeat(val.length - 4);
@@ -393,7 +438,7 @@ InfoItem.propTypes = {
   icon: PropTypes.node.isRequired,
   label: PropTypes.string.isRequired,
   value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-  isSensitive: PropTypes.bool
+  isSensitive: PropTypes.bool,
 };
 
 export default ShopProfile;

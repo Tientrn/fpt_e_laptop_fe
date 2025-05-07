@@ -206,14 +206,18 @@ const OverviewPage = () => {
     }
   );
 
-  // Add pagination calculation functions
+  // Add this before phân trang:
+  const sortedTransactions = transactions
+    .filter((t) => t.transactionType !== "TransferIn")
+    .sort((a, b) => b.transactionId - a.transactionId);
+
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentTransactions = transactions.slice(
+  const currentTransactions = sortedTransactions.slice(
     indexOfFirstItem,
     indexOfLastItem
   );
-  const totalPages = Math.ceil(transactions.length / itemsPerPage);
+  const totalPages = Math.ceil(sortedTransactions.length / itemsPerPage);
 
   const paginate = (pageNumber) => {
     if (pageNumber > 0 && pageNumber <= totalPages) {
@@ -515,108 +519,115 @@ const OverviewPage = () => {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {transactions
-                    .sort((a, b) => b.transactionId - a.transactionId)
-                    .slice(0, 5)
-                    .map((transaction) => {
-                      // Calculate the cash flow
-                      let cashFlow = 0;
-                      let flowType = "";
+                  {currentTransactions.map((transaction) => {
+                    // Calculate the cash flow
+                    let cashFlow = 0;
+                    let flowType = "";
 
-                      if (transaction.transactionType === "Deposit") {
-                        cashFlow = transaction.amount;
+                    if (transaction.transactionType === "Deposit") {
+                      cashFlow = transaction.amount;
+                      flowType = "in";
+                    } else if (transaction.transactionType === "Compensation") {
+                      if (transaction.extraPaymentRequired > 0) {
+                        cashFlow = transaction.extraPaymentRequired;
                         flowType = "in";
                       } else if (
-                        transaction.transactionType === "Compensation"
+                        transaction.refundAmount !== null &&
+                        transaction.refundAmount > 0
                       ) {
-                        if (transaction.extraPaymentRequired > 0) {
-                          cashFlow = transaction.extraPaymentRequired;
-                          flowType = "in";
-                        } else if (
-                          transaction.refundAmount !== null &&
-                          transaction.refundAmount > 0
-                        ) {
-                          cashFlow = transaction.refundAmount;
-                          flowType = "out";
-                        } else if (
-                          transaction.usedDepositAmount < transaction.amount
-                        ) {
-                          cashFlow =
-                            transaction.amount - transaction.usedDepositAmount;
-                          flowType = "out";
-                        }
-                      } else if (transaction.transactionType === "Refund") {
-                        cashFlow = transaction.amount;
+                        cashFlow = transaction.refundAmount;
+                        flowType = "out";
+                      } else if (
+                        transaction.usedDepositAmount < transaction.amount
+                      ) {
+                        cashFlow =
+                          transaction.amount - transaction.usedDepositAmount;
                         flowType = "out";
                       }
+                    } else if (transaction.transactionType === "Refund") {
+                      cashFlow = transaction.amount;
+                      flowType = "out";
+                    } else if (transaction.transactionType === "Payment") {
+                      cashFlow = transaction.amount;
+                      flowType = "in";
+                    } else if (transaction.transactionType === "ShopWithdraw") {
+                      cashFlow = transaction.amount;
+                      flowType = "in";
+                    } else if (transaction.transactionType === "TransferOut") {
+                      cashFlow = transaction.amount;
+                      flowType = "out";
+                    }
 
-                      return (
-                        <tr
-                          key={transaction.transactionId}
-                          className="hover:bg-gray-50"
-                        >
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {encodeId(transaction.transactionId)}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
+                    return (
+                      <tr
+                        key={transaction.transactionId}
+                        className="hover:bg-gray-50"
+                      >
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {encodeId(transaction.transactionId)}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span
+                            className={`px-2 py-1 text-xs font-semibold rounded-full 
+                            ${
+                              transaction.transactionType === "Deposit"
+                                ? "bg-green-100 text-green-800"
+                                : transaction.transactionType === "Compensation"
+                                ? "bg-amber-100 text-amber-800"
+                                : "bg-blue-100 text-blue-800"
+                            }`}
+                          >
+                            {transaction.transactionType}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {formatCurrency(transaction.amount)}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {transaction.usedDepositAmount !== null
+                            ? formatCurrency(transaction.usedDepositAmount)
+                            : "-"}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {transaction.extraPaymentRequired !== null
+                            ? formatCurrency(transaction.extraPaymentRequired)
+                            : "-"}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {transaction.refundAmount !== null
+                            ? formatCurrency(transaction.refundAmount)
+                            : "-"}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {flowType && (
                             <span
-                              className={`px-2 py-1 text-xs font-semibold rounded-full 
-                              ${
-                                transaction.transactionType === "Deposit"
+                              className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                                flowType === "in"
                                   ? "bg-green-100 text-green-800"
-                                  : transaction.transactionType ===
-                                    "Compensation"
-                                  ? "bg-amber-100 text-amber-800"
-                                  : "bg-blue-100 text-blue-800"
+                                  : "bg-red-100 text-red-800"
                               }`}
                             >
-                              {transaction.transactionType}
+                              {flowType === "in" ? "+" : "-"}
+                              {["Deposit", "Compensation"].includes(
+                                transaction.transactionType
+                              )
+                                ? formatCurrency(cashFlow)
+                                : formatCurrency(Math.abs(cashFlow))}
                             </span>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {formatCurrency(transaction.amount)}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {transaction.usedDepositAmount !== null
-                              ? formatCurrency(transaction.usedDepositAmount)
-                              : "-"}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {transaction.extraPaymentRequired !== null
-                              ? formatCurrency(transaction.extraPaymentRequired)
-                              : "-"}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {transaction.refundAmount !== null
-                              ? formatCurrency(transaction.refundAmount)
-                              : "-"}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            {flowType && (
-                              <span
-                                className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                                  flowType === "in"
-                                    ? "bg-green-100 text-green-800"
-                                    : "bg-red-100 text-red-800"
-                                }`}
-                              >
-                                {flowType === "in" ? "+" : "-"}
-                                {formatCurrency(cashFlow)}
-                              </span>
-                            )}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {format(
-                              new Date(transaction.createdDate),
-                              "dd/MM/yyyy HH:mm"
-                            )}
-                          </td>
-                          <td className="px-6 py-4 text-sm text-gray-500 max-w-xs truncate">
-                            {transaction.note}
-                          </td>
-                        </tr>
-                      );
-                    })}
+                          )}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {format(
+                            new Date(transaction.createdDate),
+                            "dd/MM/yyyy HH:mm"
+                          )}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-500 max-w-xs truncate">
+                          {transaction.note}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -867,6 +878,15 @@ const OverviewPage = () => {
                   } else if (transaction.transactionType === "Refund") {
                     cashFlow = transaction.amount;
                     flowType = "out";
+                  } else if (transaction.transactionType === "Payment") {
+                    cashFlow = transaction.amount;
+                    flowType = "in";
+                  } else if (transaction.transactionType === "ShopWithdraw") {
+                    cashFlow = transaction.amount;
+                    flowType = "in";
+                  } else if (transaction.transactionType === "TransferOut") {
+                    cashFlow = transaction.amount;
+                    flowType = "out";
                   }
 
                   return (
@@ -920,7 +940,11 @@ const OverviewPage = () => {
                             }`}
                           >
                             {flowType === "in" ? "+" : "-"}
-                            {formatCurrency(cashFlow)}
+                            {["Deposit", "Compensation"].includes(
+                              transaction.transactionType
+                            )
+                              ? formatCurrency(cashFlow)
+                              : formatCurrency(Math.abs(cashFlow))}
                           </span>
                         )}
                       </td>

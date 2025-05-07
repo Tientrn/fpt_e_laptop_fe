@@ -23,7 +23,7 @@ const WalletManagement = () => {
   const [withdrawNote, setWithdrawNote] = useState("");
   const [isWithdrawing, setIsWithdrawing] = useState(false);
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
-  
+
   // Filter states
   const [filters, setFilters] = useState({
     type: "all",
@@ -40,7 +40,7 @@ const WalletManagement = () => {
     }).format(amount);
   };
 
-  // Generate a transaction ID 
+  // Generate a transaction ID
   const encodeId = (id) => `TX-${id.toString(36).toUpperCase()}`;
 
   // Fetch wallet and transaction data
@@ -107,8 +107,11 @@ const WalletManagement = () => {
       const searchTerm = filters.search.toLowerCase();
       result = result.filter(
         (transaction) =>
-          encodeId(transaction.transactionId).toLowerCase().includes(searchTerm) ||
-          (transaction.note && transaction.note.toLowerCase().includes(searchTerm))
+          encodeId(transaction.transactionId)
+            .toLowerCase()
+            .includes(searchTerm) ||
+          (transaction.note &&
+            transaction.note.toLowerCase().includes(searchTerm))
       );
     }
 
@@ -137,30 +140,30 @@ const WalletManagement = () => {
   // Handle withdraw money
   const handleWithdraw = async (e) => {
     e.preventDefault();
-    
+
     if (!withdrawAmount || parseFloat(withdrawAmount) <= 0) {
       toast.error("Please enter a valid amount");
       return;
     }
-    
+
     if (parseFloat(withdrawAmount) > walletInfo?.balance) {
       toast.error("Withdrawal amount exceeds your balance");
       return;
     }
-    
+
     try {
       setIsWithdrawing(true);
       const response = await walletApi.withdrawMoney(
         parseFloat(withdrawAmount)
       );
-      
+
       if (response && (response.isSuccess || response.status === 200)) {
         toast.success("Money withdrawal successful!");
-        
+
         // Update wallet balance
         const updatedWallet = await getWalletByUserId();
         setWalletInfo(updatedWallet);
-        
+
         // Refresh transactions
         const transactionsResponse = await walletApi.getTransactions();
         if (transactionsResponse?.isSuccess) {
@@ -170,13 +173,15 @@ const WalletManagement = () => {
           setTransactions(sortedTransactions || []);
           setFilteredTransactions(sortedTransactions || []);
         }
-        
+
         // Reset form
         setWithdrawAmount("");
         setWithdrawNote("");
         setShowWithdrawModal(false);
       } else {
-        toast.error(response?.message || "Withdrawal failed. Please try again.");
+        toast.error(
+          response?.message || "Withdrawal failed. Please try again."
+        );
       }
     } catch (error) {
       console.error("Error withdrawing money:", error);
@@ -187,7 +192,7 @@ const WalletManagement = () => {
     }
   };
 
-  // Handle transaction flow display 
+  // Handle transaction flow display
   const getTransactionFlow = (transaction) => {
     // Calculate the cash flow
     let cashFlow = 0;
@@ -206,14 +211,14 @@ const WalletManagement = () => {
       ) {
         cashFlow = transaction.refundAmount;
         flowType = "out";
-      } else if (
-        transaction.usedDepositAmount < transaction.amount
-      ) {
+      } else if (transaction.usedDepositAmount < transaction.amount) {
         cashFlow = transaction.amount - transaction.usedDepositAmount;
         flowType = "out";
       }
-    } else if (transaction.transactionType === "Refund" || 
-               transaction.transactionType === "Withdraw") {
+    } else if (
+      transaction.transactionType === "Refund" ||
+      transaction.transactionType === "Withdraw"
+    ) {
       cashFlow = transaction.amount;
       flowType = "out";
     }
@@ -232,7 +237,7 @@ const WalletManagement = () => {
           {flowType === "in" ? "+" : "-"}
           {formatCurrency(cashFlow)}
         </span>
-      )
+      ),
     };
   };
 
@@ -285,9 +290,11 @@ const WalletManagement = () => {
       <div className="bg-white rounded-xl shadow-sm p-4 border border-gray-200">
         <div className="flex items-center mb-4">
           <FaFilter className="text-amber-600 mr-2" />
-          <h3 className="text-lg font-medium text-gray-800">Filter Transactions</h3>
+          <h3 className="text-lg font-medium text-gray-800">
+            Filter Transactions
+          </h3>
         </div>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           {/* Transaction Type Filter */}
           <div>
@@ -307,7 +314,7 @@ const WalletManagement = () => {
               <option value="Withdraw">Withdrawals</option>
             </select>
           </div>
-          
+
           {/* Date From Filter */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -321,7 +328,7 @@ const WalletManagement = () => {
               className="w-full p-2 border border-gray-300 rounded-md focus:ring-amber-500 focus:border-amber-500"
             />
           </div>
-          
+
           {/* Date To Filter */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -335,7 +342,7 @@ const WalletManagement = () => {
               className="w-full p-2 border border-gray-300 rounded-md focus:ring-amber-500 focus:border-amber-500"
             />
           </div>
-          
+
           {/* Search Filter */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -356,7 +363,7 @@ const WalletManagement = () => {
             </div>
           </div>
         </div>
-        
+
         {/* Reset Filters Button */}
         <div className="mt-4 flex justify-end">
           <button
@@ -373,10 +380,12 @@ const WalletManagement = () => {
         <div className="p-4 border-b border-gray-200">
           <div className="flex items-center">
             <FaExchangeAlt className="text-amber-600 mr-2" />
-            <h3 className="text-lg font-medium text-gray-800">Transaction History</h3>
+            <h3 className="text-lg font-medium text-gray-800">
+              Transaction History
+            </h3>
           </div>
         </div>
-        
+
         <div className="overflow-x-auto">
           {filteredTransactions.length === 0 ? (
             <div className="p-8 text-center text-gray-500">
@@ -396,9 +405,6 @@ const WalletManagement = () => {
                     Amount
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Flow
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Date & Time
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -407,48 +413,52 @@ const WalletManagement = () => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {filteredTransactions.map((transaction) => {
-                  const { display } = getTransactionFlow(transaction);
-                  
-                  return (
-                    <tr key={transaction.transactionId} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {encodeId(transaction.transactionId)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span
-                          className={`px-2 py-1 text-xs font-semibold rounded-full 
-                          ${
-                            transaction.transactionType === "Deposit"
-                              ? "bg-green-100 text-green-800"
-                              : transaction.transactionType === "Compensation"
-                              ? "bg-amber-100 text-amber-800"
-                              : transaction.transactionType === "Withdraw"
-                              ? "bg-purple-100 text-purple-800"
-                              : "bg-blue-100 text-blue-800"
-                          }`}
-                        >
-                          {transaction.transactionType}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {formatCurrency(transaction.amount)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {display}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {format(
-                          parseISO(transaction.createdDate),
-                          "dd/MM/yyyy HH:mm"
-                        )}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-500 max-w-xs truncate">
-                        {transaction.note || "-"}
-                      </td>
-                    </tr>
-                  );
-                })}
+                {filteredTransactions
+                  .filter((transaction) =>
+                    ["TransferIn", "Payment"].includes(
+                      transaction.transactionType
+                    )
+                  )
+                  .map((transaction) => {
+                    return (
+                      <tr
+                        key={transaction.transactionId}
+                        className="hover:bg-gray-50"
+                      >
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {encodeId(transaction.transactionId)}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span
+                            className={`px-2 py-1 text-xs font-semibold rounded-full 
+                            ${
+                              transaction.transactionType === "Deposit"
+                                ? "bg-green-100 text-green-800"
+                                : transaction.transactionType === "Compensation"
+                                ? "bg-amber-100 text-amber-800"
+                                : transaction.transactionType === "Withdraw"
+                                ? "bg-purple-100 text-purple-800"
+                                : "bg-blue-100 text-blue-800"
+                            }`}
+                          >
+                            {transaction.transactionType}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {formatCurrency(transaction.amount)}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {format(
+                            parseISO(transaction.createdDate),
+                            "dd/MM/yyyy HH:mm"
+                          )}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-500 max-w-xs truncate">
+                          {transaction.note || "-"}
+                        </td>
+                      </tr>
+                    );
+                  })}
               </tbody>
             </table>
           )}
@@ -468,7 +478,7 @@ const WalletManagement = () => {
             <p className="text-gray-600 text-center text-sm mb-6">
               Current Balance: {formatCurrency(walletInfo?.balance || 0)}
             </p>
-            
+
             <form onSubmit={handleWithdraw}>
               <div className="mb-6">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -488,7 +498,7 @@ const WalletManagement = () => {
                   Minimum withdrawal: 10,000 VND
                 </p>
               </div>
-              
+
               <div className="flex justify-between gap-4">
                 <button
                   type="button"
@@ -499,10 +509,16 @@ const WalletManagement = () => {
                 </button>
                 <button
                   type="submit"
-                  disabled={isWithdrawing || !withdrawAmount || parseFloat(withdrawAmount) <= 0}
+                  disabled={
+                    isWithdrawing ||
+                    !withdrawAmount ||
+                    parseFloat(withdrawAmount) <= 0
+                  }
                   className={`flex-1 py-2 px-4 rounded-md text-white flex items-center justify-center
                     ${
-                      isWithdrawing || !withdrawAmount || parseFloat(withdrawAmount) <= 0
+                      isWithdrawing ||
+                      !withdrawAmount ||
+                      parseFloat(withdrawAmount) <= 0
                         ? "bg-gray-400 cursor-not-allowed"
                         : "bg-amber-600 hover:bg-amber-700"
                     } transition-colors`}
@@ -521,7 +537,7 @@ const WalletManagement = () => {
           </div>
         </div>
       )}
-      
+
       <ToastContainer
         position="top-right"
         autoClose={3000}
@@ -535,4 +551,4 @@ const WalletManagement = () => {
   );
 };
 
-export default WalletManagement; 
+export default WalletManagement;
