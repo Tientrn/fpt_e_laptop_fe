@@ -165,8 +165,10 @@ export default function LoginPage() {
       }
     } catch (err) {
       console.error("Login Error:", err);
-      setError(err.message || "Login failed");
-      toast.error(err.message || "Login failed");
+      setError("Invalid email or password");
+      toast.error("Invalid email or password");
+      // Clear password field on error
+      setPassword("");
     }
   };
 
@@ -372,7 +374,10 @@ export default function LoginPage() {
             </motion.div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form onSubmit={(e) => {
+            e.preventDefault();
+            handleSubmit(e);
+          }} className="space-y-5">
             <div>
               <label
                 htmlFor="email"
@@ -438,20 +443,7 @@ export default function LoginPage() {
               <span className="px-3 text-sm text-slate-600">or</span>
               <hr className="flex-1 border-slate-300" />
             </div>
-            <motion.button
-              className="w-full flex items-center justify-center py-2 px-4 border border-slate-300 
-                         rounded-md text-black hover:bg-slate-50 transition shadow-sm"
-              variants={buttonVariants}
-              whileHover="hover"
-              whileTap="tap"
-            >
-              <img
-                src="https://img.icons8.com/color/24/000000/google-logo.png"
-                alt="Google Logo"
-                className="mr-2 h-5 w-5"
-              />
-              Sign in with Google
-            </motion.button>
+            
           </div>
 
           <p className="text-center text-sm text-black">
