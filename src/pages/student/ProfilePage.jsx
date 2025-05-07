@@ -24,6 +24,31 @@ import userinfoApi from "../../api/userinfoApi";
 import updateProfileApi from "../../api/updateprofileApi";
 import changepassApi from "../../api/changepassApi";
 
+function formatDateToInput(dateStr) {
+  // Nếu đã là yyyy-MM-dd thì trả về luôn
+  if (/^\\d{4}-\\d{2}-\\d{2}$/.test(dateStr)) return dateStr;
+  // Nếu là dd/MM/yyyy thì convert
+  const [day, month, year] = dateStr.split(/[\\/\\-]/);
+  if (year && month && day) return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+  return "";
+}
+
+function toAPIDateFormat(dateStr) {
+  // Nếu đã là yyyy-MM-dd thì trả về luôn
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return dateStr;
+  // Nếu là dd/MM/yyyy hoặc dd-MM-yyyy thì convert
+  if (/^\d{2}[\/\-]\d{2}[\/\-]\d{4}$/.test(dateStr)) {
+    const [d, m, y] = dateStr.split(/[\/\-]/);
+    return `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+  }
+  // Nếu là MM/dd/yyyy thì convert
+  if (/^\d{2}[\/\-]\d{2}[\/\-]\d{4}$/.test(dateStr)) {
+    const [m, d, y] = dateStr.split(/[\/\-]/);
+    return `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+  }
+  return dateStr;
+}
+
 const ProfilePage = () => {
   const [formErrors, setFormErrors] = useState({});
   const [profile, setProfile] = useState({
@@ -138,7 +163,9 @@ const ProfilePage = () => {
           studentCode: response.data.studentCode || "",
           roleName: response.data.roleName || "",
           gender: response.data.gender || "",
-          dob: response.data.dob || "",
+          dob: response.data.dob
+            ? formatDateToInput(response.data.dob)
+            : "",
           address: response.data.address || "",
           avatar: response.data.avatar || null,
         };
@@ -182,14 +209,10 @@ const ProfilePage = () => {
   const handleAvatarChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setEditedProfile({
-          ...editedProfile,
-          avatar: reader.result,
-        });
-      };
-      reader.readAsDataURL(file);
+      setEditedProfile({
+        ...editedProfile,
+        avatar: file,
+      });
     }
   };
 
@@ -278,17 +301,24 @@ const ProfilePage = () => {
     try {
       setLoading(true);
 
-      const updateData = {
-        dob: editedProfile.dob,
-        address: editedProfile.address,
-        phoneNumber: editedProfile.phoneNumber,
-        gender: editedProfile.gender,
-        avatar: editedProfile.avatar,
-      };
+      // Tạo FormData đúng chuẩn API
+      const formData = new FormData();
+      formData.append("Dob", editedProfile.dob ? toAPIDateFormat(editedProfile.dob) : "");
+      formData.append("Address", editedProfile.address || "");
+      formData.append("PhoneNumber", editedProfile.phoneNumber || "");
+      formData.append("Gender", editedProfile.gender || "");
+      // Chỉ gửi AvatarImage nếu là file object (user vừa chọn ảnh mới)
+      if (editedProfile.avatar && typeof editedProfile.avatar !== "string") {
+        formData.append("AvatarImage", editedProfile.avatar);
+      }
+      // Debug: log FormData
+      for (let pair of formData.entries()) {
+        console.log(pair[0]+ ':', pair[1]);
+      }
 
-      const response = await updateProfileApi.updateProfile(updateData);
+      const response = await updateProfileApi.updateProfile(formData);
       if (response && response.isSuccess) {
-        setProfile((prev) => ({ ...prev, ...updateData }));
+        setProfile((prev) => ({ ...prev, ...editedProfile }));
         setIsEditing(false);
         toast.success("Profile updated successfully");
       } else {
