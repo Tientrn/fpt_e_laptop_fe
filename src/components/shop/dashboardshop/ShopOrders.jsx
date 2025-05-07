@@ -133,6 +133,9 @@ const ShopOrders = () => {
       ? orders
       : orders.filter((order) => order.status.toLowerCase() === filterStatus);
 
+  // Sắp xếp order mới nhất lên trên cùng
+  const sortedOrders = [...filteredOrders].sort((a, b) => new Date(b.createdDate) - new Date(a.createdDate));
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 bg-gray-50 min-h-screen">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
@@ -160,13 +163,13 @@ const ShopOrders = () => {
         <div className="flex justify-center items-center h-64">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500"></div>
         </div>
-      ) : filteredOrders.length === 0 ? (
+      ) : sortedOrders.length === 0 ? (
         <div className="text-center py-12 bg-white rounded-xl shadow-sm">
           <p className="text-gray-500 text-lg">No orders found.</p>
         </div>
       ) : (
         <div className="space-y-6">
-          {filteredOrders.map((order) => (
+          {sortedOrders.map((order) => (
             <div
               key={order.orderId}
               className="bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden border border-gray-100"

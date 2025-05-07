@@ -40,90 +40,67 @@ const ShopAnalytics = () => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        // Lấy token và decode để xác định user
-        const token = localStorage.getItem("token");
-        if (!token) {
-          throw new Error("No token found");
-        }
+        // Lấy userId từ localStorage
+        const rawUser = JSON.parse(localStorage.getItem("user"));
+        const userId = Number(rawUser?.userId);
+        if (!userId) throw new Error("User not found");
 
-        const decodedToken = jwtDecode(token);
-        const userId = decodedToken.userId;
-
-        if (!userId) {
-          throw new Error("User ID not found in token");
-        }
-
-        // Lấy thông tin shop của user
-        const shopsRes = await shopApi.getAllShops();
-        if (!shopsRes || !shopsRes.isSuccess) {
-          throw new Error("Failed to fetch shops");
-        }
-
-        const userShop = shopsRes.data.find(
-          (shop) => shop.userId === Number(userId)
+        // Lấy shop của user
+        const shopRes = await shopApi.getAllShops();
+        const shops = shopRes.data || [];
+        const currentShop = shops.find(
+          (shop) => Number(shop.userId) === userId && shop.status?.toLowerCase() === "active"
         );
+        if (!currentShop) throw new Error("Shop not found for this user");
+        const shopId = currentShop.shopId;
 
-        if (!userShop) {
-          throw new Error("Shop not found for this user");
-        }
-
-        setShopId(userShop.shopId);
-
-        // Lấy tất cả sản phẩm
+        // Lấy tất cả sản phẩm của shop
         const productsRes = await productApi.getAllProducts();
-        if (!productsRes || !productsRes.isSuccess) {
-          throw new Error("Failed to fetch products");
-        }
-
-        // Lọc sản phẩm thuộc về shop của user
-        const shopProducts = productsRes.data.filter(
-          (product) => product.shopId === userShop.shopId
-        );
+        const allProducts = productsRes.data || [];
+        const shopProducts = allProducts.filter(p => p.shopId === shopId);
 
         // Lấy tất cả đơn hàng
         const ordersRes = await orderApi.getAllOrders();
-        if (!ordersRes || !ordersRes.isSuccess) {
-          throw new Error("Failed to fetch orders");
-        }
-
-        // Lọc đơn hàng có sản phẩm thuộc về shop của user
-        const shopOrders = ordersRes.data.filter(order => 
-          order.orderDetails.some(detail => 
+        const allOrders = ordersRes.data || [];
+        // Lọc đơn hàng có ít nhất 1 sản phẩm thuộc shop này
+        const shopOrders = allOrders.filter(order =>
+          Array.isArray(order.orderDetails) && order.orderDetails.some(detail =>
             shopProducts.some(product => product.productId === detail.productId)
           )
         );
 
-        // Tính tổng doanh thu từ các đơn hàng
+        // Tổng số đơn hàng
+        const totalOrders = shopOrders.length;
+        // Tổng số sản phẩm
+        const totalProducts = shopProducts.length;
+        // Tổng doanh thu (chỉ tính đơn hàng thành công)
         const totalRevenue = shopOrders.reduce((sum, order) => {
-          const orderTotal = order.orderDetails.reduce((orderSum, detail) => {
-            const product = shopProducts.find(p => p.productId === detail.productId);
-            return orderSum + (product ? product.price * detail.quantity : 0);
-          }, 0);
-          return sum + orderTotal;
+          if (order.status && order.status.toLowerCase() === "success") {
+            const orderTotal = order.orderDetails.reduce((orderSum, detail) => {
+              const product = shopProducts.find(p => p.productId === detail.productId);
+              return orderSum + (product ? product.price * detail.quantity : 0);
+            }, 0);
+            return sum + orderTotal;
+          }
+          return sum;
         }, 0);
-
-        // Đếm số khách hàng độc lập
-        const uniqueCustomers = new Set(shopOrders.map(order => order.userId)).size;
-
         // Đếm số đơn hàng đang chờ xử lý
-        const pendingOrders = shopOrders.filter(order => 
-          order.status === "Pending" || order.status === "Processing"
+        const pendingOrders = shopOrders.filter(order =>
+          order.status && order.status.toLowerCase() === "pending"
         ).length;
 
-        // Cập nhật stats
+        console.log("All products:", allProducts);
+        console.log("Shop products:", shopProducts);
+        console.log("All orders:", allOrders);
+        console.log("Shop orders:", shopOrders);
+
         setStats(prevStats => ({
           ...prevStats,
-          totalProducts: shopProducts.length,
-          totalOrders: shopOrders.length,
-          totalRevenue: totalRevenue,
-          totalCustomers: uniqueCustomers || 0,
-          pendingOrders: pendingOrders || 0,
-          // Thêm giá trị mẫu cho rating 
-          averageRating: 4.7,
-          // Thêm giá trị mẫu cho doanh số gần đây
-          recentSales: Math.round(totalRevenue * 0.3)
+          totalProducts,
+          totalOrders,
+          totalRevenue,
+          pendingOrders,
         }));
-
       } catch (error) {
         console.error("Error:", error);
         toast.error(error.message || "An error occurred while loading analytics");
@@ -131,7 +108,6 @@ const ShopAnalytics = () => {
         setLoading(false);
       }
     };
-
     fetchData();
   }, []);
 
