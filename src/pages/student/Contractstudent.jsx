@@ -184,12 +184,12 @@ const Contractstudent = () => {
     setIsModalOpen(true);
   };
 
-  const handleDownloadContract = (id) => {
-    toast.info(`Downloading contract #${id}...`);
-    setTimeout(() => {
-      toast.success("Contract downloaded successfully");
-    }, 1500);
-  };
+  // const handleDownloadContract = (id) => {
+  //   toast.info(`Downloading contract #${id}...`);
+  //   setTimeout(() => {
+  //     toast.success("Contract downloaded successfully");
+  //   }, 1500);
+  // };
 
   const handleConfirmReturn = async (id) => {
     if (
@@ -452,7 +452,7 @@ const Contractstudent = () => {
                               <FaEye className="mr-1" />
                               <span className="hidden sm:inline">View</span>
                             </button>
-                            <button
+                            {/* <button
                               onClick={() =>
                                 handleDownloadContract(contract.id)
                               }
@@ -461,7 +461,7 @@ const Contractstudent = () => {
                             >
                               <FaFileDownload className="mr-1" />
                               <span className="hidden sm:inline">Download</span>
-                            </button>
+                            </button> */}
                             {contract.status === "active" && (
                               <button
                                 onClick={() => handleConfirmReturn(contract.id)}
@@ -867,13 +867,13 @@ const Contractstudent = () => {
                 </div>
 
                 <div className="mt-8 flex justify-end gap-3">
-                  <button
+                  {/* <button
                     onClick={() => handleDownloadContract(selectedContract.id)}
                     className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors duration-200 text-sm flex items-center"
                   >
                     <FaFileDownload className="mr-2" />
                     Download Contract
-                  </button>
+                  </button> */}
                   <button
                     onClick={() => setIsModalOpen(false)}
                     className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors duration-200 text-sm"
