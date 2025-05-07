@@ -253,11 +253,11 @@ const DetailItem = ({ icon, label, value, valueClassName = "text-black" }) => {
   };
 
   return (
-    <div className="flex items-center p-2">
-      <div className="mr-2">{icons[icon]}</div>
+    <div className="flex items-center p-3">
+      <div className="mr-3">{icons[icon]}</div>
       <div>
-        <p className="text-xs text-gray-500">{label}</p>
-        <p className={`text-sm font-medium ${valueClassName}`}>
+        <p className="text-base text-gray-600 font-semibold">{label}</p>
+        <p className={`text-xl font-bold ${valueClassName}`}>
           {value || "N/A"}
         </p>
       </div>
@@ -736,7 +736,7 @@ const ProductDetailPage = () => {
                   {isAvailable ? "In Stock" : "Out of Stock"}
                 </span>
                 {product.quantity > 0 && (
-                  <span className="text-lg text-gray-500 font-semibold animate-fade-in">
+                  <span className="inline-flex items-center px-4 py-1.5 rounded-full text-lg font-bold shadow border border-green-300 bg-green-100 text-green-700 ml-3 animate-fade-in">
                     {product.quantity} available
                   </span>
                 )}
