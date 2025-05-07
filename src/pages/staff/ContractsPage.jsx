@@ -53,6 +53,8 @@ const ContractsPage = () => {
   const [selectedImages, setSelectedImages] = useState([]);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
+  // Thêm biến state để ẩn/hiện ảnh nhạy cảm
+  const [showSensitiveInfo, setShowSensitiveInfo] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -1658,7 +1660,13 @@ const ContractsPage = () => {
               <h3 className="text-xl font-bold text-gray-800 mb-4 pb-2 border-b-2 border-amber-500">
                 Contract Images
               </h3>
-
+              {/* Nút toggle ẩn/hiện ảnh */}
+              <button
+                onClick={() => setShowSensitiveInfo((prev) => !prev)}
+                className="mb-4 px-4 py-2 bg-amber-600 text-white rounded"
+              >
+                {showSensitiveInfo ? "Ẩn ảnh hợp đồng" : "Hiện ảnh hợp đồng"}
+              </button>
               {/* Existing Images Section */}
               <div className="mb-6">
                 <h4 className="text-lg font-medium text-gray-700 mb-4">

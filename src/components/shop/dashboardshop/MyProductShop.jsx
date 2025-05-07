@@ -270,7 +270,7 @@ const MyProductShop = () => {
                 </h2>
                 <div className="mb-4 ">
                   <span className="text-lg font-bold text-amber-600">
-                    {product.price?.toLocaleString() || 0} đ
+                  {product.price?.toLocaleString() || 0} đ
                   </span>
                 </div>
                 <div className="space-y-1 mb-4">
