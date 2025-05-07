@@ -1,44 +1,27 @@
 import walletApi from "../api/walletApi";
-import { jwtDecode } from "jwt-decode";
 
 export const getWalletByUserId = async () => {
   try {
-    
-    const token = localStorage.getItem("token");
-
-    if (!token) {
-      throw new Error("Token not found");
-    }
-
-    
-    const decodedToken = jwtDecode(token);
-    const userId = decodedToken.userId;
-    console.log(userId);
-
-    if (!userId) {
-      throw new Error("UserId not found in token");
-    }
-
-    
     const response = await walletApi.getWallet();
     
-    
-    if (response && response.data && Array.isArray(response.data)) {
+    if (response?.isSuccess && response?.data) {
+      // Get the user ID from local storage
+      const user = JSON.parse(localStorage.getItem("user"));
+      const userId = user?.userId;
       
-      const userIdNumber = parseInt(userId);
+      if (!userId) return null;
       
-      const userWallet = response.data.find(wallet => parseInt(wallet.userId) === userIdNumber);
-      if (userWallet) {
-        return userWallet;
-      } else {
-        console.warn("Wallet not found for userId:", userId);
-        return null;
-      }
-    } else {
-      throw new Error("Wallet data not found or invalid format");
+      // Find the wallet for this user
+      const userWallet = response.data.find(
+        (wallet) => wallet.userId === Number(userId)
+      );
+      
+      return userWallet;
     }
+    
+    return null;
   } catch (error) {
-    console.error("Error getting wallet by userId:", error);
+    console.error("Error fetching wallet:", error);
     return null;
   }
 };

@@ -35,6 +35,7 @@ import ShopAnalytics from "./components/shop/dashboardshop/ShopAnalytics";
 import CreateShopInfo from "./components/shop/dashboardshop/CreateShopInfo";
 import ShopProfile from "./components/shop/dashboardshop/ShopProfile";
 import EditProduct from "./components/shop/dashboardshop/EditProduct";
+import WalletManagement from "./components/shop/dashboardshop/WalletManagement";
 {
   /* Student */
 }
@@ -180,6 +181,7 @@ const App = () => {
           <Route path="analytics" element={<ShopAnalytics />} />
           <Route path="create-profile" element={<CreateShopInfo />} />
           <Route path="profile" element={<ShopProfile />} />
+          <Route path="wallet" element={<WalletManagement />} />
         </Route>
 
         {/* Sponsor Routes */}
