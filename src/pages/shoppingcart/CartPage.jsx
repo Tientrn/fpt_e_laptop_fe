@@ -257,12 +257,7 @@ const CartPage = () => {
             <h1 className="text-3xl font-bold text-indigo-900 tracking-tight">
               Your Shopping Cart
             </h1>
-            <Link
-              to="/laptopshop"
-              className="flex items-center gap-2 text-indigo-600 hover:text-indigo-800 transition-colors duration-200 px-4 py-2 rounded-full hover:bg-indigo-50"
-            >
-              <FaArrowLeft className="text-sm" /> Continue Shopping
-            </Link>
+            
           </div>
 
           <div className="flex items-center justify-center py-20">
