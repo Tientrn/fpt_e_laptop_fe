@@ -374,10 +374,7 @@ export default function LoginPage() {
             </motion.div>
           )}
 
-          <form onSubmit={(e) => {
-            e.preventDefault();
-            handleSubmit(e);
-          }} className="space-y-5">
+          <form onSubmit={handleSubmit} className="space-y-5">
             <div>
               <label
                 htmlFor="email"

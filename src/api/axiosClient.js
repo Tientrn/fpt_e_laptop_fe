@@ -50,9 +50,12 @@ axiosClient.interceptors.response.use(
 
       // Xử lý lỗi 401 Unauthorized
       if (error.response.status === 401) {
-        // Redirect to login page or refresh token
-        localStorage.removeItem("token");
-        window.location.href = "/login";
+        // Chỉ redirect nếu KHÔNG phải đang ở trang /login và đã có token
+        if (window.location.pathname !== "/login" && localStorage.getItem("token")) {
+          localStorage.removeItem("token");
+          localStorage.removeItem("user");
+          window.location.href = "/login";
+        }
       }
 
       return Promise.reject(error.response.data);
