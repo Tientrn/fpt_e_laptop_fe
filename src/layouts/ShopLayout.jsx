@@ -157,7 +157,7 @@ const ShopLayout = () => {
         name: "Create Shop Info",
         icon: <FaPlusCircle className="w-5 h-5" />,
         requiresShop: false,
-        requiresWallet: true,
+        requiresWallet: false,
       });
     }
 
@@ -252,18 +252,18 @@ const ShopLayout = () => {
 
   return (
     <div className="flex h-screen bg-gray-50">
-      {/* Wallet Create Modal */}
-      {!hasWallet && (
+      {/* Wallet Create Modal - Only show after shop profile is created */}
+      {hasShop && !hasWallet && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center">
           <div className="bg-white rounded-xl shadow-xl p-8 max-w-md mx-4 w-full border border-indigo-100 animate-fade-in">
             <div className="w-20 h-20 mx-auto mb-6 flex items-center justify-center rounded-full bg-indigo-100 text-indigo-600">
               <FaWallet className="w-10 h-10" />
             </div>
             <h2 className="text-2xl font-bold text-center text-gray-800 mb-4">
-              Need to create a wallet before continuing
+              Create Wallet to Continue
             </h2>
             <p className="text-gray-600 text-center mb-6">
-              To use the shop's features, you need to create a wallet first. The
+              To use the shop&apos;s features, you need to create a wallet now. The
               wallet will be used for transactions and payments.
             </p>
             <button
@@ -524,17 +524,35 @@ const ShopLayout = () => {
         {/* Page Content */}
         <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 p-4 md:p-6">
           <div className="max-w-7xl mx-auto">
-            {!hasWallet ? (
+            {!hasShop && location.pathname !== "/shop/create-profile" ? (
               <div className="bg-white rounded-xl shadow-sm p-8 text-center border border-red-100">
                 <div className="w-20 h-20 mx-auto mb-6 flex items-center justify-center rounded-full bg-red-50 text-red-500">
+                  <FaStore className="w-10 h-10" />
+                </div>
+                <h2 className="text-xl font-bold text-gray-800 mb-4">
+                  Create Your Shop Profile First
+                </h2>
+                <p className="text-gray-600 mb-6 max-w-md mx-auto">
+                  Before you can create a wallet and manage products, you need to set up your shop profile.
+                </p>
+                <Link
+                  to="/shop/create-profile"
+                  className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-full hover:from-indigo-700 hover:to-purple-700 transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
+                >
+                  <FaPlusCircle className="w-4 h-4 mr-2" />
+                  Create shop profile
+                </Link>
+              </div>
+            ) : hasShop && !hasWallet && location.pathname !== "/shop/create-profile" ? (
+              <div className="bg-white rounded-xl shadow-sm p-8 text-center border border-amber-100">
+                <div className="w-20 h-20 mx-auto mb-6 flex items-center justify-center rounded-full bg-amber-50 text-amber-500">
                   <FaWallet className="w-10 h-10" />
                 </div>
                 <h2 className="text-xl font-bold text-gray-800 mb-4">
-                  Need to create a wallet before using other features
+                  Create a Wallet to Access Features
                 </h2>
                 <p className="text-gray-600 mb-6 max-w-md mx-auto">
-                  To manage products and perform transactions, you need to
-                  create a wallet first.
+                  Now that your shop is set up, you need to create a wallet to manage transactions.
                 </p>
                 <button
                   onClick={handleCreateWallet}
@@ -577,26 +595,6 @@ const ShopLayout = () => {
                     </>
                   )}
                 </button>
-              </div>
-            ) : !hasShop && location.pathname !== "/shop/create-profile" ? (
-              <div className="bg-white rounded-xl shadow-sm p-8 text-center border border-amber-100">
-                <div className="w-20 h-20 mx-auto mb-6 flex items-center justify-center rounded-full bg-amber-50 text-amber-500">
-                  <FaStore className="w-10 h-10" />
-                </div>
-                <h2 className="text-xl font-bold text-gray-800 mb-4">
-                  Need to create shop info before using other features
-                </h2>
-                <p className="text-gray-600 mb-6 max-w-md mx-auto">
-                  To manage products and track analytics, please create shop
-                  info first.
-                </p>
-                <Link
-                  to="/shop/create-profile"
-                  className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-full hover:from-indigo-700 hover:to-purple-700 transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
-                >
-                  <FaPlusCircle className="w-4 h-4 mr-2" />
-                  Create shop info
-                </Link>
               </div>
             ) : (
               <div className="bg-white rounded-xl shadow-sm p-5 md:p-6 mb-6 border border-gray-100">
