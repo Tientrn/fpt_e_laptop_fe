@@ -43,4 +43,4 @@ const PrivateRoute = ({ children, allowedRoles = [] }) => {
   return children;
 };
 
-export { PrivateRoute }; 
+export { PrivateRoute };
