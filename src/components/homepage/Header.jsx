@@ -298,11 +298,17 @@ function HeaderHomePage() {
   return (
     <header className={`sticky top-0 z-50 transition-all duration-300 ${scrolled ? 'shadow-xl' : 'shadow-md'}`}>
       {/* Sponsor Bar - Only show for non-sponsors */}
-      {userRole !== "Sponsor" && (
+      {userRole == "Student" !== "Sponsor" && (
         <div className="bg-gradient-to-r from-purple-950 via-indigo-950 to-indigo-900 text-white px-4 lg:px-8 py-1.5">
           <div className="mx-auto max-w-screen-xl flex justify-end">
             <button
-              onClick={() => navigate("/sponsor/register")}
+              onClick={() => {
+                if (!isLoggedIn) {
+                  navigate("/register");
+                } else {
+                  navigate("/sponsor/register");
+                }
+              }}
               className="font-medium text-md hover:text-amber-300 transition-all flex items-center h-9 gap-1.5 hover:scale-105"
             >
               <HandshakeIcon className="text-amber-300" fontSize="medium" />

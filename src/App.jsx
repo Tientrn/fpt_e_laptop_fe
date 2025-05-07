@@ -3,6 +3,7 @@ import React from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { PrivateRoute } from "./components/routes/PrivateRoute";
 import ScrollToTop from "./components/routes/ScrollToTop";
+import SponsorRegisterGuard from "./components/routes/SponsorRegisterGuard";
 
 {
   /* Layout */
@@ -191,7 +192,6 @@ const App = () => {
           </PrivateRoute>
         }>
           <Route index element={<RegisterSponsor />} />
-          <Route path="register" element={<RegisterSponsor />} />
           <Route path="laptop-info" element={<LaptopInfo />} />
           <Route path="laptop-status" element={<LaptopStatus />} />
         </Route>
@@ -321,6 +321,16 @@ const App = () => {
             <HomePageLayout>
               <ProductDetailPage />
             </HomePageLayout>
+          }
+        />
+
+        {/* Route đăng ký sponsor cho student */}
+        <Route
+          path="/sponsor/register"
+          element={
+            <SponsorRegisterGuard>
+              <RegisterSponsor />
+            </SponsorRegisterGuard>
           }
         />
       </Routes>
