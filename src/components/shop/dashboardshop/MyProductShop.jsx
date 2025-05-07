@@ -243,7 +243,7 @@ const MyProductShop = () => {
           {filteredProducts.map((product) => (
             <div
               key={product.productId}
-              className="bg-white rounded-lg shadow-lg overflow-hidden border border-gray-200 transition-all hover:shadow-xl"
+              className="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-200 transition-all hover:shadow-2xl flex flex-col"
             >
               <div className="relative h-48 overflow-hidden">
                 <img
@@ -254,37 +254,54 @@ const MyProductShop = () => {
                   alt={product.productName}
                   className="w-full h-full object-cover"
                 />
-                <div className="absolute top-0 right-0 bg-amber-500 text-white px-2 py-1 text-sm">
-                  {product.quantity > 0
-                    ? `In Stock: ${product.quantity}`
-                    : "Out of Stock"}
-                </div>
+                {product.quantity > 0 ? (
+                  <span className="absolute top-3 right-3 bg-green-500 text-white px-4 py-1.5 rounded-full text-sm font-bold shadow">
+                    In Stock: {product.quantity}
+                  </span>
+                ) : (
+                  <span className="absolute top-3 right-3 bg-red-400 text-white px-4 py-1.5 rounded-full text-sm font-bold shadow">
+                    Out of Stock
+                  </span>
+                )}
               </div>
-              <div className="p-5">
-                <h2 className="text-xl font-semibold mb-2 text-gray-800 line-clamp-2">
+              <div className="p-5 flex flex-col flex-1">
+                <h2 className="text-2xl font-extrabold mb-2 text-blue-800 line-clamp-2 drop-shadow">
                   {product.productName}
                 </h2>
-                <p className="text-amber-600 font-bold mb-4">
-                  {product.price?.toLocaleString() || 0} đ
-                </p>
-                <div className="flex justify-between mt-4">
+                <div className="mb-4 ">
+                  <span className="text-lg font-bold text-amber-600">
+                    {product.price?.toLocaleString() || 0} đ
+                  </span>
+                </div>
+                <div className="space-y-1 mb-4">
+                  <div className="text-base text-indigo-700">
+                    <span className="font-bold">CPU:</span> {product.cpu || '-'}
+                  </div>
+                  <div className="text-base text-purple-700">
+                    <span className="font-bold">RAM:</span> {product.ram || '-'}
+                  </div>
+                  <div className="text-base text-pink-700">
+                    <span className="font-bold">Storage:</span> {product.storage || '-'}
+                  </div>
+                </div>
+                <div className="flex justify-between gap-2 mt-auto">
                   <button
                     onClick={() => handleViewDetail(product)}
-                    className="flex items-center bg-blue-500 hover:bg-blue-600 text-white px-3 py-2 rounded transition duration-300"
+                    className="flex items-center bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-semibold shadow transition duration-200 text-base gap-2"
                   >
-                    <FaEye className="mr-2" /> Details
+                    <FaEye /> Details
                   </button>
                   <Link
                     to={`/shop/edit-product/${product.productId}`}
-                    className="flex items-center bg-amber-500 hover:bg-amber-600 text-white px-3 py-2 rounded transition duration-300"
+                    className="flex items-center bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg font-semibold shadow transition duration-200 text-base gap-2"
                   >
-                    <FaEdit className="mr-2" /> Edit
+                    <FaEdit /> Edit
                   </Link>
                   <button
                     onClick={() => handleDelete(product.productId)}
-                    className="flex items-center bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded transition duration-300"
+                    className="flex items-center bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-semibold shadow transition duration-200 text-base gap-2"
                   >
-                    <FaTrash className="mr-2" /> Delete
+                    <FaTrash /> Delete
                   </button>
                 </div>
               </div>
@@ -296,8 +313,8 @@ const MyProductShop = () => {
       {/* Chi tiết sản phẩm Modal */}
       {showDetailModal && selectedProduct && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 animate-fade-in">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col border border-gray-200">
-            <div className="sticky top-0 bg-white border-b p-4 rounded-t-2xl z-10 flex justify-between items-center">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col border border-gray-200">
+            <div className="sticky top-0 bg-white border-b p-6 rounded-t-2xl z-10 flex justify-between items-center">
               <h2 className="text-2xl font-bold text-amber-600 tracking-tight">
                 Product Details
               </h2>
@@ -309,173 +326,114 @@ const MyProductShop = () => {
                 ×
               </button>
             </div>
-            <div className="overflow-y-auto p-6 flex-1">
-              <div className="flex flex-col md:flex-row gap-6">
-                <div className="flex-shrink-0 flex flex-col items-center w-full md:w-56">
-                  <div className="bg-gradient-to-br from-amber-100 to-white p-2 rounded-xl shadow-md mb-3 w-full">
+            <div className="overflow-y-auto p-8 flex-1">
+              <div className="flex flex-col md:flex-row gap-8">
+                {/* Image section */}
+                <div className="flex-shrink-0 flex flex-col items-center w-full md:w-60">
+                  <div className="bg-gradient-to-br from-amber-100 to-white p-3 rounded-xl shadow mb-4 w-full">
                     <img
-                      src={
-                        selectedProduct.imageProduct ||
-                        "https://via.placeholder.com/400x300?text=No+Image"
-                      }
+                      src={selectedProduct.imageProduct || "https://via.placeholder.com/400x300?text=No+Image"}
                       alt={selectedProduct.productName}
-                      className="w-full h-40 object-cover rounded-lg border-2 border-amber-200 shadow"
+                      className="w-full h-44 object-contain rounded-lg border-2 border-amber-200 shadow"
                     />
                   </div>
                 </div>
-                <div className="flex-1 flex flex-col gap-4">
+                {/* Info section */}
+                <div className="flex-1 flex flex-col gap-6">
                   <div className="flex flex-col md:flex-row md:items-center md:gap-6 gap-2">
                     <h3 className="text-2xl font-bold text-gray-900 flex-1 line-clamp-2">
                       {selectedProduct.productName}
                     </h3>
-                    <div className="flex flex-col md:flex-row md:gap-4 gap-1">
-                      <span className="text-lg font-semibold text-amber-600">
+                    <div className="flex flex-col md:flex-row md:gap-4 gap-1 items-start md:items-center">
+                      <span className="text-xl font-bold text-amber-600">
                         {selectedProduct.price?.toLocaleString() || 0} đ
                       </span>
-                      <span className="text-base font-medium text-green-600 bg-green-50 px-3 py-1 rounded-lg border border-green-100">
+                      <span className="text-base font-semibold text-green-700 bg-green-100 px-4 py-1 rounded-full border border-green-200">
                         Qty: {selectedProduct.quantity || 0}
                       </span>
                     </div>
                   </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-4 hover:shadow-md transition">
-                      <h4 className="font-semibold text-gray-800 mb-2 flex items-center gap-2">
-                        <span className="text-amber-500">•</span>Technical
-                        Specifications
+                  {/* Technical and Additional Info */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-6">
+                      <h4 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                        <span className="text-amber-500">•</span>Technical Specifications
                       </h4>
-                      <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                      <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-base">
                         <div>
-                          <span className="font-medium text-gray-600">CPU</span>
-                          <div className="text-gray-900">
-                            {selectedProduct.cpu || "-"}
-                          </div>
+                          <span className="font-semibold text-gray-800 mb-2 flex items-center gap-2">CPU</span>
+                          <div className="text-gray-700">{selectedProduct.cpu || "-"}</div>
                         </div>
                         <div>
-                          <span className="font-medium text-gray-600">RAM</span>
-                          <div className="text-gray-900">
-                            {selectedProduct.ram || "-"}
-                          </div>
+                          <span className="font-semibold text-gray-800 mb-2 flex items-center gap-2">RAM</span>
+                          <div className="text-gray-700">{selectedProduct.ram || "-"}</div>
                         </div>
                         <div>
-                          <span className="font-medium text-gray-600">
-                            Storage
-                          </span>
-                          <div className="text-gray-900">
-                            {selectedProduct.storage || "-"}
-                          </div>
+                          <span className="font-semibold text-gray-800 mb-2 flex items-center gap-2">Storage</span>
+                          <div className="text-gray-700">{selectedProduct.storage || "-"}</div>
                         </div>
                         <div>
-                          <span className="font-medium text-gray-600">
-                            Screen Size
-                          </span>
-                          <div className="text-gray-900">
-                            {selectedProduct.screenSize || "-"}
-                          </div>
+                          <span className="font-semibold text-gray-800 mb-2 flex items-center gap-2">Screen Size</span>
+                          <div className="text-gray-700">{selectedProduct.screenSize || "-"}</div>
                         </div>
                         <div>
-                          <span className="font-medium text-gray-600">
-                            Graphics Card
-                          </span>
-                          <div className="text-gray-900">
-                            {selectedProduct.graphicsCard || "-"}
-                          </div>
+                          <span className="font-semibold text-gray-800 mb-2 flex items-center gap-2">Graphics Card</span>
+                          <div className="text-gray-700">{selectedProduct.graphicsCard || "-"}</div>
                         </div>
                         <div>
-                          <span className="font-medium text-gray-600">
-                            Battery
-                          </span>
-                          <div className="text-gray-900">
-                            {selectedProduct.battery || "-"}
-                          </div>
+                          <span className="font-semibold text-gray-800 mb-2 flex items-center gap-2">Battery</span>
+                          <div className="text-gray-700">{selectedProduct.battery || "-"}</div>
                         </div>
                       </div>
                     </div>
-                    <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-4 hover:shadow-md transition">
-                      <h4 className="font-semibold text-gray-800 mb-2 flex items-center gap-2">
-                        <span className="text-amber-500">•</span>Additional
-                        Information
+                    <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-6">
+                      <h4 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                        <span className="text-amber-500">•</span>Additional Information
                       </h4>
-                      <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                      <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-base">
                         <div>
-                          <span className="font-medium text-gray-600">
-                            Model
-                          </span>
-                          <div className="text-gray-900">
-                            {selectedProduct.model || "-"}
-                          </div>
+                          <span className="font-semibold text-gray-800 mb-2 flex items-center gap-2">Model</span>
+                          <div className="text-gray-700">{selectedProduct.model || "-"}</div>
                         </div>
                         <div>
-                          <span className="font-medium text-gray-600">
-                            Color
-                          </span>
-                          <div className="text-gray-900">
-                            {selectedProduct.color || "-"}
-                          </div>
+                          <span className="font-semibold text-gray-800 mb-2 flex items-center gap-2">Color</span>
+                          <div className="text-gray-700">{selectedProduct.color || "-"}</div>
                         </div>
                         <div>
-                          <span className="font-medium text-gray-600">
-                            Ports
-                          </span>
-                          <div className="text-gray-900">
-                            {selectedProduct.ports || "-"}
-                          </div>
+                          <span className="font-semibold text-gray-800 mb-2 flex items-center gap-2">Ports</span>
+                          <div className="text-gray-700">{selectedProduct.ports || "-"}</div>
                         </div>
                         <div>
-                          <span className="font-medium text-gray-600">
-                            Production Year
-                          </span>
-                          <div className="text-gray-900">
-                            {selectedProduct.productionYear || "-"}
-                          </div>
+                          <span className="font-semibold text-gray-800 mb-2 flex items-center gap-2">Production Year</span>
+                          <div className="text-gray-700">{selectedProduct.productionYear || "-"}</div>
                         </div>
                         <div>
-                          <span className="font-medium text-gray-600">
-                            Operating System
-                          </span>
-                          <div className="text-gray-900">
-                            {selectedProduct.operatingSystem || "-"}
-                          </div>
+                          <span className="font-semibold text-gray-800 mb-2 flex items-center gap-2">Operating System</span>
+                          <div className="text-gray-700">{selectedProduct.operatingSystem || "-"}</div>
                         </div>
                         <div>
-                          <span className="font-medium text-gray-600">
-                            Category
-                          </span>
-                          <div className="text-gray-900">
-                            {selectedProduct.categoryName || "-"}
-                          </div>
+                          <span className="font-semibold text-gray-800 mb-2 flex items-center gap-2">Category</span>
+                          <div className="text-gray-700">{selectedProduct.categoryName || "-"}</div>
                         </div>
                       </div>
                     </div>
                   </div>
-
+                  {/* Description */}
                   {selectedProduct.description && (
-                    <div className="bg-gradient-to-r from-amber-50 to-white border-l-4 border-amber-400 p-4 rounded-xl shadow-sm max-h-32 overflow-y-auto">
+                    <div className="bg-gradient-to-r from-amber-50 to-white border-l-4 border-amber-400 p-5 rounded-xl shadow-sm mt-6">
                       <h4 className="font-semibold text-gray-800 mb-2 flex items-center gap-2">
                         <span className="text-amber-500">•</span>Description
                       </h4>
-                      <p className="text-gray-900 whitespace-pre-line text-sm">
-                        {selectedProduct.description}
-                      </p>
+                      <p className="text-gray-900 whitespace-pre-line text-base">{selectedProduct.description}</p>
                     </div>
                   )}
-
-                  <div className="flex flex-wrap gap-4 mt-2">
-                    <div className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-2 text-xs text-gray-600">
-                      <span className="font-medium">Created:</span>{" "}
-                      {selectedProduct.createdDate
-                        ? new Date(
-                            selectedProduct.createdDate
-                          ).toLocaleDateString()
-                        : "-"}
+                  {/* Dates */}
+                  <div className="flex flex-wrap gap-4 mt-4">
+                    <div className="font-semibold text-gray-800 mb-2 flex items-center gap-2">
+                      <span className="font-medium">Created:</span> {selectedProduct.createdDate ? new Date(selectedProduct.createdDate).toLocaleDateString() : "-"}
                     </div>
-                    <div className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-2 text-xs text-gray-600">
-                      <span className="font-medium">Updated:</span>{" "}
-                      {selectedProduct.updatedDate
-                        ? new Date(
-                            selectedProduct.updatedDate
-                          ).toLocaleDateString()
-                        : "-"}
+                    <div className="font-semibold text-gray-800 mb-2 flex items-center gap-2">
+                      <span className="font-medium">Updated:</span> {selectedProduct.updatedDate ? new Date(selectedProduct.updatedDate).toLocaleDateString() : "-"}
                     </div>
                   </div>
                 </div>
