@@ -678,6 +678,16 @@ const BorrowHistory = () => {
         </button>
       </div>
 
+      {/* Thêm nút toggle trước phần render bảng hoặc trước phần render chi tiết */}
+      <div className="flex justify-end mb-2">
+        <button
+          onClick={() => setShowSensitiveInfo((prev) => !prev)}
+          className="px-4 py-2 bg-amber-600 text-white rounded"
+        >
+          {showSensitiveInfo ? "Ẩn ảnh hợp đồng" : "Hiện ảnh hợp đồng"}
+        </button>
+      </div>
+
       {/* Enhanced Table Container */}
       <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100 hover:shadow-xl transition-all duration-300">
         <div className="p-6 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-amber-50">
