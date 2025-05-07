@@ -43,6 +43,8 @@ const BorrowHistory = () => {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [depositTransactionsMap, setDepositTransactionsMap] = useState({});
+  // Thêm biến state để ẩn/hiện ảnh nhạy cảm
+  const [showSensitiveInfo, setShowSensitiveInfo] = useState(true);
 
   // Simplified mask functions that always return true values
   const maskSensitiveInfo = (text) => {
@@ -2592,6 +2594,16 @@ const BorrowHistory = () => {
           </div>
         </div>
       )}
+
+      {/* Thêm nút toggle trước phần render bảng hoặc trước phần render chi tiết */}
+      <div className="flex justify-end mb-2">
+        <button
+          onClick={() => setShowSensitiveInfo((prev) => !prev)}
+          className="px-4 py-2 bg-amber-600 text-white rounded"
+        >
+          {showSensitiveInfo ? "Ẩn ảnh hợp đồng" : "Hiện ảnh hợp đồng"}
+        </button>
+      </div>
     </div>
   );
 };
