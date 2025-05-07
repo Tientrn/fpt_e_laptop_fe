@@ -168,7 +168,11 @@ const App = () => {
           }
         />
         {/* Shop Routes */}
-        <Route path="/shop" element={<ShopLayout />}>
+        <Route path="/shop" element={
+          <PrivateRoute allowedRoles={[6]}>
+            <ShopLayout />
+          </PrivateRoute>
+        }>
           <Route path="products" element={<MyProducts />} />
           <Route path="edit-product/:productId" element={<EditProduct />} />
           <Route path="orders" element={<ShopOrders />} />
@@ -179,7 +183,11 @@ const App = () => {
         </Route>
 
         {/* Sponsor Routes */}
-        <Route path="/sponsor" element={<SponsorLayout />}>
+        <Route path="/sponsor" element={
+          <PrivateRoute allowedRoles={[3]}>
+            <SponsorLayout />
+          </PrivateRoute>
+        }>
           <Route index element={<RegisterSponsor />} />
           <Route path="register" element={<RegisterSponsor />} />
           <Route path="laptop-info" element={<LaptopInfo />} />
@@ -187,7 +195,11 @@ const App = () => {
         </Route>
 
         {/* Managerment Routes */}
-        <Route path="/manager" element={<ManagerLayout />}>
+        <Route path="/manager" element={
+          <PrivateRoute allowedRoles={[5]}>
+            <ManagerLayout />
+          </PrivateRoute>
+        }>
           <Route index element={<OverviewPage />} />
           <Route path="overview" element={<OverviewPage />} />
           <Route path="borrow-requests" element={<BorrowRequest />} />
@@ -195,7 +207,11 @@ const App = () => {
         </Route>
 
         {/* Staff Routes */}
-        <Route path="/staff" element={<StaffLayout />}>
+        <Route path="/staff" element={
+          <PrivateRoute allowedRoles={[4]}>
+            <StaffLayout />
+          </PrivateRoute>
+        }>
           <Route index element={<Navigate to="/staff" replace />} />
           <Route path="donate-items" element={<DonateItem />} />
           <Route path="edit-item/:itemId" element={<EditDonateItem />} />
@@ -211,7 +227,11 @@ const App = () => {
         </Route>
 
         {/* Student Routes */}
-        <Route path="/student" element={<StudentLayout />}>
+        <Route path="/student" element={
+          <PrivateRoute allowedRoles={[2]}>
+            <StudentLayout />
+          </PrivateRoute>
+        }>
           <Route index element={<Navigate to="/student/profile" replace />} />
           <Route path="profile" element={<ProfilePage />} />
           <Route path="requests" element={<RequestsPage />} />
@@ -236,27 +256,27 @@ const App = () => {
         <Route
           path="/admin"
           element={
-            // <PrivateRoute>
-            <AdminLayout>
-              <Navigate to="/admin/accounts" replace />
-            </AdminLayout>
-            // </PrivateRoute>
+            <PrivateRoute allowedRoles={[1]}>
+              <AdminLayout>
+                <Navigate to="/admin/accounts" replace />
+              </AdminLayout>
+            </PrivateRoute>
           }
         />
         <Route
           path="/admin/accounts"
           element={
-            // <PrivateRoute>
-            <AdminLayout>
-              <AdminPage />
-            </AdminLayout>
-            // </PrivateRoute>
+            <PrivateRoute allowedRoles={[1]}>
+              <AdminLayout>
+                <AdminPage />
+              </AdminLayout>
+            </PrivateRoute>
           }
         />
         <Route
           path="/admin/analytics"
           element={
-            <PrivateRoute restrictedTo={["Manager"]} redirectTo="/login">
+            <PrivateRoute allowedRoles={[1,5]}>
               <AdminLayout>
                 <AnalyticPage />
               </AdminLayout>
@@ -266,21 +286,21 @@ const App = () => {
         <Route
           path="/admin/shopmanagement"
           element={
-            // <PrivateRoute>
-            <AdminLayout>
-              <ShopManager />
-            </AdminLayout>
-            // </PrivateRoute>
+            <PrivateRoute allowedRoles={[1]}>
+              <AdminLayout>
+                <ShopManager />
+              </AdminLayout>
+            </PrivateRoute>
           }
         />
         <Route
           path="/admin/reports"
           element={
-            // <PrivateRoute>
-            <AdminLayout>
-              <ReportPage />
-            </AdminLayout>
-            // </PrivateRoute>
+            <PrivateRoute allowedRoles={[1]}>
+              <AdminLayout>
+                <ReportPage />
+              </AdminLayout>
+            </PrivateRoute>
           }
         />
 
