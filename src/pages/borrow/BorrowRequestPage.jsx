@@ -422,44 +422,39 @@ const BorrowRequestPage = () => {
               </div>
 
               {/* Terms and Conditions */}
-              <div className="p-4 mb-5 bg-amber-50 rounded-lg border border-amber-100">
-                <div className="flex items-center mb-3">
-                  <Shield className="w-4 h-4 text-amber-600 mr-2" />
-                  <h3 className="text-sm font-semibold text-amber-800">
+              <div className="p-7 mb-6 bg-amber-50 rounded-xl border border-amber-200">
+                <div className="flex items-center mb-4">
+                  <Shield className="w-5 h-5 text-amber-600 mr-2" />
+                  <h3 className="text-lg font-bold text-amber-800">
                     Terms and Conditions
                   </h3>
                 </div>
-                <ul className="list-disc list-inside text-xs text-amber-900 space-y-1 ml-1 mb-3">
-                  <li>
-                    You must return the laptop in the same condition as
-                    received.
-                  </li>
+                <ul className="list-disc list-inside text-base text-amber-900 space-y-2 ml-2 mb-4">
+                  <li>You must return the laptop in the same condition as received.</li>
                   <li>Any damage or loss will be your responsibility.</li>
-                  <li>
-                    The borrowing period is strictly between the selected dates.
-                  </li>
+                  <li>The borrowing period is strictly between the selected dates.</li>
                   <li>Extensions must be requested before the end date.</li>
                   <li>Failure to return on time may result in penalties.</li>
                 </ul>
                 <div className="flex items-start">
-                  <div className="flex items-center h-5 mt-0.5">
+                  <div className="flex items-center h-6 mt-0.5">
                     <input
                       id="terms"
                       type="checkbox"
                       checked={termsAccepted}
                       onChange={handleTermsChange}
-                      className="w-4 h-4 text-amber-600 border-amber-300 rounded focus:ring-amber-500"
+                      className="w-5 h-5 text-amber-600 border-amber-300 rounded focus:ring-amber-500"
                     />
                   </div>
                   <label
                     htmlFor="terms"
-                    className="ml-2 text-xs text-amber-900 font-medium"
+                    className="ml-3 text-base text-amber-900 font-semibold"
                   >
                     I agree to care for and return the laptop in good condition.
                   </label>
                 </div>
                 {errors.terms && (
-                  <p className="mt-1 text-xs text-red-500 ml-6">
+                  <p className="mt-2 text-sm text-red-500 ml-7">
                     {errors.terms}
                   </p>
                 )}
