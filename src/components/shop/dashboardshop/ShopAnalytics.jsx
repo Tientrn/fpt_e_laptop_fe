@@ -304,7 +304,7 @@ const ShopAnalytics = () => {
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
             <div className="flex items-center">
               <FaStore className="text-3xl mr-4 text-white/80" />
-              <div>
+    <div>
                 <h1 className="text-2xl md:text-3xl font-bold">Shop Analytics</h1>
                 <p className="text-indigo-200 mt-1">View your store&apos;s performance metrics</p>
               </div>
@@ -391,9 +391,9 @@ const ShopAnalytics = () => {
                     Year
                   </TimeRangeButton>
                 </div>
-              </div>
             </div>
-            
+          </div>
+
             <div className="p-6">
               <div className="mb-6">
                 <div className="flex items-center justify-between">
@@ -454,17 +454,17 @@ const ShopAnalytics = () => {
                 </div>
                 
                 <div className="flex justify-between items-center pb-3 border-b border-gray-100">
-                  <div>
+            <div>
                     <p className="text-sm text-gray-500">Unique Customers</p>
                     <p className="text-xl font-bold mt-1">{stats.totalCustomers}</p>
                   </div>
                   <div className="p-2 bg-indigo-100 rounded-lg">
                     <FaUsers className="text-indigo-600" />
-                  </div>
-                </div>
-                
+            </div>
+          </div>
+
                 <div className="flex justify-between items-center">
-                  <div>
+            <div>
                     <p className="text-sm text-gray-500">Recent 7-Day Sales</p>
                     <p className="text-xl font-bold mt-1">{stats.recentSales.toLocaleString()} đ</p>
                   </div>

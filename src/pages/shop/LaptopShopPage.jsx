@@ -166,10 +166,10 @@ const LaptopShopPage = () => {
                 const shopRes = await shopApi.getShopById(product.shopId);
                 return {
                   ...product,
-                  shopName: shopRes.data?.shopName || "Unknown Shop",
+                  shopName: shopRes.data?.shopName || "Unknown",
                 };
               } catch (err) {
-                return { ...product, shopName: "Unknown Shop" };
+                return { ...product, shopName: "Unknown" };
               }
             })
           );
@@ -501,7 +501,7 @@ const LaptopShopPage = () => {
                   {products.map((product) => (
                     <div
                       key={product.productId}
-                      className="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-all duration-300 group cursor-pointer transform hover:-translate-y-1"
+                      className="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-all duration-300 group cursor-pointer transform hover:-translate-y-1 flex flex-col h-full"
                       onClick={() => navigateToDetail(product.productId)}
                     >
                       <div className="relative h-48 overflow-hidden">
@@ -530,7 +530,7 @@ const LaptopShopPage = () => {
                         </div>
                       </div>
 
-                      <div className="p-5">
+                      <div className="p-5 flex flex-col flex-1">
                         <h3 className="text-indigo-900 font-semibold text-lg mb-2 line-clamp-2 min-h-[3rem] group-hover:text-indigo-600 transition-colors">
                           {product.productName}
                         </h3>
@@ -554,7 +554,7 @@ const LaptopShopPage = () => {
                           </div>
                         </div>
 
-                        <div className="flex justify-end">
+                        <div className="flex justify-end mt-auto pt-2">
                           <button
                             onClick={(e) => {
                               e.stopPropagation();

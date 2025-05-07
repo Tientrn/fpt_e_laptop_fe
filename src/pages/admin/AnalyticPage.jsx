@@ -70,23 +70,23 @@ export default function AnalyticPage() {
     fetchData();
   }, []);
 
-  const data = [
+const data = [
     { name: 'Jan', users: 4000, shops: 2400 },
     { name: 'Feb', users: 3000, shops: 1398 },
     { name: 'Mar', users: 2000, shops: 9800 },
     { name: 'Apr', users: 2780, shops: 3908 },
     { name: 'May', users: 1890, shops: 4800 },
     { name: 'Jun', users: 2390, shops: 3800 },
-  ];
+];
 
-  const visitorData = [
-    { time: '00:00', visitors: 2400 },
-    { time: '04:00', visitors: 1398 },
-    { time: '08:00', visitors: 9800 },
-    { time: '12:00', visitors: 3908 },
-    { time: '16:00', visitors: 4800 },
-    { time: '20:00', visitors: 3800 },
-  ];
+const visitorData = [
+  { time: '00:00', visitors: 2400 },
+  { time: '04:00', visitors: 1398 },
+  { time: '08:00', visitors: 9800 },
+  { time: '12:00', visitors: 3908 },
+  { time: '16:00', visitors: 4800 },
+  { time: '20:00', visitors: 3800 },
+];
 
   const salesData = [
     { month: 'Jan', sales: 12500 },

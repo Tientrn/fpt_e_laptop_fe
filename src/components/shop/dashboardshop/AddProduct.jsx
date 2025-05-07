@@ -292,7 +292,7 @@ const AddProduct = () => {
       // Use functional state update to prevent unnecessary re-renders
       setFormData((prevData) => ({
         ...prevData,
-        [name]: value,
+      [name]: value,
       }));
     }
   }, []);
@@ -477,8 +477,8 @@ const AddProduct = () => {
                 <div className="p-2 bg-white/20 rounded-lg mr-3">
                   <FaLaptop className="text-white" />
                 </div>
-                Add New Product
-              </h1>
+        Add New Product
+      </h1>
               <p className="text-indigo-100 mt-2 ml-12">
                 Fill out the form below to add a new laptop to your inventory
               </p>
@@ -507,18 +507,18 @@ const AddProduct = () => {
                       />
                     </div>
 
-                    <div>
+        <div>
                       <label className="flex text-sm font-medium text-gray-700 mb-1 items-center">
                         <span className="mr-2 text-indigo-500">
                           <MdCategory />
                         </span>
-                        Category
-                      </label>
-                      <select
-                        name="categoryId"
-                        value={formData.categoryId}
+            Category
+          </label>
+          <select
+            name="categoryId"
+            value={formData.categoryId}
                         onChange={handleInputChange}
-                        required
+            required
                         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all hover:border-indigo-300 shadow-sm bg-white bg-opacity-80 backdrop-blur-sm appearance-none"
                         style={{
                           backgroundImage:
@@ -528,16 +528,16 @@ const AddProduct = () => {
                           backgroundSize: "1.5em 1.5em",
                           paddingRight: "2.5rem",
                         }}
-                      >
-                        <option value="">-- Select Category --</option>
-                        {Array.isArray(categories) &&
-                          categories.map((cat) => (
-                            <option key={cat.categoryId} value={cat.categoryId}>
-                              {cat.categoryName}
-                            </option>
-                          ))}
-                      </select>
-                    </div>
+          >
+            <option value="">-- Select Category --</option>
+            {Array.isArray(categories) &&
+              categories.map((cat) => (
+                <option key={cat.categoryId} value={cat.categoryId}>
+                  {cat.categoryName}
+                </option>
+              ))}
+          </select>
+        </div>
 
                     <InputField
                       label="Model"
@@ -707,8 +707,8 @@ const AddProduct = () => {
                   <div className="space-y-6 p-2">
                     <div className="space-y-3">
                       <label className="block text-sm font-medium text-gray-700">
-                        Main Product Image
-                      </label>
+            Main Product Image
+          </label>
                       <div className="flex flex-col items-center space-y-4">
                         {mainImagePreview ? (
                           <div className="relative w-full h-48 bg-gradient-to-r from-gray-50 to-indigo-50 rounded-lg overflow-hidden border-2 border-indigo-300 shadow-md transition-all hover:shadow-lg hover:scale-[1.01]">
@@ -730,10 +730,10 @@ const AddProduct = () => {
                           </div>
                         ) : (
                           <div className="w-full">
-                            <input
-                              type="file"
-                              accept="image/*"
-                              onChange={handleMainImageChange}
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handleMainImageChange}
                               className="hidden"
                               id="mainImage"
                               required
@@ -744,14 +744,14 @@ const AddProduct = () => {
                             >
                               <div className="p-3 rounded-full bg-indigo-100 group-hover:bg-indigo-200 transition-all mb-2">
                                 <FaUpload className="text-2xl text-indigo-500 group-hover:text-indigo-600" />
-                              </div>
+        </div>
                               <span className="text-sm text-gray-700 font-medium group-hover:text-indigo-700">
                                 Upload main image
                               </span>
                               <span className="text-xs text-gray-500 mt-1">
                                 Click or drag & drop
                               </span>
-                            </label>
+          </label>
                             {!mainImage && (
                               <p className="text-xs text-red-500 mt-1">
                                 Main image is required
@@ -765,8 +765,8 @@ const AddProduct = () => {
                 </FormSection>
 
                 <div className="mt-8">
-                  <button
-                    type="submit"
+        <button
+          type="submit"
                     disabled={isSubmitting}
                     className={`w-full py-4 px-6 rounded-xl font-semibold text-white transition-all transform hover:translate-y-[-2px] shadow-lg relative overflow-hidden ${
                       isSubmitting
@@ -810,11 +810,11 @@ const AddProduct = () => {
                         <div className="absolute left-0 top-0 w-24 h-24 rounded-full bg-purple-400 opacity-10 blur-2xl transform -translate-x-1/3 -translate-y-1/3"></div>
                       </div>
                     )}
-                  </button>
+        </button>
                 </div>
               </div>
             </div>
-          </form>
+      </form>
         </div>
       </div>
       <ToastContainer
