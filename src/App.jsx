@@ -187,11 +187,11 @@ const App = () => {
 
         {/* Sponsor Routes */}
         <Route path="/sponsor" element={
-          <PrivateRoute allowedRoles={[3]}>
+          <PrivateRoute allowedRoles={[2,3]}>
             <SponsorLayout />
           </PrivateRoute>
         }>
-          <Route index element={<RegisterSponsor />} />
+          <Route path="register" element={<RegisterSponsor />} />
           <Route path="laptop-info" element={<LaptopInfo />} />
           <Route path="laptop-status" element={<LaptopStatus />} />
         </Route>
@@ -324,15 +324,6 @@ const App = () => {
           }
         />
 
-        {/* Route đăng ký sponsor cho student */}
-        <Route
-          path="/sponsor/register"
-          element={
-            <SponsorRegisterGuard>
-              <RegisterSponsor />
-            </SponsorRegisterGuard>
-          }
-        />
       </Routes>
     </BrowserRouter>
   );

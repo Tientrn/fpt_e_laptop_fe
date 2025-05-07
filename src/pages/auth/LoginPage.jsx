@@ -149,7 +149,7 @@ export default function LoginPage() {
                 navigate("/home");
                 break;
               case 3:
-                navigate("/sponsor/register");
+                navigate("/sponsor/laptop-info");
                 break;
               case 4:
                 navigate("/staff/items");

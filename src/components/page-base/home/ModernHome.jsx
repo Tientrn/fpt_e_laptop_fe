@@ -6,6 +6,7 @@ import SponsorSection from "./SponsorSection";
 import laptopImage from "../../../assets/laptopanimation.jpg";
 import laptopsellImage from "../../../assets/laptopsell.jpg";
 import laptopborrowImage from "../../../assets/laptopborrow.jpg";
+import banner from "../../../assets/banner.jpg";
 
 export default function ModernHome() {
   return (
@@ -255,16 +256,16 @@ export default function ModernHome() {
       {/* Featured Categories - More compact */}
       <div className="py-16 px-4 sm:px-6 bg-[#f8f5f2] relative overflow-hidden">
         <div className="container mx-auto max-w-6xl">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
             {/* Heading section */}
             <motion.div
-              className="lg:col-span-4 lg:col-start-1"
+              className="lg:col-span-4 lg:col-start-1 flex flex-col justify-center h-full"
               initial={{ opacity: 0, x: -30 }}
               whileInView={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.8 }}
               viewport={{ once: true }}
             >
-              <span className="inline-block px-4 py-1.5 bg-[#3d5a80]/10 text-[#3d5a80] rounded-full text-sm font-medium tracking-wide mb-4">
+              <span className="inline-block px-4 py-1.5 bg-[#3d5a80]/10 text-[#3d5a80] rounded-full text-sm text-center font-medium tracking-wide mb-4">
                 Our Offerings
               </span>
               <h2 className="text-3xl font-bold mb-4 tracking-tight">
@@ -345,7 +346,7 @@ export default function ModernHome() {
                     </div>
                     <div className="md:w-3/5 p-6">
                       <h3 className="text-xl font-bold text-[#3d5a80] mb-3">
-                        Laptop Borrowing
+                        Laptop Borrow
                       </h3>
                       <p className="text-[#293241]/70 mb-4">
                         Borrow laptops for your semester needs with flexible
@@ -357,6 +358,51 @@ export default function ModernHome() {
                         className="inline-flex items-center text-[#ee6c4d] font-medium transition-all hover:pl-2"
                       >
                         See more
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="ml-2 h-5 w-5"
+                          viewBox="0 0 20 20"
+                          fill="currentColor"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M12.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-2.293-2.293a1 1 0 010-1.414z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                      </Link>
+                    </div>
+                  </div>
+                </motion.div>
+
+                {/* NEW: Donate Laptop Card */}
+                <motion.div
+                  className="bg-white rounded-2xl shadow-lg overflow-hidden group hover:shadow-xl transition-all duration-500"
+                  initial={{ opacity: 0, y: 40 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.8, delay: 0.1 }}
+                  viewport={{ once: true }}
+                >
+                  <div className="flex flex-col md:flex-row">
+                    <div className="md:w-2/5 h-48 md:h-auto overflow-hidden flex items-center justify-center bg-[#f8f5f2]">
+                      <img
+                        src={banner}
+                        alt="Donate Laptop"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                      />
+                    </div>
+                    <div className="md:w-3/5 p-6">
+                      <h3 className="text-xl font-bold text-[#3d5a80] mb-3">
+                        Donate Laptop
+                      </h3>
+                      <p className="text-[#293241]/70 mb-4">
+                        Make a difference! Donate your laptop to help students in need. Your contribution empowers education and opens new opportunities.
+                      </p>
+                      <Link
+                        to="/sponsor/register"
+                        className="inline-flex items-center text-[#ee6c4d] font-medium transition-all hover:pl-2"
+                      >
+                        Donate now
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
                           className="ml-2 h-5 w-5"

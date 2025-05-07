@@ -178,6 +178,14 @@ function HeaderHomePage() {
       case "Sponsor":
         return [
           <Link
+            key="sponsor-register"
+            to="/sponsor/register"
+            className="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-indigo-50 transition-colors"
+          >
+            <i className="fas fa-laptop text-indigo-500"></i>
+            Laptop Donation Request
+          </Link>,
+          <Link
             key="sponsor-laptops"
             to="/sponsor/laptop-info"
             className="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-indigo-50 transition-colors"
