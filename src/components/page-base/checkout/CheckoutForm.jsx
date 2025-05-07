@@ -86,10 +86,10 @@ const CheckoutForm = ({
         orderId,
         paymentMethod:
           paymentMethod === "payos"
-            ? 1
+            ? 3
             : paymentMethod === "creditCard"
             ? 2
-            : 3,
+            : 4,
       });
 
       if (paymentResponse.data && paymentResponse.data.paymentId) {
