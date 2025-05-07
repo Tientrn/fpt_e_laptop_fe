@@ -1661,12 +1661,7 @@ const ContractsPage = () => {
                 Contract Images
               </h3>
               {/* Nút toggle ẩn/hiện ảnh */}
-              <button
-                onClick={() => setShowSensitiveInfo((prev) => !prev)}
-                className="mb-4 px-4 py-2 bg-amber-600 text-white rounded"
-              >
-                {showSensitiveInfo ? "Ẩn ảnh hợp đồng" : "Hiện ảnh hợp đồng"}
-              </button>
+              
               {/* Existing Images Section */}
               <div className="mb-6">
                 <h4 className="text-lg font-medium text-gray-700 mb-4">
