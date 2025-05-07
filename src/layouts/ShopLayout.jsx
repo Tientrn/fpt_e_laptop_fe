@@ -15,6 +15,7 @@ import {
   FaQuestion,
   FaWallet,
   FaClipboardCheck,
+  FaExchangeAlt,
 } from "react-icons/fa";
 import { toast } from "react-toastify";
 import shopApi from "../api/shopApi";
@@ -143,6 +144,13 @@ const ShopLayout = () => {
         requiresWallet: true,
       },
       {
+        path: "/shop/wallet",
+        name: "Manage Wallet",
+        icon: <FaWallet className="w-5 h-5" />,
+        requiresShop: true,
+        requiresWallet: true,
+      },
+      {
         path: "/shop/analytics",
         name: "Analytics",
         icon: <FaChartPie className="w-5 h-5" />,
@@ -189,6 +197,7 @@ const ShopLayout = () => {
     if (location.pathname.includes("add-product")) return "Add Product";
     if (location.pathname.includes("analytics")) return "Analytics";
     if (location.pathname.includes("create-profile")) return "Create Shop Info";
+    if (location.pathname.includes("wallet")) return "Manage Wallet";
     return "Shop Dashboard";
   };
 
