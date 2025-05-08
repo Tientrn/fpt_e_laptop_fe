@@ -89,39 +89,71 @@ const OverviewPage = () => {
   }, []);
 
   // Group transactions by type
-  const transactionsByType = transactions.reduce((acc, transaction) => {
-    const type = transaction.transactionType;
-    if (!acc[type]) {
-      acc[type] = { type, count: 0, totalAmount: 0, inflow: 0, outflow: 0 };
-    }
-    acc[type].count += 1;
-    acc[type].totalAmount += transaction.amount;
+  const transactionsByType = transactions
+    .filter(
+      (transaction) =>
+        !["ShopWithdraw", "TransferIn"].includes(transaction.transactionType)
+    )
+    .reduce((acc, transaction) => {
+      const type = transaction.transactionType;
 
-    // Calculate inflow and outflow
-    if (type === "Deposit") {
-      // Deposits are always inflow
-      acc[type].inflow += transaction.amount;
-    } else if (type === "Compensation") {
-      // Compensation logic based on the scenarios
-      if (transaction.extraPaymentRequired > 0) {
-        // Case: deposit < damage, extra payment required (money coming in)
-        acc[type].inflow += transaction.extraPaymentRequired;
+      // Handle Payment and TransferOut as a single category
+      if (type === "Payment" || type === "TransferOut") {
+        const category = "Transaction Fee";
+        if (!acc[category]) {
+          acc[category] = {
+            type: category,
+            count: 0,
+            totalAmount: 0,
+            inflow: 0,
+            outflow: 0,
+          };
+        }
+        acc[category].count += 1;
+        if (type === "Payment") {
+          acc[category].inflow += transaction.amount;
+        } else if (type === "TransferOut") {
+          acc[category].outflow += transaction.amount;
+        }
+        // Calculate totalAmount as the sum of Payment and TransferOut
+        acc[category].totalAmount =
+          acc[category].inflow + acc[category].outflow;
+        return acc;
       }
 
-      if (transaction.refundAmount !== null && transaction.refundAmount > 0) {
-        // Case: refund is specified (money going out)
-        acc[type].outflow += transaction.refundAmount;
-      } else if (transaction.usedDepositAmount < transaction.amount) {
-        // Case: deposit > damage, remainder refunded (money going out)
-        acc[type].outflow += transaction.amount - transaction.usedDepositAmount;
+      // Handle other transaction types
+      if (!acc[type]) {
+        acc[type] = { type, count: 0, totalAmount: 0, inflow: 0, outflow: 0 };
       }
-    } else if (type === "Refund") {
-      // Refunds are outflow
-      acc[type].outflow += transaction.amount;
-    }
+      acc[type].count += 1;
+      acc[type].totalAmount += transaction.amount;
 
-    return acc;
-  }, {});
+      // Calculate inflow and outflow
+      if (type === "Deposit") {
+        // Deposits are always inflow
+        acc[type].inflow += transaction.amount;
+      } else if (type === "Compensation") {
+        // Compensation logic based on the scenarios
+        if (transaction.extraPaymentRequired > 0) {
+          // Case: deposit < damage, extra payment required (money coming in)
+          acc[type].inflow += transaction.extraPaymentRequired;
+        }
+
+        if (transaction.refundAmount !== null && transaction.refundAmount > 0) {
+          // Case: refund is specified (money going out)
+          acc[type].outflow += transaction.refundAmount;
+        } else if (transaction.usedDepositAmount < transaction.amount) {
+          // Case: deposit > damage, remainder refunded (money going out)
+          acc[type].outflow +=
+            transaction.amount - transaction.usedDepositAmount;
+        }
+      } else if (type === "Refund" || type === "RefundFromDeposit") {
+        // Both Refund and RefundFromDeposit are outflow
+        acc[type].outflow += transaction.amount;
+      }
+
+      return acc;
+    }, {});
 
   const transactionTypeChartData = Object.values(transactionsByType);
 
@@ -145,6 +177,10 @@ const OverviewPage = () => {
       return total;
     } else if (transaction.transactionType === "Refund") {
       return total - transaction.amount;
+    } else if (transaction.transactionType === "Payment") {
+      return total + transaction.amount;
+    } else if (transaction.transactionType === "TransferOut") {
+      return total - transaction.amount;
     }
     return total;
   }, 0);
@@ -153,17 +189,43 @@ const OverviewPage = () => {
   const financialFlowData = [
     {
       name: "Inflow",
-      value: transactionTypeChartData.reduce(
-        (sum, type) => sum + type.inflow,
-        0
-      ),
+      value: transactions.reduce((total, transaction) => {
+        let cashFlow = 0;
+        if (transaction.transactionType === "Deposit") {
+          cashFlow = transaction.amount;
+        } else if (transaction.transactionType === "Compensation") {
+          if (transaction.extraPaymentRequired > 0) {
+            cashFlow = transaction.extraPaymentRequired;
+          }
+        } else if (transaction.transactionType === "Payment") {
+          cashFlow = transaction.amount;
+        }
+        return total + cashFlow;
+      }, 0),
     },
     {
       name: "Outflow",
-      value: transactionTypeChartData.reduce(
-        (sum, type) => sum + type.outflow,
-        0
-      ),
+      value: -transactions.reduce((total, transaction) => {
+        let cashFlow = 0;
+        if (transaction.transactionType === "Compensation") {
+          if (
+            transaction.refundAmount !== null &&
+            transaction.refundAmount > 0
+          ) {
+            cashFlow = transaction.refundAmount;
+          } else if (transaction.usedDepositAmount < transaction.amount) {
+            cashFlow = transaction.amount - transaction.usedDepositAmount;
+          }
+        } else if (
+          transaction.transactionType === "Refund" ||
+          transaction.transactionType === "RefundFromDeposit"
+        ) {
+          cashFlow = transaction.amount;
+        } else if (transaction.transactionType === "TransferOut") {
+          cashFlow = transaction.amount;
+        }
+        return total + cashFlow;
+      }, 0),
     },
   ];
 
@@ -443,13 +505,6 @@ const OverviewPage = () => {
                     <YAxis />
                     <Tooltip formatter={(value) => formatCurrency(value)} />
                     <Legend />
-                    <Line
-                      type="monotone"
-                      dataKey="totalAmount"
-                      stroke="#8884d8"
-                      activeDot={{ r: 8 }}
-                      name="Total"
-                    />
                     <Line type="monotone" dataKey="Deposit" stroke="#82ca9d" />
                     <Line
                       type="monotone"
@@ -548,9 +603,6 @@ const OverviewPage = () => {
                       cashFlow = transaction.amount;
                       flowType = "out";
                     } else if (transaction.transactionType === "Payment") {
-                      cashFlow = transaction.amount;
-                      flowType = "in";
-                    } else if (transaction.transactionType === "ShopWithdraw") {
                       cashFlow = transaction.amount;
                       flowType = "in";
                     } else if (transaction.transactionType === "TransferOut") {
@@ -671,12 +723,6 @@ const OverviewPage = () => {
                     stackId="a"
                     fill="#ff7300"
                     name="Compensation"
-                  />
-                  <Bar
-                    dataKey="Refund"
-                    stackId="a"
-                    fill="#8884d8"
-                    name="Refund"
                   />
                   <Bar
                     dataKey="RefundFromCompensation"
@@ -879,9 +925,6 @@ const OverviewPage = () => {
                     cashFlow = transaction.amount;
                     flowType = "out";
                   } else if (transaction.transactionType === "Payment") {
-                    cashFlow = transaction.amount;
-                    flowType = "in";
-                  } else if (transaction.transactionType === "ShopWithdraw") {
                     cashFlow = transaction.amount;
                     flowType = "in";
                   } else if (transaction.transactionType === "TransferOut") {

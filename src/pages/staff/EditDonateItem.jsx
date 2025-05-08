@@ -1,9 +1,18 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { toast } from "react-toastify";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import donateitemsApi from "../../api/donateitemsApi";
 import itemimagesApi from "../../api/itemimagesApi";
-import { FaLaptop, FaUpload, FaTrash, FaImage, FaCheck, FaChevronLeft, FaChevronRight } from "react-icons/fa";
+import {
+  FaLaptop,
+  FaUpload,
+  FaTrash,
+  FaImage,
+  FaCheck,
+  FaChevronLeft,
+  FaChevronRight,
+} from "react-icons/fa";
 
 const EditDonateItem = () => {
   const { itemId } = useParams();
@@ -34,7 +43,7 @@ const EditDonateItem = () => {
     productionYear: "",
     operatingSystem: "",
     userId: "",
-    donateFormId: ""
+    donateFormId: "",
   });
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const imagesPerPage = 4; // Số ảnh hiển thị mỗi lần
@@ -55,29 +64,34 @@ const EditDonateItem = () => {
         // Fetch all images and filter for this item
         const imagesResponse = await itemimagesApi.getAllItemImages();
         if (imagesResponse.isSuccess) {
-          const itemImages = imagesResponse.data.filter(img => img.itemId === parseInt(itemId));
+          const itemImages = imagesResponse.data.filter(
+            (img) => img.itemId === parseInt(itemId)
+          );
           setAdditionalImages(itemImages);
         }
-        
+
         // Fetch categories
         const fetchCategories = async () => {
           try {
             // Replace with your actual API call to get categories
-            const response = { isSuccess: true, data: [
-              { id: 1, name: "Apple MacBook" },
-              { id: 2, name: "HP Laptop" },
-              { id: 3, name: "Dell Laptop" },
-              { id: 4, name: "Lenovo ThinkPad" },
-              { id: 5, name: "ASUS Laptop" },
-              { id: 6, name: "Acer Laptop" },
-              { id: 7, name: "Microsoft Surface" },
-              { id: 8, name: "Samsung Laptop" },
-              { id: 9, name: "MSI Gaming Laptop" },
-              { id: 10, name: "Razer Blade" },
-              { id: 11, name: "Toshiba Laptop" },
-              { id: 12, name: "Other" }
-            ]};
-            
+            const response = {
+              isSuccess: true,
+              data: [
+                { id: 1, name: "Apple MacBook" },
+                { id: 2, name: "HP Laptop" },
+                { id: 3, name: "Dell Laptop" },
+                { id: 4, name: "Lenovo ThinkPad" },
+                { id: 5, name: "ASUS Laptop" },
+                { id: 6, name: "Acer Laptop" },
+                { id: 7, name: "Microsoft Surface" },
+                { id: 8, name: "Samsung Laptop" },
+                { id: 9, name: "MSI Gaming Laptop" },
+                { id: 10, name: "Razer Blade" },
+                { id: 11, name: "Toshiba Laptop" },
+                { id: 12, name: "Other" },
+              ],
+            };
+
             if (response.isSuccess) {
               setCategories(response.data);
             }
@@ -85,7 +99,7 @@ const EditDonateItem = () => {
             console.error("Error fetching categories:", error);
           }
         };
-        
+
         fetchCategories();
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -100,9 +114,9 @@ const EditDonateItem = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setItem(prev => ({
+    setItem((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
@@ -119,46 +133,38 @@ const EditDonateItem = () => {
 
   const handleAdditionalImageUpload = async (e) => {
     const files = Array.from(e.target.files);
-    
+
     for (const file of files) {
+      const tempImageUrl = URL.createObjectURL(file);
+      const tempImageId = Date.now();
+
+      // Add image to state immediately
+      setAdditionalImages((prev) => [
+        ...prev,
+        {
+          itemImageId: tempImageId,
+          imageUrl: tempImageUrl,
+          itemId: parseInt(itemId),
+          createdDate: new Date().toISOString(),
+          isUploading: true,
+        },
+      ]);
+
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const toastId = toast.loading(
+        <div className="flex items-center">
+          <FaImage className="mr-2" />
+          <span>Uploading image...</span>
+        </div>
+      );
+
       try {
-        // Tạo preview URL ngay lập tức
-        const previewUrl = URL.createObjectURL(file);
-        
-        // Thêm ảnh tạm thời vào state với trạng thái đang tải
-        const tempImage = {
-          itemImageId: `temp_${Date.now()}`,
-          imageUrl: previewUrl,
-          isUploading: true
-        };
-        setAdditionalImages(prev => [...prev, tempImage]);
-
-        const formData = new FormData();
-        formData.append('file', file);
-        
-        // Hiển thị toast loading
-        const toastId = toast.loading(
-          <div className="flex items-center">
-            <FaImage className="mr-2" />
-            <span>Uploading image...</span>
-          </div>
-        );
-
         const response = await itemimagesApi.addItemImage(itemId, formData);
-        
-        if (response && response.data) {
-          // Xóa ảnh tạm và thêm ảnh mới từ response
-          setAdditionalImages(prev => {
-            const filtered = prev.filter(img => img.itemImageId !== tempImage.itemImageId);
-            return [...filtered, {
-              itemImageId: response.data.itemImageId,
-              imageUrl: response.data.imageUrl,
-              itemId: response.data.itemId,
-              createdDate: response.data.createdDate
-            }];
-          });
 
-          // Cập nhật toast thành công
+        // Check for success based on response fields
+        if (response && response.itemImageId && response.imageUrl) {
           toast.update(toastId, {
             render: (
               <div className="flex items-center">
@@ -168,107 +174,136 @@ const EditDonateItem = () => {
             ),
             type: "success",
             isLoading: false,
-            autoClose: 3000
+            autoClose: 3000,
           });
-
-          // Giải phóng URL tạm thời
-          URL.revokeObjectURL(previewUrl);
         } else {
-          // Xóa ảnh tạm nếu upload thất bại
-          setAdditionalImages(prev => prev.filter(img => img.itemImageId !== tempImage.itemImageId));
-          
           toast.update(toastId, {
             render: (
               <div className="flex items-center">
                 <FaImage className="mr-2 text-red-500" />
-                <span>Failed to upload image. Please try again.</span>
+                <span>Failed to upload image</span>
               </div>
             ),
             type: "error",
             isLoading: false,
-            autoClose: 3000
+            autoClose: 3000,
           });
-
-          // Giải phóng URL tạm thời
-          URL.revokeObjectURL(previewUrl);
         }
       } catch (error) {
-        console.error("Error uploading additional image:", error);
         toast.error(
           <div className="flex items-center">
             <FaImage className="mr-2 text-red-500" />
-            <span>Error uploading image. Please try again.</span>
+            <span>
+              {error.response?.data?.message || "Error uploading image"}
+            </span>
           </div>,
           { autoClose: 3000 }
         );
+      } finally {
+        // Always fetch the latest images from server to sync UI
+        try {
+          const imagesResponse = await itemimagesApi.getAllItemImages();
+          if (imagesResponse && imagesResponse.data) {
+            const itemImages = imagesResponse.data.filter(
+              (img) => img.itemId === parseInt(itemId)
+            );
+            setAdditionalImages(itemImages);
+          }
+        } catch (fetchError) {
+          // Optionally handle fetch error
+        }
+        // Clean up temp image URL
+        URL.revokeObjectURL(tempImageUrl);
       }
     }
   };
 
   const handleDeleteAdditionalImage = async (imageId) => {
+    // Optimistically remove the image from state
+    setAdditionalImages((prev) =>
+      prev.filter((img) => img.itemImageId !== imageId)
+    );
+
+    const toastId = toast.loading(
+      <div className="flex items-center">
+        <FaTrash className="mr-2" />
+        <span>Deleting image...</span>
+      </div>
+    );
+
     try {
-      // Lưu trữ ảnh cần xóa để có thể khôi phục nếu cần
-      const imageToDelete = additionalImages.find(img => img.itemImageId === imageId);
-      
-      // Cập nhật UI ngay lập tức (optimistic update)
-      setAdditionalImages(prev => prev.filter(img => img.itemImageId !== imageId));
-
-      // Hiển thị toast loading
-      const toastId = toast.loading(
-        <div className="flex items-center">
-          <FaTrash className="mr-2" />
-          <span>Deleting image...</span>
-        </div>
-      );
-
       const response = await itemimagesApi.deleteItemImage(imageId);
-      
-      if (response.isSuccess) {
-        // Cập nhật toast thành công
+
+      // Check for success based on response.message
+      if (
+        response &&
+        response.message &&
+        response.message.toLowerCase().includes("thành công")
+      ) {
         toast.update(toastId, {
           render: (
             <div className="flex items-center">
-              <FaCheck className="mr-2 text-green-500" />
+              <FaCheck className="mr-2" />
               <span>Image deleted successfully!</span>
             </div>
           ),
           type: "success",
           isLoading: false,
-          autoClose: 3000
+          autoClose: 3000,
         });
       } else {
-        // Khôi phục lại ảnh nếu xóa thất bại
-        setAdditionalImages(prev => [...prev, imageToDelete]);
-        
+        // If delete failed, fetch the images again to restore state
+        const imagesResponse = await itemimagesApi.getAllItemImages();
+        if (imagesResponse && imagesResponse.data) {
+          const itemImages = imagesResponse.data.filter(
+            (img) => img.itemId === parseInt(itemId)
+          );
+          setAdditionalImages(itemImages);
+        }
+
         toast.update(toastId, {
           render: (
             <div className="flex items-center">
-              <FaTrash className="mr-2 text-red-500" />
-              <span>{response.message || "Failed to delete image"}</span>
+              <FaTrash className="mr-2" />
+              <span>{response?.message || "Failed to delete image"}</span>
             </div>
           ),
           type: "error",
           isLoading: false,
-          autoClose: 3000
+          autoClose: 3000,
         });
       }
     } catch (error) {
-      console.error("Error deleting image:", error);
-      toast.error(
-        <div className="flex items-center">
-          <FaTrash className="mr-2 text-red-500" />
-          <span>{error.response?.data?.message || "Failed to delete image"}</span>
-        </div>,
-        { autoClose: 3000 }
-      );
+      // If delete failed, fetch the images again to restore state
+      const imagesResponse = await itemimagesApi.getAllItemImages();
+      if (imagesResponse && imagesResponse.data) {
+        const itemImages = imagesResponse.data.filter(
+          (img) => img.itemId === parseInt(itemId)
+        );
+        setAdditionalImages(itemImages);
+      }
+
+      toast.update(toastId, {
+        render: (
+          <div className="flex items-center">
+            <FaTrash className="mr-2" />
+            <span>
+              {error.response?.data?.message || "Failed to delete image"}
+            </span>
+          </div>
+        ),
+        type: "error",
+        isLoading: false,
+        autoClose: 3000,
+      });
     }
   };
 
   // Thêm CSS cho ảnh đang tải
   const getImageStyles = (image) => {
     return {
-      opacity: image.isUploading ? '0.6' : '1',
-      filter: image.isUploading ? 'grayscale(50%)' : 'none'
+      opacity: image.isUploading ? "0.6" : "1",
+      filter: image.isUploading ? "grayscale(50%)" : "none",
     };
   };
 
@@ -276,35 +311,35 @@ const EditDonateItem = () => {
     e.preventDefault();
     try {
       const formData = new FormData();
-      
+
       // Add file first if selected
       const imageInput = document.querySelector('input[type="file"]');
       if (imageInput && imageInput.files[0]) {
-        formData.append('file', imageInput.files[0]);
+        formData.append("file", imageInput.files[0]);
       }
 
       // Add other fields with exact names matching the API
-      formData.append('itemId', item.itemId);
-      formData.append('itemName', item.itemName);
-      formData.append('cpu', item.cpu);
-      formData.append('ram', item.ram);
-      formData.append('storage', item.storage);
-      formData.append('screenSize', item.screenSize);
-      formData.append('conditionItem', item.conditionItem);
-      formData.append('totalBorrowedCount', item.totalBorrowedCount.toString());
-      formData.append('status', item.status);
-      formData.append('color', item.color);
-      formData.append('model', item.model);
-      formData.append('ports', item.ports);
-      formData.append('battery', item.battery);
-      formData.append('categoryId', item.categoryId);
-      formData.append('description', item.description);
-      formData.append('graphicsCard', item.graphicsCard);
-      formData.append('serialNumber', item.serialNumber);
-      formData.append('productionYear', item.productionYear);
-      formData.append('operatingSystem', item.operatingSystem);
-      formData.append('userId', item.userId);
-      formData.append('donateFormId', item.donateFormId);
+      formData.append("itemId", item.itemId);
+      formData.append("itemName", item.itemName);
+      formData.append("cpu", item.cpu);
+      formData.append("ram", item.ram);
+      formData.append("storage", item.storage);
+      formData.append("screenSize", item.screenSize);
+      formData.append("conditionItem", item.conditionItem);
+      formData.append("totalBorrowedCount", item.totalBorrowedCount.toString());
+      formData.append("status", item.status);
+      formData.append("color", item.color);
+      formData.append("model", item.model);
+      formData.append("ports", item.ports);
+      formData.append("battery", item.battery);
+      formData.append("categoryId", item.categoryId);
+      formData.append("description", item.description);
+      formData.append("graphicsCard", item.graphicsCard);
+      formData.append("serialNumber", item.serialNumber);
+      formData.append("productionYear", item.productionYear);
+      formData.append("operatingSystem", item.operatingSystem);
+      formData.append("userId", item.userId);
+      formData.append("donateFormId", item.donateFormId);
 
       const response = await donateitemsApi.updateDonateItem(itemId, formData);
       if (response.isSuccess) {
@@ -321,15 +356,16 @@ const EditDonateItem = () => {
 
   // Thêm hàm điều hướng
   const nextImages = () => {
-    setCurrentImageIndex(prevIndex => 
-      Math.min(prevIndex + imagesPerPage, additionalImages.length - imagesPerPage)
+    setCurrentImageIndex((prevIndex) =>
+      Math.min(
+        prevIndex + imagesPerPage,
+        additionalImages.length - imagesPerPage
+      )
     );
   };
 
   const previousImages = () => {
-    setCurrentImageIndex(prevIndex => 
-      Math.max(0, prevIndex - imagesPerPage)
-    );
+    setCurrentImageIndex((prevIndex) => Math.max(0, prevIndex - imagesPerPage));
   };
 
   if (loading) {
@@ -342,13 +378,28 @@ const EditDonateItem = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
+      />
       <div className="max-w-4xl mx-auto">
         <h1 className="text-3xl font-bold text-gray-800 mb-8 flex items-center">
           <FaLaptop className="mr-3 text-blue-600" />
           Edit Donated Laptop
         </h1>
 
-        <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-md p-6">
+        <form
+          onSubmit={handleSubmit}
+          className="bg-white rounded-lg shadow-md p-6"
+        >
           {/* Combined Image Gallery Section */}
           <div className="mb-6">
             <div className="flex flex-col items-center space-y-4">
@@ -418,15 +469,20 @@ const EditDonateItem = () => {
                       {/* Images Container */}
                       <div className="flex gap-4 overflow-hidden px-12">
                         {additionalImages
-                          .slice(currentImageIndex, currentImageIndex + imagesPerPage)
+                          .slice(
+                            currentImageIndex,
+                            currentImageIndex + imagesPerPage
+                          )
                           .map((img, index) => (
-                            <div 
-                              key={img.itemImageId || index} 
+                            <div
+                              key={img.itemImageId || index}
                               className="relative group w-32 h-32 flex-shrink-0"
                             >
                               <img
                                 src={img.imageUrl}
-                                alt={`Additional ${currentImageIndex + index + 1}`}
+                                alt={`Additional ${
+                                  currentImageIndex + index + 1
+                                }`}
                                 className="w-full h-full object-cover rounded-lg border-2 border-gray-200 hover:border-blue-500 transition-all duration-200"
                                 style={getImageStyles(img)}
                               />
@@ -439,7 +495,11 @@ const EditDonateItem = () => {
                                 <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all duration-300 rounded-lg">
                                   <button
                                     type="button"
-                                    onClick={() => handleDeleteAdditionalImage(img.itemImageId)}
+                                    onClick={() =>
+                                      handleDeleteAdditionalImage(
+                                        img.itemImageId
+                                      )
+                                    }
                                     className="absolute top-2 right-2 bg-red-500 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-red-600"
                                   >
                                     <FaTrash size={12} />
@@ -447,11 +507,12 @@ const EditDonateItem = () => {
                                 </div>
                               )}
                             </div>
-                        ))}
+                          ))}
                       </div>
 
                       {/* Next Button */}
-                      {currentImageIndex + imagesPerPage < additionalImages.length && (
+                      {currentImageIndex + imagesPerPage <
+                        additionalImages.length && (
                         <button
                           type="button"
                           onClick={nextImages}
@@ -494,7 +555,7 @@ const EditDonateItem = () => {
                 required
               >
                 <option value="">Select Category</option>
-                {categories.map(category => (
+                {categories.map((category) => (
                   <option key={category.id} value={category.id}>
                     {category.name}
                   </option>
@@ -744,4 +805,4 @@ const EditDonateItem = () => {
   );
 };
 
-export default EditDonateItem; 
+export default EditDonateItem;
