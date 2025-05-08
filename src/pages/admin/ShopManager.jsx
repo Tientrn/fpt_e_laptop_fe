@@ -109,7 +109,9 @@ const ShopManager = () => {
           </div>
           <h1 className="text-3xl font-bold text-[#3d5a80]">Shop Management</h1>
         </div>
-        <p className="text-[#293241]/70 ml-11">Manage and monitor shop partners</p>
+        <p className="text-[#293241]/70 ml-11">
+          Manage and monitor shop partners
+        </p>
       </div>
 
       {/* Stats Section */}
@@ -121,19 +123,23 @@ const ShopManager = () => {
         <div className="bg-white p-4 rounded-xl shadow-sm">
           <h3 className="text-[#293241] text-sm font-medium">Active Shops</h3>
           <p className="text-2xl font-bold text-[#3d5a80]">
-            {shops.filter(shop => shop.status === "Active").length}
+            {shops.filter((shop) => shop.status === "Active").length}
           </p>
         </div>
         <div className="bg-white p-4 rounded-xl shadow-sm">
           <h3 className="text-[#293241] text-sm font-medium">Inactive Shops</h3>
           <p className="text-2xl font-bold text-[#ee6c4d]">
-            {shops.filter(shop => shop.status !== "Active").length}
+            {shops.filter((shop) => shop.status !== "Active").length}
           </p>
         </div>
         <div className="bg-white p-4 rounded-xl shadow-sm">
           <h3 className="text-[#293241] text-sm font-medium">Newest Shop</h3>
           <p className="text-xl font-bold text-[#3d5a80] truncate">
-            {shops.length > 0 ? shops.sort((a, b) => new Date(b.createdDate) - new Date(a.createdDate))[0].shopName : "N/A"}
+            {shops.length > 0
+              ? shops.sort(
+                  (a, b) => new Date(b.createdDate) - new Date(a.createdDate)
+                )[0].shopName
+              : "N/A"}
           </p>
         </div>
       </div>
@@ -169,7 +175,10 @@ const ShopManager = () => {
             </thead>
             <tbody className="divide-y divide-gray-100">
               {shops.map((shop) => (
-                <tr key={shop.shopId} className="text-sm hover:bg-[#e0fbfc] transition-colors duration-150">
+                <tr
+                  key={shop.shopId}
+                  className="text-sm hover:bg-[#e0fbfc] transition-colors duration-150"
+                >
                   <td className="px-6 py-4 whitespace-nowrap font-medium text-[#293241]">
                     {shop.shopId}
                   </td>
@@ -179,7 +188,9 @@ const ShopManager = () => {
                         <FaStore />
                       </div>
                       <div className="ml-4">
-                        <div className="font-medium text-[#293241]">{shop.shopName}</div>
+                        <div className="font-medium text-[#293241]">
+                          {shop.shopName}
+                        </div>
                       </div>
                     </div>
                   </td>
@@ -195,7 +206,7 @@ const ShopManager = () => {
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span
                       className={`px-3 py-1 text-xs font-semibold rounded-full ${
-                        shop.status === "Active"
+                        shop.status.toLowerCase() === "active"
                           ? "bg-[#98c1d9] text-[#3d5a80]"
                           : "bg-[#ee6c4d] text-white"
                       }`}
@@ -229,7 +240,7 @@ const ShopManager = () => {
       </div>
 
       {/* Add Shop Button */}
-      <button 
+      <button
         className="fixed bottom-8 right-8 p-4 bg-[#3d5a80] text-white rounded-full shadow-lg hover:bg-[#3d5a80]/90 transition-colors"
         title="Add new shop"
       >
@@ -360,8 +371,9 @@ const ShopManager = () => {
               <FaTrash className="text-[#ee6c4d]" /> Confirm Deletion
             </h2>
             <p className="mb-6 text-[#293241]">
-              Are you sure you want to delete <span className="font-semibold">{selectedShop?.shopName}</span>? This
-              action cannot be undone.
+              Are you sure you want to delete{" "}
+              <span className="font-semibold">{selectedShop?.shopName}</span>?
+              This action cannot be undone.
             </p>
             <div className="flex gap-3">
               <button

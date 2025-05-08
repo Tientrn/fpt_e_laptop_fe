@@ -387,12 +387,12 @@ const ShopProfile = () => {
                       </h4>
                       <p
                         className={`text-base ${
-                          shop.status === "Active"
+                          shop.status.toLowerCase() === "active"
                             ? "text-green-600"
                             : "text-red-600"
                         }`}
                       >
-                        {shop.status}
+                        {shop.status.toLowerCase()}
                       </p>
                     </div>
                   </div>
