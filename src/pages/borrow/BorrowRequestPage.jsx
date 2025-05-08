@@ -429,14 +429,16 @@ const BorrowRequestPage = () => {
                     Terms and Conditions
                   </h3>
                 </div>
-                <ul className="list-disc list-inside text-base text-amber-900 space-y-2 ml-2 mb-4">
+                <ul className="list-disc list-inside text-base text-amber-900 space-y-2 ml-2 mb-6">
                   <li>You must return the laptop in the same condition as received.</li>
                   <li>Any damage or loss will be your responsibility.</li>
                   <li>The borrowing period is strictly between the selected dates.</li>
                   <li>Extensions must be requested before the end date.</li>
                   <li>Failure to return on time may result in penalties.</li>
+                  <li className="text-red-600 font-bold">If the laptop is lost, the student must compensate 100% of the laptop's value.</li>
+                  <li className="text-red-600 font-bold">If the laptop is not returned within 3 days after the due date, the matter will be escalated to the authorities and the university for further action.</li>
                 </ul>
-                <div className="flex items-start">
+                <div className="flex items-start m-2">
                   <div className="flex items-center h-6 mt-0.5">
                     <input
                       id="terms"

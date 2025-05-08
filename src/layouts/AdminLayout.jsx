@@ -69,11 +69,11 @@ const AdminLayout = ({ children }) => {
       name: 'Shop Management',
       icon: <FaStore className="w-5 h-5" />
     },
-    {
-      path: '/admin/analytics',
-      name: 'Analytics',
-      icon: <FaChartLine className="w-5 h-5" />
-    }
+    // {
+    //   path: '/admin/analytics',
+    //   name: 'Analytics',
+    //   icon: <FaChartLine className="w-5 h-5" />
+    // }
  
   ];
 
