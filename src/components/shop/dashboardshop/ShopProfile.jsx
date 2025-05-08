@@ -221,11 +221,17 @@ const ShopProfile = () => {
                     <FaStoreAlt className="mr-2 text-white/80" />
                     {shop.shopName}
                   </h1>
-                  <div className="mt-2 inline-flex items-center px-3 py-1 rounded-full bg-white/20 backdrop-blur-sm text-white text-sm">
+                  <div
+                    className={`mt-2 inline-flex items-center px-3 py-1 rounded-full ${
+                      shop.status === "Active"
+                        ? "bg-green-500/20 backdrop-blur-sm text-green-100"
+                        : "bg-red-500/20 backdrop-blur-sm text-red-100"
+                    }`}
+                  >
                     {shop.status === "Active" ? (
-                      <MdVerified className="mr-1.5 text-white" />
+                      <MdVerified className="mr-1.5 text-green-100" />
                     ) : (
-                      <MdErrorOutline className="mr-1.5 text-white" />
+                      <MdErrorOutline className="mr-1.5 text-red-100" />
                     )}
                     {shop.status}
                   </div>
@@ -376,7 +382,7 @@ const ShopProfile = () => {
                   <div className="flex items-start">
                     <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0">
                       {shop.status === "Active" ? (
-                        <MdVerified className="text-indigo-600 text-lg" />
+                        <MdVerified className="text-green-600 text-lg" />
                       ) : (
                         <MdErrorOutline className="text-red-500 text-lg" />
                       )}
@@ -387,12 +393,12 @@ const ShopProfile = () => {
                       </h4>
                       <p
                         className={`text-base ${
-                          shop.status.toLowerCase() === "active"
+                          shop.status === "Active"
                             ? "text-green-600"
                             : "text-red-600"
                         }`}
                       >
-                        {shop.status.toLowerCase()}
+                        {shop.status}
                       </p>
                     </div>
                   </div>
