@@ -150,13 +150,13 @@ const ShopLayout = () => {
         requiresShop: true,
         requiresWallet: true,
       },
-      {
-        path: "/shop/analytics",
-        name: "Analytics",
-        icon: <FaChartPie className="w-5 h-5" />,
-        requiresShop: true,
-        requiresWallet: true,
-      },
+      // {
+      //   path: "/shop/analytics",
+      //   name: "Analytics",
+      //   icon: <FaChartPie className="w-5 h-5" />,
+      //   requiresShop: true,
+      //   requiresWallet: true,
+      // },
     ];
 
     if (!hasShop) {
