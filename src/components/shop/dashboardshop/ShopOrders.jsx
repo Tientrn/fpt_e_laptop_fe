@@ -134,7 +134,9 @@ const ShopOrders = () => {
       : orders.filter((order) => order.status.toLowerCase() === filterStatus);
 
   // Sắp xếp order mới nhất lên trên cùng
-  const sortedOrders = [...filteredOrders].sort((a, b) => new Date(b.createdDate) - new Date(a.createdDate));
+  const sortedOrders = [...filteredOrders].sort(
+    (a, b) => new Date(b.createdDate) - new Date(a.createdDate)
+  );
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 bg-gray-50 min-h-screen">
@@ -193,10 +195,7 @@ const ShopOrders = () => {
                       <div className="space-y-1">
                         <p className="text-sm text-gray-600 flex items-center gap-2">
                           <span className="font-medium">Date:</span>
-                          {format(
-                            new Date(order.createdDate),
-                            "dd/MM/yyyy HH:mm"
-                          )}
+                          {format(new Date(order.createdDate), "dd/MM/yyyy")}
                         </p>
                         <p className="text-sm text-gray-600 flex items-center gap-2">
                           <span className="font-medium">Address:</span>

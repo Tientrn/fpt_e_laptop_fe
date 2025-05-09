@@ -818,34 +818,9 @@ const ProductDetailPage = () => {
                   Product Description
                 </h2>
                 <p className="text-gray-800 text-lg whitespace-pre-line leading-relaxed">
-                  {`This ${product.productName} by ${
-                    product.shopName || "Unknown Shop"
-                  } features:\n\nFeatures:\n• CPU: ${
-                    product.cpu || "N/A"
-                  } – for smooth performance\n• RAM: ${
-                    product.ram || "N/A"
-                  } – handles multitasking easily\n• Storage: ${
-                    product.storage || "N/A"
-                  } – enough space for your files\n• Screen Size: ${
-                    product.screenSize || "N/A"
-                  }" – crisp, clear display\n• Graphics Card: ${
-                    product.graphicsCard || "N/A"
-                  } – for better visual experience\n• Battery: ${
-                    product.battery || "N/A"
-                  } – long-lasting usage\n• Ports: ${
-                    product.ports || "N/A"
-                  } – connect all your devices\n• OS: ${
-                    product.operatingSystem || "N/A"
-                  } – optimized for productivity\n• Color: ${
-                    product.color || "N/A"
-                  } – stylish and sleek\n• Model: ${
-                    product.model || "N/A"
-                  }\n• Year: ${
-                    product.productionYear || "N/A"
-                  }\n\nPerfect for students, professionals, or anyone needing reliable performance.`}
+                  {product.description}
                 </p>
               </div>
-
               <div className="mt-auto animate-fade-in">
                 <button
                   onClick={handleAddToCart}

@@ -405,7 +405,7 @@ const WalletManagement = () => {
                     Amount
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Date & Time
+                    Date
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Note
@@ -450,7 +450,7 @@ const WalletManagement = () => {
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                           {format(
                             parseISO(transaction.createdDate),
-                            "dd/MM/yyyy HH:mm"
+                            "dd/MM/yyyy"
                           )}
                         </td>
                         <td className="px-6 py-4 text-sm text-gray-500 max-w-xs truncate">

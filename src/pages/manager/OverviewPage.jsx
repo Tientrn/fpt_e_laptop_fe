@@ -671,7 +671,7 @@ const OverviewPage = () => {
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                           {format(
                             new Date(transaction.createdDate),
-                            "dd/MM/yyyy HH:mm"
+                            "dd/MM/yyyy"
                           )}
                         </td>
                         <td className="px-6 py-4 text-sm text-gray-500 max-w-xs truncate">
@@ -994,7 +994,7 @@ const OverviewPage = () => {
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {format(
                           new Date(transaction.createdDate),
-                          "dd/MM/yyyy HH:mm"
+                          "dd/MM/yyyy"
                         )}
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-500 max-w-xs truncate">
