@@ -10,6 +10,7 @@ const useCartStore = create(
       initializeCart: (userId) => {
         set({ currentUserId: userId });
       },
+      
 
       addToCart: (product) => {
         const { carts, currentUserId } = get();
